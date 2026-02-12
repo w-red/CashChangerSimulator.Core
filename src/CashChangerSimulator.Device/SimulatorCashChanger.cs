@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Device;
 
@@ -16,13 +17,27 @@ public class SimulatorCashChanger : CashChangerBasic
 
     public SimulatorCashChanger()
     {
+        // Load settings from TOML
+        var config = ConfigurationLoader.Load();
+
         _inventory = new Inventory();
+        foreach (var item in config.Inventory.InitialCounts)
+        {
+            if (int.TryParse(item.Key, out int denom))
+            {
+                _inventory.SetCount(denom, item.Value);
+            }
+        }
+
         _history = new TransactionHistory();
         _manager = new CashChangerManager(_inventory, _history);
         
         var denominations = new[] { 10000, 5000, 2000, 1000, 500, 100, 50, 10, 5, 1 };
         var monitors = denominations.Select(d => 
-            new CashStatusMonitor(_inventory, d, nearEmptyThreshold: 5, nearFullThreshold: 90, fullThreshold: 100)
+            new CashStatusMonitor(_inventory, d, 
+                nearEmptyThreshold: config.Thresholds.NearEmpty, 
+                nearFullThreshold: config.Thresholds.NearFull, 
+                fullThreshold: config.Thresholds.Full)
         ).ToList();
         
         _statusAggregator = new OverallStatusAggregator(monitors);
