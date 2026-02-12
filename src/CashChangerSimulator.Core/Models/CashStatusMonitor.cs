@@ -21,6 +21,11 @@ public class CashStatusMonitor : IDisposable
     public ReadOnlyReactiveProperty<CashStatus> Status => _status;
 
     /// <summary>
+    /// 監視する金種。
+    /// </summary>
+    public int Denomination => _denomination;
+
+    /// <summary>
     /// コンストラクタ。
     /// </summary>
     /// <param name="inventory">監視対象の在庫。</param>
