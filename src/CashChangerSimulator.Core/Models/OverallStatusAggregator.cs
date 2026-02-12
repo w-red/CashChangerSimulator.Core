@@ -8,7 +8,7 @@ namespace CashChangerSimulator.Core.Models;
 /// <summary>
 /// 釣銭機全体のステータスを集約管理するクラス。
 /// </summary>
-public class CashChangerStatus : IDisposable
+public class OverallStatusAggregator : IDisposable
 {
     private readonly IEnumerable<CashStatusMonitor> _monitors;
     private readonly ReadOnlyReactiveProperty<CashStatus> _overallStatus;
@@ -22,7 +22,7 @@ public class CashChangerStatus : IDisposable
     /// コンストラクタ。
     /// </summary>
     /// <param name="monitors">監視対象の各金種モニター。</param>
-    public CashChangerStatus(IEnumerable<CashStatusMonitor> monitors)
+    public OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
     {
         _monitors = monitors;
 

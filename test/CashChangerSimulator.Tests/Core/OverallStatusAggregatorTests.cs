@@ -7,12 +7,12 @@ using Shouldly;
 using Xunit;
 
 /// <summary>
-/// CashChangerStatus の集約ロジックを検証するテスト。
+/// OverallStatusAggregator の集約ロジックを検証するテスト。
 /// </summary>
-public class CashChangerStatusTests
+public class OverallStatusAggregatorTests
 {
     [Fact]
-    public void CashChangerStatus_ShouldAggregateIndividualStatuses()
+    public void OverallStatusAggregator_ShouldAggregateIndividualStatuses()
     {
         // Arrange
         var inventory = new Inventory();
@@ -23,7 +23,7 @@ public class CashChangerStatusTests
             new CashStatusMonitor(inventory, d, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)
         ).ToList();
 
-        var changerStatus = new CashChangerStatus(monitors);
+        var changerStatus = new OverallStatusAggregator(monitors);
         
         CashStatus currentOverall = CashStatus.Unknown;
         using var _ = changerStatus.OverallStatus.Subscribe(s => currentOverall = s);
