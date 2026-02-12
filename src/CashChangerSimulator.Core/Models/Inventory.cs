@@ -1,13 +1,30 @@
+using System.Collections.Generic;
+using R3;
+
 namespace CashChangerSimulator.Core.Models;
 
-using System.Collections.Generic;
+/// <summary>
+/// 読み取り専用の在庫情報のインターフェース。
+/// </summary>
+public interface IReadOnlyInventory
+{
+    int GetCount(int denomination);
+    decimal CalculateTotal();
+    Observable<int> Changed { get; }
+}
 
 /// <summary>
 /// 金種ごとの在庫枚数を管理するクラス。
 /// </summary>
-public class Inventory
+public class Inventory : IReadOnlyInventory
 {
     private readonly Dictionary<int, int> _counts = new();
+    private readonly Subject<int> _changed = new();
+
+    /// <summary>
+    /// 在庫が変更されたときに通知されるイベントストリーム。変更された金種（額面）を流す。
+    /// </summary>
+    public Observable<int> Changed => _changed;
 
     /// <summary>
     /// 指定された金種の枚数を追加する。
@@ -24,6 +41,18 @@ public class Inventory
         {
             _counts[denomination] = count;
         }
+        _changed.OnNext(denomination);
+    }
+
+    /// <summary>
+    /// 指定された金種の枚数を設定する。
+    /// </summary>
+    /// <param name="denomination">金種（額面）。</param>
+    /// <param name="count">設定する枚数。</param>
+    public void SetCount(int denomination, int count)
+    {
+        _counts[denomination] = count;
+        _changed.OnNext(denomination);
     }
 
     /// <summary>

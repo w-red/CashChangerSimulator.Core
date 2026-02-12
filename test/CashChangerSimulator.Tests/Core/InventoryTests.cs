@@ -1,6 +1,7 @@
 namespace CashChangerSimulator.Tests.Core;
 
 using CashChangerSimulator.Core.Models;
+using R3;
 using Shouldly;
 using Xunit;
 
@@ -60,5 +61,24 @@ public class InventoryTests
 
         // Assert
         total.ShouldBe(4500);
+    }
+
+    /// <summary>
+    /// 在庫が追加された際、Changed ストリームに通知が飛ぶことを確認する。
+    /// </summary>
+    [Fact]
+    public void Inventory_Add_ShouldNotifyChanged()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var denomination = 100;
+        int notifiedDenomination = 0;
+        using var _ = inventory.Changed.Subscribe(d => notifiedDenomination = d);
+
+        // Act
+        inventory.Add(denomination, 1);
+
+        // Assert
+        notifiedDenomination.ShouldBe(denomination);
     }
 }
