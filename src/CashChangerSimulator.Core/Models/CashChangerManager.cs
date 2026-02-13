@@ -28,7 +28,7 @@ public class CashChangerManager
     /// 入金を処理する。
     /// </summary>
     /// <param name="counts">投入された金種ごとの枚数内訳。</param>
-    public void Deposit(IReadOnlyDictionary<int, int> counts)
+    public virtual void Deposit(IReadOnlyDictionary<int, int> counts)
     {
         decimal total = 0;
         foreach (var (denomination, count) in counts)
@@ -49,7 +49,7 @@ public class CashChangerManager
     /// 出金を処理する。
     /// </summary>
     /// <param name="counts">放出する金種ごとの枚数内訳。</param>
-    public void Dispense(IReadOnlyDictionary<int, int> counts)
+    public virtual void Dispense(IReadOnlyDictionary<int, int> counts)
     {
         decimal total = 0;
         foreach (var (denomination, count) in counts)
@@ -71,7 +71,7 @@ public class CashChangerManager
     /// 指定された金額を出金する。内訳は自動計算される。
     /// </summary>
     /// <param name="amount">出金する合計金額。</param>
-    public void Dispense(decimal amount)
+    public virtual void Dispense(decimal amount)
     {
         var counts = _calculator.Calculate(_inventory, amount);
         Dispense(counts);

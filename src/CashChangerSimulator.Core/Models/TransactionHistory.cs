@@ -20,13 +20,13 @@ public class TransactionHistory : IDisposable
     /// <summary>
     /// 取引が新しく追加されたときに通知されるストリーム。
     /// </summary>
-    public Observable<TransactionEntry> Added => _added;
+    public virtual Observable<TransactionEntry> Added => _added;
 
     /// <summary>
     /// 履歴を追加する。
     /// </summary>
     /// <param name="entry">追加する履歴エントリ。</param>
-    public void Add(TransactionEntry entry)
+    public virtual void Add(TransactionEntry entry)
     {
         _entries.Add(entry);
         _added.OnNext(entry);
