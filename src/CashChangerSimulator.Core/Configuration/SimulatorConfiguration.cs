@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using CsToml;
 
 namespace CashChangerSimulator.Core.Configuration;
@@ -59,14 +58,7 @@ public partial class InventorySettings
     /// 金種識別子（B=紙幣, C=硬貨 + 額面）と個別設定のマップ。
     /// </summary>
     [TomlValueOnSerialized]
-    public Dictionary<string, DenominationSettings> Denominations { get; set; } = new();
-
-    /// <summary>
-    /// 互換性維持のための古い初期枚数設定。
-    /// </summary>
-    [TomlValueOnSerialized]
-    [Obsolete("Use Denominations instead.")]
-    public Dictionary<string, int> InitialCounts { get; set; } = new();
+    public Dictionary<string, DenominationSettings> Denominations { get; set; } = [];
 }
 
 /// <summary>

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 
@@ -51,7 +50,7 @@ public interface IReadOnlyInventory
 /// <summary>金種ごとの在庫枚数を管理するクラス。</summary>
 public class Inventory : IReadOnlyInventory
 {
-    private readonly Dictionary<DenominationKey, int> _counts = new();
+    private readonly Dictionary<DenominationKey, int> _counts = [];
     private readonly Subject<DenominationKey> _changed = new();
 
     /// <inheritdoc/>
@@ -97,4 +96,29 @@ public class Inventory : IReadOnlyInventory
 
     /// <summary>全在庫の金種キーと枚数の列挙を取得する。</summary>
     public IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => _counts;
+
+    /// <summary>
+    /// 現在の在庫を文字列キーのディクショナリに変換する（保存用）。
+    /// </summary>
+    public Dictionary<string, int> ToDictionary()
+    {
+        return _counts.ToDictionary(
+            kv => (kv.Key.Type == CashType.Bill ? "B" : "C") + kv.Key.Value.ToString(),
+            kv => kv.Value
+        );
+    }
+
+    /// <summary>
+    /// 文字列キーのディクショナリから在庫を復元する。
+    /// </summary>
+    public void LoadFromDictionary(IReadOnlyDictionary<string, int> data)
+    {
+        foreach (var kv in data)
+        {
+            if (DenominationKey.TryParse(kv.Key, out var key) && key != null)
+            {
+                SetCount(key, kv.Value);
+            }
+        }
+    }
 }

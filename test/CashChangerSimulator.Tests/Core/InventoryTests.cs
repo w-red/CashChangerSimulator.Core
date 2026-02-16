@@ -75,4 +75,27 @@ public class InventoryTests
         // Assert
         notifiedDenomination.ShouldBe(denomination);
     }
+
+    /// <summary>在庫をディクショナリに変換し、再び読み込めることを検証する。</summary>
+    [Fact]
+    public void InventoryShouldSerializeAndDeserializeViaDictionary()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var c100 = new DenominationKey(100, CashType.Coin);
+        inventory.SetCount(b1000, 10);
+        inventory.SetCount(c100, 50);
+
+        // Act
+        var dict = inventory.ToDictionary();
+        var newInventory = new Inventory();
+        newInventory.LoadFromDictionary(dict);
+
+        // Assert
+        dict.ShouldContainKeyAndValue("B1000", 10);
+        dict.ShouldContainKeyAndValue("C100", 50);
+        newInventory.GetCount(b1000).ShouldBe(10);
+        newInventory.GetCount(c100).ShouldBe(50);
+    }
 }

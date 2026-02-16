@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using R3;
 
 namespace CashChangerSimulator.Core.Models;
@@ -9,7 +7,7 @@ namespace CashChangerSimulator.Core.Models;
 /// </summary>
 public class TransactionHistory : IDisposable
 {
-    private readonly List<TransactionEntry> _entries = new();
+    private readonly List<TransactionEntry> _entries = [];
     private readonly Subject<TransactionEntry> _added = new();
 
     /// <summary>

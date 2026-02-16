@@ -1,6 +1,5 @@
 namespace CashChangerSimulator.Tests.Core;
 
-using System.Collections.Generic;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using MoneyKind4Opos.Currencies.Interfaces;

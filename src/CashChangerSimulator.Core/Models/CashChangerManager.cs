@@ -1,28 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace CashChangerSimulator.Core.Models;
 
 /// <summary>
 /// 在庫管理と履歴管理を統合し、実務的な入出金操作を提供するマネージャークラス。
 /// </summary>
-public class CashChangerManager
+/// <remarks>
+/// コンストラクタ。
+/// </remarks>
+/// <param name="inventory">在庫管理オブジェクト。</param>
+/// <param name="history">履歴管理オブジェクト。</param>
+public class CashChangerManager(Inventory inventory, TransactionHistory history)
 {
-    private readonly Inventory _inventory;
-    private readonly TransactionHistory _history;
     private readonly ChangeCalculator _calculator = new();
-
-    /// <summary>
-    /// コンストラクタ。
-    /// </summary>
-    /// <param name="inventory">在庫管理オブジェクト。</param>
-    /// <param name="history">履歴管理オブジェクト。</param>
-    public CashChangerManager(Inventory inventory, TransactionHistory history)
-    {
-        _inventory = inventory;
-        _history = history;
-    }
 
     /// <summary>入金を処理する。</summary>
     /// <param name="counts">投入された金種ごとの枚数内訳。</param>
@@ -31,11 +19,11 @@ public class CashChangerManager
         decimal total = 0;
         foreach (var (key, count) in counts)
         {
-            _inventory.Add(key, count);
+            inventory.Add(key, count);
             total += key.Value * count;
         }
 
-        _history.Add(new TransactionEntry(
+        history.Add(new TransactionEntry(
             DateTimeOffset.Now,
             TransactionType.Deposit,
             total,
@@ -50,11 +38,11 @@ public class CashChangerManager
         decimal total = 0;
         foreach (var (key, count) in counts)
         {
-            _inventory.Add(key, -count);
+            inventory.Add(key, -count);
             total += key.Value * count;
         }
 
-        _history.Add(new TransactionEntry(
+        history.Add(new TransactionEntry(
             DateTimeOffset.Now,
             TransactionType.Dispense,
             total,
@@ -66,7 +54,7 @@ public class CashChangerManager
     /// <param name="amount">出金する合計金額。</param>
     public virtual void Dispense(decimal amount)
     {
-        var counts = _calculator.Calculate(_inventory, amount);
+        var counts = _calculator.Calculate(inventory, amount);
         Dispense(counts);
     }
 }
