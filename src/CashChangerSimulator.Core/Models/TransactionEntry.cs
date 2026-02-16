@@ -9,10 +9,10 @@ namespace CashChangerSimulator.Core.Models;
 /// <param name="Timestamp">取引日時。</param>
 /// <param name="Type">取引種別。</param>
 /// <param name="Amount">合計金額の変動量。</param>
-/// <param name="Counts">金種ごとの枚数変動（額面, 枚数）。</param>
+/// <param name="Counts">金種ごとの枚数変動（DenominationKey, 枚数）。</param>
 public record TransactionEntry(
     DateTimeOffset Timestamp,
     TransactionType Type,
     decimal Amount,
-    IReadOnlyDictionary<int, int> Counts
+    IReadOnlyDictionary<DenominationKey, int> Counts
 );

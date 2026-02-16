@@ -3,6 +3,7 @@ namespace CashChangerSimulator.Tests.Core;
 using System.Collections.Generic;
 using System.Linq;
 using CashChangerSimulator.Core.Models;
+using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 using Xunit;
 
@@ -11,21 +12,24 @@ using Xunit;
 /// </summary>
 public class CashChangerManagerTests
 {
+    /// <summary>入金時に在庫と履歴が正しく更新されることを検証する。</summary>
     [Fact]
-    public void Deposit_ShouldUpdateInventoryAndHistory()
+    public void DepositShouldUpdateInventoryAndHistory()
     {
         // Arrange
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history);
-        var depositCounts = new Dictionary<int, int> { { 1000, 2 }, { 100, 5 } };
+        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var c100 = new DenominationKey(100, CashType.Coin);
+        var depositCounts = new Dictionary<DenominationKey, int> { { b1000, 2 }, { c100, 5 } };
 
         // Act
         manager.Deposit(depositCounts);
 
         // Assert: Inventory updated
-        inventory.GetCount(1000).ShouldBe(2);
-        inventory.GetCount(100).ShouldBe(5);
+        inventory.GetCount(b1000).ShouldBe(2);
+        inventory.GetCount(c100).ShouldBe(5);
         inventory.CalculateTotal().ShouldBe(2500m);
 
         // Assert: History added
@@ -33,25 +37,27 @@ public class CashChangerManagerTests
         var entry = history.Entries[0];
         entry.Type.ShouldBe(TransactionType.Deposit);
         entry.Amount.ShouldBe(2500m);
-        entry.Counts[1000].ShouldBe(2);
-        entry.Counts[100].ShouldBe(5);
+        entry.Counts[b1000].ShouldBe(2);
+        entry.Counts[c100].ShouldBe(5);
     }
 
+    /// <summary>払出時に在庫と履歴が正しく更新されることを検証する。</summary>
     [Fact]
-    public void Dispense_ShouldUpdateInventoryAndHistory()
+    public void DispenseShouldUpdateInventoryAndHistory()
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(1000, 10);
+        var b1000 = new DenominationKey(1000, CashType.Bill);
+        inventory.SetCount(b1000, 10);
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history);
-        var dispenseCounts = new Dictionary<int, int> { { 1000, 3 } };
+        var dispenseCounts = new Dictionary<DenominationKey, int> { { b1000, 3 } };
 
         // Act
         manager.Dispense(dispenseCounts);
 
         // Assert: Inventory updated
-        inventory.GetCount(1000).ShouldBe(7);
+        inventory.GetCount(b1000).ShouldBe(7);
 
         // Assert: History added
         history.Entries.Count.ShouldBe(1);
@@ -60,13 +66,16 @@ public class CashChangerManagerTests
         entry.Amount.ShouldBe(3000m);
     }
 
+    /// <summary>金額指定の払出時に計算、更新、記録が正しく行われることを検証する。</summary>
     [Fact]
-    public void Dispense_ByAmount_ShouldCalculateUpdateAndRecord()
+    public void DispenseByAmountShouldCalculateUpdateAndRecord()
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(1000, 5);
-        inventory.SetCount(100, 10);
+        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var c100 = new DenominationKey(100, CashType.Coin);
+        inventory.SetCount(b1000, 5);
+        inventory.SetCount(c100, 10);
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history);
 
@@ -74,13 +83,13 @@ public class CashChangerManagerTests
         manager.Dispense(1200m);
 
         // Assert: Inventory updated
-        inventory.GetCount(1000).ShouldBe(4);
-        inventory.GetCount(100).ShouldBe(8);
+        inventory.GetCount(b1000).ShouldBe(4);
+        inventory.GetCount(c100).ShouldBe(8);
 
         // Assert: History recorded
         history.Entries.Count.ShouldBe(1);
         history.Entries[0].Amount.ShouldBe(1200m);
-        history.Entries[0].Counts[1000].ShouldBe(1);
-        history.Entries[0].Counts[100].ShouldBe(2);
+        history.Entries[0].Counts[b1000].ShouldBe(1);
+        history.Entries[0].Counts[c100].ShouldBe(2);
     }
 }

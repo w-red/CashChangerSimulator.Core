@@ -10,37 +10,36 @@ namespace CashChangerSimulator.Core.Models;
 /// </summary>
 public class ChangeCalculator
 {
-    /// <summary>
-    /// 指定された在庫から、指定された金額を支払うための金種内訳を計算する。
-    /// </summary>
+    /// <summary>指定された在庫から、指定された金額を支払うための金種内訳を計算する。</summary>
     /// <param name="inventory">現在の在庫。</param>
     /// <param name="targetAmount">支払いたい合計金額。</param>
-    /// <returns>額面と枚数のディクショナリ。</returns>
+    /// <returns>金種キーと枚数のディクショナリ。</returns>
     /// <exception cref="InsufficientCashException">在庫不足や端数不一致により計算できない場合。</exception>
-    public IReadOnlyDictionary<int, int> Calculate(IReadOnlyInventory inventory, decimal targetAmount)
+    public IReadOnlyDictionary<DenominationKey, int> Calculate(IReadOnlyInventory inventory, decimal targetAmount)
     {
-        var result = new Dictionary<int, int>();
+        var result = new Dictionary<DenominationKey, int>();
         decimal remaining = targetAmount;
 
         // 在庫のある金種を大きい順に取得
-        // ※ 本来は「利用可能な金種マスター」を持つべきだが、一旦現在の在庫に含まれる金種から計算
-        var availableDenominations = GetAvailableDenominations(inventory)
-            .OrderByDescending(d => d);
+        // 同じ額面の場合は、一旦紙幣を優先する（CashType.Bill > Coin）
+        var availableKeys = GetAvailableDenominationKeys(inventory)
+            .OrderByDescending(k => k.Value)
+            .ThenByDescending(k => k.Type);
 
-        foreach (var denomination in availableDenominations)
+        foreach (var key in availableKeys)
         {
             if (remaining <= 0) break;
 
-            int needed = (int)(remaining / denomination);
+            int needed = (int)(remaining / key.Value);
             if (needed <= 0) continue;
 
-            int available = inventory.GetCount(denomination);
+            int available = inventory.GetCount(key);
             int countToTake = Math.Min(needed, available);
 
             if (countToTake > 0)
             {
-                result[denomination] = countToTake;
-                remaining -= (decimal)denomination * countToTake;
+                result[key] = countToTake;
+                remaining -= key.Value * countToTake;
             }
         }
 
@@ -52,13 +51,13 @@ public class ChangeCalculator
         return result;
     }
 
-    private IEnumerable<int> GetAvailableDenominations(IReadOnlyInventory inventory)
+    private IEnumerable<DenominationKey> GetAvailableDenominationKeys(IReadOnlyInventory inventory)
     {
-        // Inventory の実装詳細に依存せず、一般的に使われる日本円の金種などを想定しても良いが、
-        // 現状は Inventory に登録されている（枚数が0より大きい）金種を対象とする。
-        // ※ 改善案: IReadOnlyInventory に「登録されている全金種リスト」を返すメソッドを追加する。
-        
-        // 現状の実装：1円〜10000円の標準的な金種を候補とする
-        return new[] { 10000, 5000, 2000, 1000, 500, 100, 50, 10, 5, 1 };
+        // 実際には IReadOnlyInventory の実装（Inventory クラス）から全金種キーを取得する
+        if (inventory is Inventory inv)
+        {
+            return inv.AllCounts.Select(kv => kv.Key);
+        }
+        return Enumerable.Empty<DenominationKey>();
     }
 }

@@ -1,6 +1,7 @@
 namespace CashChangerSimulator.Tests.Core;
 
 using CashChangerSimulator.Core.Models;
+using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
 using Xunit;
@@ -10,15 +11,13 @@ using Xunit;
 /// </summary>
 public class InventoryTests
 {
-    /// <summary>
-    /// 指定された金種の枚数を追加し、正しく保持されることを確認する。
-    /// </summary>
+    /// <summary>指定された金種の枚数を追加し、正しく保持されることを検証する。</summary>
     [Fact]
-    public void Inventory_Add_ShouldIncreaseCount()
+    public void InventoryAddShouldIncreaseCount()
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = 1000;
+        var denomination = new DenominationKey(1000, CashType.Bill);
 
         // Act
         inventory.Add(denomination, 5);
@@ -27,52 +26,47 @@ public class InventoryTests
         inventory.GetCount(denomination).ShouldBe(5);
     }
 
-    /// <summary>
-    /// 存在しない金種の枚数を取得した場合、0 が返されることを確認する。
-    /// </summary>
+    /// <summary>存在しない金種の枚数を取得した場合、0 が返されることを検証する。</summary>
     [Fact]
-    public void Inventory_GetCount_NonExistent_ShouldReturnZero()
+    public void InventoryGetCountNonExistentShouldReturnZero()
     {
         // Arrange
         var inventory = new Inventory();
+        var denomination = new DenominationKey(500, CashType.Coin);
 
         // Act
-        var count = inventory.GetCount(500);
+        var count = inventory.GetCount(denomination);
 
         // Assert
         count.ShouldBe(0);
     }
 
-    /// <summary>
-    /// 複数の金種がある場合、合計金額が正しく計算されることを確認する。
-    /// </summary>
+    /// <summary>複数の金種がある場合、合計金額が正しく計算されることを検証する。</summary>
     [Fact]
-    public void Inventory_TotalAmount_ShouldBeCorrect()
+    public void InventoryTotalAmountShouldBeCorrect()
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.Add(1000, 2); // 2000
-        inventory.Add(500, 3);  // 1500
-        inventory.Add(100, 10); // 1000
+        inventory.Add(new DenominationKey(1000, CashType.Bill), 2); // 2000
+        inventory.Add(new DenominationKey(500, CashType.Coin), 3);  // 1500
+        inventory.Add(new DenominationKey(100, CashType.Coin), 10); // 1000
         // Total: 4500
 
         // Act
         var total = inventory.CalculateTotal();
 
         // Assert
-        total.ShouldBe(4500);
+        total.ShouldBe(4500m);
     }
 
-    /// <summary>
-    /// 在庫が追加された際、Changed ストリームに通知が飛ぶことを確認する。
-    /// </summary>
+    /// <summary>在庫が追加された際、Changed ストリームに通知が飛ぶことを検証する。</summary>
     [Fact]
-    public void Inventory_Add_ShouldNotifyChanged()
+    public void InventoryAddShouldNotifyChanged()
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = 100;
-        int notifiedDenomination = 0;
+        var denomination = new DenominationKey(100, CashType.Coin);
+        DenominationKey? notifiedDenomination = null;
         using var _ = inventory.Changed.Subscribe(d => notifiedDenomination = d);
 
         // Act

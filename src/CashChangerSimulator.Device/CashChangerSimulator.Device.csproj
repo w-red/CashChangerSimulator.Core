@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0-windows;net9.0-windows</TargetFrameworks>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -19,6 +19,12 @@
     </Reference>
     <Reference Include="Microsoft.PointOfService.ControlBase">
       <HintPath>C:\Program Files (x86)\Microsoft Point Of Service\SDK\Microsoft.PointOfService.ControlBase.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MoneyKind4Opos">
+      <HintPath>..\..\..\MoneyKind4Opos\src\MoneyKind4Opos\bin\Debug\net10.0\MoneyKind4Opos.dll</HintPath>
     </Reference>
   </ItemGroup>
 

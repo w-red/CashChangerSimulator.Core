@@ -1,6 +1,7 @@
 namespace CashChangerSimulator.Tests.Core;
 
 using CashChangerSimulator.Core.Models;
+using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
 using Xunit;
@@ -10,12 +11,13 @@ using Xunit;
 /// </summary>
 public class CashStatusMonitorTests
 {
+    /// <summary>在庫の枚数に応じてステータスが正しく遷移することを検証する。</summary>
     [Fact]
-    public void Monitor_ShouldTransitionStatus_BasedOnInventory()
+    public void MonitorShouldTransitionStatusBasedOnInventory()
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = 1000;
+        var denomination = new DenominationKey(1000, CashType.Bill);
         
         // しきい値設定: Empty=0, NearEmpty=2, NearFull=8, Full=10
         // 0: Empty

@@ -23,25 +23,29 @@ public class SimulatorCashChanger : CashChangerBasic
         _inventory = new Inventory();
         foreach (var item in config.Inventory.InitialCounts)
         {
-            if (int.TryParse(item.Key, out int denom))
+            if (DenominationKey.TryParse(item.Key, out var key) && key != null)
             {
-                _inventory.SetCount(denom, item.Value);
+                _inventory.SetCount(key, item.Value);
             }
         }
 
         _history = new TransactionHistory();
         _manager = new CashChangerManager(_inventory, _history);
         
-        var denominations = new[] { 10000, 5000, 2000, 1000, 500, 100, 50, 10, 5, 1 };
-        var monitors = denominations.Select(d => 
-            new CashStatusMonitor(_inventory, d, 
+        // Create monitors for each denomination in inventory
+        var monitors = _inventory.AllCounts.Select(x => x.Key).Select(key => 
+            new CashStatusMonitor(_inventory, key, 
                 nearEmptyThreshold: config.Thresholds.NearEmpty, 
                 nearFullThreshold: config.Thresholds.NearFull, 
                 fullThreshold: config.Thresholds.Full)
         ).ToList();
         
         _statusAggregator = new OverallStatusAggregator(monitors);
+        
+        _currencyCode = config.CurrencyCode ?? "JPY";
     }
+
+    private readonly string _currencyCode;
 
     public override string CheckHealth(HealthCheckLevel level) => "OK";
     public override string CheckHealthText => "OK";
@@ -64,9 +68,9 @@ public class SimulatorCashChanger : CashChangerBasic
     public override int AsyncResultCode => 0;
     public override int AsyncResultCodeExtended => 0;
 
-    public override string CurrencyCode { get => "JPY"; set { } }
-    public override string[] CurrencyCodeList => new[] { "JPY" };
-    public override string[] DepositCodeList => new[] { "JPY" };
+    public override string CurrencyCode { get => _currencyCode; set { } }
+    public override string[] CurrencyCodeList => new[] { _currencyCode };
+    public override string[] DepositCodeList => new[] { _currencyCode };
     
     public override CashUnits CurrencyCashList => new CashUnits();
     public override CashUnits DepositCashList => new CashUnits();

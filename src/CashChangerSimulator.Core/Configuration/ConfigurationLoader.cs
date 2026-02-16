@@ -11,12 +11,11 @@ namespace CashChangerSimulator.Core.Configuration;
 /// </summary>
 public static class ConfigurationLoader
 {
+    /// <summary>デフォルトの設定ファイルパス。</summary>
     private static readonly string DefaultConfigPath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "config.toml");
 
-    /// <summary>
-    /// 設定ファイルを読み込みます。ファイルが存在しない場合はデフォルト値を返します。
-    /// </summary>
+    /// <summary>設定ファイルを読み込む（存在しない場合はデフォルトを作成して返す）。</summary>
     public static SimulatorConfiguration Load(string? path = null)
     {
         var filePath = path ?? DefaultConfigPath;
@@ -37,9 +36,7 @@ public static class ConfigurationLoader
         }
     }
 
-    /// <summary>
-    /// 設定をファイルに保存します。
-    /// </summary>
+    /// <summary>設定をファイルへシリアライズして保存する。</summary>
     public static void Save(SimulatorConfiguration config, string? path = null)
     {
         var filePath = path ?? DefaultConfigPath;

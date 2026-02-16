@@ -1,83 +1,100 @@
 using System.Collections.Generic;
+using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>
-/// 読み取り専用の在庫情報のインターフェース。
-/// </summary>
-public interface IReadOnlyInventory
+/// <summary>金種を一意に識別するための複合キー（額面と硬貨/紙幣の種別）。</summary>
+public record DenominationKey(decimal Value, CashType Type)
 {
-    int GetCount(int denomination);
-    decimal CalculateTotal();
-    Observable<int> Changed { get; }
+    /// <summary>
+    /// 文字列形式（例: "B10000", "C500"）から DenominationKey を解析する。
+    /// </summary>
+    /// <param name="s">解析対象の文字列。先頭が 'B' (Bill) または 'C' (Coin) である必要がある。</param>
+    /// <param name="result">解析結果のキー。</param>
+    /// <returns>解析に成功した場合は true、それ以外は false。</returns>
+    public static bool TryParse(string s, out DenominationKey? result)
+    {
+        result = null;
+        if (string.IsNullOrEmpty(s) || s.Length < 2) return false;
+
+        var type = s[0] switch
+        {
+            'B' or 'b' => CashType.Bill,
+            'C' or 'c' => CashType.Coin,
+            _ => CashType.Undefined
+        };
+
+        if (type == CashType.Undefined) return false;
+
+        if (decimal.TryParse(s[1..], out var value))
+        {
+            result = new DenominationKey(value, type);
+            return true;
+        }
+
+        return false;
+    }
 }
 
-/// <summary>
-/// 金種ごとの在庫枚数を管理するクラス。
-/// </summary>
+/// <summary>読み取り専用の在庫情報のインターフェース。</summary>
+public interface IReadOnlyInventory
+{
+    /// <summary>指定された金種の現在の枚数を取得する。</summary>
+    int GetCount(DenominationKey key);
+    /// <summary>現在の在庫の合計金額を計算する。</summary>
+    decimal CalculateTotal();
+    /// <summary>在庫が変更されたときに通知されるイベントストリーム。</summary>
+    Observable<DenominationKey> Changed { get; }
+}
+
+/// <summary>金種ごとの在庫枚数を管理するクラス。</summary>
 public class Inventory : IReadOnlyInventory
 {
-    private readonly Dictionary<int, int> _counts = new();
-    private readonly Subject<int> _changed = new();
-    public event Action<int>? ChangedLegacy;
+    private readonly Dictionary<DenominationKey, int> _counts = new();
+    private readonly Subject<DenominationKey> _changed = new();
 
-    /// <summary>
-    /// 在庫が変更されたときに通知されるイベントストリーム。変更された金種（額面）を流す。
-    /// </summary>
-    public virtual Observable<int> Changed => _changed;
+    /// <inheritdoc/>
+    public virtual Observable<DenominationKey> Changed => _changed;
 
-    /// <summary>
-    /// 指定された金種の枚数を追加する。
-    /// </summary>
-    /// <param name="denomination">金種（額面）。</param>
-    /// <param name="count">追加する枚数。</param>
-    public virtual void Add(int denomination, int count)
+    /// <summary>指定された金種の枚数を追加する。</summary>
+    public virtual void Add(DenominationKey key, int count)
     {
-        if (_counts.ContainsKey(denomination))
+        if (_counts.ContainsKey(key))
         {
-            _counts[denomination] += count;
+            _counts[key] += count;
         }
         else
         {
-            _counts[denomination] = count;
+            _counts[key] = count;
         }
-        _changed.OnNext(denomination);
-        ChangedLegacy?.Invoke(denomination);
+        _changed.OnNext(key);
     }
 
-    /// <summary>
-    /// 指定された金種の枚数を設定する。
-    /// </summary>
-    /// <param name="denomination">金種（額面）。</param>
-    /// <param name="count">設定する枚数。</param>
-    public virtual void SetCount(int denomination, int count)
+    /// <summary>指定された金種の枚数を設定する。</summary>
+    public virtual void SetCount(DenominationKey key, int count)
     {
-        _counts[denomination] = count;
-        _changed.OnNext(denomination);
+        _counts[key] = count;
+        _changed.OnNext(key);
     }
 
-    /// <summary>
-    /// 指定された金種の現在の枚数を取得する。
-    /// </summary>
-    /// <param name="denomination">金種（額面）。</param>
-    /// <returns>現在の枚数。存在しない場合は 0。</returns>
-    public virtual int GetCount(int denomination)
+    /// <summary>指定された金種の現在の枚数を取得する。</summary>
+    public virtual int GetCount(DenominationKey key)
     {
-        return _counts.GetValueOrDefault(denomination, 0);
+        return _counts.GetValueOrDefault(key, 0);
     }
 
-    /// <summary>
-    /// 現在の在庫の合計金額を計算する。
-    /// </summary>
-    /// <returns>合計金額。</returns>
+    /// <summary>現在の在庫の合計金額を計算する。</summary>
     public virtual decimal CalculateTotal()
     {
         decimal total = 0;
-        foreach (var (denomination, count) in _counts)
+        foreach (var (key, count) in _counts)
         {
-            total += (decimal)denomination * count;
+            total += key.Value * count;
         }
         return total;
     }
+
+    /// <summary>全在庫の金種キーと枚数の列挙を取得する。</summary>
+    public IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => _counts;
 }

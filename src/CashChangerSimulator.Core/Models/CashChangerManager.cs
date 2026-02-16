@@ -24,17 +24,15 @@ public class CashChangerManager
         _history = history;
     }
 
-    /// <summary>
-    /// 入金を処理する。
-    /// </summary>
+    /// <summary>入金を処理する。</summary>
     /// <param name="counts">投入された金種ごとの枚数内訳。</param>
-    public virtual void Deposit(IReadOnlyDictionary<int, int> counts)
+    public virtual void Deposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         decimal total = 0;
-        foreach (var (denomination, count) in counts)
+        foreach (var (key, count) in counts)
         {
-            _inventory.Add(denomination, count);
-            total += (decimal)denomination * count;
+            _inventory.Add(key, count);
+            total += key.Value * count;
         }
 
         _history.Add(new TransactionEntry(
@@ -45,18 +43,15 @@ public class CashChangerManager
         ));
     }
 
-    /// <summary>
-    /// 出金を処理する。
-    /// </summary>
+    /// <summary>出金を処理する。</summary>
     /// <param name="counts">放出する金種ごとの枚数内訳。</param>
-    public virtual void Dispense(IReadOnlyDictionary<int, int> counts)
+    public virtual void Dispense(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         decimal total = 0;
-        foreach (var (denomination, count) in counts)
+        foreach (var (key, count) in counts)
         {
-            // 在庫を減らす (count を負の値にして Add)
-            _inventory.Add(denomination, -count);
-            total += (decimal)denomination * count;
+            _inventory.Add(key, -count);
+            total += key.Value * count;
         }
 
         _history.Add(new TransactionEntry(
@@ -67,9 +62,7 @@ public class CashChangerManager
         ));
     }
 
-    /// <summary>
-    /// 指定された金額を出金する。内訳は自動計算される。
-    /// </summary>
+    /// <summary>指定された金額を出金する。内訳は自動計算される。</summary>
     /// <param name="amount">出金する合計金額。</param>
     public virtual void Dispense(decimal amount)
     {
