@@ -14,6 +14,7 @@
     <PackageReference Include="CsToml" Version="1.8.1" />
     <PackageReference Include="CsToml.Extensions" Version="1.8.1" />
     <PackageReference Include="MemoryPack" Version="1.21.4" />
+    <PackageReference Include="MemoryPack.Core" Version="1.21.4" />
     <PackageReference Include="PolySharp" Version="1.15.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
