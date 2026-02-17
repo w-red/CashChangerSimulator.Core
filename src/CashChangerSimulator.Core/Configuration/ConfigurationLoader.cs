@@ -1,4 +1,5 @@
 using CsToml.Extensions;
+using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Core.Configuration;
 
@@ -28,7 +29,10 @@ public static class ConfigurationLoader
 
         try
         {
-            return CsTomlFileSerializer.Deserialize<SimulatorConfiguration>(filePath);
+            var config = CsTomlFileSerializer.Deserialize<SimulatorConfiguration>(filePath);
+            config.Simulation ??= new SimulationSettings();
+            config.Logging ??= new LoggingSettings();
+            return config;
         }
         catch (Exception)
         {
@@ -65,5 +69,58 @@ public static class ConfigurationLoader
     public static void SaveInventoryState(InventoryState state)
     {
         CsTomlFileSerializer.Serialize(InventoryStatePath, state);
+    }
+
+    /// <summary>取引履歴の保存先ファイルパス（バイナリ形式）。</summary>
+    private static readonly string HistoryStatePath = Path.Combine(
+        AppDomain.CurrentDomain.BaseDirectory, "history.bin");
+
+    /// <summary>取引履歴を読み込む。</summary>
+    public static HistoryState LoadHistoryState()
+    {
+        if (!File.Exists(HistoryStatePath))
+        {
+            return CreateInitialHistoryState();
+        }
+
+        try
+        {
+            var bin = File.ReadAllBytes(HistoryStatePath);
+            return MemoryPack.MemoryPackSerializer.Deserialize<HistoryState>(bin) ?? CreateInitialHistoryState();
+        }
+        catch (Exception)
+        {
+            return CreateInitialHistoryState();
+        }
+    }
+
+    /// <summary>取引履歴を保存する。</summary>
+    public static void SaveHistoryState(HistoryState state)
+    {
+        try
+        {
+            var bin = MemoryPack.MemoryPackSerializer.Serialize(state);
+            File.WriteAllBytes(HistoryStatePath, bin);
+        }
+        catch (Exception)
+        {
+            // Logging can be added here
+        }
+    }
+
+    private static HistoryState CreateInitialHistoryState()
+    {
+        return new HistoryState
+        {
+            Entries = [
+                new HistoryEntryState
+                {
+                    Timestamp = DateTimeOffset.Now,
+                    Type = TransactionType.Unknown,
+                    Amount = 0,
+                    Counts = new Dictionary<string, int>()
+                }
+            ]
+        };
     }
 }

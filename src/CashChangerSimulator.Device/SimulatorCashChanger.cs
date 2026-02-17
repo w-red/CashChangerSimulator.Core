@@ -1,9 +1,13 @@
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
+using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Exceptions;
 using R3;
 using MoneyKind4Opos.Currencies.Interfaces;
+using Microsoft.Extensions.Logging;
+using ZLogger;
 
 namespace CashChangerSimulator.Device;
 
@@ -15,203 +19,428 @@ public class SimulatorCashChanger : CashChangerBasic
     private readonly CashChangerManager _manager;
     private readonly OverallStatusAggregator _statusAggregator;
     private readonly IDisposable _statusSubscription;
-    private int _depositAmount;
-    private readonly Dictionary<DenominationKey, int> _depositCounts = [];
-    private CashDepositStatus _depositStatus = CashDepositStatus.None;
-    private Microsoft.PointOfService.CashChangerStatus _lastCashChangerStatus = Microsoft.PointOfService.CashChangerStatus.OK;
+    private readonly SimulatorConfiguration _config;
 
-    public SimulatorCashChanger()
+    private readonly DepositController _depositController;
+    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly ILogger<SimulatorCashChanger> _logger;
+
+    // Status tracking for StatusUpdateEvent transitions
+    private Microsoft.PointOfService.CashChangerStatus _lastCashChangerStatus = Microsoft.PointOfService.CashChangerStatus.OK;
+    private CashChangerFullStatus _lastFullStatus = CashChangerFullStatus.OK;
+
+    // Async processing state
+    private bool _asyncProcessing;
+    private int _asyncResultCode;
+    private int _asyncResultCodeExtended;
+
+    internal Action<EventArgs>? OnEventQueued; // For testing
+
+    protected virtual void NotifyEvent(EventArgs e)
+    {
+        OnEventQueued?.Invoke(e);
+        if (e is DataEventArgs de) QueueEvent(de);
+        else if (e is StatusUpdateEventArgs se) QueueEvent(se);
+    }
+
+    public SimulatorCashChanger() : this(null, null, null, null, null, null, null) { }
+
+    internal SimulatorCashChanger(
+        SimulatorConfiguration? config = null,
+        Inventory? inventory = null,
+        TransactionHistory? history = null,
+        CashChangerManager? manager = null,
+        DepositController? depositController = null,
+        OverallStatusAggregator? aggregator = null,
+        HardwareStatusManager? hardwareStatusManager = null)
     {
         // Load settings from TOML
-        var config = ConfigurationLoader.Load();
+        _config = config ?? ConfigurationLoader.Load();
 
-        _inventory = new Inventory();
-        var state = ConfigurationLoader.LoadInventoryState();
-        if (state.Counts.Count > 0)
+        DevicePath = "SimulatorCashChanger";
+        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+
+        _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
+        _logger.ZLogInformation($"SimulatorCashChanger initialized.");
+
+        _inventory = inventory ?? new Inventory();
+        if (inventory == null)
         {
-            _inventory.LoadFromDictionary(state.Counts);
-        }
-        else
-        {
-            foreach (var item in config.Inventory.Denominations)
+            var state = ConfigurationLoader.LoadInventoryState();
+            if (state.Counts.Count > 0)
             {
-                if (DenominationKey.TryParse(item.Key, out var key) && key != null)
+                _inventory.LoadFromDictionary(state.Counts);
+            }
+            else
+            {
+                // MultiInventory から全ての通貨の金種をロード
+                foreach (var currencyEntry in _config.MultiInventory)
                 {
-                    _inventory.SetCount(key, item.Value.InitialCount);
+                    var currencyCode = currencyEntry.Key;
+                    foreach (var item in currencyEntry.Value.Denominations)
+                    {
+                        if (DenominationKey.TryParse(item.Key, currencyCode, out var key) && key != null)
+                        {
+                            _inventory.SetCount(key, item.Value.InitialCount);
+                        }
+                    }
                 }
             }
         }
 
-        _history = new TransactionHistory();
-        _manager = new CashChangerManager(_inventory, _history);
-        
-        // Create monitors for each denomination in inventory
-        var monitors = _inventory.AllCounts.Select(x => x.Key).Select(key => 
-            new CashStatusMonitor(_inventory, key, 
-                nearEmptyThreshold: config.Thresholds.NearEmpty, 
-                nearFullThreshold: config.Thresholds.NearFull, 
-                fullThreshold: config.Thresholds.Full)
-        ).ToList();
-        
-        _statusAggregator = new OverallStatusAggregator(monitors);
-        
-        _currencyCode = config.CurrencyCode ?? "JPY";
+        _history = history ?? new TransactionHistory();
+        _manager = manager ?? new CashChangerManager(_inventory, _history);
+        _depositController = depositController ?? new DepositController(_inventory, _manager);
 
-        // Subscribe to overall status changes for StatusUpdateEvent
-        _statusSubscription = _statusAggregator.OverallStatus
-            .Subscribe(status => 
+        // Status monitors / Aggregator
+        var monitors = _inventory.AllCounts
+            .Select(kv => (kv.Key, _config.GetDenominationSetting(kv.Key)))
+            .Select(x => new CashStatusMonitor(_inventory, x.Key, x.Item2.NearEmpty, x.Item2.NearFull, x.Item2.Full))
+            .ToList();
+        _statusAggregator = aggregator ?? new OverallStatusAggregator(monitors);
+
+        // Active currency initialization
+        _activeCurrencyCode = _config.MultiInventory.Keys.FirstOrDefault() ?? "JPY";
+
+        // Subscribe to status changes for StatusUpdateEvent
+        _statusSubscription = Disposable.Combine(
+            _statusAggregator.DeviceStatus.Subscribe(status => 
             {
-                _lastCashChangerStatus = status switch
+                var newDeviceStatus = status switch
                 {
                     CashStatus.Empty => Microsoft.PointOfService.CashChangerStatus.Empty,
                     CashStatus.NearEmpty => Microsoft.PointOfService.CashChangerStatus.NearEmpty,
                     _ => Microsoft.PointOfService.CashChangerStatus.OK
                 };
-                // StatusUpdateEvent is fired automatically by the base class when DeviceStatus changes.
-                // The DeviceStatus property getter already returns the mapped status.
-            });
+
+                if (newDeviceStatus != _lastCashChangerStatus)
+                {
+                    _lastCashChangerStatus = newDeviceStatus;
+                }
+            }),
+            _statusAggregator.FullStatus.Subscribe(status => 
+            {
+                var newFullStatus = status switch
+                {
+                    CashStatus.Full => CashChangerFullStatus.Full,
+                    CashStatus.NearFull => CashChangerFullStatus.NearFull,
+                    _ => CashChangerFullStatus.OK
+                };
+
+                if (newFullStatus != _lastFullStatus)
+                {
+                    _lastFullStatus = newFullStatus;
+                    NotifyEvent(new StatusUpdateEventArgs((int)newFullStatus));
+                }
+            }),
+            _hardwareStatusManager.IsJammed.Subscribe(jammed =>
+            {
+                if (jammed)
+                {
+                    _lastCashChangerStatus = Microsoft.PointOfService.CashChangerStatus.OK; // Property based status
+                    NotifyEvent(new StatusUpdateEventArgs(205)); // CHAN_STATUS_JAM = 205
+                }
+                else
+                {
+                    _lastCashChangerStatus = Microsoft.PointOfService.CashChangerStatus.OK;
+                    NotifyEvent(new StatusUpdateEventArgs(206)); // CHAN_STATUS_OK = 206
+                }
+            })
+        );
             
-        // Listen to inventory changes to track deposits if BeginDeposit was called
+        // Listen to inventory changes to track deposits
         _inventory.Changed.Subscribe(key => 
         {
-            if (_depositStatus == CashDepositStatus.None) return;
-            
-            // Assume any addition to inventory is a deposit during the session.
-            // This is a simple simulator logic.
-            var count = _inventory.GetCount(key);
-            
-            // We need to know if it was an 'Add' or 'Set'. 
-            // In a better design, Inventory.Changed would include the delta.
-            // For now, let's just use a simple heuristic: if it's during a deposit, we'll increment our tracker.
-            // (Note: This might be inaccurate if the UI subtracts for correction, but it's a start)
-            
-            _depositAmount += (int)key.Value; // Increment total amount by face value of 1 item
-            _depositCounts[key] = 
-                _depositCounts.TryGetValue(key, out int value)
-                ? ++value : 1;
+            _depositController.TrackDeposit(key);
 
-            if (DataEventEnabled)
+            if (_depositController.DepositStatus == CashDepositStatus.Count && !_depositController.IsPaused && DataEventEnabled)
             {
-                // Queue a DataEvent for the POS application.
-                // DataEventArgs(status=0) indicates successful data.
-                QueueEvent(new DataEventArgs(0));
+                NotifyEvent(new DataEventArgs(0));
             }
         });
     }
 
-    private readonly string _currencyCode;
+    private string _activeCurrencyCode;
 
     public override string CheckHealth(HealthCheckLevel level) => "OK";
     public override string CheckHealthText => "OK";
 
+    // ========== Deposit Methods (UPOS v1.5+) ==========
+
     public override void BeginDeposit() 
     {
-        _depositAmount = 0;
-        _depositCounts.Clear();
-        _depositStatus = CashDepositStatus.Count;
+        ThrowIfBusy();
+        _depositController.BeginDeposit();
     }
 
-    public override void EndDeposit(CashDepositAction action) 
-    {
-        if (action == CashDepositAction.Change)
-        {
-            DispenseChange(_depositAmount);
-        }
-        _depositStatus = CashDepositStatus.None;
-    }
+    public override void EndDeposit(CashDepositAction action) => _depositController.EndDeposit(action);
 
     public override void FixDeposit() 
     {
-        // For simulation, we assume counting is finished.
-        // If DataEventEnabled is true, we should fire DataEvent here or progressively.
-        if (DataEventEnabled)
+        _depositController.FixDeposit();
+
+        if (DataEventEnabled && CapDepositDataEvent)
         {
-            // Fire DataEvent(amount, 0)
-            // In CashChangerBasic, we use specialized methods or fire manually.
-            // For now, let's assume we fire it.
+            QueueEvent(new DataEventArgs(0));
         }
     }
 
-    public override void PauseDeposit(CashDepositPause control) 
+    public override void PauseDeposit(CashDepositPause control) => _depositController.PauseDeposit(control);
+
+    // ========== Dispense Methods ==========
+
+    private void ThrowIfDepositInProgress()
     {
-        if (control == CashDepositPause.Pause) _depositStatus = CashDepositStatus.None; // Using None or something else for paused if no Paused state
-        else _depositStatus = CashDepositStatus.Count;
-    }
-    
-    public override CashCounts ReadCashCounts() 
-    {
-        var list = new List<CashCount>();
-        foreach (var kv in _inventory.AllCounts)
+        if (_depositController.IsDepositInProgress)
         {
-            list.Add(new CashCount(kv.Key.Type == CashType.Bill ? CashCountType.Bill : CashCountType.Coin, (int)kv.Key.Value, kv.Value));
+            throw new PosControlException(
+                "Cash cannot be dispensed because cash acceptance is in progress.",
+                ErrorCode.Illegal);
         }
-        return new CashCounts([.. list],
-                              false);
     }
 
-    public override void DispenseChange(int amount) => _manager.Dispense((decimal)amount);
+    private void ThrowIfBusy()
+    {
+        if (_asyncProcessing)
+        {
+            throw new PosControlException("Device is busy with an asynchronous operation.", ErrorCode.Busy);
+        }
+    }
+
+    private void StartAsyncDispense(Action action)
+    {
+        _asyncProcessing = true;
+        _asyncResultCode = 0;
+        _asyncResultCodeExtended = 0;
+
+        Task.Run(async () => 
+        {
+            try
+            {
+                // Simulation: Delay
+                if (_config.Simulation.DelayEnabled)
+                {
+                    var delay = Random.Shared.Next(_config.Simulation.MinDelayMs, _config.Simulation.MaxDelayMs);
+                    await Task.Delay(delay);
+                }
+
+                // Simulation: Random Error
+                if (_config.Simulation.RandomErrorsEnabled)
+                {
+                    var roll = Random.Shared.Next(0, 100);
+                    if (roll < _config.Simulation.ErrorRate)
+                    {
+                        throw new PosControlException("Simulated Random Failure", ErrorCode.Failure);
+                    }
+                }
+
+                action();
+                _logger.ZLogInformation($"Async operation completed successfully.");
+                _asyncResultCode = (int)ErrorCode.Success;
+            }
+            catch (PosControlException ex)
+            {
+                _logger.ZLogError(ex, $"Async operation failed: {ex.ErrorCode} ({ex.ErrorCodeExtended})");
+                _asyncResultCode = (int)ex.ErrorCode;
+                _asyncResultCodeExtended = ex.ErrorCodeExtended;
+            }
+            catch (Exception ex)
+            {
+                _logger.ZLogError(ex, $"Async operation encountered an unexpected error.");
+                _asyncResultCode = (int)ErrorCode.Failure;
+            }
+            finally
+            {
+                _asyncProcessing = false;
+                NotifyEvent(new StatusUpdateEventArgs(201)); // CHAN_STATUS_ASYNC = 201
+            }
+        });
+    }
+
+    public override void DispenseChange(int amount)
+    {
+        if (amount <= 0) throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
+
+        ThrowIfDepositInProgress();
+        ThrowIfBusy();
+        if (_hardwareStatusManager.IsJammed.Value) throw new PosControlException("Device is jammed", ErrorCode.Failure);
+
+        if (AsyncMode)
+        {
+            StartAsyncDispense(() => _manager.Dispense((decimal)amount));
+        }
+        else
+        {
+            try
+            {
+                _manager.Dispense((decimal)amount);
+            }
+            catch (InsufficientCashException ex)
+            {
+                throw new PosControlException(ex.Message, ErrorCode.Extended, 201); // ECHAN_OVERDISPENSE = 201
+            }
+        }
+    }
 
     public override void DispenseCash(CashCount[] cashCounts) 
     {
-        foreach (var cc in cashCounts)
+        ThrowIfDepositInProgress();
+        ThrowIfBusy();
+        if (_hardwareStatusManager.IsJammed.Value) throw new PosControlException("Device is jammed", ErrorCode.Failure);
+
+        void DoDispense()
         {
-            // Need to determine if CC is bill or coin. This is tricky with UPOS CashCount.
-            // Usually, the SO knows which is which from the CurrencyCashList.
-            // For now, let's try to find a matching Bill first, then Coin.
-            // In POS for .NET, CashCount property for amount is 'NominalValue'.
-            var billKey = new DenominationKey(cc.NominalValue, CashType.Bill);
-            var coinKey = new DenominationKey(cc.NominalValue, CashType.Coin);
-            
-            if (_inventory.GetCount(billKey) >= cc.Count)
-                _inventory.Add(billKey, -cc.Count);
-            else if (_inventory.GetCount(coinKey) >= cc.Count)
-                _inventory.Add(coinKey, -cc.Count);
+            foreach (var cc in cashCounts)
+            {
+                var cashType = (cc.Type == Microsoft.PointOfService.CashCountType.Bill) 
+                    ? MoneyKind4Opos.Currencies.Interfaces.CashType.Bill 
+                    : MoneyKind4Opos.Currencies.Interfaces.CashType.Coin;
+
+                var factor = GetCurrencyFactor(_activeCurrencyCode);
+                var val = cc.NominalValue / factor;
+                var key = new DenominationKey(val, cashType, _activeCurrencyCode);
+                
+                if (_inventory.GetCount(key) < cc.Count)
+                {
+                    throw new PosControlException("Insufficient cash for denomination", ErrorCode.Extended, 201);
+                }
+                _inventory.Add(key, -cc.Count);
+            }
+        }
+
+        if (AsyncMode)
+        {
+            StartAsyncDispense(DoDispense);
+        }
+        else
+        {
+            DoDispense();
         }
     }
 
+    // ========== ReadCashCounts ==========
+    
+    public override CashCounts ReadCashCounts() 
+    {
+        ThrowIfBusy();
+        var sorted = _inventory.AllCounts
+            .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
+            .OrderBy(kv => kv.Key.Type) // Coin(0) before Bill(1)
+            .ThenBy(kv => kv.Key.Value);
+
+        var list = sorted.Select(kv => new CashCount(
+            (kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill) ? CashCountType.Bill : CashCountType.Coin,
+            GetNominalValue(kv.Key),
+            kv.Value)).ToList();
+
+        return new CashCounts([.. list], false);
+    }
+
+    // ========== DirectIO ==========
+
     public override DirectIOData DirectIO(int command, int data, object obj) => new(data, obj);
 
+    // ========== Status Properties ==========
+
     public override Microsoft.PointOfService.CashChangerStatus DeviceStatus => _lastCashChangerStatus;
+    public override CashChangerFullStatus FullStatus => _lastFullStatus;
 
-    public override CashChangerFullStatus FullStatus 
-    {
-        get => _statusAggregator.OverallStatus.CurrentValue switch
-        {
-            CashStatus.Full => CashChangerFullStatus.Full,
-            CashStatus.NearFull => CashChangerFullStatus.NearFull,
-            _ => CashChangerFullStatus.OK
-        };
-    }
-    
+    // ========== Async Properties ==========
+
     public override bool AsyncMode { get; set; }
-    public override int AsyncResultCode => 0;
-    public override int AsyncResultCodeExtended => 0;
+    public override int AsyncResultCode => _asyncResultCode;
+    public override int AsyncResultCodeExtended => _asyncResultCodeExtended;
 
-    public override string CurrencyCode { get => _currencyCode; set { } }
-    public override string[] CurrencyCodeList => [.. new[] { _currencyCode }];
-    public override string[] DepositCodeList => [.. new[] { _currencyCode }];
-    
-    public override CashUnits CurrencyCashList => new();
-    public override CashUnits DepositCashList => new();
-    public override CashUnits ExitCashList => new();
-    
-    public override int DepositAmount => _depositAmount;
-    public override CashCount[] DepositCounts 
-    {
-        get => [.. _depositCounts.Select(kv => new CashCount(kv.Key.Type == CashType.Bill ? CashCountType.Bill : CashCountType.Coin, (int)kv.Key.Value, kv.Value))];
+    // ========== Currency Properties ==========
+
+    public override string CurrencyCode 
+    { 
+        get => _activeCurrencyCode; 
+        set 
+        {
+            if (CurrencyCodeList.Contains(value))
+            {
+                _activeCurrencyCode = value;
+            }
+            else
+            {
+                throw new PosControlException($"Unsupported currency: {value}", ErrorCode.Illegal);
+            }
+        }
     }
-    public override CashDepositStatus DepositStatus => _depositStatus;
+    public override string[] CurrencyCodeList => [.. _config.MultiInventory.Keys.OrderBy(c => c)];
+    public override string[] DepositCodeList => CurrencyCodeList;
+
+    public override CashUnits CurrencyCashList => BuildCashUnits();
+    public override CashUnits DepositCashList => CapDeposit ? BuildCashUnits() : new CashUnits();
+    public override CashUnits ExitCashList => BuildCashUnits();
+
+    // ========== Deposit Properties ==========
+
+    public override int DepositAmount => (int)Math.Round(_depositController.DepositAmount * GetCurrencyFactor());
+    public override CashCount[] DepositCounts 
+    { 
+        get => [.. _depositController.DepositCounts
+            .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
+            .Select(kv => new CashCount(
+                kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? CashCountType.Bill : CashCountType.Coin,
+                GetNominalValue(kv.Key),
+                kv.Value))];
+    }
+    public override CashDepositStatus DepositStatus => _depositController.DepositStatus;
     
+    // ========== Exit Properties ==========
+
     public override int CurrentExit { get => 1; set { } }
     public override int DeviceExits => 1;
 
+    // ========== Capability Properties ==========
+
     public override bool CapDeposit => true;
     public override bool CapDepositDataEvent => true;
-    public override bool CapPauseDeposit => false;
-    public override bool CapDiscrepancy => false;
+    public override bool CapPauseDeposit => true;
     public override bool CapRepayDeposit => false;
+
+    public override bool CapDiscrepancy => false;
     public override bool CapFullSensor => true;
     public override bool CapNearFullSensor => true;
     public override bool CapNearEmptySensor => true;
     public override bool CapEmptySensor => true;
+
+    // ========== Private Helpers ==========
+
+    private CashUnits BuildCashUnits()
+    {
+        var activeUnits = _inventory.AllCounts
+            .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
+            .OrderBy(kv => kv.Key.Value)
+            .ToList();
+
+        var coins = activeUnits
+            .Where(kv => kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Coin)
+            .Select(kv => GetNominalValue(kv.Key))
+            .ToArray();
+
+        var bills = activeUnits
+            .Where(kv => kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill)
+            .Select(kv => GetNominalValue(kv.Key))
+            .ToArray();
+
+        return new CashUnits(coins, bills);
+    }
+
+    private int GetNominalValue(DenominationKey key)
+    {
+        return (int)Math.Round(key.Value * GetCurrencyFactor(key.CurrencyCode));
+    }
+
+    private decimal GetCurrencyFactor(string? currencyCode = null)
+    {
+        var code = currencyCode ?? _activeCurrencyCode;
+        return code switch
+        {
+            "USD" or "EUR" or "GBP" or "CAD" or "AUD" => 100m,
+            _ => 1m
+        };
+    }
 }

@@ -3,16 +3,25 @@ using R3;
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>金種を一意に識別するための複合キー（額面と硬貨/紙幣の種別）。</summary>
-public record DenominationKey(decimal Value, CashType Type)
+/// <summary>金種を一意に識別するための複合キー（通貨コード、額面、硬貨/紙幣の種別）。</summary>
+public record DenominationKey(decimal Value, CashType Type, string CurrencyCode = "JPY")
 {
     /// <summary>
     /// 文字列形式（例: "B10000", "C500"）から DenominationKey を解析する。
+    /// デフォルトの通貨は JPY となる。
     /// </summary>
     /// <param name="s">解析対象の文字列。先頭が 'B' (Bill) または 'C' (Coin) である必要がある。</param>
     /// <param name="result">解析結果のキー。</param>
     /// <returns>解析に成功した場合は true、それ以外は false。</returns>
     public static bool TryParse(string s, out DenominationKey? result)
+    {
+        return TryParse(s, "JPY", out result);
+    }
+
+    /// <summary>
+    /// 通貨コードと文字列形式から DenominationKey を解析する。
+    /// </summary>
+    public static bool TryParse(string s, string currencyCode, out DenominationKey? result)
     {
         result = null;
         if (string.IsNullOrEmpty(s) || s.Length < 2) return false;
@@ -28,7 +37,7 @@ public record DenominationKey(decimal Value, CashType Type)
 
         if (decimal.TryParse(s[1..], out var value))
         {
-            result = new DenominationKey(value, type);
+            result = new DenominationKey(value, type, currencyCode);
             return true;
         }
 
@@ -99,11 +108,12 @@ public class Inventory : IReadOnlyInventory
 
     /// <summary>
     /// 現在の在庫を文字列キーのディクショナリに変換する（保存用）。
+    /// フォーマットは "CurrencyCode:TypeAmount" (例: "JPY:B1000") となる。
     /// </summary>
     public Dictionary<string, int> ToDictionary()
     {
         return _counts.ToDictionary(
-            kv => (kv.Key.Type == CashType.Bill ? "B" : "C") + kv.Key.Value.ToString(),
+            kv => $"{kv.Key.CurrencyCode}:{(kv.Key.Type == CashType.Bill ? "B" : "C")}{kv.Key.Value}",
             kv => kv.Value
         );
     }
@@ -115,9 +125,24 @@ public class Inventory : IReadOnlyInventory
     {
         foreach (var kv in data)
         {
-            if (DenominationKey.TryParse(kv.Key, out var key) && key != null)
+            // "JPY:B1000" 形式を想定
+            var parts = kv.Key.Split(':');
+            if (parts.Length == 2)
             {
-                SetCount(key, kv.Value);
+                var currencyCode = parts[0];
+                var denomStr = parts[1];
+                if (DenominationKey.TryParse(denomStr, currencyCode, out var key) && key != null)
+                {
+                    SetCount(key, kv.Value);
+                }
+            }
+            else
+            {
+                // 旧形式 (B1000) との互換性のため、デフォルト通貨 (JPY) で試行
+                if (DenominationKey.TryParse(kv.Key, "JPY", out var key) && key != null)
+                {
+                    SetCount(key, kv.Value);
+                }
             }
         }
     }

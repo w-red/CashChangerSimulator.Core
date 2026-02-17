@@ -38,4 +38,39 @@ public class TransactionHistoryTests
         history.Entries.Count.ShouldBe(1);
         history.Entries[0].Type.ShouldBe(TransactionType.Deposit);
     }
+
+    /// <summary>1000件を超える履歴が追加された際、古い順に破棄されることを検証する。</summary>
+    [Fact]
+    public void TransactionHistoryShouldEnforceLimit()
+    {
+        var history = new TransactionHistory();
+        for (int i = 0; i < 1100; i++)
+        {
+            history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Adjustment, i, new Dictionary<DenominationKey, int>()));
+        }
+
+        history.Entries.Count.ShouldBe(1000);
+        history.Entries[0].Amount.ShouldBe(1099); // 最新
+        history.Entries[999].Amount.ShouldBe(100); // 100番目が最後（100-1099の1000件）
+    }
+
+    /// <summary>HistoryState DTO との相互変換が正しく行われることを検証する。</summary>
+    [Fact]
+    public void TransactionHistoryShouldConvertStateCorrectly()
+    {
+        var history = new TransactionHistory();
+        var key = new DenominationKey(1000, CashType.Bill, "JPY");
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Refill, 5000m, new Dictionary<DenominationKey, int> { { key, 5 } }));
+
+        var state = history.ToState();
+        state.Entries.Count.ShouldBe(1);
+        state.Entries[0].Counts.ContainsKey("JPY:B1000").ShouldBeTrue();
+
+        var history2 = new TransactionHistory();
+        history2.FromState(state);
+        history2.Entries.Count.ShouldBe(1);
+        history2.Entries[0].Amount.ShouldBe(5000m);
+        history2.Entries[0].Type.ShouldBe(TransactionType.Refill);
+        history2.Entries[0].Counts[key].ShouldBe(5);
+    }
 }

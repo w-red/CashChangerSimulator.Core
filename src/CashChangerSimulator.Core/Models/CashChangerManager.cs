@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Logging;
+using ZLogger;
+
 namespace CashChangerSimulator.Core.Models;
 
 /// <summary>
@@ -10,6 +13,9 @@ namespace CashChangerSimulator.Core.Models;
 /// <param name="history">履歴管理オブジェクト。</param>
 public class CashChangerManager(Inventory inventory, TransactionHistory history)
 {
+    private readonly Inventory _inventory = inventory;
+    private readonly TransactionHistory _history = history;
+    private readonly ILogger<CashChangerManager> _logger = LogProvider.CreateLogger<CashChangerManager>();
     private readonly ChangeCalculator _calculator = new();
 
     /// <summary>入金を処理する。</summary>
@@ -19,11 +25,14 @@ public class CashChangerManager(Inventory inventory, TransactionHistory history)
         decimal total = 0;
         foreach (var (key, count) in counts)
         {
-            inventory.Add(key, count);
+            _inventory.Add(key, count);
             total += key.Value * count;
         }
 
-        history.Add(new TransactionEntry(
+        var currencyCode = counts.Keys.FirstOrDefault()?.CurrencyCode ?? "---";
+        _logger.ZLogInformation($"Deposit: {total} {currencyCode}");
+
+        _history.Add(new TransactionEntry(
             DateTimeOffset.Now,
             TransactionType.Deposit,
             total,
@@ -38,11 +47,14 @@ public class CashChangerManager(Inventory inventory, TransactionHistory history)
         decimal total = 0;
         foreach (var (key, count) in counts)
         {
-            inventory.Add(key, -count);
+            _inventory.Add(key, -count);
             total += key.Value * count;
         }
 
-        history.Add(new TransactionEntry(
+        var currencyCode = counts.Keys.FirstOrDefault()?.CurrencyCode ?? "---";
+        _logger.ZLogInformation($"Dispense: {total} {currencyCode}");
+
+        _history.Add(new TransactionEntry(
             DateTimeOffset.Now,
             TransactionType.Dispense,
             total,
@@ -54,7 +66,7 @@ public class CashChangerManager(Inventory inventory, TransactionHistory history)
     /// <param name="amount">出金する合計金額。</param>
     public virtual void Dispense(decimal amount)
     {
-        var counts = _calculator.Calculate(inventory, amount);
+        var counts = _calculator.Calculate(_inventory, amount);
         Dispense(counts);
     }
 }

@@ -31,31 +31,43 @@ public class OverallStatusAggregatorTests
 
         var changerStatus = new OverallStatusAggregator(monitors);
         
-        CashStatus currentOverall = CashStatus.Unknown;
-        using var _ = changerStatus.OverallStatus.Subscribe(s => currentOverall = s);
+        CashStatus deviceStatus = CashStatus.Unknown;
+        CashStatus fullStatus = CashStatus.Unknown;
+        using var _d = changerStatus.DeviceStatus.Subscribe(s => deviceStatus = s);
+        using var _f = changerStatus.FullStatus.Subscribe(s => fullStatus = s);
 
-        // Assert: 初期状態 (両方 0 枚) -> Empty
-        currentOverall.ShouldBe(CashStatus.Empty);
+        // Assert: 初期状態 (両方 0 枚) -> DeviceStatus=Empty, FullStatus=Normal
+        deviceStatus.ShouldBe(CashStatus.Empty);
+        fullStatus.ShouldBe(CashStatus.Normal);
 
         // Act: 1000円を Normal にする (1000: 5枚, 5000: 0枚)
         inventory.SetCount(denominations[0], 5);
-        // Assert: 5000円がまだ Empty なので、全体としては Empty
-        currentOverall.ShouldBe(CashStatus.Empty);
+        // Assert: 5000円がまだ Empty なので、DeviceStatus=Empty
+        deviceStatus.ShouldBe(CashStatus.Empty);
 
         // Act: 5000円も Normal にする (1000: 5枚, 5000: 5枚)
         inventory.SetCount(denominations[1], 5);
-        // Assert: 全て正常なので Normal
-        currentOverall.ShouldBe(CashStatus.Normal);
+        // Assert: 両方正常
+        deviceStatus.ShouldBe(CashStatus.Normal);
+        fullStatus.ShouldBe(CashStatus.Normal);
 
         // Act: 1000円を Full にする (1000: 10枚, 5000: 5枚)
         inventory.SetCount(denominations[0], 10);
-        // Assert: 一方の金種が Full なので全体も Full
-        currentOverall.ShouldBe(CashStatus.Full);
+        // Assert: FullStatus=Full
+        fullStatus.ShouldBe(CashStatus.Full);
+        deviceStatus.ShouldBe(CashStatus.Normal);
         
+        // Act: 1000円を Full のまま、5000円を Empty にする (1000: 10枚, 5000: 0枚)
+        inventory.SetCount(denominations[1], 0);
+        // Assert: 両方の異常が独立して報告される
+        fullStatus.ShouldBe(CashStatus.Full);
+        deviceStatus.ShouldBe(CashStatus.Empty);
+
         // Act: 1000円を Normal に戻し、5000円を NearEmpty にする (1000: 5枚, 5000: 1枚)
         inventory.SetCount(denominations[0], 5);
         inventory.SetCount(denominations[1], 1);
-        // Assert: 5000円が NearEmpty なので全体も NearEmpty
-        currentOverall.ShouldBe(CashStatus.NearEmpty);
+        // Assert: NearEmpty
+        deviceStatus.ShouldBe(CashStatus.NearEmpty);
+        fullStatus.ShouldBe(CashStatus.Normal);
     }
 }

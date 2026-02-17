@@ -8,39 +8,46 @@ namespace CashChangerSimulator.Core.Models;
 public class OverallStatusAggregator : IDisposable
 {
     private readonly IEnumerable<CashStatusMonitor> _monitors;
-    private readonly ReadOnlyReactiveProperty<CashStatus> _overallStatus;
+    private readonly ReadOnlyReactiveProperty<CashStatus> _deviceStatus;
+    private readonly ReadOnlyReactiveProperty<CashStatus> _fullStatus;
 
-    /// <summary>
-    /// 全体の集約ステータス。
-    /// </summary>
-    public ReadOnlyReactiveProperty<CashStatus> OverallStatus => _overallStatus;
+    /// <summary>空・ニアエンプティに関する集約ステータス。</summary>
+    public ReadOnlyReactiveProperty<CashStatus> DeviceStatus => _deviceStatus;
 
-    /// <summary>
-    /// コンストラクタ。
-    /// </summary>
-    /// <param name="monitors">監視対象の各金種モニター。</param>
+    /// <summary>満杯・ニアフルに関する集約ステータス。</summary>
+    public ReadOnlyReactiveProperty<CashStatus> FullStatus => _fullStatus;
+
     public OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
     {
         _monitors = monitors;
+        var statuses = Observable.CombineLatest(_monitors.Select(m => m.Status.AsObservable()));
 
-        // 全てのモニターの状態を監視し、最も深刻な状態を全体状態とする
-        _overallStatus = Observable.CombineLatest(_monitors.Select(m => m.Status.AsObservable()))
-            .Select(statuses => Aggregate(statuses))
+        _deviceStatus = statuses
+            .Select(s => AggregateDevice(s))
+            .ToReadOnlyReactiveProperty(CashStatus.Unknown);
+
+        _fullStatus = statuses
+            .Select(s => AggregateFull(s))
             .ToReadOnlyReactiveProperty(CashStatus.Unknown);
     }
 
-    private static CashStatus Aggregate(IList<CashStatus> statuses)
+    private static CashStatus AggregateDevice(IList<CashStatus> statuses)
+    {
+        if (statuses.Any(s => s == CashStatus.Empty)) return CashStatus.Empty;
+        if (statuses.Any(s => s == CashStatus.NearEmpty)) return CashStatus.NearEmpty;
+        return CashStatus.Normal;
+    }
+
+    private static CashStatus AggregateFull(IList<CashStatus> statuses)
     {
         if (statuses.Any(s => s == CashStatus.Full)) return CashStatus.Full;
-        if (statuses.Any(s => s == CashStatus.Empty)) return CashStatus.Empty;
         if (statuses.Any(s => s == CashStatus.NearFull)) return CashStatus.NearFull;
-        if (statuses.Any(s => s == CashStatus.NearEmpty)) return CashStatus.NearEmpty;
-        
         return CashStatus.Normal;
     }
 
     public void Dispose()
     {
-        _overallStatus.Dispose();
+        _deviceStatus.Dispose();
+        _fullStatus.Dispose();
     }
 }

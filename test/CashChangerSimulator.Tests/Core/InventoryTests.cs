@@ -93,8 +93,8 @@ public class InventoryTests
         newInventory.LoadFromDictionary(dict);
 
         // Assert
-        dict.ShouldContainKeyAndValue("B1000", 10);
-        dict.ShouldContainKeyAndValue("C100", 50);
+        dict.ShouldContainKeyAndValue("JPY:B1000", 10);
+        dict.ShouldContainKeyAndValue("JPY:C100", 50);
         newInventory.GetCount(b1000).ShouldBe(10);
         newInventory.GetCount(c100).ShouldBe(50);
     }
