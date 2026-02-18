@@ -26,7 +26,7 @@ public class SimulatorCashChanger : CashChangerBasic
     private readonly ILogger<SimulatorCashChanger> _logger;
 
     // Status tracking for StatusUpdateEvent transitions
-    private Microsoft.PointOfService.CashChangerStatus _lastCashChangerStatus = Microsoft.PointOfService.CashChangerStatus.OK;
+    private Microsoft.PointOfService.CashChangerStatus _lastCashChangerStatus = CashChangerStatus.OK;
     private CashChangerFullStatus _lastFullStatus = CashChangerFullStatus.OK;
 
     // Async processing state
@@ -108,9 +108,9 @@ public class SimulatorCashChanger : CashChangerBasic
             {
                 var newDeviceStatus = status switch
                 {
-                    CashStatus.Empty => Microsoft.PointOfService.CashChangerStatus.Empty,
-                    CashStatus.NearEmpty => Microsoft.PointOfService.CashChangerStatus.NearEmpty,
-                    _ => Microsoft.PointOfService.CashChangerStatus.OK
+                    CashStatus.Empty => CashChangerStatus.Empty,
+                    CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
+                    _ => CashChangerStatus.OK
                 };
 
                 if (newDeviceStatus != _lastCashChangerStatus)
@@ -137,12 +137,12 @@ public class SimulatorCashChanger : CashChangerBasic
             {
                 if (jammed)
                 {
-                    _lastCashChangerStatus = Microsoft.PointOfService.CashChangerStatus.OK; // Property based status
+                    _lastCashChangerStatus = CashChangerStatus.OK; // Property based status
                     NotifyEvent(new StatusUpdateEventArgs(205)); // CHAN_STATUS_JAM = 205
                 }
                 else
                 {
-                    _lastCashChangerStatus = Microsoft.PointOfService.CashChangerStatus.OK;
+                    _lastCashChangerStatus = CashChangerStatus.OK;
                     NotifyEvent(new StatusUpdateEventArgs(206)); // CHAN_STATUS_OK = 206
                 }
             }),
@@ -298,9 +298,9 @@ public class SimulatorCashChanger : CashChangerBasic
         {
             foreach (var cc in cashCounts)
             {
-                var cashType = (cc.Type == Microsoft.PointOfService.CashCountType.Bill) 
-                    ? MoneyKind4Opos.Currencies.Interfaces.CashType.Bill 
-                    : MoneyKind4Opos.Currencies.Interfaces.CashType.Coin;
+                var cashType = (cc.Type == CashCountType.Bill) 
+                    ? CashType.Bill 
+                    : CashType.Coin;
 
                 var factor = GetCurrencyFactor(_activeCurrencyCode);
                 var val = cc.NominalValue / factor;
@@ -335,7 +335,7 @@ public class SimulatorCashChanger : CashChangerBasic
             .ThenBy(kv => kv.Key.Value);
 
         var list = sorted.Select(kv => new CashCount(
-            (kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill) ? CashCountType.Bill : CashCountType.Coin,
+            (kv.Key.Type == CashType.Bill) ? CashCountType.Bill : CashCountType.Coin,
             GetNominalValue(kv.Key),
             kv.Value)).ToList();
 
@@ -389,7 +389,7 @@ public class SimulatorCashChanger : CashChangerBasic
         get => [.. _depositController.DepositCounts
             .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
             .Select(kv => new CashCount(
-                kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? CashCountType.Bill : CashCountType.Coin,
+                kv.Key.Type == CashType.Bill ? CashCountType.Bill : CashCountType.Coin,
                 GetNominalValue(kv.Key),
                 kv.Value))];
     }
@@ -423,12 +423,12 @@ public class SimulatorCashChanger : CashChangerBasic
             .ToList();
 
         var coins = activeUnits
-            .Where(kv => kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Coin)
+            .Where(kv => kv.Key.Type == CashType.Coin)
             .Select(kv => GetNominalValue(kv.Key))
             .ToArray();
 
         var bills = activeUnits
-            .Where(kv => kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill)
+            .Where(kv => kv.Key.Type == CashType.Bill)
             .Select(kv => GetNominalValue(kv.Key))
             .ToArray();
 
