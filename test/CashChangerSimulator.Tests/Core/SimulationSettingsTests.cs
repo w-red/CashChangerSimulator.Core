@@ -1,14 +1,11 @@
-namespace CashChangerSimulator.Tests.Core;
-
-using System;
-using System.Collections.Generic;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.UI.Wpf.ViewModels;
 using CashChangerSimulator.UI.Wpf;
 using CashChangerSimulator.UI.Wpf.Services;
-using Shouldly;
-using Xunit;
+using CashChangerSimulator.UI.Wpf.ViewModels;
 using CsToml;
+using Shouldly;
+
+namespace CashChangerSimulator.Tests.Core;
 
 public class SimulationSettingsTests
 {
@@ -92,14 +89,14 @@ public class SimulationSettingsTests
         configProvider.Config.Simulation.MinDelayMs.ShouldBe(500);
     }
 
-    private SettingsViewModel CreateViewModel(ConfigurationProvider? configProvider = null)
+    private static SettingsViewModel CreateViewModel(ConfigurationProvider? configProvider = null)
     {
         var cp = configProvider ?? new ConfigurationProvider();
         
         // Ensure JPY inventory exists for test
-        if (!cp.Config.MultiInventory.ContainsKey("JPY"))
+        if (!cp.Config.Inventory.ContainsKey("JPY"))
         {
-            cp.Config.MultiInventory["JPY"] = new InventorySettings();
+            cp.Config.Inventory["JPY"] = new InventorySettings();
         }
 
         // Ensure Simulation settings exist
@@ -108,7 +105,7 @@ public class SimulationSettingsTests
             cp.Config.Simulation = new SimulationSettings();
         }
 
-        var meta = new CashChangerSimulator.UI.Wpf.Services.CurrencyMetadataProvider(cp);
+        var meta = new CurrencyMetadataProvider(cp);
         var inventory = new CashChangerSimulator.Core.Models.Inventory();
         var mp = new MonitorsProvider(inventory, cp, meta);
         return new SettingsViewModel(cp, mp, meta);

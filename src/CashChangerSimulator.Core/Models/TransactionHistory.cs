@@ -61,6 +61,8 @@ public class TransactionHistory : IDisposable
     public void FromState(HistoryState state)
     {
         _entries.Clear();
+        if (state.Entries == null) return;
+        
         foreach (var s in state.Entries.Take(MaxEntries))
         {
             var counts = new Dictionary<DenominationKey, int>();

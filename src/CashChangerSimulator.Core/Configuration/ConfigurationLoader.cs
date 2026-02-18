@@ -30,6 +30,24 @@ public static class ConfigurationLoader
         try
         {
             var config = CsTomlFileSerializer.Deserialize<SimulatorConfiguration>(filePath);
+            
+            // 後方互換性：[Inventory.Denominations] という旧形式を [Inventory.JPY.Denominations] などへ移行
+            if (config.Inventory.TryGetValue("Denominations", out var legacySettings))
+            {
+                var targetCurrency = string.IsNullOrEmpty(config.CurrencyCode) ? "JPY" : config.CurrencyCode;
+                
+                // 現在の通貨コードの在庫設定が（デフォルトなどで）存在しないか、空の場合のみ上書き移行
+                if (!config.Inventory.ContainsKey(targetCurrency) || config.Inventory[targetCurrency].Denominations.Count == 0)
+                {
+                    config.Inventory[targetCurrency] = legacySettings;
+                }
+                
+                config.Inventory.Remove("Denominations");
+                
+                // 移行が発生したため、新形式で上書き保存
+                Save(config, filePath);
+            }
+
             config.Simulation ??= new SimulationSettings();
             config.Logging ??= new LoggingSettings();
             return config;
@@ -57,7 +75,9 @@ public static class ConfigurationLoader
 
         try
         {
-            return CsTomlFileSerializer.Deserialize<InventoryState>(InventoryStatePath);
+            var state = CsTomlFileSerializer.Deserialize<InventoryState>(InventoryStatePath);
+            state.EnsureInitialized();
+            return state;
         }
         catch (Exception)
         {
@@ -86,7 +106,9 @@ public static class ConfigurationLoader
         try
         {
             var bin = File.ReadAllBytes(HistoryStatePath);
-            return MemoryPack.MemoryPackSerializer.Deserialize<HistoryState>(bin) ?? CreateInitialHistoryState();
+            var state = MemoryPack.MemoryPackSerializer.Deserialize<HistoryState>(bin) ?? CreateInitialHistoryState();
+            state.Entries ??= [];
+            return state;
         }
         catch (Exception)
         {

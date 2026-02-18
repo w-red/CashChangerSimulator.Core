@@ -1,5 +1,6 @@
 using Microsoft.PointOfService;
 using CashChangerSimulator.Core.Models;
+using R3;
 
 namespace CashChangerSimulator.Device;
 
@@ -7,10 +8,15 @@ namespace CashChangerSimulator.Device;
 /// UPOS v1.5+ の Deposit シーケンスを管理するコントローラー。
 /// beginDeposit → fixDeposit → endDeposit の状態遷移とバリデーションを担う。
 /// </summary>
-public class DepositController
+public class DepositController : IDisposable
 {
     private readonly Inventory _inventory;
     private readonly CashChangerManager _manager;
+    private readonly CompositeDisposable _disposables = [];
+    private readonly Subject<Unit> _changed = new();
+
+    /// <summary>状態が変更されたときに通知されるストリーム。</summary>
+    public Observable<Unit> Changed => _changed;
     
     private decimal _depositAmount;
     private readonly Dictionary<DenominationKey, int> _depositCounts = [];
@@ -42,6 +48,9 @@ public class DepositController
     /// <summary>一時停止中かどうか。</summary>
     public bool IsPaused => _depositPaused;
 
+    /// <summary>入金が確定（固定）されたかどうか。</summary>
+    public bool IsFixed => _depositFixed;
+
     // ========== Methods ==========
 
     /// <summary>
@@ -56,6 +65,7 @@ public class DepositController
         _depositPaused = false;
         _depositFixed = false;
         _depositStatus = CashDepositStatus.Count;
+        _changed.OnNext(Unit.Default);
     }
 
     /// <summary>
@@ -71,6 +81,7 @@ public class DepositController
                 ErrorCode.Illegal);
         }
         _depositFixed = true;
+        _changed.OnNext(Unit.Default);
     }
 
     /// <summary>
@@ -110,6 +121,7 @@ public class DepositController
         }
         _depositPaused = false;
         _depositFixed = false;
+        _changed.OnNext(Unit.Default);
     }
 
     /// <summary>
@@ -133,19 +145,40 @@ public class DepositController
             if (!_depositPaused) throw new PosControlException("Not paused.", ErrorCode.Illegal);
             _depositPaused = false;
         }
+        _changed.OnNext(Unit.Default);
     }
 
     /// <summary>
     /// 入金中に金種が追加されたときに呼ばれるトラッキングメソッド。
     /// </summary>
-    public void TrackDeposit(DenominationKey key)
+    public void TrackDeposit(DenominationKey key) 
+        => TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, 1 } });
+
+    /// <summary>
+    /// 入金中に複数の金種を一括で追加するトラッキングメソッド。
+    /// </summary>
+    public void TrackBulkDeposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         if (_depositStatus != CashDepositStatus.Count) return;
         if (_depositPaused) return;
 
-        _depositAmount += key.Value;
-        _depositCounts[key] =
-            _depositCounts.TryGetValue(key, out int value)
-            ? ++value : 1;
+        foreach (var (key, count) in counts)
+        {
+            if (count <= 0) continue;
+            _depositAmount += key.Value * count;
+            _depositCounts[key] =
+                _depositCounts.TryGetValue(key, out int value)
+                ? value + count : count;
+            
+            // Fix: Update physical inventory immediately upon insertion
+            _inventory.Add(key, count);
+        }
+        _changed.OnNext(Unit.Default);
+    }
+
+    public void Dispose()
+    {
+        _disposables.Dispose();
+        _changed.OnCompleted();
     }
 }

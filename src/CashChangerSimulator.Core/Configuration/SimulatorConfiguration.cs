@@ -13,22 +13,9 @@ public partial class SimulatorConfiguration
     [TomlValueOnSerialized]
     public string CurrencyCode { get; set; } = "JPY";
 
-    /// <summary>現在の通貨に対応する在庫設定（後方互換性用ヘルパー）。</summary>
-    public InventorySettings Inventory
-    {
-        get
-        {
-            if (!MultiInventory.ContainsKey(CurrencyCode))
-            {
-                MultiInventory[CurrencyCode] = new InventorySettings();
-            }
-            return MultiInventory[CurrencyCode];
-        }
-    }
-
     /// <summary>通貨コードごとの在庫設定。</summary>
     [TomlValueOnSerialized]
-    public Dictionary<string, InventorySettings> MultiInventory { get; set; } = new()
+    public Dictionary<string, InventorySettings> Inventory { get; set; } = new()
     {
         ["JPY"] = new InventorySettings
         {
@@ -80,7 +67,7 @@ public partial class SimulatorConfiguration
     public DenominationSettings GetDenominationSetting(Models.DenominationKey key)
     {
         var keyStr = (key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? "B" : "C") + key.Value.ToString();
-        if (MultiInventory.TryGetValue(key.CurrencyCode, out var inventory) &&
+        if (Inventory.TryGetValue(key.CurrencyCode, out var inventory) &&
             inventory.Denominations.TryGetValue(keyStr, out var setting))
         {
             return setting;

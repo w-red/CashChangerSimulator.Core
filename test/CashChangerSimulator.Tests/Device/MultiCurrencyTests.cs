@@ -16,7 +16,7 @@ public class MultiCurrencyTests
     {
         var config = new SimulatorConfiguration
         {
-            MultiInventory = new()
+            Inventory = new()
             {
                 ["JPY"] = new InventorySettings
                 {

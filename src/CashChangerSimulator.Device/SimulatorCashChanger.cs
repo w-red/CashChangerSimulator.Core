@@ -73,8 +73,8 @@ public class SimulatorCashChanger : CashChangerBasic
             }
             else
             {
-                // MultiInventory から全ての通貨の金種をロード
-                foreach (var currencyEntry in _config.MultiInventory)
+                // Inventory から全ての通貨の金種をロード
+                foreach (var currencyEntry in _config.Inventory)
                 {
                     var currencyCode = currencyEntry.Key;
                     foreach (var item in currencyEntry.Value.Denominations)
@@ -100,7 +100,7 @@ public class SimulatorCashChanger : CashChangerBasic
         _statusAggregator = aggregator ?? new OverallStatusAggregator(monitors);
 
         // Active currency initialization
-        _activeCurrencyCode = _config.MultiInventory.Keys.FirstOrDefault() ?? "JPY";
+        _activeCurrencyCode = _config.Inventory.Keys.FirstOrDefault() ?? "JPY";
 
         // Subscribe to status changes for StatusUpdateEvent
         _statusSubscription = Disposable.Combine(
@@ -368,7 +368,7 @@ public class SimulatorCashChanger : CashChangerBasic
             }
         }
     }
-    public override string[] CurrencyCodeList => [.. _config.MultiInventory.Keys.OrderBy(c => c)];
+    public override string[] CurrencyCodeList => [.. _config.Inventory.Keys.OrderBy(c => c)];
     public override string[] DepositCodeList => CurrencyCodeList;
 
     public override CashUnits CurrencyCashList => BuildCashUnits();

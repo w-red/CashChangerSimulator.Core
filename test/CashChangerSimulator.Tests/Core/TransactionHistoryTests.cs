@@ -3,6 +3,7 @@ namespace CashChangerSimulator.Tests.Core;
 using System;
 using System.Collections.Generic;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Configuration;
 using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
@@ -72,5 +73,17 @@ public class TransactionHistoryTests
         history2.Entries[0].Amount.ShouldBe(5000m);
         history2.Entries[0].Type.ShouldBe(TransactionType.Refill);
         history2.Entries[0].Counts[key].ShouldBe(5);
+    }
+
+    /// <summary>Entries が null の HistoryState を渡してもクラッシュしないことを検証する。</summary>
+    [Fact]
+    public void FromStateWithNullEntriesShouldNotCrash()
+    {
+        var history = new TransactionHistory();
+        var state = new HistoryState { Entries = null! };
+
+        // Act & Assert
+        Should.NotThrow(() => history.FromState(state));
+        history.Entries.ShouldBeEmpty();
     }
 }

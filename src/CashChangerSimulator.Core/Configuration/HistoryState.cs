@@ -11,6 +11,12 @@ public partial class HistoryState
 {
     /// <summary>取引履歴エントリのリスト。</summary>
     public List<HistoryEntryState> Entries { get; set; } = [];
+
+    [MemoryPackOnDeserialized]
+    void OnDeserialized()
+    {
+        Entries ??= [];
+    }
 }
 
 /// <summary>
@@ -30,4 +36,10 @@ public partial class HistoryEntryState
 
     /// <summary>金種ごとの枚数変動。キーは "CurrencyCode:B1000" 形式。</summary>
     public Dictionary<string, int> Counts { get; set; } = [];
+
+    [MemoryPackOnDeserialized]
+    void OnDeserialized()
+    {
+        Counts ??= [];
+    }
 }

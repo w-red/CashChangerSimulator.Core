@@ -11,4 +11,9 @@ public partial class InventoryState
     /// <summary>金種キー（B1000, C100等）と現在の枚数のマップ。</summary>
     [TomlValueOnSerialized]
     public Dictionary<string, int> Counts { get; set; } = [];
+
+    public void EnsureInitialized()
+    {
+        Counts ??= [];
+    }
 }
