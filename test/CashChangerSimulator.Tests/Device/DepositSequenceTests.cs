@@ -37,7 +37,6 @@ public class DepositSequenceTests
         controller.DepositStatus.ShouldBe(CashDepositStatus.Count);
 
         // 入金シミュレーション
-        inventory.Add(b1000, 1);
         controller.TrackDeposit(b1000);
 
         controller.DepositAmount.ShouldBe(1000);
@@ -62,7 +61,6 @@ public class DepositSequenceTests
 
         controller.BeginDeposit();
         
-        inventory.Add(b1000, 1);
         controller.TrackDeposit(b1000);
 
         controller.FixDeposit();
@@ -81,7 +79,6 @@ public class DepositSequenceTests
 
         controller.BeginDeposit();
         
-        inventory.Add(b1000, 1);
         controller.TrackDeposit(b1000);
 
         controller.FixDeposit();
@@ -107,7 +104,6 @@ public class DepositSequenceTests
         controller.IsPaused.ShouldBeTrue();
 
         // Pause中に在庫が増えてもTrackDepositは無視するはず
-        inventory.Add(b1000, 1);
         controller.TrackDeposit(b1000);
         controller.DepositAmount.ShouldBe(0);
 

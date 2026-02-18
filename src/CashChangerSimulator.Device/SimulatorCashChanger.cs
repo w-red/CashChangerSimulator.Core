@@ -90,7 +90,7 @@ public class SimulatorCashChanger : CashChangerBasic
 
         _history = history ?? new TransactionHistory();
         _manager = manager ?? new CashChangerManager(_inventory, _history);
-        _depositController = depositController ?? new DepositController(_inventory, _manager);
+        _depositController = depositController ?? new DepositController(_inventory, _manager, _config.Simulation, _hardwareStatusManager);
 
         // Status monitors / Aggregator
         var monitors = _inventory.AllCounts
@@ -145,19 +145,25 @@ public class SimulatorCashChanger : CashChangerBasic
                     _lastCashChangerStatus = Microsoft.PointOfService.CashChangerStatus.OK;
                     NotifyEvent(new StatusUpdateEventArgs(206)); // CHAN_STATUS_OK = 206
                 }
+            }),
+            _hardwareStatusManager.IsOverlapped.Subscribe(overlapped =>
+            {
+                if (overlapped)
+                {
+                    _logger.ZLogWarning($"Device reported OVERLAP error.");
+                    // There isn't a standard OPOS status for "Overlap" in CashChangerStatus enum, 
+                    // but we can use StatusUpdateEvent with a custom code or just log it.
+                    // For now, let's keep it as an internal state that blocks operations.
+                }
+            }),
+            _depositController.Changed.Subscribe(_ =>
+            {
+                if (_depositController.DepositStatus == CashDepositStatus.Count && !_depositController.IsPaused && DataEventEnabled)
+                {
+                    NotifyEvent(new DataEventArgs(0));
+                }
             })
         );
-            
-        // Listen to inventory changes to track deposits
-        _inventory.Changed.Subscribe(key => 
-        {
-            _depositController.TrackDeposit(key);
-
-            if (_depositController.DepositStatus == CashDepositStatus.Count && !_depositController.IsPaused && DataEventEnabled)
-            {
-                NotifyEvent(new DataEventArgs(0));
-            }
-        });
     }
 
     private string _activeCurrencyCode;

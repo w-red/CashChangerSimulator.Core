@@ -27,4 +27,8 @@ public partial class SimulationSettings
     /// <summary>エラー発生確率 (0-100)。</summary>
     [TomlValueOnSerialized]
     public int ErrorRate { get; set; } = 10;
+
+    /// <summary>重なり等による読取エラーの発生確率 (0-100)。</summary>
+    [TomlValueOnSerialized]
+    public int ValidationFailureRate { get; set; } = 5;
 }

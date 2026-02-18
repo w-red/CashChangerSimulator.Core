@@ -1,5 +1,6 @@
 using Microsoft.PointOfService;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Configuration;
 using R3;
 
 namespace CashChangerSimulator.Device;
@@ -12,6 +13,8 @@ public class DepositController : IDisposable
 {
     private readonly Inventory _inventory;
     private readonly CashChangerManager _manager;
+    private readonly SimulationSettings _config;
+    private readonly HardwareStatusManager _hardwareStatusManager;
     private readonly CompositeDisposable _disposables = [];
     private readonly Subject<Unit> _changed = new();
 
@@ -24,10 +27,16 @@ public class DepositController : IDisposable
     private bool _depositPaused;
     private bool _depositFixed;
 
-    public DepositController(Inventory inventory, CashChangerManager manager)
+    public DepositController(
+        Inventory inventory, 
+        CashChangerManager manager, 
+        SimulationSettings? config = null,
+        HardwareStatusManager? hardwareStatusManager = null)
     {
         _inventory = inventory;
         _manager = manager;
+        _config = config ?? new SimulationSettings();
+        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
     }
 
     // ========== Properties ==========
@@ -64,6 +73,7 @@ public class DepositController : IDisposable
         _depositStatus = CashDepositStatus.Start;
         _depositPaused = false;
         _depositFixed = false;
+        _hardwareStatusManager.SetOverlapped(false); // Clear error on new deposit
         _depositStatus = CashDepositStatus.Count;
         _changed.OnNext(Unit.Default);
     }
@@ -74,12 +84,8 @@ public class DepositController : IDisposable
     /// </summary>
     public void FixDeposit()
     {
-        if (_depositStatus is not (CashDepositStatus.Start or CashDepositStatus.Count))
-        {
-            throw new PosControlException(
-                "The call sequence is invalid. beginDeposit must be called before fixDeposit.",
-                ErrorCode.Illegal);
-        }
+        if (!IsDepositInProgress) throw new PosControlException("Deposit not in progress", ErrorCode.Illegal);
+
         _depositFixed = true;
         _changed.OnNext(Unit.Default);
     }
@@ -97,30 +103,33 @@ public class DepositController : IDisposable
                 ErrorCode.Illegal);
         }
 
-        switch (action)
+        if (action == CashDepositAction.Repay)
         {
-            case CashDepositAction.Change:
-                _depositStatus = CashDepositStatus.End;
+            foreach (var kv in _depositCounts)
+            {
+                _inventory.Add(kv.Key, -kv.Value);
+            }
+        }
+        else
+        {
+            // For NoChange/Change, we check if device is healthy
+            if (_hardwareStatusManager.IsOverlapped.Value)
+            {
+                throw new PosControlException("Device is in error state (Overlap). Cannot complete deposit.", ErrorCode.Failure);
+            }
+
+            if (action == CashDepositAction.Change)
+            {
                 if (_depositAmount > 0)
                 {
                     _manager.Dispense(_depositAmount);
                 }
-                break;
-
-            case CashDepositAction.Repay:
-                foreach (var kv in _depositCounts)
-                {
-                    _inventory.Add(kv.Key, -kv.Value);
-                }
-                _depositStatus = CashDepositStatus.End;
-                break;
-
-            default: // NoChange
-                _depositStatus = CashDepositStatus.End;
-                break;
+            }
         }
+        _depositStatus = CashDepositStatus.End;
         _depositPaused = false;
         _depositFixed = false;
+        _hardwareStatusManager.SetOverlapped(false); // Clear error on end deposit
         _changed.OnNext(Unit.Default);
     }
 
@@ -161,16 +170,32 @@ public class DepositController : IDisposable
     {
         if (_depositStatus != CashDepositStatus.Count) return;
         if (_depositPaused) return;
+        if (_hardwareStatusManager.IsOverlapped.Value) return;
 
         foreach (var (key, count) in counts)
         {
             if (count <= 0) continue;
+
+            // Simulation: Validation Failure (Overlap etc.)
+            if (_config.RandomErrorsEnabled)
+            {
+                var roll = Random.Shared.Next(0, 100);
+                if (roll < _config.ValidationFailureRate)
+                {
+                    _hardwareStatusManager.SetOverlapped(true);
+                    _changed.OnNext(Unit.Default);
+                    return; // Stop processing further items
+                }
+            }
+
             _depositAmount += key.Value * count;
             _depositCounts[key] =
                 _depositCounts.TryGetValue(key, out int value)
                 ? value + count : count;
             
             // Fix: Update physical inventory immediately upon insertion
+            // Note: We bypass the circular dependency in SimulatorCashChanger 
+            // by ensuring TrackBulkDeposit is the one driving the change.
             _inventory.Add(key, count);
         }
         _changed.OnNext(Unit.Default);
