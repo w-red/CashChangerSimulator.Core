@@ -1,6 +1,6 @@
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using Shouldly;
 using Xunit;

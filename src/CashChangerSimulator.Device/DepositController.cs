@@ -1,19 +1,20 @@
-using Microsoft.PointOfService;
-using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.PointOfService;
 using R3;
+using ZLogger;
 
 namespace CashChangerSimulator.Device;
 
-/// <summary>
-/// UPOS v1.5+ の Deposit シーケンスを管理するコントローラー。
-/// beginDeposit → fixDeposit → endDeposit の状態遷移とバリデーションを担う。
-/// </summary>
+/// <summary>UPOS v1.5+ の Deposit シーケンスを管理するコントローラー（beginDeposit → fixDeposit → endDeposit）。</summary>
 public class DepositController : IDisposable
 {
     private readonly Inventory _inventory;
     private readonly CashChangerManager _manager;
     private readonly SimulationSettings _config;
+    private readonly ILogger<DepositController> _logger;
     private readonly HardwareStatusManager _hardwareStatusManager;
     private readonly CompositeDisposable _disposables = [];
     private readonly Subject<Unit> _changed = new();
@@ -27,6 +28,12 @@ public class DepositController : IDisposable
     private bool _depositPaused;
     private bool _depositFixed;
 
+    /// <summary>DepositController の新しいインスタンスを初期化します。</summary>
+    /// <param name="inventory">在庫管理オブジェクト。</param>
+    /// <param name="manager">入出金マネージャー。</param>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="config">シミュレーション設定。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態マネージャー。</param>
     public DepositController(
         Inventory inventory, 
         CashChangerManager manager, 
@@ -35,6 +42,7 @@ public class DepositController : IDisposable
     {
         _inventory = inventory;
         _manager = manager;
+        _logger = LogProvider.CreateLogger<DepositController>();
         _config = config ?? new SimulationSettings();
         _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
     }
@@ -62,12 +70,11 @@ public class DepositController : IDisposable
 
     // ========== Methods ==========
 
-    /// <summary>
-    /// UPOS 8.5.2: 入金受付を開始する。
-    /// DepositCounts と DepositAmount を 0 に初期化。
-    /// </summary>
+    /// <summary>UPOS 8.5.2: 入金受付を開始し、DepositCounts と DepositAmount を 0 に初期化します。</summary>
     public void BeginDeposit()
     {
+        try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: BeginDeposit called. Current Status: {_depositStatus}\n"); } catch {}
+        _logger.ZLogInformation($"BeginDeposit called. Current Status: {_depositStatus}");
         _depositAmount = 0m;
         _depositCounts.Clear();
         _depositStatus = CashDepositStatus.Start;
@@ -76,12 +83,11 @@ public class DepositController : IDisposable
         _hardwareStatusManager.SetOverlapped(false); // Clear error on new deposit
         _depositStatus = CashDepositStatus.Count;
         _changed.OnNext(Unit.Default);
+        try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: BeginDeposit finished. New Status: {_depositStatus}\n"); } catch {}
+        _logger.ZLogInformation($"BeginDeposit finished. New Status: {_depositStatus}");
     }
 
-    /// <summary>
-    /// UPOS 8.5.6: 入金を確定する。
-    /// beginDeposit が先に呼ばれていない場合は E_ILLEGAL。
-    /// </summary>
+    /// <summary>UPOS 8.5.6: 入金を確定します。beginDeposit が先に呼ばれていない場合は E_ILLEGAL。</summary>
     public void FixDeposit()
     {
         if (!IsDepositInProgress) throw new PosControlException("Deposit not in progress", ErrorCode.Illegal);
@@ -90,10 +96,7 @@ public class DepositController : IDisposable
         _changed.OnNext(Unit.Default);
     }
 
-    /// <summary>
-    /// UPOS 8.5.5: 入金受付を完了する。
-    /// fixDeposit が先に呼ばれていない場合は E_ILLEGAL。
-    /// </summary>
+    /// <summary>UPOS 8.5.5: 入金受付を完了します。fixDeposit が先に呼ばれていない場合は E_ILLEGAL。</summary>
     public void EndDeposit(CashDepositAction action)
     {
         if (!_depositFixed)
@@ -110,22 +113,13 @@ public class DepositController : IDisposable
                 _inventory.Add(kv.Key, -kv.Value);
             }
         }
-        else
+        // For NoChange/Change, we check if device is healthy
+        // Repay is allowed even if overlapped to recover money.
+        if (action != CashDepositAction.Repay && _hardwareStatusManager.IsOverlapped.Value)
         {
-            // For NoChange/Change, we check if device is healthy
-            if (_hardwareStatusManager.IsOverlapped.Value)
-            {
-                throw new PosControlException("Device is in error state (Overlap). Cannot complete deposit.", ErrorCode.Failure);
-            }
-
-            if (action == CashDepositAction.Change)
-            {
-                if (_depositAmount > 0)
-                {
-                    _manager.Dispense(_depositAmount);
-                }
-            }
+            throw new PosControlException("Device is in error state (Overlap). Cannot complete deposit.", ErrorCode.Failure);
         }
+
         _depositStatus = CashDepositStatus.End;
         _depositPaused = false;
         _depositFixed = false;
@@ -133,10 +127,7 @@ public class DepositController : IDisposable
         _changed.OnNext(Unit.Default);
     }
 
-    /// <summary>
-    /// UPOS 8.5.7: 入金一時停止 / 再開。
-    /// すでにその状態である場合は E_ILLEGAL。
-    /// </summary>
+    /// <summary>UPOS 8.5.7: 入金一時停止 / 再開。すでにその状態である場合は E_ILLEGAL。</summary>
     public void PauseDeposit(CashDepositPause control)
     {
         if (_depositStatus is not (CashDepositStatus.Start or CashDepositStatus.Count))
@@ -157,15 +148,11 @@ public class DepositController : IDisposable
         _changed.OnNext(Unit.Default);
     }
 
-    /// <summary>
-    /// 入金中に金種が追加されたときに呼ばれるトラッキングメソッド。
-    /// </summary>
+    /// <summary>入金中に金種が追加されたときに呼ばれるトラッキングメソッド。</summary>
     public void TrackDeposit(DenominationKey key) 
         => TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, 1 } });
 
-    /// <summary>
-    /// 入金中に複数の金種を一括で追加するトラッキングメソッド。
-    /// </summary>
+    /// <summary>入金中に複数の金種を一括で追加するトラッキングメソッド。</summary>
     public void TrackBulkDeposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         if (_depositStatus != CashDepositStatus.Count) return;
@@ -201,6 +188,7 @@ public class DepositController : IDisposable
         _changed.OnNext(Unit.Default);
     }
 
+    /// <summary>リソースを解放します。</summary>
     public void Dispose()
     {
         _disposables.Dispose();

@@ -1,30 +1,22 @@
-using R3;
 using CashChangerSimulator.Core.Configuration;
+using R3;
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>
-/// 取引履歴を管理するクラス。
-/// </summary>
+/// <summary>取引履歴を管理するクラス。</summary>
 public class TransactionHistory : IDisposable
 {
     private const int MaxEntries = 1000;
     private readonly List<TransactionEntry> _entries = [];
     private readonly Subject<TransactionEntry> _added = new();
 
-    /// <summary>
-    /// 全ての取引履歴（読み取り専用）。
-    /// </summary>
+    /// <summary>全ての取引履歴（読み取り専用）。</summary>
     public IReadOnlyList<TransactionEntry> Entries => _entries;
 
-    /// <summary>
-    /// 取引が新しく追加されたときに通知されるストリーム。
-    /// </summary>
+    /// <summary>取引が新しく追加されたときに通知されるストリーム。</summary>
     public virtual Observable<TransactionEntry> Added => _added;
 
-    /// <summary>
-    /// 履歴を追加する。
-    /// </summary>
+    /// <summary>履歴を追加します。</summary>
     /// <param name="entry">追加する履歴エントリ。</param>
     public virtual void Add(TransactionEntry entry)
     {
@@ -36,9 +28,7 @@ public class TransactionHistory : IDisposable
         _added.OnNext(entry);
     }
 
-    /// <summary>
-    /// 永続化用の状態オブジェクトに変換する。
-    /// </summary>
+    /// <summary>永続化用の状態オブジェクトに変換します。</summary>
     public HistoryState ToState()
     {
         return new HistoryState
@@ -55,9 +45,7 @@ public class TransactionHistory : IDisposable
         };
     }
 
-    /// <summary>
-    /// 永続化用の状態オブジェクトから履歴を復元する。
-    /// </summary>
+    /// <summary>永続化用の状態オブジェクトから履歴を復元します。</summary>
     public void FromState(HistoryState state)
     {
         _entries.Clear();

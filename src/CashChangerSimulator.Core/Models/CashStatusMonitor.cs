@@ -63,9 +63,7 @@ public class CashStatusMonitor : IDisposable
         }
     }
 
-    /// <summary>
-    /// しきい値を動的に更新し、状態を再計算する。
-    /// </summary>
+    /// <summary>しきい値を動的に更新し、状態を再計算します。</summary>
     public void UpdateThresholds(int nearEmpty, int nearFull, int full)
     {
         _nearEmptyThreshold = nearEmpty;

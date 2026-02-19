@@ -3,12 +3,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>
-/// 在庫管理と履歴管理を統合し、実務的な入出金操作を提供するマネージャークラス。
-/// </summary>
-/// <remarks>
-/// コンストラクタ。
-/// </remarks>
+/// <summary>在庫管理と履歴管理を統合し、実務的な入出金操作を提供するマネージャークラス。</summary>
 /// <param name="inventory">在庫管理オブジェクト。</param>
 /// <param name="history">履歴管理オブジェクト。</param>
 public class CashChangerManager(Inventory inventory, TransactionHistory history)

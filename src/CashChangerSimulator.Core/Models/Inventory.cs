@@ -6,10 +6,7 @@ namespace CashChangerSimulator.Core.Models;
 /// <summary>金種を一意に識別するための複合キー（通貨コード、額面、硬貨/紙幣の種別）。</summary>
 public record DenominationKey(decimal Value, CashType Type, string CurrencyCode = "JPY")
 {
-    /// <summary>
-    /// 文字列形式（例: "B10000", "C500"）から DenominationKey を解析する。
-    /// デフォルトの通貨は JPY となる。
-    /// </summary>
+    /// <summary>文字列形式（例: "B10000", "C500"）から DenominationKey を解析します。</summary>
     /// <param name="s">解析対象の文字列。先頭が 'B' (Bill) または 'C' (Coin) である必要がある。</param>
     /// <param name="result">解析結果のキー。</param>
     /// <returns>解析に成功した場合は true、それ以外は false。</returns>
@@ -18,9 +15,7 @@ public record DenominationKey(decimal Value, CashType Type, string CurrencyCode 
         return TryParse(s, "JPY", out result);
     }
 
-    /// <summary>
-    /// 通貨コードと文字列形式から DenominationKey を解析する。
-    /// </summary>
+    /// <summary>通貨コードと文字列形式から DenominationKey を解析します。</summary>
     public static bool TryParse(string s, string currencyCode, out DenominationKey? result)
     {
         result = null;
@@ -68,6 +63,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数を追加する。</summary>
     public virtual void Add(DenominationKey key, int count)
     {
+        try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: Inventory.Add called. Key: {key}, Count: {count}\n"); } catch {}
         if (_counts.ContainsKey(key))
         {
             _counts[key] += count;
@@ -77,6 +73,7 @@ public class Inventory : IReadOnlyInventory
             _counts[key] = count;
         }
         _changed.OnNext(key);
+        try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: Inventory.Add finished. New Total: {CalculateTotal()}\n"); } catch {}
     }
 
     /// <summary>指定された金種の枚数を設定する。</summary>
@@ -106,10 +103,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>全在庫の金種キーと枚数の列挙を取得する。</summary>
     public IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => _counts;
 
-    /// <summary>
-    /// 現在の在庫を文字列キーのディクショナリに変換する（保存用）。
-    /// フォーマットは "CurrencyCode:TypeAmount" (例: "JPY:B1000") となる。
-    /// </summary>
+    /// <summary>現在の在庫を保存用のディクショナリ（"CurrencyCode:TypeAmount" 形式）に変換します。</summary>
     public Dictionary<string, int> ToDictionary()
     {
         return _counts.ToDictionary(
@@ -118,9 +112,7 @@ public class Inventory : IReadOnlyInventory
         );
     }
 
-    /// <summary>
-    /// 文字列キーのディクショナリから在庫を復元する。
-    /// </summary>
+    /// <summary>文字列キーのディクショナリから在庫を復元します。</summary>
     public void LoadFromDictionary(IReadOnlyDictionary<string, int> data)
     {
         foreach (var kv in data)

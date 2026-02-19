@@ -2,9 +2,7 @@ using CsToml;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>
-/// シミュレーション挙動（遅延・エラー）の設定クラス。
-/// </summary>
+/// <summary>シミュレーション挙動（遅延・エラー）の設定クラス。</summary>
 [TomlSerializedObject]
 public partial class SimulationSettings
 {

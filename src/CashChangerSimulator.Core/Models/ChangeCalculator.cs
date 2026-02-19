@@ -2,9 +2,7 @@ using CashChangerSimulator.Core.Exceptions;
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>
-/// お釣りの金種組み合わせを計算するクラス。
-/// </summary>
+/// <summary>お釣りの金種組み合わせを計算するクラス。</summary>
 public class ChangeCalculator
 {
     /// <summary>指定された在庫から、指定された金額を支払うための金種内訳を計算する。</summary>

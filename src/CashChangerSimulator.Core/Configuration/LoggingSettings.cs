@@ -2,9 +2,7 @@ using CsToml;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>
-/// ロギング設定を管理するクラス。
-/// </summary>
+/// <summary>ロギング設定を管理するクラス。</summary>
 [TomlSerializedObject]
 public partial class LoggingSettings
 {

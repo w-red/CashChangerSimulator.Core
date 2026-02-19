@@ -1,11 +1,9 @@
-using CsToml.Extensions;
 using CashChangerSimulator.Core.Models;
+using CsToml.Extensions;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>
-/// TOML 形式の設定ファイルを管理するクラス。
-/// </summary>
+/// <summary>TOML 形式の設定ファイルを管理するクラス。</summary>
 public static class ConfigurationLoader
 {
     /// <summary>デフォルトの設定ファイルパス。</summary>

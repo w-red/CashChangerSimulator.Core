@@ -1,8 +1,6 @@
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>
-/// 取引の種類を表す列挙型。
-/// </summary>
+/// <summary>取引の種類を表す列挙型。</summary>
 public enum TransactionType
 {
     /// <summary>不明な取引。</summary>

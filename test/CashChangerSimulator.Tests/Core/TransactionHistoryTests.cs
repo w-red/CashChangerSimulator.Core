@@ -1,12 +1,12 @@
 namespace CashChangerSimulator.Tests.Core;
 
-using System;
-using System.Collections.Generic;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Models;
 using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
+using System;
+using System.Collections.Generic;
 using Xunit;
 
 /// <summary>

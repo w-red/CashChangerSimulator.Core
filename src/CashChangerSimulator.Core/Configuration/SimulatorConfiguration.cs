@@ -1,11 +1,9 @@
-using CsToml;
 using CashChangerSimulator.Core.Models;
+using CsToml;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>
-/// 釣銭機シミュレーターの設定を保持するクラス。
-/// </summary>
+/// <summary>釣銭機シミュレーターの設定を保持するクラス。</summary>
 [TomlSerializedObject]
 public partial class SimulatorConfiguration
 {
@@ -64,7 +62,7 @@ public partial class SimulatorConfiguration
     public LoggingSettings Logging { get; set; } = new();
 
     /// <summary>指定された金種の個別設定を取得する。存在しない場合はデフォルト値を返す。</summary>
-    public DenominationSettings GetDenominationSetting(Models.DenominationKey key)
+    public DenominationSettings GetDenominationSetting(DenominationKey key)
     {
         var keyStr = (key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? "B" : "C") + key.Value.ToString();
         if (Inventory.TryGetValue(key.CurrencyCode, out var inventory) &&

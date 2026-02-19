@@ -1,16 +1,17 @@
-using Microsoft.PointOfService;
-using Microsoft.PointOfService.BasicServiceObjects;
 using CashChangerSimulator.Core;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
-using R3;
-using MoneyKind4Opos.Currencies.Interfaces;
+using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.PointOfService;
+using Microsoft.PointOfService.BasicServiceObjects;
+using MoneyKind4Opos.Currencies.Interfaces;
+using R3;
 using ZLogger;
 
 namespace CashChangerSimulator.Device;
 
+/// <summary>UPOS の CashChanger サービスオブジェクトをシミュレートするクラス。</summary>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
 public class SimulatorCashChanger : CashChangerBasic
 {
@@ -26,7 +27,7 @@ public class SimulatorCashChanger : CashChangerBasic
     private readonly ILogger<SimulatorCashChanger> _logger;
 
     // Status tracking for StatusUpdateEvent transitions
-    private Microsoft.PointOfService.CashChangerStatus _lastCashChangerStatus = CashChangerStatus.OK;
+    private CashChangerStatus _lastCashChangerStatus = CashChangerStatus.OK;
     private CashChangerFullStatus _lastFullStatus = CashChangerFullStatus.OK;
 
     // Async processing state
@@ -34,15 +35,25 @@ public class SimulatorCashChanger : CashChangerBasic
     private int _asyncResultCode;
     private int _asyncResultCodeExtended;
 
+    /// <summary>テスト用のイベント通知アクション。</summary>
     internal Action<EventArgs>? OnEventQueued; // For testing
 
+    /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
+    /// <param name="e">通知するイベント引数。</param>
     protected virtual void NotifyEvent(EventArgs e)
     {
         OnEventQueued?.Invoke(e);
-        if (e is DataEventArgs de) QueueEvent(de);
-        else if (e is StatusUpdateEventArgs se) QueueEvent(se);
+        if (e is DataEventArgs de)
+        {
+            QueueEvent(de);
+        }
+        else if (e is StatusUpdateEventArgs se)
+        {
+            QueueEvent(se);
+        }
     }
 
+    /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。</summary>
     public SimulatorCashChanger() : this(null, null, null, null, null, null, null) { }
 
     internal SimulatorCashChanger(
@@ -55,18 +66,29 @@ public class SimulatorCashChanger : CashChangerBasic
         HardwareStatusManager? hardwareStatusManager = null)
     {
         // Load settings from TOML
-        _config = config ?? ConfigurationLoader.Load();
+        _config =
+            config
+            ?? ConfigurationLoader.Load();
 
         DevicePath = "SimulatorCashChanger";
-        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+        _hardwareStatusManager =
+            hardwareStatusManager
+            ?? new HardwareStatusManager();
 
-        _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
-        _logger.ZLogInformation($"SimulatorCashChanger initialized.");
+        _logger =
+            LogProvider
+            .CreateLogger<SimulatorCashChanger>();
+        _logger
+            .ZLogInformation(
+                $"SimulatorCashChanger initialized.");
 
-        _inventory = inventory ?? new Inventory();
+        _inventory =
+            inventory ?? new Inventory();
         if (inventory == null)
         {
-            var state = ConfigurationLoader.LoadInventoryState();
+            var state =
+                ConfigurationLoader
+                .LoadInventoryState();
             if (state.Counts.Count > 0)
             {
                 _inventory.LoadFromDictionary(state.Counts);
@@ -88,19 +110,42 @@ public class SimulatorCashChanger : CashChangerBasic
             }
         }
 
-        _history = history ?? new TransactionHistory();
-        _manager = manager ?? new CashChangerManager(_inventory, _history);
-        _depositController = depositController ?? new DepositController(_inventory, _manager, _config.Simulation, _hardwareStatusManager);
+        _history =
+            history
+            ?? new TransactionHistory();
+        _manager =
+            manager
+            ?? new CashChangerManager(_inventory, _history);
+        _depositController =
+            depositController
+            ?? new DepositController(_inventory, _manager, _config.Simulation, _hardwareStatusManager);
 
         // Status monitors / Aggregator
-        var monitors = _inventory.AllCounts
-            .Select(kv => (kv.Key, _config.GetDenominationSetting(kv.Key)))
-            .Select(x => new CashStatusMonitor(_inventory, x.Key, x.Item2.NearEmpty, x.Item2.NearFull, x.Item2.Full))
+        var monitors =
+            _inventory
+            .AllCounts
+            .Select(kv =>
+                (kv.Key,
+                 _config.GetDenominationSetting(kv.Key)))
+            .Select(x =>
+                new CashStatusMonitor(
+                    _inventory,
+                    x.Key,
+                    x.Item2.NearEmpty,
+                    x.Item2.NearFull,
+                    x.Item2.Full))
             .ToList();
-        _statusAggregator = aggregator ?? new OverallStatusAggregator(monitors);
+        _statusAggregator =
+            aggregator
+            ?? new OverallStatusAggregator(monitors);
 
         // Active currency initialization
-        _activeCurrencyCode = _config.Inventory.Keys.FirstOrDefault() ?? "JPY";
+        _activeCurrencyCode =
+            _config
+            .Inventory
+            .Keys
+            .FirstOrDefault()
+            ?? "JPY";
 
         // Subscribe to status changes for StatusUpdateEvent
         _statusSubscription = Disposable.Combine(
@@ -138,12 +183,12 @@ public class SimulatorCashChanger : CashChangerBasic
                 if (jammed)
                 {
                     _lastCashChangerStatus = CashChangerStatus.OK; // Property based status
-                    NotifyEvent(new StatusUpdateEventArgs(205)); // CHAN_STATUS_JAM = 205
+                    NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.VendorJam));
                 }
                 else
                 {
                     _lastCashChangerStatus = CashChangerStatus.OK;
-                    NotifyEvent(new StatusUpdateEventArgs(206)); // CHAN_STATUS_OK = 206
+                    NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.VendorOk));
                 }
             }),
             _hardwareStatusManager.IsOverlapped.Subscribe(overlapped =>
@@ -168,19 +213,24 @@ public class SimulatorCashChanger : CashChangerBasic
 
     private string _activeCurrencyCode;
 
+    /// <summary>デバイスの健康状態を確認します。</summary>
     public override string CheckHealth(HealthCheckLevel level) => "OK";
+    /// <summary>健康状態のテキスト表現を取得します。</summary>
     public override string CheckHealthText => "OK";
 
     // ========== Deposit Methods (UPOS v1.5+) ==========
 
+    /// <summary>現金投入処理を開始します。</summary>
     public override void BeginDeposit() 
     {
         ThrowIfBusy();
         _depositController.BeginDeposit();
     }
 
+    /// <summary>現金投入処理を終了します。</summary>
     public override void EndDeposit(CashDepositAction action) => _depositController.EndDeposit(action);
 
+    /// <summary>投入された現金の計数を確定します。</summary>
     public override void FixDeposit() 
     {
         _depositController.FixDeposit();
@@ -191,6 +241,7 @@ public class SimulatorCashChanger : CashChangerBasic
         }
     }
 
+    /// <summary>現金投入処理を一時停止または再開します。</summary>
     public override void PauseDeposit(CashDepositPause control) => _depositController.PauseDeposit(control);
 
     // ========== Dispense Methods ==========
@@ -258,14 +309,18 @@ public class SimulatorCashChanger : CashChangerBasic
             finally
             {
                 _asyncProcessing = false;
-                NotifyEvent(new StatusUpdateEventArgs(201)); // CHAN_STATUS_ASYNC = 201
+                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
             }
         });
     }
 
+    /// <summary>指定された金額の釣銭を払い出します。</summary>
     public override void DispenseChange(int amount)
     {
-        if (amount <= 0) throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
+        if (amount <= 0)
+        {
+            throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
+        }
 
         ThrowIfDepositInProgress();
         ThrowIfBusy();
@@ -273,21 +328,22 @@ public class SimulatorCashChanger : CashChangerBasic
 
         if (AsyncMode)
         {
-            StartAsyncDispense(() => _manager.Dispense((decimal)amount));
+            StartAsyncDispense(() => _manager.Dispense(amount));
         }
         else
         {
             try
             {
-                _manager.Dispense((decimal)amount);
+                _manager.Dispense(amount);
             }
             catch (InsufficientCashException ex)
             {
-                throw new PosControlException(ex.Message, ErrorCode.Extended, 201); // ECHAN_OVERDISPENSE = 201
+                throw new PosControlException(ex.Message, ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense);
             }
         }
     }
 
+    /// <summary>指定された金種と枚数の現金を払い出します。</summary>
     public override void DispenseCash(CashCount[] cashCounts) 
     {
         ThrowIfDepositInProgress();
@@ -308,7 +364,7 @@ public class SimulatorCashChanger : CashChangerBasic
                 
                 if (_inventory.GetCount(key) < cc.Count)
                 {
-                    throw new PosControlException("Insufficient cash for denomination", ErrorCode.Extended, 201);
+                    throw new PosControlException("Insufficient cash for denomination", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense);
                 }
                 _inventory.Add(key, -cc.Count);
             }
@@ -326,6 +382,7 @@ public class SimulatorCashChanger : CashChangerBasic
 
     // ========== ReadCashCounts ==========
     
+    /// <summary>現在の現金在庫数を読み取ります。</summary>
     public override CashCounts ReadCashCounts() 
     {
         ThrowIfBusy();
@@ -342,23 +399,28 @@ public class SimulatorCashChanger : CashChangerBasic
         return new CashCounts([.. list], false);
     }
 
-    // ========== DirectIO ==========
-
+    /// <summary>ベンダー固有のコマンドをデバイスに送信します。</summary>
     public override DirectIOData DirectIO(int command, int data, object obj) => new(data, obj);
 
     // ========== Status Properties ==========
 
-    public override Microsoft.PointOfService.CashChangerStatus DeviceStatus => _lastCashChangerStatus;
+    /// <summary>デバイスの現在の状態（正常、空、ニアエンプティなど）を取得します。</summary>
+    public override CashChangerStatus DeviceStatus => _lastCashChangerStatus;
+    /// <summary>デバイスの現在の満杯状態（正常、満杯、ニアフルなど）を取得します。</summary>
     public override CashChangerFullStatus FullStatus => _lastFullStatus;
 
     // ========== Async Properties ==========
 
+    /// <summary>非同期モードで動作するかどうかを取得または設定します。</summary>
     public override bool AsyncMode { get; set; }
+    /// <summary>最後の非同期操作の結果コードを取得します。</summary>
     public override int AsyncResultCode => _asyncResultCode;
+    /// <summary>最後の非同期操作の拡張結果コードを取得します。</summary>
     public override int AsyncResultCodeExtended => _asyncResultCodeExtended;
 
     // ========== Currency Properties ==========
 
+    /// <summary>現在アクティブな通貨コードを取得または設定します。</summary>
     public override string CurrencyCode 
     { 
         get => _activeCurrencyCode; 
@@ -374,16 +436,23 @@ public class SimulatorCashChanger : CashChangerBasic
             }
         }
     }
+    /// <summary>サポートされている通貨コードの一覧を取得します。</summary>
     public override string[] CurrencyCodeList => [.. _config.Inventory.Keys.OrderBy(c => c)];
+    /// <summary>入金可能な通貨コードの一覧を取得します。</summary>
     public override string[] DepositCodeList => CurrencyCodeList;
 
+    /// <summary>アクティブな通貨の現在の現金一覧を取得します。</summary>
     public override CashUnits CurrencyCashList => BuildCashUnits();
+    /// <summary>入金可能な現金の一覧を取得します。</summary>
     public override CashUnits DepositCashList => CapDeposit ? BuildCashUnits() : new CashUnits();
+    /// <summary>払出可能な現金の一覧を取得します。</summary>
     public override CashUnits ExitCashList => BuildCashUnits();
 
     // ========== Deposit Properties ==========
 
+    /// <summary>現在投入されている現金の合計金額を取得します。</summary>
     public override int DepositAmount => (int)Math.Round(_depositController.DepositAmount * GetCurrencyFactor());
+    /// <summary>現在投入されている現金の金種別枚数を取得します。</summary>
     public override CashCount[] DepositCounts 
     { 
         get => [.. _depositController.DepositCounts
@@ -393,24 +462,36 @@ public class SimulatorCashChanger : CashChangerBasic
                 GetNominalValue(kv.Key),
                 kv.Value))];
     }
+    /// <summary>現在の入金処理の状態を取得します。</summary>
     public override CashDepositStatus DepositStatus => _depositController.DepositStatus;
     
     // ========== Exit Properties ==========
 
+    /// <summary>現在の排出口インデックスを取得または設定します。</summary>
     public override int CurrentExit { get => 1; set { } }
+    /// <summary>デバイスの排出口の総数を取得します。</summary>
     public override int DeviceExits => 1;
 
     // ========== Capability Properties ==========
 
+    /// <summary>入金機能があるかどうかを取得します。</summary>
     public override bool CapDeposit => true;
+    /// <summary>入金データイベントをサポートしているかどうかを取得します。</summary>
     public override bool CapDepositDataEvent => true;
+    /// <summary>入金の一時停止をサポートしているかどうかを取得します。</summary>
     public override bool CapPauseDeposit => true;
+    /// <summary>入金の返却（払い戻し）をサポートしているかどうかを取得します。</summary>
     public override bool CapRepayDeposit => false;
 
+    /// <summary>不一致の検出をサポートしているかどうかを取得します。</summary>
     public override bool CapDiscrepancy => false;
+    /// <summary>満杯センサーをサポートしているかどうかを取得します。</summary>
     public override bool CapFullSensor => true;
+    /// <summary>ニアフルセンサーをサポートしているかどうかを取得します。</summary>
     public override bool CapNearFullSensor => true;
+    /// <summary>ニアエンプティセンサーをサポートしているかどうかを取得します。</summary>
     public override bool CapNearEmptySensor => true;
+    /// <summary>空センサーをサポートしているかどうかを取得します。</summary>
     public override bool CapEmptySensor => true;
 
     // ========== Private Helpers ==========

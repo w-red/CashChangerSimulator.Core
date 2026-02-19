@@ -2,9 +2,7 @@ using CsToml;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>
-/// ステータス判定用のしきい値を管理する設定クラス。
-/// </summary>
+/// <summary>ステータス判定用のしきい値を管理する設定クラス。</summary>
 [TomlSerializedObject]
 public partial class ThresholdSettings
 {

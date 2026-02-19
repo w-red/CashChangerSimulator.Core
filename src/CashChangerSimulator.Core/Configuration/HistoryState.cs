@@ -1,11 +1,9 @@
-using MemoryPack;
 using CashChangerSimulator.Core.Models;
+using MemoryPack;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>
-/// 取引履歴の状態を保持するクラス（永続化用）。
-/// </summary>
+/// <summary>取引履歴の状態を保持するクラス（永続化用）。</summary>
 [MemoryPackable]
 public partial class HistoryState
 {
@@ -19,9 +17,7 @@ public partial class HistoryState
     }
 }
 
-/// <summary>
-/// 単一の取引履歴エントリの状態を保持するクラス。
-/// </summary>
+/// <summary>単一の取引履歴エントリの状態を保持するクラス。</summary>
 [MemoryPackable]
 public partial class HistoryEntryState
 {

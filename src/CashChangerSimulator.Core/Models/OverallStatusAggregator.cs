@@ -2,9 +2,7 @@ using R3;
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>
-/// 釣銭機全体のステータスを集約管理するクラス。
-/// </summary>
+/// <summary>釣銭機全体のステータスを集約管理するクラス。</summary>
 public class OverallStatusAggregator : IDisposable
 {
     private readonly IEnumerable<CashStatusMonitor> _monitors;

@@ -2,9 +2,7 @@ using CsToml;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>
-/// 金種ごとの詳細設定を保持するクラス。
-/// </summary>
+/// <summary>金種ごとの詳細設定を保持するクラス。</summary>
 [TomlSerializedObject]
 public partial class DenominationSettings
 {
