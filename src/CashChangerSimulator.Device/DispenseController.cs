@@ -77,7 +77,6 @@ public class DispenseController(
             _logger.ZLogInformation($"Dispense operation started.");
 
             await SimulationBehavior.ApplyDelayAsync(_config);
-            SimulationBehavior.ThrowIfRandomError(_config);
 
             action();
             _status = CashDispenseStatus.Idle;

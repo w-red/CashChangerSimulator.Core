@@ -152,18 +152,6 @@ public class DepositController(
         {
             if (count <= 0) continue;
 
-            // Simulation: Validation Failure (Overlap etc.)
-            if (_config.RandomErrorsEnabled)
-            {
-                var roll = Random.Shared.Next(0, 100);
-                if (roll < _config.ValidationFailureRate)
-                {
-                    _hardwareStatusManager.SetOverlapped(true);
-                    _changed.OnNext(Unit.Default);
-                    return; // Stop processing further items
-                }
-            }
-
             _depositAmount += key.Value * count;
             _depositCounts[key] =
                 _depositCounts.TryGetValue(key, out int value)

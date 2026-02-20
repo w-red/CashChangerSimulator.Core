@@ -9,37 +9,12 @@ namespace CashChangerSimulator.Tests;
 public class OverlapSimulationTest
 {
     [Fact]
-    public void TrackBulkDeposit_ShouldSimulateOverlap_WhenFailureRateIsHigh()
-    {
-        // Arrange
-        var inventory = new Inventory();
-        var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history);
-        var simSettings = new SimulationSettings { RandomErrorsEnabled = true, ValidationFailureRate = 100 }; // 100% failure
-        var hardwareManager = new HardwareStatusManager();
-        var controller = new DepositController(inventory, simSettings, hardwareManager);
-
-        var key = new DenominationKey(1000, MoneyKind4Opos.Currencies.Interfaces.CashType.Bill);
-        var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
-
-        // Act
-        controller.BeginDeposit();
-        controller.TrackBulkDeposit(counts);
-
-        // Assert
-        Assert.True(hardwareManager.IsOverlapped.Value);
-    }
-
-    [Fact]
     public void FixDeposit_ShouldSucceed_ButEndDepositNoChange_ShouldThrow_WhenOverlapped()
     {
         // Arrange
         var inventory = new Inventory();
-        var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history);
-        var simSettings = new SimulationSettings { RandomErrorsEnabled = true, ValidationFailureRate = 100 };
         var hardwareManager = new HardwareStatusManager();
-        var controller = new DepositController(inventory, simSettings, hardwareManager);
+        var controller = new DepositController(inventory, new SimulationSettings(), hardwareManager);
 
         var key = new DenominationKey(1000, MoneyKind4Opos.Currencies.Interfaces.CashType.Bill);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
@@ -47,12 +22,15 @@ public class OverlapSimulationTest
         controller.BeginDeposit();
         controller.TrackBulkDeposit(counts);
 
+        // Manually set overlap (previously done via random error simulation)
+        hardwareManager.SetOverlapped(true);
+
         // Act & Assert
-        // Fix should now succeed to allow Repay flow
+        // Fix should succeed to allow Repay flow
         controller.FixDeposit();
         Assert.True(controller.IsFixed);
 
-        // EndDeposit(NoChange) should throw if still overlapped
+        // EndDeposit(NoChange) should throw if overlapped
         Assert.Throws<PosControlException>(() => controller.EndDeposit(CashDepositAction.NoChange));
 
         // EndDeposit(Repay) should succeed and clear error
@@ -68,8 +46,6 @@ public class OverlapSimulationTest
         hardwareManager.SetOverlapped(true);
 
         var inventory = new Inventory();
-        var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history);
         var controller = new DepositController(inventory, new SimulationSettings(), hardwareManager);
 
         // Act

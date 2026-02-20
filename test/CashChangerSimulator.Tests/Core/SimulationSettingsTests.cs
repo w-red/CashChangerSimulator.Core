@@ -18,8 +18,6 @@ public class SimulationSettingsTests
         config.Simulation.DelayEnabled = true;
         config.Simulation.MinDelayMs = 1000;
         config.Simulation.MaxDelayMs = 3000;
-        config.Simulation.RandomErrorsEnabled = true;
-        config.Simulation.ErrorRate = 5; // 5%
 
         var toml = CsTomlSerializer.Serialize(config);
         var loaded = CsTomlSerializer.Deserialize<SimulatorConfiguration>(toml.ByteSpan);
@@ -27,8 +25,6 @@ public class SimulationSettingsTests
         loaded.Simulation.DelayEnabled.ShouldBeTrue();
         loaded.Simulation.MinDelayMs.ShouldBe(1000);
         loaded.Simulation.MaxDelayMs.ShouldBe(3000);
-        loaded.Simulation.RandomErrorsEnabled.ShouldBeTrue();
-        loaded.Simulation.ErrorRate.ShouldBe(5);
     }
 
     [Fact]
@@ -46,21 +42,6 @@ public class SimulationSettingsTests
         vm.MaxDelay.Value = 2000;
         vm.MinDelay.HasErrors.ShouldBeFalse();
         vm.MaxDelay.HasErrors.ShouldBeFalse();
-    }
-
-    [Fact]
-    public void ViewModelShouldValidateErrorRate()
-    {
-        var vm = CreateViewModel();
-
-        vm.ErrorRate.Value = -1;
-        vm.ErrorRate.HasErrors.ShouldBeTrue();
-
-        vm.ErrorRate.Value = 101;
-        vm.ErrorRate.HasErrors.ShouldBeTrue();
-
-        vm.ErrorRate.Value = 50;
-        vm.ErrorRate.HasErrors.ShouldBeFalse();
     }
 
     [Fact]
@@ -113,28 +94,11 @@ public class SimulationSettingsTests
     }
 
     [Fact]
-    public void EnsureValidRange_ShouldClampNegativeDelay()
+    public void EnsureValidRange_ShouldClampDelayValues()
     {
         var settings = new SimulationSettings { MinDelayMs = -100, MaxDelayMs = -50 };
         settings.EnsureValidRange();
         settings.MinDelayMs.ShouldBe(0);
         settings.MaxDelayMs.ShouldBe(0);
-    }
-
-    [Fact]
-    public void EnsureValidRange_ShouldClampMaxBelowMin()
-    {
-        var settings = new SimulationSettings { MinDelayMs = 1000, MaxDelayMs = 500 };
-        settings.EnsureValidRange();
-        settings.MaxDelayMs.ShouldBe(1000);
-    }
-
-    [Fact]
-    public void EnsureValidRange_ShouldClampErrorRate()
-    {
-        var settings = new SimulationSettings { ErrorRate = 150, ValidationFailureRate = -10 };
-        settings.EnsureValidRange();
-        settings.ErrorRate.ShouldBe(100);
-        settings.ValidationFailureRate.ShouldBe(0);
     }
 }

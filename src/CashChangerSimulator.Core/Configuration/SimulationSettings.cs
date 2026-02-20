@@ -27,18 +27,6 @@ public partial class SimulationSettings
     [TomlValueOnSerialized]
     public int MaxDelayMs { get; set; } = 2000;
 
-    /// <summary>ランダムエラーを有効にするか。</summary>
-    [TomlValueOnSerialized]
-    public bool RandomErrorsEnabled { get; set; } = false;
-
-    /// <summary>エラー発生確率 (0-100)。</summary>
-    [TomlValueOnSerialized]
-    public int ErrorRate { get; set; } = 10;
-
-    /// <summary>重なり等による読取エラーの発生確率 (0-100)。</summary>
-    [TomlValueOnSerialized]
-    public int ValidationFailureRate { get; set; } = 5;
-
     /// <summary>UIの動作モード。</summary>
     [TomlValueOnSerialized]
     public UIMode UIMode { get; set; } = UIMode.Standard;
@@ -49,7 +37,5 @@ public partial class SimulationSettings
     {
         MinDelayMs = Math.Max(0, MinDelayMs);
         MaxDelayMs = Math.Max(MinDelayMs, MaxDelayMs);
-        ErrorRate = Math.Clamp(ErrorRate, 0, 100);
-        ValidationFailureRate = Math.Clamp(ValidationFailureRate, 0, 100);
     }
 }
