@@ -77,5 +77,6 @@ public class CashStatusMonitor : IDisposable
     {
         _subscription.Dispose();
         _status.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

@@ -69,5 +69,6 @@ public class TransactionHistory : IDisposable
     public void Dispose()
     {
         _added.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

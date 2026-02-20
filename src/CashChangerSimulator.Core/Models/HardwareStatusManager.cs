@@ -34,5 +34,6 @@ public class HardwareStatusManager : IDisposable
     {
         _isJammed.Dispose();
         _isOverlapped.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

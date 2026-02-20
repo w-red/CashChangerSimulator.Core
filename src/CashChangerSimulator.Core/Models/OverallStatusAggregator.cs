@@ -47,5 +47,6 @@ public class OverallStatusAggregator : IDisposable
     {
         _deviceStatus.Dispose();
         _fullStatus.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

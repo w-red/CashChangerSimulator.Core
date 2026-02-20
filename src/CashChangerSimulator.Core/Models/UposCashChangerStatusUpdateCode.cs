@@ -32,10 +32,3 @@ public enum UposCashChangerStatusUpdateCode
     /// <summary>ベンダー固有の OK 状態 (現行実装で使用)。</summary>
     VendorOk = 206
 }
-
-/// <summary>UnifiedPOS CashChanger の ResultCodeExtended 定数。</summary>
-public enum UposCashChangerErrorCodeExtended
-{
-    /// <summary>現金不足のため、指定された現金を払い出せない。</summary>
-    OverDispense = 201
-}
