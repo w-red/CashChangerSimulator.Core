@@ -5,6 +5,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Tests;
 
+/// <summary>重なりエラー（Overlap Error）のシミュレーションを検証するテストクラス。</summary>
 public class OverlapSimulationTest
 {
     [Fact]

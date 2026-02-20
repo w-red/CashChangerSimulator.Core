@@ -15,6 +15,7 @@ public class OverallStatusAggregator : IDisposable
     /// <summary>満杯・ニアフルに関する集約ステータス。</summary>
     public ReadOnlyReactiveProperty<CashStatus> FullStatus => _fullStatus;
 
+    /// <summary>監視対象のモニター一覧を指定して初期化します。</summary>
     public OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
     {
         _monitors = monitors;
@@ -43,6 +44,7 @@ public class OverallStatusAggregator : IDisposable
         return CashStatus.Normal;
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         _deviceStatus.Dispose();

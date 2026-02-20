@@ -33,7 +33,7 @@ public class TransactionHistory : IDisposable
     {
         return new HistoryState
         {
-            Entries = _entries.Select(e => new HistoryEntryState
+            Entries = [.. _entries.Select(e => new HistoryEntryState
             {
                 Timestamp = e.Timestamp,
                 Type = e.Type,
@@ -41,7 +41,7 @@ public class TransactionHistory : IDisposable
                 Counts = e.Counts.ToDictionary(
                     kv => $"{kv.Key.CurrencyCode}:{(kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? "B" : "C")}{kv.Key.Value}",
                     kv => kv.Value)
-            }).ToList()
+            })]
         };
     }
 
@@ -66,6 +66,7 @@ public class TransactionHistory : IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         _added.Dispose();

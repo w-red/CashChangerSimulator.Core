@@ -5,7 +5,9 @@ namespace CashChangerSimulator.Core.Configuration;
 /// <summary>シミュレーターのUIモード</summary>
 public enum UIMode
 {
+    /// <summary>標準モード。</summary>
     Standard,
+    /// <summary>POS取引モード。</summary>
     PosTransaction
 }
 
@@ -40,4 +42,14 @@ public partial class SimulationSettings
     /// <summary>UIの動作モード。</summary>
     [TomlValueOnSerialized]
     public UIMode UIMode { get; set; } = UIMode.Standard;
+
+    /// <summary>全プロパティの値を有効範囲にクランプします。</summary>
+    /// <remarks>デシリアライズ後や外部入力を受け付けた後に呼び出してください。</remarks>
+    public void EnsureValidRange()
+    {
+        MinDelayMs = Math.Max(0, MinDelayMs);
+        MaxDelayMs = Math.Max(MinDelayMs, MaxDelayMs);
+        ErrorRate = Math.Clamp(ErrorRate, 0, 100);
+        ValidationFailureRate = Math.Clamp(ValidationFailureRate, 0, 100);
+    }
 }

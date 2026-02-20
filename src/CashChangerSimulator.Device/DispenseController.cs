@@ -12,7 +12,8 @@ namespace CashChangerSimulator.Device;
 public class DispenseController(
     CashChangerManager manager,
     SimulationSettings? config = null,
-    HardwareStatusManager? hardwareStatusManager = null) : IDisposable
+    HardwareStatusManager? hardwareStatusManager = null)
+    : IDisposable
 {
     private readonly SimulationSettings _config = config ?? new SimulationSettings();
     private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
@@ -28,7 +29,7 @@ public class DispenseController(
     /// <summary>現在の出金ステータス。</summary>
     public CashDispenseStatus Status => _status;
 
-    /// <summary>出金中かどうか。</summary>
+    /// <summary>出金処理中かどうか（BUSY 状態）。</summary>
     public bool IsBusy => _status == CashDispenseStatus.Busy;
 
     /// <summary>指定された金額を払い出します（内訳自動計算）。</summary>
@@ -75,22 +76,8 @@ public class DispenseController(
         {
             _logger.ZLogInformation($"Dispense operation started.");
 
-            // Simulation: Delay
-            if (_config.DelayEnabled)
-            {
-                var delay = Random.Shared.Next(_config.MinDelayMs, _config.MaxDelayMs);
-                await Task.Delay(delay);
-            }
-
-            // Simulation: Random Error
-            if (_config.RandomErrorsEnabled)
-            {
-                var roll = Random.Shared.Next(0, 100);
-                if (roll < _config.ErrorRate)
-                {
-                    throw new PosControlException("Simulated Random Failure", ErrorCode.Failure);
-                }
-            }
+            await SimulationBehavior.ApplyDelayAsync(_config);
+            SimulationBehavior.ThrowIfRandomError(_config);
 
             action();
             _status = CashDispenseStatus.Idle;
@@ -134,6 +121,7 @@ public class DispenseController(
         }
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         _disposables.Dispose();

@@ -8,7 +8,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device;
 
-/// <summary>UPOS v1.5+ の Deposit シーケンスを管理するコントローラー（beginDeposit → fixDeposit → endDeposit）。</summary>
+/// <summary>入金シーケンスのライフサイクルを管理するコントローラー。</summary>
 /// <param name="inventory">在庫管理オブジェクト。</param>
 /// <param name="config">シミュレーション設定。</param>
 /// <param name="hardwareStatusManager">ハードウェア状態マネージャー。</param>
@@ -55,7 +55,7 @@ public class DepositController(
 
     // ========== Methods ==========
 
-    /// <summary>UPOS 8.5.2: 入金受付を開始し、DepositCounts と DepositAmount を 0 に初期化します。</summary>
+    /// <summary>入金受付を開始します。</summary>
     public void BeginDeposit()
     {
         _logger.ZLogInformation($"BeginDeposit called. Current Status: {_depositStatus}");
@@ -70,7 +70,7 @@ public class DepositController(
         _logger.ZLogInformation($"BeginDeposit finished. New Status: {_depositStatus}");
     }
 
-    /// <summary>UPOS 8.5.6: 入金を確定します。beginDeposit が先に呼ばれていない場合は E_ILLEGAL。</summary>
+    /// <summary>投入された金額を確定（固定）します。</summary>
     public void FixDeposit()
     {
         if (!IsDepositInProgress) throw new PosControlException("Deposit not in progress", ErrorCode.Illegal);
@@ -79,7 +79,7 @@ public class DepositController(
         _changed.OnNext(Unit.Default);
     }
 
-    /// <summary>UPOS 8.5.5: 入金受付を完了します。fixDeposit が先に呼ばれていない場合は E_ILLEGAL。</summary>
+    /// <summary>入金受付を完了し、必要に応じて在庫を更新します。</summary>
     public void EndDeposit(CashDepositAction action)
     {
         if (!_depositFixed)
@@ -116,7 +116,7 @@ public class DepositController(
         _changed.OnNext(Unit.Default);
     }
 
-    /// <summary>UPOS 8.5.7: 入金一時停止 / 再開。すでにその状態である場合は E_ILLEGAL。</summary>
+    /// <summary>入金受付の一時停止または再開を制御します。</summary>
     public void PauseDeposit(CashDepositPause control)
     {
         if (_depositStatus is not (CashDepositStatus.Start or CashDepositStatus.Count))
@@ -175,7 +175,7 @@ public class DepositController(
         _changed.OnNext(Unit.Default);
     }
 
-    /// <summary>リソースを解放します。</summary>
+    /// <inheritdoc/>
     public void Dispose()
     {
         _disposables.Dispose();

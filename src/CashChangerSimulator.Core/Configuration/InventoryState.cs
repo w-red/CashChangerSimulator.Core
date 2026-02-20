@@ -10,6 +10,7 @@ public partial class InventoryState
     [TomlValueOnSerialized]
     public Dictionary<string, int> Counts { get; set; } = [];
 
+    /// <summary>インスタンスの状態が整合していることを保証します。</summary>
     public void EnsureInitialized()
     {
         Counts ??= [];

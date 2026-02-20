@@ -30,6 +30,7 @@ public class HardwareStatusManager : IDisposable
         _isOverlapped.Value = overlapped;
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         _isJammed.Dispose();

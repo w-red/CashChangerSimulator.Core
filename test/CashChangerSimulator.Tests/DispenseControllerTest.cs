@@ -6,8 +6,12 @@ using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Tests;
 
+/// <summary>DispenseController の動作を検証するテストクラス。</summary>
 public class DispenseControllerTest
 {
+    /// <summary>ディスペンス結果を無視するコールバック。</summary>
+    private static void IgnoreDispenseResult(ErrorCode code, int codeEx) { }
+
     [Fact]
     public async Task DispenseChangeAsync_ShouldTransitionToBusyAndBackToIdle()
     {
@@ -35,7 +39,7 @@ public class DispenseControllerTest
         // OR just use a synchronous call with delay and check status from another thread).
         // Actually, let's use a synchronous call with a large delay and Task.Run it here.
 
-        await Task.Delay(300); // Wait for simulation to finish
+        await Task.Delay(TestTimingConstants.CompletionWaitMs, TestContext.Current.CancellationToken); // Wait for simulation to finish
 
         // Assert
         Assert.Equal(CashDispenseStatus.Idle, controller.Status);
@@ -55,12 +59,12 @@ public class DispenseControllerTest
 
         // Act & Assert
         // Start first dispense (async)
-        _ = controller.DispenseChangeAsync(1000, true, (c, e) => { });
+        _ = controller.DispenseChangeAsync(1000, true, IgnoreDispenseResult);
 
         // Wait a bit to ensure it started
-        await Task.Delay(50);
+        await Task.Delay(TestTimingConstants.StartupCheckDelayMs, TestContext.Current.CancellationToken);
 
         // Second call should throw
-        await Assert.ThrowsAsync<PosControlException>(() => controller.DispenseChangeAsync(1000, false, (c, e) => { }));
+        await Assert.ThrowsAsync<PosControlException>(() => controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult));
     }
 }

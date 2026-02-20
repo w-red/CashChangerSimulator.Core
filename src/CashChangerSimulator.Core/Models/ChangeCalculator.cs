@@ -5,7 +5,7 @@ namespace CashChangerSimulator.Core.Models;
 /// <summary>お釣りの金種組み合わせを計算するクラス。</summary>
 public class ChangeCalculator
 {
-    /// <summary>指定された在庫から、指定された金額を支払うための金種内訳を計算する。</summary>
+    /// <summary>指定された在庫から、支払額に応じた金種の組み合わせを算出します。</summary>
     /// <param name="inventory">現在の在庫。</param>
     /// <param name="targetAmount">支払いたい合計金額。</param>
     /// <returns>金種キーと枚数のディクショナリ。</returns>

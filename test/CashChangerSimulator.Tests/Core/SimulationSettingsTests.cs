@@ -8,6 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
+/// <summary>シミュレーション設定の保存・読み込みとバリデーションを検証するテストクラス。</summary>
 public class SimulationSettingsTests
 {
     [Fact]
@@ -109,5 +110,31 @@ public class SimulationSettingsTests
         var inventory = new CashChangerSimulator.Core.Models.Inventory();
         var mp = new MonitorsProvider(inventory, cp, meta);
         return new SettingsViewModel(cp, mp, meta);
+    }
+
+    [Fact]
+    public void EnsureValidRange_ShouldClampNegativeDelay()
+    {
+        var settings = new SimulationSettings { MinDelayMs = -100, MaxDelayMs = -50 };
+        settings.EnsureValidRange();
+        settings.MinDelayMs.ShouldBe(0);
+        settings.MaxDelayMs.ShouldBe(0);
+    }
+
+    [Fact]
+    public void EnsureValidRange_ShouldClampMaxBelowMin()
+    {
+        var settings = new SimulationSettings { MinDelayMs = 1000, MaxDelayMs = 500 };
+        settings.EnsureValidRange();
+        settings.MaxDelayMs.ShouldBe(1000);
+    }
+
+    [Fact]
+    public void EnsureValidRange_ShouldClampErrorRate()
+    {
+        var settings = new SimulationSettings { ErrorRate = 150, ValidationFailureRate = -10 };
+        settings.EnsureValidRange();
+        settings.ErrorRate.ShouldBe(100);
+        settings.ValidationFailureRate.ShouldBe(0);
     }
 }

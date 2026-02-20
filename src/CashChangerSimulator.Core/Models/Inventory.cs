@@ -8,8 +8,8 @@ namespace CashChangerSimulator.Core.Models;
 /// <summary>金種を一意に識別するための複合キー（通貨コード、額面、硬貨/紙幣の種別）。</summary>
 public record DenominationKey(decimal Value, CashType Type, string CurrencyCode = "JPY")
 {
-    /// <summary>文字列形式（例: "B10000", "C500"）から DenominationKey を解析します。</summary>
-    /// <param name="s">解析対象の文字列。先頭が 'B' (Bill) または 'C' (Coin) である必要がある。</param>
+    /// <summary>文字列形式から金種キーを解析します。</summary>
+    /// <param name="s">解析対象の文字列。</param>
     /// <param name="result">解析結果のキー。</param>
     /// <returns>解析に成功した場合は true、それ以外は false。</returns>
     public static bool TryParse(string s, out DenominationKey? result)
@@ -114,7 +114,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>全在庫の金種キーと枚数の列挙を取得する。</summary>
     public IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => _counts;
 
-    /// <summary>現在の在庫を保存用のディクショナリ（"CurrencyCode:TypeAmount" 形式）に変換します。</summary>
+    /// <summary>現在の在庫を保存用のデータ形式に変換します。</summary>
     public Dictionary<string, int> ToDictionary()
     {
         return _counts.ToDictionary(
