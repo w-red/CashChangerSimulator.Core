@@ -25,7 +25,7 @@ public class DepositController(
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public Observable<Unit> Changed => _changed;
-    
+
     private decimal _depositAmount;
     private readonly Dictionary<DenominationKey, int> _depositCounts = [];
     private CashDepositStatus _depositStatus = CashDepositStatus.None;
@@ -44,7 +44,7 @@ public class DepositController(
     public CashDepositStatus DepositStatus => _depositStatus;
 
     /// <summary>入金受付中かどうか（払出ガード判定用）。</summary>
-    public bool IsDepositInProgress => 
+    public bool IsDepositInProgress =>
         _depositStatus is CashDepositStatus.Start or CashDepositStatus.Count;
 
     /// <summary>一時停止中かどうか。</summary>
@@ -58,7 +58,6 @@ public class DepositController(
     /// <summary>UPOS 8.5.2: 入金受付を開始し、DepositCounts と DepositAmount を 0 に初期化します。</summary>
     public void BeginDeposit()
     {
-        try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: BeginDeposit called. Current Status: {_depositStatus}\n"); } catch {}
         _logger.ZLogInformation($"BeginDeposit called. Current Status: {_depositStatus}");
         _depositAmount = 0m;
         _depositCounts.Clear();
@@ -68,7 +67,6 @@ public class DepositController(
         _hardwareStatusManager.SetOverlapped(false); // Clear error on new deposit
         _depositStatus = CashDepositStatus.Count;
         _changed.OnNext(Unit.Default);
-        try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: BeginDeposit finished. New Status: {_depositStatus}\n"); } catch {}
         _logger.ZLogInformation($"BeginDeposit finished. New Status: {_depositStatus}");
     }
 
@@ -140,7 +138,7 @@ public class DepositController(
     }
 
     /// <summary>入金中に金種が追加されたときに呼ばれるトラッキングメソッド。</summary>
-    public void TrackDeposit(DenominationKey key) 
+    public void TrackDeposit(DenominationKey key)
         => TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, 1 } });
 
     /// <summary>入金中に複数の金種を一括で追加するトラッキングメソッド。</summary>
@@ -170,7 +168,7 @@ public class DepositController(
             _depositCounts[key] =
                 _depositCounts.TryGetValue(key, out int value)
                 ? value + count : count;
-            
+
             // Logic Correction: Inventory is NOT updated here.
             // It will be updated in EndDeposit if action is Store.
         }

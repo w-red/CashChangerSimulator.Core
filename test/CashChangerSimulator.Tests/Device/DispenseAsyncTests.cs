@@ -49,7 +49,7 @@ public class DispenseAsyncTests
 
         // Act
         changer.DispenseChange(100);
-        
+
         // Assert: Immediate return, event should not have fired yet because we haven't set the finish signal
         changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91).ShouldBeFalse();
 
@@ -87,7 +87,7 @@ public class DispenseAsyncTests
 
         // Act: Start dispense but don't finish it
         var dispenseTask = Task.Run(() => changer.DispenseChange(100), TestContext.Current.CancellationToken);
-        
+
         // Wait until it enters the manager
         manager.DispenseStartSignal.Wait(2000, TestContext.Current.CancellationToken).ShouldBeTrue("Dispense did not start in time");
 

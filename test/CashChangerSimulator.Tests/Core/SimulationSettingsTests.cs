@@ -34,7 +34,7 @@ public class SimulationSettingsTests
     public void ViewModelShouldValidateDelaySettings()
     {
         var vm = CreateViewModel();
-        
+
         vm.MinDelay.Value = -1;
         vm.MinDelay.HasErrors.ShouldBeTrue();
 
@@ -72,16 +72,16 @@ public class SimulationSettingsTests
         }
         configProvider.Config.Simulation.DelayEnabled = true;
         configProvider.Config.Simulation.MinDelayMs = 1234;
-        
+
         var vm = CreateViewModel(configProvider);
-        
+
         vm.UseDelay.Value.ShouldBeTrue();
         vm.MinDelay.Value.ShouldBe(1234);
 
         // Edit
         vm.UseDelay.Value = false;
         vm.MinDelay.Value = 500;
-        
+
         // Save
         vm.SaveCommand.Execute(Unit.Default);
 
@@ -92,7 +92,7 @@ public class SimulationSettingsTests
     private static SettingsViewModel CreateViewModel(ConfigurationProvider? configProvider = null)
     {
         var cp = configProvider ?? new ConfigurationProvider();
-        
+
         // Ensure JPY inventory exists for test
         if (!cp.Config.Inventory.ContainsKey("JPY"))
         {

@@ -18,19 +18,19 @@ public class OverallStatusAggregatorTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denominations = new[] 
-        { 
+        var denominations = new[]
+        {
             new DenominationKey(1000, CashType.Bill),
             new DenominationKey(5000, CashType.Bill)
         };
-        
+
         // モニター作成
-        var monitors = denominations.Select(d => 
+        var monitors = denominations.Select(d =>
             new CashStatusMonitor(inventory, d, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)
         ).ToList();
 
         var changerStatus = new OverallStatusAggregator(monitors);
-        
+
         CashStatus deviceStatus = CashStatus.Unknown;
         CashStatus fullStatus = CashStatus.Unknown;
         using var _d = changerStatus.DeviceStatus.Subscribe(s => deviceStatus = s);
@@ -56,7 +56,7 @@ public class OverallStatusAggregatorTests
         // Assert: FullStatus=Full
         fullStatus.ShouldBe(CashStatus.Full);
         deviceStatus.ShouldBe(CashStatus.Normal);
-        
+
         // Act: 1000円を Full のまま、5000円を Empty にする (1000: 10枚, 5000: 0枚)
         inventory.SetCount(denominations[1], 0);
         // Assert: 両方の異常が独立して報告される

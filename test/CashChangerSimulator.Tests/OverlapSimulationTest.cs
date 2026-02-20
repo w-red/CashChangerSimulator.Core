@@ -53,7 +53,7 @@ public class OverlapSimulationTest
 
         // EndDeposit(NoChange) should throw if still overlapped
         Assert.Throws<PosControlException>(() => controller.EndDeposit(CashDepositAction.NoChange));
-        
+
         // EndDeposit(Repay) should succeed and clear error
         controller.EndDeposit(CashDepositAction.Repay);
         Assert.False(hardwareManager.IsOverlapped.Value);
@@ -65,7 +65,7 @@ public class OverlapSimulationTest
         // Arrange
         var hardwareManager = new HardwareStatusManager();
         hardwareManager.SetOverlapped(true);
-        
+
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history);

@@ -39,7 +39,7 @@ public class ErrorScenarioTests
     {
         var (device, _) = CreateDevice();
         device.BeginDeposit();
-        
+
         Should.Throw<PosControlException>(() => device.DispenseChange(100))
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
@@ -50,7 +50,7 @@ public class ErrorScenarioTests
     {
         var (device, _) = CreateDevice();
         device.BeginDeposit();
-        
+
         Should.Throw<PosControlException>(() => device.EndDeposit(CashDepositAction.NoChange))
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
@@ -72,7 +72,7 @@ public class ErrorScenarioTests
     {
         var (device, hardware) = CreateDevice();
         hardware.SetJammed(true);
-        
+
         Should.Throw<PosControlException>(() => device.DispenseChange(1000))
             .ErrorCode.ShouldBe(ErrorCode.Failure);
     }
@@ -83,8 +83,8 @@ public class ErrorScenarioTests
     {
         var (device, hardware) = CreateDevice();
         int lastStatus = 0;
-        
-        device.OnEventQueued = (e) => 
+
+        device.OnEventQueued = (e) =>
         {
             if (e is StatusUpdateEventArgs se)
             {

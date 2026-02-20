@@ -73,7 +73,7 @@ public class SimulatorCashChanger : CashChangerBasic
 
         DevicePath = "SimulatorCashChanger";
         _hardwareStatusManager =
-            hardwareStatusManager 
+            hardwareStatusManager
             ?? ServiceLocator.HardwareStatusManager
             ?? new HardwareStatusManager();
 
@@ -85,10 +85,10 @@ public class SimulatorCashChanger : CashChangerBasic
                 $"SimulatorCashChanger initialized.");
 
         _inventory =
-            inventory 
-            ?? ServiceLocator.Inventory 
+            inventory
+            ?? ServiceLocator.Inventory
             ?? new Inventory();
-        
+
         if (inventory == null && ServiceLocator.Inventory == null)
         {
             var state =
@@ -159,7 +159,7 @@ public class SimulatorCashChanger : CashChangerBasic
 
         // Subscribe to status changes for StatusUpdateEvent
         _statusSubscription = Disposable.Combine(
-            _statusAggregator.DeviceStatus.Subscribe(status => 
+            _statusAggregator.DeviceStatus.Subscribe(status =>
             {
                 var newDeviceStatus = status switch
                 {
@@ -173,7 +173,7 @@ public class SimulatorCashChanger : CashChangerBasic
                     _lastCashChangerStatus = newDeviceStatus;
                 }
             }),
-            _statusAggregator.FullStatus.Subscribe(status => 
+            _statusAggregator.FullStatus.Subscribe(status =>
             {
                 var newFullStatus = status switch
                 {
@@ -233,7 +233,7 @@ public class SimulatorCashChanger : CashChangerBasic
     // ========== Deposit Methods (UPOS v1.5+) ==========
 
     /// <summary>現金投入処理を開始します。</summary>
-    public override void BeginDeposit() 
+    public override void BeginDeposit()
     {
         ThrowIfBusy();
         _depositController.BeginDeposit();
@@ -243,7 +243,7 @@ public class SimulatorCashChanger : CashChangerBasic
     public override void EndDeposit(CashDepositAction action) => _depositController.EndDeposit(action);
 
     /// <summary>投入された現金の計数を確定します。</summary>
-    public override void FixDeposit() 
+    public override void FixDeposit()
     {
         _depositController.FixDeposit();
 
@@ -318,7 +318,7 @@ public class SimulatorCashChanger : CashChangerBasic
     }
 
     /// <summary>指定された金種と枚数の現金を払い出します。</summary>
-    public override void DispenseCash(CashCount[] cashCounts) 
+    public override void DispenseCash(CashCount[] cashCounts)
     {
         ThrowIfDepositInProgress();
         ThrowIfBusy();
@@ -326,8 +326,8 @@ public class SimulatorCashChanger : CashChangerBasic
         var dict = new Dictionary<DenominationKey, int>();
         foreach (var cc in cashCounts)
         {
-            var cashType = (cc.Type == CashCountType.Bill) 
-                ? CashType.Bill 
+            var cashType = (cc.Type == CashCountType.Bill)
+                ? CashType.Bill
                 : CashType.Coin;
 
             var factor = GetCurrencyFactor(_activeCurrencyCode);
@@ -355,9 +355,9 @@ public class SimulatorCashChanger : CashChangerBasic
     }
 
     // ========== ReadCashCounts ==========
-    
+
     /// <summary>現在の現金在庫数を読み取ります。</summary>
-    public override CashCounts ReadCashCounts() 
+    public override CashCounts ReadCashCounts()
     {
         ThrowIfBusy();
         var sorted = _inventory.AllCounts
@@ -395,10 +395,10 @@ public class SimulatorCashChanger : CashChangerBasic
     // ========== Currency Properties ==========
 
     /// <summary>現在アクティブな通貨コードを取得または設定します。</summary>
-    public override string CurrencyCode 
-    { 
-        get => _activeCurrencyCode; 
-        set 
+    public override string CurrencyCode
+    {
+        get => _activeCurrencyCode;
+        set
         {
             if (CurrencyCodeList.Contains(value))
             {
@@ -427,8 +427,8 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>現在投入されている現金の合計金額を取得します。</summary>
     public override int DepositAmount => (int)Math.Round(_depositController.DepositAmount * GetCurrencyFactor());
     /// <summary>現在投入されている現金の金種別枚数を取得します。</summary>
-    public override CashCount[] DepositCounts 
-    { 
+    public override CashCount[] DepositCounts
+    {
         get => [.. _depositController.DepositCounts
             .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
             .Select(kv => new CashCount(
@@ -438,7 +438,7 @@ public class SimulatorCashChanger : CashChangerBasic
     }
     /// <summary>現在の入金処理の状態を取得します。</summary>
     public override CashDepositStatus DepositStatus => _depositController.DepositStatus;
-    
+
     // ========== Exit Properties ==========
 
     /// <summary>現在の排出口インデックスを取得または設定します。</summary>

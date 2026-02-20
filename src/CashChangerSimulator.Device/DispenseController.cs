@@ -1,6 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
@@ -16,7 +16,7 @@ public class DispenseController(
 {
     private readonly SimulationSettings _config = config ?? new SimulationSettings();
     private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-    private readonly ILogger<DispenseController> _logger = CashChangerSimulator.Core.LogProvider.CreateLogger<DispenseController>();
+    private readonly ILogger<DispenseController> _logger = Core.LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> _changed = new();
     private readonly CompositeDisposable _disposables = [];
 

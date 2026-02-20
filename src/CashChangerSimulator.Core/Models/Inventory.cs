@@ -1,5 +1,7 @@
 using MoneyKind4Opos.Currencies.Interfaces;
+using Microsoft.Extensions.Logging;
 using R3;
+using ZLogger;
 
 namespace CashChangerSimulator.Core.Models;
 
@@ -54,6 +56,7 @@ public interface IReadOnlyInventory
 /// <summary>金種ごとの在庫枚数を管理するクラス。</summary>
 public class Inventory : IReadOnlyInventory
 {
+    private readonly Microsoft.Extensions.Logging.ILogger<Inventory> _logger = LogProvider.CreateLogger<Inventory>();
     private readonly Dictionary<DenominationKey, int> _counts = [];
     private readonly Subject<DenominationKey> _changed = new();
 
@@ -68,7 +71,7 @@ public class Inventory : IReadOnlyInventory
         {
             key = key with { CurrencyCode = "JPY" };
         }
-        try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: Inventory.Add called. Key: {key}, Count: {count}\n"); } catch {}
+        _logger.ZLogDebug($"Inventory.Add called. Key: {key}, Count: {count}");
         if (_counts.ContainsKey(key))
         {
             _counts[key] += count;
@@ -78,7 +81,7 @@ public class Inventory : IReadOnlyInventory
             _counts[key] = count;
         }
         _changed.OnNext(key);
-        try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: Inventory.Add finished. New Total: {CalculateTotal()}\n"); } catch {}
+        _logger.ZLogDebug($"Inventory.Add finished. New Total: {CalculateTotal()}");
     }
 
     /// <summary>指定された金種の枚数を設定する。</summary>
@@ -138,11 +141,7 @@ public class Inventory : IReadOnlyInventory
             }
             else
             {
-                // 旧形式 (B1000) との互換性のため、デフォルト通貨 (JPY) で試行
-                if (DenominationKey.TryParse(kv.Key, "JPY", out var key) && key != null)
-                {
-                    SetCount(key, kv.Value);
-                }
+                _logger.ZLogWarning($"Invalid inventory key format: {kv.Key}");
             }
         }
     }

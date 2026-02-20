@@ -40,7 +40,7 @@ public class CashStatusMonitor : IDisposable
     private void UpdateStatus()
     {
         var count = _inventory.GetCount(_key);
-        
+
         if (count == 0)
         {
             _status.Value = CashStatus.Empty;

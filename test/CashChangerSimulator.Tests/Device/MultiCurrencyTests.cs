@@ -78,7 +78,7 @@ public class MultiCurrencyTests
         // ※SimulatorCashChangerの内部のInventoryにアクセスできないため、
         // 現状の設計では DepositController または Inventory をモックするか、
         // 今回の修正で CurrencyCode を持つ DenominationKey を使って入金する。
-        
+
         // テスト用に直接 Inventory を操作できるよう、必要ならリフレクションを使うか
         // 外部から入金イベントを模倣する仕組みが必要。
         // ここでは実装の意図通り GetCurrencyFactor が効いているかを確認。

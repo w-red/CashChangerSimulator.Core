@@ -50,7 +50,7 @@ public class TransactionHistory : IDisposable
     {
         _entries.Clear();
         if (state.Entries == null) return;
-        
+
         foreach (var s in state.Entries.Take(MaxEntries))
         {
             var counts = new Dictionary<DenominationKey, int>();

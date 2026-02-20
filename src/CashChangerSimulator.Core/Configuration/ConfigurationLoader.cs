@@ -1,11 +1,14 @@
 using CashChangerSimulator.Core.Models;
 using CsToml.Extensions;
+using Microsoft.Extensions.Logging;
+using ZLogger;
 
 namespace CashChangerSimulator.Core.Configuration;
 
 /// <summary>TOML 形式の設定ファイルを管理するクラス。</summary>
 public static class ConfigurationLoader
 {
+    private static readonly ILogger Logger = LogProvider.CreateLogger<SimulatorConfiguration>(); // SimulatorConfiguration as category since it's the main config class
     /// <summary>デフォルトの設定ファイルパス。</summary>
     private static readonly string DefaultConfigPath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "config.toml");
@@ -28,30 +31,17 @@ public static class ConfigurationLoader
         try
         {
             var config = CsTomlFileSerializer.Deserialize<SimulatorConfiguration>(filePath);
-            
-            // 後方互換性：[Inventory.Denominations] という旧形式を [Inventory.JPY.Denominations] などへ移行
-            if (config.Inventory.TryGetValue("Denominations", out var legacySettings))
-            {
-                var targetCurrency = string.IsNullOrEmpty(config.CurrencyCode) ? "JPY" : config.CurrencyCode;
-                
-                // 現在の通貨コードの在庫設定が（デフォルトなどで）存在しないか、空の場合のみ上書き移行
-                if (!config.Inventory.ContainsKey(targetCurrency) || config.Inventory[targetCurrency].Denominations.Count == 0)
-                {
-                    config.Inventory[targetCurrency] = legacySettings;
-                }
-                
-                config.Inventory.Remove("Denominations");
-                
-                // 移行が発生したため、新形式で上書き保存
-                Save(config, filePath);
-            }
 
             config.Simulation ??= new SimulationSettings();
             config.Logging ??= new LoggingSettings();
             return config;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.ZLogError(
+                ex,
+                $"Failed to load configuration from {filePath}. Returning default configuration.");
+            // Return default configuration instead of crashing the app
             return new SimulatorConfiguration();
         }
     }
@@ -77,8 +67,10 @@ public static class ConfigurationLoader
             state.EnsureInitialized();
             return state;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.ZLogError(ex, $"Failed to load inventory state from {InventoryStatePath}. Returning empty state.");
+            // Return empty instead of crashing; allows starting with zero inventory
             return new InventoryState();
         }
     }
@@ -104,12 +96,19 @@ public static class ConfigurationLoader
         try
         {
             var bin = File.ReadAllBytes(HistoryStatePath);
-            var state = MemoryPack.MemoryPackSerializer.Deserialize<HistoryState>(bin) ?? CreateInitialHistoryState();
+            var state = MemoryPack
+                .MemoryPackSerializer
+                .Deserialize<HistoryState>(bin)
+                ?? CreateInitialHistoryState();
             state.Entries ??= [];
             return state;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.ZLogError(
+                ex,
+                $"Failed to load history state from {HistoryStatePath}. Returning initial state.");
+            // Return initial state if file is corrupted or missing
             return CreateInitialHistoryState();
         }
     }
@@ -119,12 +118,16 @@ public static class ConfigurationLoader
     {
         try
         {
-            var bin = MemoryPack.MemoryPackSerializer.Serialize(state);
-            File.WriteAllBytes(HistoryStatePath, bin);
+            var bin = MemoryPack
+                .MemoryPackSerializer
+                .Serialize(state);
+            File
+                .WriteAllBytes(HistoryStatePath, bin);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Logging can be added here
+            Logger.ZLogError(ex, $"Failed to save history state to {HistoryStatePath}.");
+            // Swallowing because saving failed history should not interrupt other operations
         }
     }
 
@@ -138,7 +141,7 @@ public static class ConfigurationLoader
                     Timestamp = DateTimeOffset.Now,
                     Type = TransactionType.Unknown,
                     Amount = 0,
-                    Counts = new Dictionary<string, int>()
+                    Counts = []
                 }
             ]
         };

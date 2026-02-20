@@ -16,7 +16,7 @@ public class DispenseControllerTest
         var key = new DenominationKey(1000, CashType.Bill, "JPY");
         inventory.SetCount(key, 10);
         var manager = new CashChangerManager(inventory, new TransactionHistory());
-        
+
         // Enable delay to capture Busy state
         var config = new SimulationSettings { DelayEnabled = true, MinDelayMs = 100, MaxDelayMs = 200 };
         var controller = new DispenseController(manager, config);
@@ -26,7 +26,7 @@ public class DispenseControllerTest
         // Act
         // Use asyncMode: true to check status immediately
         var task = controller.DispenseChangeAsync(1000, true, (code, ex) => resultCode = code);
-        
+
         Assert.Equal(CashDispenseStatus.Busy, controller.Status);
         Assert.True(controller.IsBusy);
 
@@ -34,7 +34,7 @@ public class DispenseControllerTest
         // but we can poll or wait for the resultCode if we had a way, 
         // OR just use a synchronous call with delay and check status from another thread).
         // Actually, let's use a synchronous call with a large delay and Task.Run it here.
-        
+
         await Task.Delay(300); // Wait for simulation to finish
 
         // Assert
@@ -56,10 +56,10 @@ public class DispenseControllerTest
         // Act & Assert
         // Start first dispense (async)
         _ = controller.DispenseChangeAsync(1000, true, (c, e) => { });
-        
+
         // Wait a bit to ensure it started
         await Task.Delay(50);
-        
+
         // Second call should throw
         await Assert.ThrowsAsync<PosControlException>(() => controller.DispenseChangeAsync(1000, false, (c, e) => { }));
     }

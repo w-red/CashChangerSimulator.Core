@@ -22,7 +22,7 @@ public class ChangeCalculatorTests
         inventory.SetCount(new DenominationKey(100, CashType.Coin), 10);
         inventory.SetCount(new DenominationKey(50, CashType.Coin), 10);
         inventory.SetCount(new DenominationKey(10, CashType.Coin), 10);
-        
+
         var calculator = new ChangeCalculator();
 
         // Act: 1860円を計算
@@ -43,11 +43,11 @@ public class ChangeCalculatorTests
         // Arrange
         var inventory = new Inventory();
         inventory.SetCount(new DenominationKey(100, CashType.Coin), 2); // 200円分のみ
-        
+
         var calculator = new ChangeCalculator();
 
         // Act & Assert
-        Should.Throw<InsufficientCashException>(() => 
+        Should.Throw<InsufficientCashException>(() =>
             calculator.Calculate(inventory, 300m)
         );
     }
@@ -60,11 +60,11 @@ public class ChangeCalculatorTests
         var inventory = new Inventory();
         inventory.SetCount(new DenominationKey(100, CashType.Coin), 10);
         // 50円玉がない
-        
+
         var calculator = new ChangeCalculator();
 
         // Act & Assert: 150円は払えない
-        Should.Throw<InsufficientCashException>(() => 
+        Should.Throw<InsufficientCashException>(() =>
             calculator.Calculate(inventory, 150m)
         );
     }

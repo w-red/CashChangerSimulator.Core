@@ -20,13 +20,13 @@ public class TransactionHistoryTests
     {
         // Arrange
         var history = new TransactionHistory();
-        var counts = new Dictionary<DenominationKey, int> 
-        { 
-            { new DenominationKey(1000, CashType.Bill), 2 }, 
-            { new DenominationKey(500, CashType.Coin), 1 } 
+        var counts = new Dictionary<DenominationKey, int>
+        {
+            { new DenominationKey(1000, CashType.Bill), 2 },
+            { new DenominationKey(500, CashType.Coin), 1 }
         };
         var entry = new TransactionEntry(DateTimeOffset.Now, TransactionType.Deposit, 2500m, counts);
-        
+
         TransactionEntry? lastNotified = null;
         using var _ = history.Added.Subscribe(e => lastNotified = e);
 

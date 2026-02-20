@@ -60,7 +60,7 @@ public class DepositSequenceTests
         var b1000 = new DenominationKey(1000, CashType.Bill);
 
         controller.BeginDeposit();
-        
+
         controller.TrackDeposit(b1000);
 
         controller.FixDeposit();
@@ -78,14 +78,14 @@ public class DepositSequenceTests
         var b1000 = new DenominationKey(1000, CashType.Bill);
 
         controller.BeginDeposit();
-        
+
         controller.TrackDeposit(b1000);
 
         controller.FixDeposit();
 
         // Repay: 入金された現金を全額返却
         controller.EndDeposit(CashDepositAction.Repay);
-        
+
         controller.DepositStatus.ShouldBe(CashDepositStatus.End);
         inventory.GetCount(b1000).ShouldBe(0); // 在庫から消える（返却）
     }
@@ -110,7 +110,7 @@ public class DepositSequenceTests
         // Restart
         controller.PauseDeposit(CashDepositPause.Restart);
         controller.IsPaused.ShouldBeFalse();
-        
+
         // 再開後に入金
         controller.TrackDeposit(b1000);
         controller.DepositAmount.ShouldBe(1000);
