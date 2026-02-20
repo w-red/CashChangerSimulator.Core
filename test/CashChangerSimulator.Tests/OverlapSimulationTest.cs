@@ -2,9 +2,6 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using Moq;
-using R3;
-using Xunit;
 
 namespace CashChangerSimulator.Tests;
 
@@ -19,7 +16,7 @@ public class OverlapSimulationTest
         var manager = new CashChangerManager(inventory, history);
         var simSettings = new SimulationSettings { RandomErrorsEnabled = true, ValidationFailureRate = 100 }; // 100% failure
         var hardwareManager = new HardwareStatusManager();
-        var controller = new DepositController(inventory, manager, simSettings, hardwareManager);
+        var controller = new DepositController(inventory, simSettings, hardwareManager);
 
         var key = new DenominationKey(1000, MoneyKind4Opos.Currencies.Interfaces.CashType.Bill);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
@@ -41,7 +38,7 @@ public class OverlapSimulationTest
         var manager = new CashChangerManager(inventory, history);
         var simSettings = new SimulationSettings { RandomErrorsEnabled = true, ValidationFailureRate = 100 };
         var hardwareManager = new HardwareStatusManager();
-        var controller = new DepositController(inventory, manager, simSettings, hardwareManager);
+        var controller = new DepositController(inventory, simSettings, hardwareManager);
 
         var key = new DenominationKey(1000, MoneyKind4Opos.Currencies.Interfaces.CashType.Bill);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
@@ -72,7 +69,7 @@ public class OverlapSimulationTest
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history);
-        var controller = new DepositController(inventory, manager, new SimulationSettings(), hardwareManager);
+        var controller = new DepositController(inventory, new SimulationSettings(), hardwareManager);
 
         // Act
         controller.BeginDeposit();

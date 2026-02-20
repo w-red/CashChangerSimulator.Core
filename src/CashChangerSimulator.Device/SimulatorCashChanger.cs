@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
@@ -23,6 +22,7 @@ public class SimulatorCashChanger : CashChangerBasic
     private readonly SimulatorConfiguration _config;
 
     private readonly DepositController _depositController;
+    private readonly DispenseController _dispenseController;
     private readonly HardwareStatusManager _hardwareStatusManager;
     private readonly ILogger<SimulatorCashChanger> _logger;
 
@@ -54,7 +54,7 @@ public class SimulatorCashChanger : CashChangerBasic
     }
 
     /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。</summary>
-    public SimulatorCashChanger() : this(null, null, null, null, null, null, null) { }
+    public SimulatorCashChanger() : this(null, null, null, null, null, null, null, null) { }
 
     internal SimulatorCashChanger(
         SimulatorConfiguration? config = null,
@@ -62,6 +62,7 @@ public class SimulatorCashChanger : CashChangerBasic
         TransactionHistory? history = null,
         CashChangerManager? manager = null,
         DepositController? depositController = null,
+        DispenseController? dispenseController = null,
         OverallStatusAggregator? aggregator = null,
         HardwareStatusManager? hardwareStatusManager = null)
     {
@@ -72,7 +73,8 @@ public class SimulatorCashChanger : CashChangerBasic
 
         DevicePath = "SimulatorCashChanger";
         _hardwareStatusManager =
-            hardwareStatusManager
+            hardwareStatusManager 
+            ?? ServiceLocator.HardwareStatusManager
             ?? new HardwareStatusManager();
 
         _logger =
@@ -83,8 +85,11 @@ public class SimulatorCashChanger : CashChangerBasic
                 $"SimulatorCashChanger initialized.");
 
         _inventory =
-            inventory ?? new Inventory();
-        if (inventory == null)
+            inventory 
+            ?? ServiceLocator.Inventory 
+            ?? new Inventory();
+        
+        if (inventory == null && ServiceLocator.Inventory == null)
         {
             var state =
                 ConfigurationLoader
@@ -112,13 +117,18 @@ public class SimulatorCashChanger : CashChangerBasic
 
         _history =
             history
+            ?? ServiceLocator.History
             ?? new TransactionHistory();
         _manager =
             manager
+            ?? ServiceLocator.Manager
             ?? new CashChangerManager(_inventory, _history);
         _depositController =
             depositController
-            ?? new DepositController(_inventory, _manager, _config.Simulation, _hardwareStatusManager);
+            ?? new DepositController(_inventory, _config.Simulation, _hardwareStatusManager);
+        _dispenseController =
+            dispenseController
+            ?? new DispenseController(_manager, _config.Simulation, _hardwareStatusManager);
 
         // Status monitors / Aggregator
         var monitors =
@@ -196,9 +206,6 @@ public class SimulatorCashChanger : CashChangerBasic
                 if (overlapped)
                 {
                     _logger.ZLogWarning($"Device reported OVERLAP error.");
-                    // There isn't a standard OPOS status for "Overlap" in CashChangerStatus enum, 
-                    // but we can use StatusUpdateEvent with a custom code or just log it.
-                    // For now, let's keep it as an internal state that blocks operations.
                 }
             }),
             _depositController.Changed.Subscribe(_ =>
@@ -207,6 +214,11 @@ public class SimulatorCashChanger : CashChangerBasic
                 {
                     NotifyEvent(new DataEventArgs(0));
                 }
+            }),
+            _dispenseController.Changed.Subscribe(_ =>
+            {
+                // Map Busy state to UPOS State
+                _asyncProcessing = _dispenseController.IsBusy;
             })
         );
     }
@@ -264,56 +276,6 @@ public class SimulatorCashChanger : CashChangerBasic
         }
     }
 
-    private void StartAsyncDispense(Action action)
-    {
-        _asyncProcessing = true;
-        _asyncResultCode = 0;
-        _asyncResultCodeExtended = 0;
-
-        Task.Run(async () => 
-        {
-            try
-            {
-                // Simulation: Delay
-                if (_config.Simulation.DelayEnabled)
-                {
-                    var delay = Random.Shared.Next(_config.Simulation.MinDelayMs, _config.Simulation.MaxDelayMs);
-                    await Task.Delay(delay);
-                }
-
-                // Simulation: Random Error
-                if (_config.Simulation.RandomErrorsEnabled)
-                {
-                    var roll = Random.Shared.Next(0, 100);
-                    if (roll < _config.Simulation.ErrorRate)
-                    {
-                        throw new PosControlException("Simulated Random Failure", ErrorCode.Failure);
-                    }
-                }
-
-                action();
-                _logger.ZLogInformation($"Async operation completed successfully.");
-                _asyncResultCode = (int)ErrorCode.Success;
-            }
-            catch (PosControlException ex)
-            {
-                _logger.ZLogError(ex, $"Async operation failed: {ex.ErrorCode} ({ex.ErrorCodeExtended})");
-                _asyncResultCode = (int)ex.ErrorCode;
-                _asyncResultCodeExtended = ex.ErrorCodeExtended;
-            }
-            catch (Exception ex)
-            {
-                _logger.ZLogError(ex, $"Async operation encountered an unexpected error.");
-                _asyncResultCode = (int)ErrorCode.Failure;
-            }
-            finally
-            {
-                _asyncProcessing = false;
-                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
-            }
-        });
-    }
-
     /// <summary>指定された金額の釣銭を払い出します。</summary>
     public override void DispenseChange(int amount)
     {
@@ -324,22 +286,34 @@ public class SimulatorCashChanger : CashChangerBasic
 
         ThrowIfDepositInProgress();
         ThrowIfBusy();
-        if (_hardwareStatusManager.IsJammed.Value) throw new PosControlException("Device is jammed", ErrorCode.Failure);
 
-        if (AsyncMode)
+        var factor = GetCurrencyFactor();
+        var decimalAmount = amount / factor;
+
+        async void OnComplete(ErrorCode code, int codeEx)
         {
-            StartAsyncDispense(() => _manager.Dispense(amount));
+            if (code == ErrorCode.Success)
+            {
+                _logger.ZLogInformation($"DispenseChange completed successfully.");
+            }
+            else
+            {
+                _logger.ZLogError($"DispenseChange failed: {code}");
+            }
+
+            if (AsyncMode)
+            {
+                _asyncResultCode = (int)code;
+                _asyncResultCodeExtended = codeEx;
+                _asyncProcessing = false; // State must be updated before firing the event
+                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
+            }
         }
-        else
+
+        var task = _dispenseController.DispenseChangeAsync(decimalAmount, AsyncMode, OnComplete, CurrencyCode);
+        if (!AsyncMode)
         {
-            try
-            {
-                _manager.Dispense(amount);
-            }
-            catch (InsufficientCashException ex)
-            {
-                throw new PosControlException(ex.Message, ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense);
-            }
+            task.GetAwaiter().GetResult();
         }
     }
 
@@ -348,35 +322,35 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         ThrowIfDepositInProgress();
         ThrowIfBusy();
-        if (_hardwareStatusManager.IsJammed.Value) throw new PosControlException("Device is jammed", ErrorCode.Failure);
 
-        void DoDispense()
+        var dict = new Dictionary<DenominationKey, int>();
+        foreach (var cc in cashCounts)
         {
-            foreach (var cc in cashCounts)
-            {
-                var cashType = (cc.Type == CashCountType.Bill) 
-                    ? CashType.Bill 
-                    : CashType.Coin;
+            var cashType = (cc.Type == CashCountType.Bill) 
+                ? CashType.Bill 
+                : CashType.Coin;
 
-                var factor = GetCurrencyFactor(_activeCurrencyCode);
-                var val = cc.NominalValue / factor;
-                var key = new DenominationKey(val, cashType, _activeCurrencyCode);
-                
-                if (_inventory.GetCount(key) < cc.Count)
-                {
-                    throw new PosControlException("Insufficient cash for denomination", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense);
-                }
-                _inventory.Add(key, -cc.Count);
+            var factor = GetCurrencyFactor(_activeCurrencyCode);
+            var val = cc.NominalValue / factor;
+            var key = new DenominationKey(val, cashType, _activeCurrencyCode);
+            dict[key] = cc.Count;
+        }
+
+        async void OnComplete(ErrorCode code, int codeEx)
+        {
+            if (AsyncMode)
+            {
+                _asyncResultCode = (int)code;
+                _asyncResultCodeExtended = codeEx;
+                _asyncProcessing = false;
+                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
             }
         }
 
-        if (AsyncMode)
+        var task = _dispenseController.DispenseCashAsync(dict, AsyncMode, OnComplete);
+        if (!AsyncMode)
         {
-            StartAsyncDispense(DoDispense);
-        }
-        else
-        {
-            DoDispense();
+            task.GetAwaiter().GetResult();
         }
     }
 

@@ -9,13 +9,17 @@ using ZLogger;
 namespace CashChangerSimulator.Device;
 
 /// <summary>UPOS v1.5+ の Deposit シーケンスを管理するコントローラー（beginDeposit → fixDeposit → endDeposit）。</summary>
-public class DepositController : IDisposable
+/// <param name="inventory">在庫管理オブジェクト。</param>
+/// <param name="config">シミュレーション設定。</param>
+/// <param name="hardwareStatusManager">ハードウェア状態マネージャー。</param>
+public class DepositController(
+    Inventory inventory,
+    SimulationSettings? config = null,
+    HardwareStatusManager? hardwareStatusManager = null) : IDisposable
 {
-    private readonly Inventory _inventory;
-    private readonly CashChangerManager _manager;
-    private readonly SimulationSettings _config;
-    private readonly ILogger<DepositController> _logger;
-    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly SimulationSettings _config = config ?? new SimulationSettings();
+    private readonly ILogger<DepositController> _logger = LogProvider.CreateLogger<DepositController>();
+    private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
     private readonly CompositeDisposable _disposables = [];
     private readonly Subject<Unit> _changed = new();
 
@@ -27,25 +31,6 @@ public class DepositController : IDisposable
     private CashDepositStatus _depositStatus = CashDepositStatus.None;
     private bool _depositPaused;
     private bool _depositFixed;
-
-    /// <summary>DepositController の新しいインスタンスを初期化します。</summary>
-    /// <param name="inventory">在庫管理オブジェクト。</param>
-    /// <param name="manager">入出金マネージャー。</param>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="config">シミュレーション設定。</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態マネージャー。</param>
-    public DepositController(
-        Inventory inventory, 
-        CashChangerManager manager, 
-        SimulationSettings? config = null,
-        HardwareStatusManager? hardwareStatusManager = null)
-    {
-        _inventory = inventory;
-        _manager = manager;
-        _logger = LogProvider.CreateLogger<DepositController>();
-        _config = config ?? new SimulationSettings();
-        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-    }
 
     // ========== Properties ==========
 
@@ -108,9 +93,15 @@ public class DepositController : IDisposable
 
         if (action == CashDepositAction.Repay)
         {
+            // (Since we haven't added to inventory yet, we don't need to subtract)
+            _logger.ZLogInformation($"Deposit Repay: Returning cash without updating inventory.");
+        }
+        else
+        {
+            // Store (Change/NoChange): Commit deposit to inventory
             foreach (var kv in _depositCounts)
             {
-                _inventory.Add(kv.Key, -kv.Value);
+                inventory.Add(kv.Key, kv.Value);
             }
         }
         // For NoChange/Change, we check if device is healthy
@@ -180,10 +171,8 @@ public class DepositController : IDisposable
                 _depositCounts.TryGetValue(key, out int value)
                 ? value + count : count;
             
-            // Fix: Update physical inventory immediately upon insertion
-            // Note: We bypass the circular dependency in SimulatorCashChanger 
-            // by ensuring TrackBulkDeposit is the one driving the change.
-            _inventory.Add(key, count);
+            // Logic Correction: Inventory is NOT updated here.
+            // It will be updated in EndDeposit if action is Store.
         }
         _changed.OnNext(Unit.Default);
     }
@@ -193,5 +182,6 @@ public class DepositController : IDisposable
     {
         _disposables.Dispose();
         _changed.OnCompleted();
+        GC.SuppressFinalize(this);
     }
 }

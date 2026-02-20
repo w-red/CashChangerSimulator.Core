@@ -10,14 +10,13 @@ public class ChangeCalculator
     /// <param name="targetAmount">支払いたい合計金額。</param>
     /// <returns>金種キーと枚数のディクショナリ。</returns>
     /// <exception cref="InsufficientCashException">在庫不足や端数不一致により計算できない場合。</exception>
-    public IReadOnlyDictionary<DenominationKey, int> Calculate(IReadOnlyInventory inventory, decimal targetAmount)
+    public IReadOnlyDictionary<DenominationKey, int> Calculate(IReadOnlyInventory inventory, decimal targetAmount, string? currencyCode = null)
     {
         var result = new Dictionary<DenominationKey, int>();
         decimal remaining = targetAmount;
 
-        // 在庫のある金種を大きい順に取得
-        // 同じ額面の場合は、一旦紙幣を優先する（CashType.Bill > Coin）
         var availableKeys = GetAvailableDenominationKeys(inventory)
+            .Where(k => currencyCode == null || k.CurrencyCode == currencyCode)
             .OrderByDescending(k => k.Value)
             .ThenByDescending(k => k.Type);
 

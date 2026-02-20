@@ -46,7 +46,7 @@ public interface IReadOnlyInventory
     /// <summary>指定された金種の現在の枚数を取得する。</summary>
     int GetCount(DenominationKey key);
     /// <summary>現在の在庫の合計金額を計算する。</summary>
-    decimal CalculateTotal();
+    decimal CalculateTotal(string? currencyCode = null);
     /// <summary>在庫が変更されたときに通知されるイベントストリーム。</summary>
     Observable<DenominationKey> Changed { get; }
 }
@@ -63,6 +63,11 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数を追加する。</summary>
     public virtual void Add(DenominationKey key, int count)
     {
+        // Normalize key if meaningful currency code is missing
+        if (string.IsNullOrEmpty(key.CurrencyCode))
+        {
+            key = key with { CurrencyCode = "JPY" };
+        }
         try { System.IO.File.AppendAllText("debug_log.txt", $"{DateTime.Now}: Inventory.Add called. Key: {key}, Count: {count}\n"); } catch {}
         if (_counts.ContainsKey(key))
         {
@@ -90,12 +95,15 @@ public class Inventory : IReadOnlyInventory
     }
 
     /// <summary>現在の在庫の合計金額を計算する。</summary>
-    public virtual decimal CalculateTotal()
+    public virtual decimal CalculateTotal(string? currencyCode = null)
     {
         decimal total = 0;
         foreach (var (key, count) in _counts)
         {
-            total += key.Value * count;
+            if (currencyCode == null || key.CurrencyCode == currencyCode)
+            {
+                total += key.Value * count;
+            }
         }
         return total;
     }

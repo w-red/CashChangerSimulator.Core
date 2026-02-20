@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -19,7 +18,7 @@ public class ErrorScenarioTests
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history);
         var hardware = new HardwareStatusManager();
-        var device = new SimulatorCashChanger(config, inventory, history, manager, null, null, hardware);
+        var device = new SimulatorCashChanger(config, inventory, history, manager, null, null, null, hardware);
         return (device, hardware);
     }
 

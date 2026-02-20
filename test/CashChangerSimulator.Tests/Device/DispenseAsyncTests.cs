@@ -10,11 +10,11 @@ public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new
     public ManualResetEventSlim DispenseStartSignal { get; } = new(false);
     public ManualResetEventSlim DispenseFinishSignal { get; } = new(false);
 
-    public override void Dispense(decimal amount)
+    public override void Dispense(decimal amount, string? currencyCode = null)
     {
         DispenseStartSignal.Set();
         DispenseFinishSignal.Wait();
-        base.Dispense(amount);
+        base.Dispense(amount, currencyCode);
     }
 }
 
@@ -51,7 +51,7 @@ public class DispenseAsyncTests
         changer.DispenseChange(100);
         
         // Assert: Immediate return, event should not have fired yet because we haven't set the finish signal
-        changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 201).ShouldBeFalse();
+        changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91).ShouldBeFalse();
 
         // Let it finish
         manager.DispenseFinishSignal.Set();
@@ -64,7 +64,7 @@ public class DispenseAsyncTests
             await Task.Delay(100, TestContext.Current.CancellationToken);
             lock (changer.QueuedEvents)
             {
-                eventFired = changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 201);
+                eventFired = changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
             }
             timeout++;
         }

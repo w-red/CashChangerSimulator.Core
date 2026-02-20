@@ -1,8 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System;
-using System.IO;
 using ZLogger;
 
 namespace CashChangerSimulator.Core;

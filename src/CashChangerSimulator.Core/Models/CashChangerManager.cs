@@ -59,9 +59,10 @@ public class CashChangerManager(Inventory inventory, TransactionHistory history)
 
     /// <summary>指定された金額を出金する。内訳は自動計算される。</summary>
     /// <param name="amount">出金する合計金額。</param>
-    public virtual void Dispense(decimal amount)
+    /// <param name="currencyCode">通貨コード。</param>
+    public virtual void Dispense(decimal amount, string? currencyCode = null)
     {
-        var counts = _calculator.Calculate(_inventory, amount);
+        var counts = _calculator.Calculate(_inventory, amount, currencyCode);
         Dispense(counts);
     }
 }
