@@ -3,6 +3,7 @@ using CashChangerSimulator.UI.Wpf;
 using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using CsToml;
+using R3;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
@@ -34,17 +35,16 @@ public class SimulationSettingsTests
     {
         var vm = CreateViewModel();
         
-        vm.MinDelay = -1;
-        vm.HasErrors.ShouldBeTrue();
-        vm.GetErrors(nameof(vm.MinDelay)).Cast<object>().ShouldNotBeEmpty();
+        vm.MinDelay.Value = -1;
+        vm.MinDelay.HasErrors.ShouldBeTrue();
 
-        vm.MinDelay = 1000;
-        vm.MaxDelay = 500; // Min > Max
-        vm.HasErrors.ShouldBeTrue();
-        vm.GetErrors(nameof(vm.MaxDelay)).Cast<object>().ShouldNotBeEmpty();
+        vm.MinDelay.Value = 1000;
+        vm.MaxDelay.Value = 500; // Min > Max
+        vm.MaxDelay.HasErrors.ShouldBeTrue();
 
-        vm.MaxDelay = 2000;
-        vm.HasErrors.ShouldBeFalse();
+        vm.MaxDelay.Value = 2000;
+        vm.MinDelay.HasErrors.ShouldBeFalse();
+        vm.MaxDelay.HasErrors.ShouldBeFalse();
     }
 
     [Fact]
@@ -52,14 +52,14 @@ public class SimulationSettingsTests
     {
         var vm = CreateViewModel();
 
-        vm.ErrorRate = -1;
-        vm.HasErrors.ShouldBeTrue();
+        vm.ErrorRate.Value = -1;
+        vm.ErrorRate.HasErrors.ShouldBeTrue();
 
-        vm.ErrorRate = 101;
-        vm.HasErrors.ShouldBeTrue();
+        vm.ErrorRate.Value = 101;
+        vm.ErrorRate.HasErrors.ShouldBeTrue();
 
-        vm.ErrorRate = 50;
-        vm.HasErrors.ShouldBeFalse();
+        vm.ErrorRate.Value = 50;
+        vm.ErrorRate.HasErrors.ShouldBeFalse();
     }
 
     [Fact]
@@ -75,15 +75,15 @@ public class SimulationSettingsTests
         
         var vm = CreateViewModel(configProvider);
         
-        vm.UseDelay.ShouldBeTrue();
-        vm.MinDelay.ShouldBe(1234);
+        vm.UseDelay.Value.ShouldBeTrue();
+        vm.MinDelay.Value.ShouldBe(1234);
 
         // Edit
-        vm.UseDelay = false;
-        vm.MinDelay = 500;
+        vm.UseDelay.Value = false;
+        vm.MinDelay.Value = 500;
         
         // Save
-        vm.SaveCommand.Execute(null);
+        vm.SaveCommand.Execute(Unit.Default);
 
         configProvider.Config.Simulation.DelayEnabled.ShouldBeFalse();
         configProvider.Config.Simulation.MinDelayMs.ShouldBe(500);

@@ -2,6 +2,13 @@ using CsToml;
 
 namespace CashChangerSimulator.Core.Configuration;
 
+/// <summary>シミュレーターのUIモード</summary>
+public enum UIMode
+{
+    Standard,
+    PosTransaction
+}
+
 /// <summary>シミュレーション挙動（遅延・エラー）の設定クラス。</summary>
 [TomlSerializedObject]
 public partial class SimulationSettings
@@ -29,4 +36,8 @@ public partial class SimulationSettings
     /// <summary>重なり等による読取エラーの発生確率 (0-100)。</summary>
     [TomlValueOnSerialized]
     public int ValidationFailureRate { get; set; } = 5;
+
+    /// <summary>UIの動作モード。</summary>
+    [TomlValueOnSerialized]
+    public UIMode UIMode { get; set; } = UIMode.Standard;
 }
