@@ -170,7 +170,24 @@ public class SimulatorCashChanger : CashChangerBasic
 
                 if (newDeviceStatus != _lastCashChangerStatus)
                 {
+                    var previousStatus = _lastCashChangerStatus;
                     _lastCashChangerStatus = newDeviceStatus;
+
+                    if (newDeviceStatus == CashChangerStatus.OK &&
+                        previousStatus is CashChangerStatus.Empty or CashChangerStatus.NearEmpty)
+                    {
+                        NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.EmptyOk));
+                    }
+                    else
+                    {
+                        var code = newDeviceStatus switch
+                        {
+                            CashChangerStatus.Empty => (int)UposCashChangerStatusUpdateCode.Empty,
+                            CashChangerStatus.NearEmpty => (int)UposCashChangerStatusUpdateCode.NearEmpty,
+                            _ => (int)UposCashChangerStatusUpdateCode.Ok
+                        };
+                        NotifyEvent(new StatusUpdateEventArgs(code));
+                    }
                 }
             }),
             _statusAggregator.FullStatus.Subscribe(status =>
@@ -184,21 +201,30 @@ public class SimulatorCashChanger : CashChangerBasic
 
                 if (newFullStatus != _lastFullStatus)
                 {
+                    var previousFullStatus = _lastFullStatus;
                     _lastFullStatus = newFullStatus;
-                    NotifyEvent(new StatusUpdateEventArgs((int)newFullStatus));
+
+                    if (newFullStatus == CashChangerFullStatus.OK &&
+                        previousFullStatus is CashChangerFullStatus.Full or CashChangerFullStatus.NearFull)
+                    {
+                        NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.FullOk));
+                    }
+                    else
+                    {
+                        NotifyEvent(new StatusUpdateEventArgs((int)newFullStatus));
+                    }
                 }
             }),
             _hardwareStatusManager.IsJammed.Subscribe(jammed =>
             {
                 if (jammed)
                 {
-                    _lastCashChangerStatus = CashChangerStatus.OK; // Property based status
-                    NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.VendorJam));
+                    NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Jam));
                 }
                 else
                 {
                     _lastCashChangerStatus = CashChangerStatus.OK;
-                    NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.VendorOk));
+                    NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
                 }
             }),
             _hardwareStatusManager.IsOverlapped.Subscribe(overlapped =>

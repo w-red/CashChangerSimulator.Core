@@ -25,10 +25,5 @@ public enum UposCashChangerStatusUpdateCode
     Inserted = 42,
 
     /// <summary>非同期処理が完了した (CHAN_STATUS_ASYNC)。</summary>
-    AsyncFinished = 91,
-
-    /// <summary>ベンダー固有の JAM 状態 (現行実装で使用)。</summary>
-    VendorJam = 205,
-    /// <summary>ベンダー固有の OK 状態 (現行実装で使用)。</summary>
-    VendorOk = 206
+    AsyncFinished = 91
 }
