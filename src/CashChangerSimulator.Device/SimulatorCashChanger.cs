@@ -74,7 +74,7 @@ public class SimulatorCashChanger : CashChangerBasic
         DevicePath = "SimulatorCashChanger";
         _hardwareStatusManager =
             hardwareStatusManager
-            ?? ServiceLocator.HardwareStatusManager
+            ?? SimulatorServices.TryResolve<HardwareStatusManager>()
             ?? new HardwareStatusManager();
 
         _logger =
@@ -86,10 +86,10 @@ public class SimulatorCashChanger : CashChangerBasic
 
         _inventory =
             inventory
-            ?? ServiceLocator.Inventory
+            ?? SimulatorServices.TryResolve<Inventory>()
             ?? new Inventory();
 
-        if (inventory == null && ServiceLocator.Inventory == null)
+        if (inventory == null && SimulatorServices.TryResolve<Inventory>() == null)
         {
             var state =
                 ConfigurationLoader
@@ -117,11 +117,11 @@ public class SimulatorCashChanger : CashChangerBasic
 
         _history =
             history
-            ?? ServiceLocator.History
+            ?? SimulatorServices.TryResolve<TransactionHistory>()
             ?? new TransactionHistory();
         _manager =
             manager
-            ?? ServiceLocator.Manager
+            ?? SimulatorServices.TryResolve<CashChangerManager>()
             ?? new CashChangerManager(_inventory, _history);
         _depositController =
             depositController
