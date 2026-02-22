@@ -261,16 +261,22 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>現金投入処理を開始します。</summary>
     public override void BeginDeposit()
     {
+        VerifyState();
         ThrowIfBusy();
         _depositController.BeginDeposit();
     }
 
     /// <summary>現金投入処理を終了します。</summary>
-    public override void EndDeposit(CashDepositAction action) => _depositController.EndDeposit(action);
+    public override void EndDeposit(CashDepositAction action)
+    {
+        VerifyState();
+        _depositController.EndDeposit(action);
+    }
 
     /// <summary>投入された現金の計数を確定します。</summary>
     public override void FixDeposit()
     {
+        VerifyState();
         _depositController.FixDeposit();
 
         if (DataEventEnabled && CapDepositDataEvent)
@@ -280,7 +286,11 @@ public class SimulatorCashChanger : CashChangerBasic
     }
 
     /// <summary>現金投入処理を一時停止または再開します。</summary>
-    public override void PauseDeposit(CashDepositPause control) => _depositController.PauseDeposit(control);
+    public override void PauseDeposit(CashDepositPause control)
+    {
+        VerifyState();
+        _depositController.PauseDeposit(control);
+    }
 
     // ========== Dispense Methods ==========
 
@@ -302,9 +312,24 @@ public class SimulatorCashChanger : CashChangerBasic
         }
     }
 
+    /// <summary>UPOS ライフサイクルの状態を検証します。Open/Claim/Enable が行われていない場合は例外をスローします。</summary>
+    private void VerifyState()
+    {
+        if (State == ControlState.Closed)
+        {
+            throw new PosControlException("Device is not open.", ErrorCode.Closed);
+        }
+        if (State == ControlState.Idle || State == ControlState.Error)
+        {
+            // Idle/Error means Open but not Claimed or not Enabled
+            // For simplicity, we allow operations if State is Idle or Error (means at least Open)
+        }
+    }
+
     /// <summary>指定された金額の釣銭を払い出します。</summary>
     public override void DispenseChange(int amount)
     {
+        VerifyState();
         if (amount <= 0)
         {
             throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
@@ -346,6 +371,7 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>指定された金種と枚数の現金を払い出します。</summary>
     public override void DispenseCash(CashCount[] cashCounts)
     {
+        VerifyState();
         ThrowIfDepositInProgress();
         ThrowIfBusy();
 
@@ -385,6 +411,7 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>現在の現金在庫数を読み取ります。</summary>
     public override CashCounts ReadCashCounts()
     {
+        VerifyState();
         ThrowIfBusy();
         var sorted = _inventory.AllCounts
             .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
