@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
@@ -14,7 +13,7 @@ public class OverlapSimulationTest
         // Arrange
         var inventory = new Inventory();
         var hardwareManager = new HardwareStatusManager();
-        var controller = new DepositController(inventory, new SimulationSettings(), hardwareManager);
+        var controller = new DepositController(inventory, hardwareManager);
 
         var key = new DenominationKey(1000, MoneyKind4Opos.Currencies.Interfaces.CashType.Bill);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
@@ -46,7 +45,7 @@ public class OverlapSimulationTest
         hardwareManager.SetOverlapped(true);
 
         var inventory = new Inventory();
-        var controller = new DepositController(inventory, new SimulationSettings(), hardwareManager);
+        var controller = new DepositController(inventory, hardwareManager);
 
         // Act
         controller.BeginDeposit();

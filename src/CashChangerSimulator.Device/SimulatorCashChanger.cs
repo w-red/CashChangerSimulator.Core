@@ -125,10 +125,10 @@ public class SimulatorCashChanger : CashChangerBasic
             ?? new CashChangerManager(_inventory, _history);
         _depositController =
             depositController
-            ?? new DepositController(_inventory, _config.Simulation, _hardwareStatusManager);
+            ?? new DepositController(_inventory, _hardwareStatusManager);
         _dispenseController =
             dispenseController
-            ?? new DispenseController(_manager, _config.Simulation, _hardwareStatusManager);
+            ?? new DispenseController(_manager, _hardwareStatusManager);
 
         // Status monitors / Aggregator
         var monitors =

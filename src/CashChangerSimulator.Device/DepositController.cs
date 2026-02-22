@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core;
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
@@ -10,14 +9,11 @@ namespace CashChangerSimulator.Device;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー。</summary>
 /// <param name="inventory">在庫管理オブジェクト。</param>
-/// <param name="config">シミュレーション設定。</param>
 /// <param name="hardwareStatusManager">ハードウェア状態マネージャー。</param>
 public class DepositController(
     Inventory inventory,
-    SimulationSettings? config = null,
     HardwareStatusManager? hardwareStatusManager = null) : IDisposable
 {
-    private readonly SimulationSettings _config = config ?? new SimulationSettings();
     private readonly ILogger<DepositController> _logger = LogProvider.CreateLogger<DepositController>();
     private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
     private readonly CompositeDisposable _disposables = [];

@@ -8,30 +8,26 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>シミュレーション設定の保存・読み込みを検証するテストクラス。</summary>
-public class SimulationSettingsTests
+/// <summary>UI設定の保存・読み込みを検証するテストクラス。</summary>
+public class UISettingsTests
 {
     [Fact]
-    public void ConfigurationShouldSerializeAndDeserializeSimulationSettings()
+    public void ConfigurationShouldSerializeAndDeserializeUIMode()
     {
         var config = new SimulatorConfiguration();
-        config.Simulation.UIMode = UIMode.PosTransaction;
+        config.UIMode = UIMode.PosTransaction;
 
         var toml = CsTomlSerializer.Serialize(config);
         var loaded = CsTomlSerializer.Deserialize<SimulatorConfiguration>(toml.ByteSpan);
 
-        loaded.Simulation.UIMode.ShouldBe(UIMode.PosTransaction);
+        loaded.UIMode.ShouldBe(UIMode.PosTransaction);
     }
 
     [Fact]
-    public void ViewModelShouldLoadAndSaveSettings()
+    public void ViewModelShouldLoadAndSaveUIMode()
     {
         var configProvider = new ConfigurationProvider();
-        if (configProvider.Config.Simulation == null)
-        {
-            configProvider.Config.Simulation = new SimulationSettings();
-        }
-        configProvider.Config.Simulation.UIMode = UIMode.PosTransaction;
+        configProvider.Config.UIMode = UIMode.PosTransaction;
 
         var vm = CreateViewModel(configProvider);
 
@@ -43,7 +39,7 @@ public class SimulationSettingsTests
         // Save
         vm.SaveCommand.Execute(Unit.Default);
 
-        configProvider.Config.Simulation.UIMode.ShouldBe(UIMode.Standard);
+        configProvider.Config.UIMode.ShouldBe(UIMode.Standard);
     }
 
     private static SettingsViewModel CreateViewModel(ConfigurationProvider? configProvider = null)
@@ -54,12 +50,6 @@ public class SimulationSettingsTests
         if (!cp.Config.Inventory.ContainsKey("JPY"))
         {
             cp.Config.Inventory["JPY"] = new InventorySettings();
-        }
-
-        // Ensure Simulation settings exist
-        if (cp.Config.Simulation == null)
-        {
-            cp.Config.Simulation = new SimulationSettings();
         }
 
         var meta = new CurrencyMetadataProvider(cp);

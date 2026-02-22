@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -11,11 +10,9 @@ namespace CashChangerSimulator.Device;
 /// <summary>出金（払出）シーケンスを管理するコントローラー。 UPOS の DispenseCash / DispenseChange のライフサイクル（IDLE -> BUSY -> IDLE/ERROR）を制御します。</summary>
 public class DispenseController(
     CashChangerManager manager,
-    SimulationSettings? config = null,
     HardwareStatusManager? hardwareStatusManager = null)
     : IDisposable
 {
-    private readonly SimulationSettings _config = config ?? new SimulationSettings();
     private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
     private readonly ILogger<DispenseController> _logger = Core.LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> _changed = new();

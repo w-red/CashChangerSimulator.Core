@@ -32,7 +32,6 @@ public static class ConfigurationLoader
         {
             var config = CsTomlFileSerializer.Deserialize<SimulatorConfiguration>(filePath);
 
-            config.Simulation ??= new SimulationSettings();
             config.Logging ??= new LoggingSettings();
             return config;
         }

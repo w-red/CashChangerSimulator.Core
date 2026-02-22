@@ -53,9 +53,9 @@ public partial class SimulatorConfiguration
     [TomlValueOnSerialized]
     public ThresholdSettings Thresholds { get; set; } = new();
 
-    /// <summary>シミュレーション挙動の設定。</summary>
+    /// <summary>UIの動作モード。</summary>
     [TomlValueOnSerialized]
-    public SimulationSettings Simulation { get; set; } = new();
+    public UIMode UIMode { get; set; } = UIMode.Standard;
 
     /// <summary>ロギング設定。</summary>
     [TomlValueOnSerialized]
