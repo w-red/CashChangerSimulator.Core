@@ -72,6 +72,9 @@ public class DispenseController(
         try
         {
             _logger.ZLogInformation($"Dispense operation started.");
+            
+            // Artificial delay to simulate hardware time and ensure Busy state is detectable by UI/Tests
+            await Task.Delay(500);
 
             action();
             _status = CashDispenseStatus.Idle;
