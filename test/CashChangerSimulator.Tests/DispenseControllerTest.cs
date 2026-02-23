@@ -46,6 +46,7 @@ public class DispenseControllerTest
         // Start first dispense (async mode keeps it in BUSY)
         _ = controller.DispenseChangeAsync(1000, true, IgnoreDispenseResult);
 
+
         // Wait briefly for status to transition
         await Task.Delay(TestTimingConstants.StartupCheckDelayMs, TestContext.Current.CancellationToken);
 
