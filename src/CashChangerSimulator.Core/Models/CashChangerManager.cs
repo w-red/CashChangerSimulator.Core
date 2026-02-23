@@ -6,12 +6,13 @@ namespace CashChangerSimulator.Core.Models;
 /// <summary>在庫管理と履歴管理を統合し、実務的な入出金操作を提供するマネージャークラス。</summary>
 /// <param name="inventory">在庫管理オブジェクト。</param>
 /// <param name="history">履歴管理オブジェクト。</param>
-public class CashChangerManager(Inventory inventory, TransactionHistory history)
+/// <param name="calculator">釣銭計算オブジェクト。</param>
+public class CashChangerManager(Inventory inventory, TransactionHistory history, ChangeCalculator calculator)
 {
     private readonly Inventory _inventory = inventory;
     private readonly TransactionHistory _history = history;
+    private readonly ChangeCalculator _calculator = calculator;
     private readonly ILogger<CashChangerManager> _logger = LogProvider.CreateLogger<CashChangerManager>();
-    private readonly ChangeCalculator _calculator = new();
 
     /// <summary>入金を処理する。</summary>
     /// <param name="counts">投入された金種ごとの枚数内訳。</param>

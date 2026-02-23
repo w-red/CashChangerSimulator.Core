@@ -108,6 +108,8 @@ public class DepositController(
         _depositStatus = CashDepositStatus.End;
         _depositPaused = false;
         _depositFixed = false;
+        _depositAmount = 0m;
+        _depositCounts.Clear();
         _hardwareStatusManager.SetOverlapped(false); // Clear error on end deposit
         _changed.OnNext(Unit.Default);
     }

@@ -26,7 +26,7 @@ public class UposLifecycleTests
 
         var hw = new HardwareStatusManager();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history);
+        var manager = new CashChangerManager(inv, history, new ChangeCalculator());
 
         return new SimulatorCashChanger(config, inv, history, manager, null, null, null, hw);
     }

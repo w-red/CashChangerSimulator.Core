@@ -18,7 +18,7 @@ public class CashChangerManagerTests
         // Arrange
         var inventory = new Inventory();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history);
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
         var b1000 = new DenominationKey(1000, CashType.Bill);
         var c100 = new DenominationKey(100, CashType.Coin);
         var depositCounts = new Dictionary<DenominationKey, int> { { b1000, 2 }, { c100, 5 } };
@@ -49,7 +49,7 @@ public class CashChangerManagerTests
         var b1000 = new DenominationKey(1000, CashType.Bill);
         inventory.SetCount(b1000, 10);
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history);
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
         var dispenseCounts = new Dictionary<DenominationKey, int> { { b1000, 3 } };
 
         // Act
@@ -76,7 +76,7 @@ public class CashChangerManagerTests
         inventory.SetCount(b1000, 5);
         inventory.SetCount(c100, 10);
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history);
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
 
         // Act: 1200円を出金
         manager.Dispense(1200m);

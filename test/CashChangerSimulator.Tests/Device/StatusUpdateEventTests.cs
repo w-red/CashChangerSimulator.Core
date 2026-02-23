@@ -35,9 +35,12 @@ public class StatusUpdateEventTests
 
         var hw = new HardwareStatusManager();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history);
+        var manager = new CashChangerManager(inv, history, new ChangeCalculator());
 
-        var cc = new SimulatorCashChanger(config, inv, history, manager, null, null, null, hw);
+        var cc = new SimulatorCashChanger(config, inv, history, manager, null, null, null, hw)
+        {
+            SkipStateVerification = true
+        };
 
         var events = new List<int>();
         cc.OnEventQueued += e =>

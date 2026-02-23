@@ -16,7 +16,7 @@ public class DepositSequenceTests
     {
         var inventory = new Inventory();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history);
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
         var controller = new DepositController(inventory);
         return (controller, inventory);
     }

@@ -38,6 +38,9 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>テスト用のイベント通知アクション。</summary>
     internal Action<EventArgs>? OnEventQueued; // For testing
 
+    /// <summary>テスト用: VerifyState チェックをスキップする。OPOS ライフサイクルが利用できない単体テスト環境で使用。</summary>
+    internal bool SkipStateVerification { get; set; }
+
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">通知するイベント引数。</param>
     protected virtual void NotifyEvent(EventArgs e)
@@ -122,12 +125,14 @@ public class SimulatorCashChanger : CashChangerBasic
         _manager =
             manager
             ?? SimulatorServices.TryResolve<CashChangerManager>()
-            ?? new CashChangerManager(_inventory, _history);
+            ?? new CashChangerManager(_inventory, _history, new ChangeCalculator());
         _depositController =
             depositController
+            ?? SimulatorServices.TryResolve<DepositController>()
             ?? new DepositController(_inventory, _hardwareStatusManager);
         _dispenseController =
             dispenseController
+            ?? SimulatorServices.TryResolve<DispenseController>()
             ?? new DispenseController(_manager, _hardwareStatusManager);
 
         // Status monitors / Aggregator
@@ -315,6 +320,8 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>UPOS ライフサイクルの状態を検証します。Open/Claim/Enable が行われていない場合は例外をスローします。</summary>
     private void VerifyState()
     {
+        if (SkipStateVerification) return;
+
         if (State == ControlState.Closed)
         {
             throw new PosControlException("Device is not open.", ErrorCode.Closed);

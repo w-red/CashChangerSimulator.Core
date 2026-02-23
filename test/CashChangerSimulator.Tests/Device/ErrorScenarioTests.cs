@@ -16,9 +16,12 @@ public class ErrorScenarioTests
         var config = new SimulatorConfiguration();
         var inventory = new Inventory();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history);
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
         var hardware = new HardwareStatusManager();
-        var device = new SimulatorCashChanger(config, inventory, history, manager, null, null, null, hardware);
+        var device = new SimulatorCashChanger(config, inventory, history, manager, null, null, null, hardware)
+        {
+            SkipStateVerification = true
+        };
         return (device, hardware);
     }
 
@@ -94,11 +97,11 @@ public class ErrorScenarioTests
 
         // Jam ON
         hardware.SetJammed(true);
-        lastStatus.ShouldBe(205); // CHAN_STATUS_JAM
+        lastStatus.ShouldBe((int)CashChangerSimulator.Core.Models.UposCashChangerStatusUpdateCode.Jam);
 
         // Jam OFF
         hardware.SetJammed(false);
-        lastStatus.ShouldBe(206); // CHAN_STATUS_OK
+        lastStatus.ShouldBe((int)CashChangerSimulator.Core.Models.UposCashChangerStatusUpdateCode.Ok);
     }
 
     /// <summary>重複した pauseDeposit 呼び出しが ErrorCode.Illegal を発生させることを検証する。</summary>

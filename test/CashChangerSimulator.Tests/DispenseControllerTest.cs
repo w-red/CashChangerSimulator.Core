@@ -19,7 +19,7 @@ public class DispenseControllerTest
         var inventory = new Inventory();
         var key = new DenominationKey(1000, CashType.Bill, "JPY");
         inventory.SetCount(key, 10);
-        var manager = new CashChangerManager(inventory, new TransactionHistory());
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
         var controller = new DispenseController(manager);
 
         ErrorCode resultCode = ErrorCode.Failure;
@@ -39,7 +39,7 @@ public class DispenseControllerTest
     {
         // Arrange
         var inventory = new Inventory();
-        var manager = new CashChangerManager(inventory, new TransactionHistory());
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
         var controller = new DispenseController(manager);
 
         // Act & Assert

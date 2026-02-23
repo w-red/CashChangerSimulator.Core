@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new TransactionHistory())
+public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator())
 {
     public ManualResetEventSlim DispenseStartSignal { get; } = new(false);
     public ManualResetEventSlim DispenseFinishSignal { get; } = new(false);
@@ -21,6 +21,7 @@ public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new
 public class TestSimulatorCashChanger(Inventory inv, CashChangerManager manager) : SimulatorCashChanger(null, inv, null, manager, null, null)
 {
     public List<EventArgs> QueuedEvents { get; } = [];
+
 
     protected override void NotifyEvent(EventArgs e)
     {
@@ -44,7 +45,8 @@ public class DispenseAsyncTests
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
-            AsyncMode = true
+            AsyncMode = true,
+            SkipStateVerification = true
         };
 
         // Act
@@ -82,7 +84,8 @@ public class DispenseAsyncTests
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
-            AsyncMode = true
+            AsyncMode = true,
+            SkipStateVerification = true
         };
 
         // Act: Start dispense but don't finish it
@@ -110,7 +113,8 @@ public class DispenseAsyncTests
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
-            AsyncMode = true
+            AsyncMode = true,
+            SkipStateVerification = true
         };
 
         // Act: Start dispense but don't finish it

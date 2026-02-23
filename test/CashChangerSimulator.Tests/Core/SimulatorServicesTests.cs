@@ -41,7 +41,7 @@ public class SimulatorServicesTests : IDisposable
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var hw = new HardwareStatusManager();
-        var manager = new CashChangerManager(inventory, history);
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
 
         var provider = new TestServiceProvider(inventory, history, manager, hw);
         SimulatorServices.Provider = provider;

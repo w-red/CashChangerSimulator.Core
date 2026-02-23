@@ -26,7 +26,25 @@ public class MultiCurrencyTests
                 }
             }
         };
-        return new SimulatorCashChanger(config);
+
+        // Build inventory explicitly to avoid ConfigurationLoader reading stale filesystem state
+        var inventory = new CashChangerSimulator.Core.Models.Inventory();
+        foreach (var currencyEntry in config.Inventory)
+        {
+            foreach (var item in currencyEntry.Value.Denominations)
+            {
+                if (CashChangerSimulator.Core.Models.DenominationKey.TryParse(item.Key, currencyEntry.Key, out var key) && key != null)
+                {
+                    inventory.SetCount(key, item.Value.InitialCount);
+                }
+            }
+        }
+
+        var device = new SimulatorCashChanger(config, inventory)
+        {
+            SkipStateVerification = true
+        };
+        return device;
     }
 
     /// <summary>サポートされている通貨コードのリストが正しく取得できることを検証する。</summary>
