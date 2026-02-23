@@ -3,6 +3,8 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
+using Moq;
+using CashChangerSimulator.Core.Services;
 
 namespace CashChangerSimulator.Tests;
 
@@ -52,5 +54,24 @@ public class DispenseControllerTest
 
         // Second call should throw
         await Assert.ThrowsAsync<PosControlException>(() => controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult));
+    }
+
+    [Fact]
+    public async Task DispenseChangeAsync_ShouldCallSimulator()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var key = new DenominationKey(1000, CashType.Bill, "JPY");
+        inventory.SetCount(key, 10);
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
+        var mockSimulator = new Mock<IDeviceSimulator>();
+        
+        var controller = new DispenseController(manager, null, mockSimulator.Object);
+
+        // Act
+        await controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult);
+
+        // Assert
+        mockSimulator.Verify(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -1,5 +1,7 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
@@ -10,10 +12,12 @@ namespace CashChangerSimulator.Device;
 /// <summary>出金（払出）シーケンスを管理するコントローラー。 UPOS の DispenseCash / DispenseChange のライフサイクル（IDLE -> BUSY -> IDLE/ERROR）を制御します。</summary>
 public class DispenseController(
     CashChangerManager manager,
-    HardwareStatusManager? hardwareStatusManager = null)
+    HardwareStatusManager? hardwareStatusManager = null,
+    IDeviceSimulator? simulator = null)
     : IDisposable
 {
     private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+    private readonly IDeviceSimulator _simulator = simulator ?? new HardwareSimulator(CashChangerSimulator.Core.SimulatorServices.TryResolve<ConfigurationProvider>()!);
     private readonly ILogger<DispenseController> _logger = Core.LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> _changed = new();
     private readonly CompositeDisposable _disposables = [];
@@ -73,8 +77,8 @@ public class DispenseController(
         {
             _logger.ZLogInformation($"Dispense operation started.");
             
-            // Artificial delay to simulate hardware time and ensure Busy state is detectable by UI/Tests
-            await Task.Delay(500);
+            // Simulate hardware delay
+            await _simulator.SimulateDispenseAsync();
 
             action();
             _status = CashDispenseStatus.Idle;
