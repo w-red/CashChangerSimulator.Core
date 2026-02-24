@@ -33,6 +33,10 @@ public static class ConfigurationLoader
             var config = CsTomlFileSerializer.Deserialize<SimulatorConfiguration>(filePath);
 
             config.Logging ??= new LoggingSettings();
+            config.Simulation ??= new SimulationSettings();
+            config.Thresholds ??= new ThresholdSettings();
+            config.Inventory ??= new Dictionary<string, InventorySettings>();
+            
             return config;
         }
         catch (Exception ex)
