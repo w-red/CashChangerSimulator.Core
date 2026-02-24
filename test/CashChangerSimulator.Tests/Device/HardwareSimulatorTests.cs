@@ -21,7 +21,7 @@ public class HardwareSimulatorTests
 
         // Act
         sw.Start();
-        await simulator.SimulateDispenseAsync();
+        await simulator.SimulateDispenseAsync(TestContext.Current.CancellationToken);
         sw.Stop();
 
         // Assert: 少なくとも設定値（200ms）に近い時間経過していること
@@ -42,7 +42,7 @@ public class HardwareSimulatorTests
 
         // Act
         sw.Start();
-        await simulator.SimulateDispenseAsync();
+        await simulator.SimulateDispenseAsync(TestContext.Current.CancellationToken);
         sw.Stop();
 
         // Assert: 即座に完了すること
