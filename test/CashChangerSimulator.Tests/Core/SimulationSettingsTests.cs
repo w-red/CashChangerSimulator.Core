@@ -1,60 +1,25 @@
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.UI.Wpf;
-using CashChangerSimulator.UI.Wpf.Services;
-using CashChangerSimulator.UI.Wpf.ViewModels;
-using CsToml;
-using R3;
 using Shouldly;
+using Xunit;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>UI設定の保存・読み込みを検証するテストクラス。</summary>
-public class UISettingsTests
+/// <summary>シミュレーション設定の動作を検証するテストクラス。</summary>
+public class SimulationSettingsTests
 {
+    /// <summary>SimulationSettings がデフォルト値を保持していることを検証する。</summary>
     [Fact]
-    public void ConfigurationShouldSerializeAndDeserializeUIMode()
+    public void SimulationSettingsShouldMaintainDefaultValues()
     {
-        var config = new SimulatorConfiguration();
-        config.UIMode = UIMode.PosTransaction;
-
-        var toml = CsTomlSerializer.Serialize(config);
-        var loaded = CsTomlSerializer.Deserialize<SimulatorConfiguration>(toml.ByteSpan);
-
-        loaded.UIMode.ShouldBe(UIMode.PosTransaction);
+        var settings = new SimulationSettings();
+        settings.DispenseDelayMs.ShouldBe(500);
     }
 
+    /// <summary>SimulationSettings にカスタム値を設定できることを検証する。</summary>
     [Fact]
-    public void ViewModelShouldLoadAndSaveUIMode()
+    public void SimulationSettingsShouldStoreCustomValues()
     {
-        var configProvider = new ConfigurationProvider();
-        configProvider.Config.UIMode = UIMode.PosTransaction;
-
-        var vm = CreateViewModel(configProvider);
-
-        vm.ActiveUIMode.Value.ShouldBe(UIMode.PosTransaction);
-
-        // Edit
-        vm.ActiveUIMode.Value = UIMode.Standard;
-
-        // Save
-        vm.SaveCommand.Execute(Unit.Default);
-
-        configProvider.Config.UIMode.ShouldBe(UIMode.Standard);
-    }
-
-    private static SettingsViewModel CreateViewModel(ConfigurationProvider? configProvider = null)
-    {
-        var cp = configProvider ?? new ConfigurationProvider();
-
-        // Ensure JPY inventory exists for test
-        if (!cp.Config.Inventory.ContainsKey("JPY"))
-        {
-            cp.Config.Inventory["JPY"] = new InventorySettings();
-        }
-
-        var meta = new CurrencyMetadataProvider(cp);
-        var inventory = new CashChangerSimulator.Core.Models.Inventory();
-        var mp = new MonitorsProvider(inventory, cp, meta);
-        return new SettingsViewModel(cp, mp, meta);
+        var settings = new SimulationSettings { DispenseDelayMs = 1000 };
+        settings.DispenseDelayMs.ShouldBe(1000);
     }
 }

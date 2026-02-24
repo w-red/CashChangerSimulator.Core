@@ -1,6 +1,7 @@
 namespace CashChangerSimulator.Tests.Core;
 
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Exceptions;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 using System.Collections.Generic;
@@ -90,5 +91,41 @@ public class CashChangerManagerTests
         history.Entries[0].Amount.ShouldBe(1200m);
         history.Entries[0].Counts[b1000].ShouldBe(1);
         history.Entries[0].Counts[c100].ShouldBe(2);
+    }
+
+    /// <summary>多通貨（USD）での入金と履歴記録を検証する。</summary>
+    [Fact]
+    public void DepositWithOtherCurrencyShouldStoreCorrectCurrencyCode()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var history = new TransactionHistory();
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var usd20 = new DenominationKey(20, CashType.Bill, "USD");
+        var depositCounts = new Dictionary<DenominationKey, int> { { usd20, 2 } };
+
+        // Act
+        manager.Deposit(depositCounts);
+
+        // Assert
+        inventory.GetCount(usd20).ShouldBe(2);
+        inventory.CalculateTotal("USD").ShouldBe(40m);
+        history.Entries[0].Counts.Keys.ShouldContain(k => k.CurrencyCode == "USD");
+    }
+
+    /// <summary>在庫不足時に払出が失敗し、在庫と履歴が更新されないことを検証する。</summary>
+    [Fact]
+    public void DispenseByAmountWithInsufficientCashShouldThrowAndNotModifyState()
+    {
+        // Arrange
+        var inventory = new Inventory(); // Empty
+        var history = new TransactionHistory();
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+
+        // Act & Assert
+        Should.Throw<InsufficientCashException>(() => manager.Dispense(100m));
+        
+        inventory.CalculateTotal().ShouldBe(0m);
+        history.Entries.ShouldBeEmpty();
     }
 }

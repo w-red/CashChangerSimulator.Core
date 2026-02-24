@@ -7,26 +7,30 @@ namespace CashChangerSimulator.Tests.Core;
 /// <summary>SimulatorServices の DI 抽象レイヤーを検証するテストクラス (TDD)。</summary>
 public class SimulatorServicesTests : IDisposable
 {
+    /// <summary>SimulatorServicesTests の新しいインスタンスを初期化します。</summary>
     public SimulatorServicesTests()
     {
         // 各テスト開始時にプロバイダーをクリア
         SimulatorServices.Provider = null;
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         SimulatorServices.Provider = null;
     }
 
+    /// <summary>プロバイダーが設定されていない場合に TryResolve が null を返すことを検証する。</summary>
     [Fact]
-    public void TryResolve_ShouldReturnNull_WhenProviderNotSet()
+    public void TryResolveShouldReturnNullWhenProviderNotSet()
     {
         SimulatorServices.Provider = null;
         SimulatorServices.TryResolve<Inventory>().ShouldBeNull();
     }
 
+    /// <summary>プロバイダーが設定されている場合に TryResolve がインスタンスを返すことを検証する。</summary>
     [Fact]
-    public void TryResolve_ShouldReturnInstance_WhenProviderIsSet()
+    public void TryResolveShouldReturnInstanceWhenProviderIsSet()
     {
         var inventory = new Inventory();
         var provider = new TestServiceProvider(inventory);
@@ -35,8 +39,9 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeSameAs(inventory);
     }
 
+    /// <summary>SimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証する。</summary>
     [Fact]
-    public void SimulatorCashChanger_ShouldUseProviderInstances_WhenAvailable()
+    public void SimulatorCashChangerShouldUseProviderInstancesWhenAvailable()
     {
         var inventory = new Inventory();
         var history = new TransactionHistory();
