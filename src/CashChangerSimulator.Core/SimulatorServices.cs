@@ -21,4 +21,10 @@ public static class SimulatorServices
             return null;
         }
     }
+
+    /// <summary>サービスを解決する。解決できない場合は例外をスローする。</summary>
+    public static T Resolve<T>() where T : class
+    {
+        return TryResolve<T>() ?? throw new InvalidOperationException($"Service {typeof(T).Name} not found.");
+    }
 }

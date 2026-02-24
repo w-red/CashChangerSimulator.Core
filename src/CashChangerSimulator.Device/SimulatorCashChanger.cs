@@ -44,7 +44,12 @@ public class SimulatorCashChanger : CashChangerBasic
     internal Action<EventArgs>? OnEventQueued; // For testing
 
     /// <summary>テスト用: VerifyState チェックをスキップする。OPOS ライフサイクルが利用できない単体テスト環境で使用。</summary>
-    internal bool SkipStateVerification { get; set; }
+    public bool SkipStateVerification { get; set; }
+
+    /// <summary>デバイスの有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
+    public override bool DeviceEnabled { get; set; }
+    /// <summary>データイベント通知の有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
+    public override bool DataEventEnabled { get; set; }
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">通知するイベント引数。</param>
@@ -61,29 +66,62 @@ public class SimulatorCashChanger : CashChangerBasic
         }
     }
 
-    /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。</summary>
-    public SimulatorCashChanger() : this(null, null, null, null, null, null, null, null) { }
+    // ========== Simulator UI Helpers for Lifecycle Verification ==========
 
-    internal SimulatorCashChanger(
-        SimulatorConfiguration? config = null,
-        Inventory? inventory = null,
-        TransactionHistory? history = null,
-        CashChangerManager? manager = null,
-        DepositController? depositController = null,
-        DispenseController? dispenseController = null,
-        OverallStatusAggregator? aggregator = null,
-        HardwareStatusManager? hardwareStatusManager = null)
+    /// <summary>シミュレータUIからの Open 呼び出しを受け付けます。</summary>
+    public new virtual void Open()
+    {
+        _logger.LogInformation("OPOS Open called via simulator.");
+    }
+
+    /// <summary>シミュレータUIからの Close 呼び出しを受け付けます。</summary>
+    public new virtual void Close()
+    {
+        _logger.LogInformation("OPOS Close called via simulator.");
+    }
+
+    /// <summary>シミュレータUIからの Claim 呼び出しを受け付けます。</summary>
+    public new virtual void Claim(int timeout)
+    {
+        _logger.LogInformation("OPOS Claim({0}) called via simulator.", timeout);
+    }
+
+    /// <summary>シミュレータUIからの Release 呼び出しを受け付けます。</summary>
+    public new virtual void Release()
+    {
+        _logger.LogInformation("OPOS Release called via simulator.");
+    }
+
+    /// <summary>サービスプロバイダーを使用して SimulatorCashChanger の新しいインスタンスを初期化します（DI用）。</summary>
+    public SimulatorCashChanger()
+        : this(
+            SimulatorServices.Resolve<ConfigurationProvider>(),
+            SimulatorServices.Resolve<Inventory>(),
+            SimulatorServices.Resolve<TransactionHistory>(),
+            SimulatorServices.Resolve<CashChangerManager>(),
+            SimulatorServices.Resolve<DepositController>(),
+            SimulatorServices.Resolve<DispenseController>(),
+            SimulatorServices.Resolve<OverallStatusAggregatorProvider>(),
+            SimulatorServices.Resolve<HardwareStatusManager>())
+    {
+    }
+
+    /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。</summary>
+    public SimulatorCashChanger(
+        ConfigurationProvider configProvider,
+        Inventory inventory,
+        TransactionHistory history,
+        CashChangerManager manager,
+        DepositController depositController,
+        DispenseController dispenseController,
+        OverallStatusAggregatorProvider aggregatorProvider,
+        HardwareStatusManager hardwareStatusManager)
     {
         // Load settings from TOML
-        _config =
-            config
-            ?? ConfigurationLoader.Load();
+        _config = configProvider.Config;
 
         DevicePath = "SimulatorCashChanger";
-        _hardwareStatusManager =
-            hardwareStatusManager
-            ?? SimulatorServices.TryResolve<HardwareStatusManager>()
-            ?? new HardwareStatusManager();
+        _hardwareStatusManager = hardwareStatusManager;
 
         _logger =
             LogProvider
@@ -92,53 +130,11 @@ public class SimulatorCashChanger : CashChangerBasic
             .ZLogInformation(
                 $"SimulatorCashChanger initialized.");
 
-        _inventory =
-            inventory
-            ?? SimulatorServices.TryResolve<Inventory>()
-            ?? new Inventory();
-
-        if (inventory == null && SimulatorServices.TryResolve<Inventory>() == null)
-        {
-            var state =
-                ConfigurationLoader
-                .LoadInventoryState();
-            if (state.Counts.Count > 0)
-            {
-                _inventory.LoadFromDictionary(state.Counts);
-            }
-            else
-            {
-                // Inventory から全ての通貨の金種をロード
-                foreach (var currencyEntry in _config.Inventory)
-                {
-                    var currencyCode = currencyEntry.Key;
-                    foreach (var item in currencyEntry.Value.Denominations)
-                    {
-                        if (DenominationKey.TryParse(item.Key, currencyCode, out var key) && key != null)
-                        {
-                            _inventory.SetCount(key, item.Value.InitialCount);
-                        }
-                    }
-                }
-            }
-        }
-
-        _history =
-            history
-            ?? SimulatorServices.TryResolve<TransactionHistory>()
-            ?? new TransactionHistory();
-        _manager =
-            manager
-            ?? SimulatorServices.TryResolve<CashChangerManager>()
-            ?? new CashChangerManager(_inventory, _history, new ChangeCalculator());
-        _depositController =
-            depositController
-            ?? SimulatorServices.TryResolve<DepositController>()
-            ?? new DepositController(_inventory, _hardwareStatusManager);
-        _dispenseController =
-            dispenseController
-            ?? SimulatorServices.TryResolve<DispenseController>()
-            ?? new DispenseController(_manager, _hardwareStatusManager);
+        _inventory = inventory;
+        _history = history;
+        _manager = manager;
+        _depositController = depositController;
+        _dispenseController = dispenseController;
 
         // Status monitors / Aggregator
         var monitors =
@@ -155,9 +151,7 @@ public class SimulatorCashChanger : CashChangerBasic
                     x.Item2.NearFull,
                     x.Item2.Full))
             .ToList();
-        _statusAggregator =
-            aggregator
-            ?? new OverallStatusAggregator(monitors);
+        _statusAggregator = aggregatorProvider.Aggregator;
 
         // Active currency initialization
         _activeCurrencyCode =

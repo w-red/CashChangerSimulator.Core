@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="CashChangerSimulator.Tests" />
+    <InternalsVisibleTo Include="CashChangerSimulator.UI.Tests" />
   </ItemGroup>
 
   <ItemGroup>
