@@ -7,6 +7,7 @@ using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -20,13 +21,13 @@ public class StatusUpdateEventTests
     private static (SimulatorCashChanger cc, Inventory inv, HardwareStatusManager hw, List<int> events) CreateTestCashChanger(
         int nearEmpty = 5, int nearFull = 90, int full = 100)
     {
-        var config = new SimulatorConfiguration();
-        config.Thresholds.NearEmpty = nearEmpty;
-        config.Thresholds.NearFull = nearFull;
-        config.Thresholds.Full = full;
+        var configProvider = new ConfigurationProvider();
+        configProvider.Config.Thresholds.NearEmpty = nearEmpty;
+        configProvider.Config.Thresholds.NearFull = nearFull;
+        configProvider.Config.Thresholds.Full = full;
 
         // Initialize with a denomination
-        config.Inventory["JPY"] = new InventorySettings
+        configProvider.Config.Inventory["JPY"] = new InventorySettings
         {
             Denominations = new()
             {
@@ -35,13 +36,23 @@ public class StatusUpdateEventTests
         };
 
         var inv = new Inventory();
-        inv.SetCount(Coin100, 50); // Start at normal level
-
         var hw = new HardwareStatusManager();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inv, history, new ChangeCalculator());
+        var metadataProvider = new CurrencyMetadataProvider(configProvider);
 
-        var cc = new SimulatorCashChanger(config, inv, history, manager, null, null, null, hw)
+        // Initialize all denominations to 50 to ensure they are NOT Empty/NearEmpty initially
+        foreach (var key in metadataProvider.SupportedDenominations)
+        {
+            inv.SetCount(key, 50);
+        }
+
+        var monitorsProvider = new MonitorsProvider(inv, configProvider, metadataProvider);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
+        var depositController = new DepositController(inv, hw);
+        var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
+
+        var cc = new SimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw)
         {
             SkipStateVerification = true
         };

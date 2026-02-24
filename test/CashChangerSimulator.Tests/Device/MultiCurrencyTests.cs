@@ -1,6 +1,11 @@
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -12,35 +17,42 @@ public class MultiCurrencyTests
 {
     private SimulatorCashChanger CreateDevice()
     {
-        var config = new SimulatorConfiguration
+        var configProvider = new ConfigurationProvider();
+        configProvider.Config.Inventory = new()
         {
-            Inventory = new()
+            ["JPY"] = new InventorySettings
             {
-                ["JPY"] = new InventorySettings
-                {
-                    Denominations = new() { ["B1000"] = new() { InitialCount = 10 } }
-                },
-                ["USD"] = new InventorySettings
-                {
-                    Denominations = new() { ["C0.5"] = new() { InitialCount = 20 } }
-                }
+                Denominations = new() { ["B1000"] = new() { InitialCount = 10 } }
+            },
+            ["USD"] = new InventorySettings
+            {
+                Denominations = new() { ["C0.5"] = new() { InitialCount = 20 } }
             }
         };
 
-        // Build inventory explicitly to avoid ConfigurationLoader reading stale filesystem state
-        var inventory = new CashChangerSimulator.Core.Models.Inventory();
-        foreach (var currencyEntry in config.Inventory)
+        // Build inventory explicitly
+        var inventory = new Inventory();
+        foreach (var currencyEntry in configProvider.Config.Inventory)
         {
             foreach (var item in currencyEntry.Value.Denominations)
             {
-                if (CashChangerSimulator.Core.Models.DenominationKey.TryParse(item.Key, currencyEntry.Key, out var key) && key != null)
+                if (DenominationKey.TryParse(item.Key, currencyEntry.Key, out var key) && key != null)
                 {
                     inventory.SetCount(key, item.Value.InitialCount);
                 }
             }
         }
 
-        var device = new SimulatorCashChanger(config, inventory)
+        var hardware = new HardwareStatusManager();
+        var history = new TransactionHistory();
+        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var metadataProvider = new CurrencyMetadataProvider(configProvider);
+        var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
+        var depositController = new DepositController(inventory);
+        var dispenseController = new DispenseController(manager, null, new Mock<IDeviceSimulator>().Object);
+
+        var device = new SimulatorCashChanger(configProvider, inventory, history, manager, depositController, dispenseController, aggregatorProvider, hardware)
         {
             SkipStateVerification = true
         };
@@ -89,17 +101,6 @@ public class MultiCurrencyTests
         // ReadCashCounts で $0.5 が 50 として報告されるか
         var counts = device.ReadCashCounts();
         counts.Counts[0].NominalValue.ShouldBe(50);
-
-        // DepositAmount もスケール調整されるか
-        device.BeginDeposit();
-        // 内部的にUSD 0.5を在庫に追加（本来は外部からの操作だがシミュレーションとして）
-        // ※SimulatorCashChangerの内部のInventoryにアクセスできないため、
-        // 現状の設計では DepositController または Inventory をモックするか、
-        // 今回の修正で CurrencyCode を持つ DenominationKey を使って入金する。
-
-        // テスト用に直接 Inventory を操作できるよう、必要ならリフレクションを使うか
-        // 外部から入金イベントを模倣する仕組みが必要。
-        // ここでは実装の意図通り GetCurrencyFactor が効いているかを確認。
     }
 
     /// <summary>サポートされていない通貨コードを設定しようとした際に例外がスローされることを検証する。</summary>

@@ -2,8 +2,10 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -24,12 +26,22 @@ public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new
 }
 
 /// <summary>テスト用のシミュレータキャッシュチェンジャー。</summary>
-/// <param name="inv">在庫オブジェクト。</param>
-/// <param name="manager">マネージャーオブジェクト。</param>
-public class TestSimulatorCashChanger(Inventory inv, CashChangerManager manager) : SimulatorCashChanger(null, inv, null, manager, null, null)
+public class TestSimulatorCashChanger : SimulatorCashChanger
 {
     public List<EventArgs> QueuedEvents { get; } = [];
 
+    public TestSimulatorCashChanger(Inventory inv, CashChangerManager manager) 
+        : base(
+            new ConfigurationProvider(), 
+            inv, 
+            new TransactionHistory(), 
+            manager, 
+            new DepositController(inv), 
+            new DispenseController(manager, null, new Mock<IDeviceSimulator>().Object), 
+            new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))), 
+            new HardwareStatusManager())
+    {
+    }
 
     protected override void NotifyEvent(EventArgs e)
     {

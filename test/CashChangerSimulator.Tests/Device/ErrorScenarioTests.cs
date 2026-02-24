@@ -6,6 +6,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -17,12 +18,18 @@ public class ErrorScenarioTests
 {
     private (SimulatorCashChanger Device, HardwareStatusManager Hardware) CreateDevice()
     {
-        var config = new SimulatorConfiguration();
+        var configProvider = new ConfigurationProvider();
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
         var hardware = new HardwareStatusManager();
-        var device = new SimulatorCashChanger(config, inventory, history, manager, null, null, null, hardware)
+        var metadataProvider = new CurrencyMetadataProvider(configProvider);
+        var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
+        var depositController = new DepositController(inventory, hardware);
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+
+        var device = new SimulatorCashChanger(configProvider, inventory, history, manager, depositController, dispenseController, aggregatorProvider, hardware)
         {
             SkipStateVerification = true
         };

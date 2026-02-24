@@ -8,6 +8,7 @@ using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -17,8 +18,8 @@ public class UposLifecycleTests
 {
     private static SimulatorCashChanger CreateCashChanger()
     {
-        var config = new SimulatorConfiguration();
-        config.Inventory["JPY"] = new InventorySettings
+        var configProvider = new ConfigurationProvider();
+        configProvider.Config.Inventory["JPY"] = new InventorySettings
         {
             Denominations = new()
             {
@@ -32,8 +33,13 @@ public class UposLifecycleTests
         var hw = new HardwareStatusManager();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inv, history, new ChangeCalculator());
+        var metadataProvider = new CurrencyMetadataProvider(configProvider);
+        var monitorsProvider = new MonitorsProvider(inv, configProvider, metadataProvider);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
+        var depositController = new DepositController(inv);
+        var dispenseController = new DispenseController(manager, null, new Mock<IDeviceSimulator>().Object);
 
-        return new SimulatorCashChanger(config, inv, history, manager, null, null, null, hw);
+        return new SimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw);
     }
 
     /// <summary>Claim されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。</summary>

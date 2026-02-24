@@ -3,6 +3,10 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Monitoring;
+using CashChangerSimulator.Device;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
@@ -36,7 +40,7 @@ public class SimulatorServicesTests : IDisposable
     public void TryResolveShouldReturnInstanceWhenProviderIsSet()
     {
         var inventory = new Inventory();
-        var provider = new TestServiceProvider(inventory);
+        var provider = new TestServiceProvider(inventory: inventory);
         SimulatorServices.Provider = provider;
 
         SimulatorServices.TryResolve<Inventory>().ShouldBeSameAs(inventory);
@@ -46,20 +50,35 @@ public class SimulatorServicesTests : IDisposable
     [Fact]
     public void SimulatorCashChangerShouldUseProviderInstancesWhenAvailable()
     {
+        var configProvider = new ConfigurationProvider();
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var hw = new HardwareStatusManager();
         var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var metadataProvider = new CurrencyMetadataProvider(configProvider);
+        var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
+        var depositController = new DepositController(inventory);
+        var dispenseController = new DispenseController(manager, null, new Mock<IDeviceSimulator>().Object);
 
-        var provider = new TestServiceProvider(inventory, history, manager, hw);
+        var provider = new TestServiceProvider(
+            configProvider, 
+            inventory, 
+            history, 
+            manager, 
+            hw, 
+            metadataProvider, 
+            monitorsProvider, 
+            aggregatorProvider, 
+            depositController, 
+            dispenseController);
+            
         SimulatorServices.Provider = provider;
 
         // SimulatorCashChanger default constructor should pick up from SimulatorServices
         var cc = new CashChangerSimulator.Device.SimulatorCashChanger();
 
         // Verify via ReadCashCounts (which uses _inventory internally)
-        // If it doesn't throw, it means it got a valid Inventory
-        // State is Closed so it should throw ErrorCode.Closed
         var ex = Should.Throw<Microsoft.PointOfService.PosControlException>(
             () => cc.ReadCashCounts());
         ex.ErrorCode.ShouldBe(Microsoft.PointOfService.ErrorCode.Closed);
@@ -71,15 +90,27 @@ public class SimulatorServicesTests : IDisposable
         private readonly Dictionary<Type, object> _services = new();
 
         public TestServiceProvider(
+            ConfigurationProvider? configProvider = null,
             Inventory? inventory = null,
             TransactionHistory? history = null,
             CashChangerManager? manager = null,
-            HardwareStatusManager? hw = null)
+            HardwareStatusManager? hw = null,
+            CurrencyMetadataProvider? metadata = null,
+            MonitorsProvider? monitors = null,
+            OverallStatusAggregatorProvider? aggregator = null,
+            DepositController? deposit = null,
+            DispenseController? dispense = null)
         {
+            if (configProvider != null) _services[typeof(ConfigurationProvider)] = configProvider;
             if (inventory != null) _services[typeof(Inventory)] = inventory;
             if (history != null) _services[typeof(TransactionHistory)] = history;
             if (manager != null) _services[typeof(CashChangerManager)] = manager;
             if (hw != null) _services[typeof(HardwareStatusManager)] = hw;
+            if (metadata != null) _services[typeof(CurrencyMetadataProvider)] = metadata;
+            if (monitors != null) _services[typeof(MonitorsProvider)] = monitors;
+            if (aggregator != null) _services[typeof(OverallStatusAggregatorProvider)] = aggregator;
+            if (deposit != null) _services[typeof(DepositController)] = deposit;
+            if (dispense != null) _services[typeof(DispenseController)] = dispense;
         }
 
         public T Resolve<T>() where T : class

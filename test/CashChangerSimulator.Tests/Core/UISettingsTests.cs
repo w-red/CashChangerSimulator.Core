@@ -1,6 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.UI.Wpf;
-using CashChangerSimulator.UI.Wpf.Services;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using CsToml;
 using R3;
