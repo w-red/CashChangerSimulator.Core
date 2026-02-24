@@ -39,7 +39,7 @@ public class TransactionHistory : IDisposable
                 Type = e.Type,
                 Amount = e.Amount,
                 Counts = e.Counts.ToDictionary(
-                    kv => $"{kv.Key.CurrencyCode}:{(kv.Key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? "B" : "C")}{kv.Key.Value}",
+                    kv => $"{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}",
                     kv => kv.Value)
             })]
         };
@@ -56,7 +56,7 @@ public class TransactionHistory : IDisposable
             var counts = new Dictionary<DenominationKey, int>();
             foreach (var kv in s.Counts)
             {
-                var parts = kv.Key.Split(':');
+                var parts = kv.Key.Split(DenominationKey.KeySeparator);
                 if (parts.Length == 2 && DenominationKey.TryParse(parts[1], parts[0], out var key) && key != null)
                 {
                     counts[key] = kv.Value;

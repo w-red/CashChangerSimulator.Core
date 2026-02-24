@@ -14,17 +14,13 @@ public class HardwareStatusManager : IDisposable
     /// <summary>紙幣などの重なり（バリデーションエラー）が発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsOverlapped => _isOverlapped;
 
-    /// <summary>
-    /// ジャム状態を切り替える。
-    /// </summary>
+    /// <summary>ジャム状態を切り替えます。</summary>
     public void SetJammed(bool jammed)
     {
         _isJammed.Value = jammed;
     }
 
-    /// <summary>
-    /// 重なり状態を切り替える。
-    /// </summary>
+    /// <summary>重なり状態を切り替えます。</summary>
     public void SetOverlapped(bool overlapped)
     {
         _isOverlapped.Value = overlapped;

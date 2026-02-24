@@ -9,7 +9,10 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device;
 
-/// <summary>出金（払出）シーケンスを管理するコントローラー。 UPOS の DispenseCash / DispenseChange のライフサイクル（IDLE -> BUSY -> IDLE/ERROR）を制御します。</summary>
+/// <summary>出金（払出）シーケンスを管理するコントローラー。</summary>
+/// <param name="manager">キャッシュチェンジャーマネージャー。</param>
+/// <param name="hardwareStatusManager">ハードウェアステータスマネージャー。</param>
+/// <param name="simulator">デバイスシミュレーター。</param>
 public class DispenseController(
     CashChangerManager manager,
     HardwareStatusManager? hardwareStatusManager = null,

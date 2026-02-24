@@ -5,6 +5,8 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>テスト用のモックキャッシュチェンジャーマネージャー。</summary>
+/// <param name="inv">在庫オブジェクト。</param>
 public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator())
 {
     public ManualResetEventSlim DispenseStartSignal { get; } = new(false);
@@ -18,6 +20,9 @@ public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new
     }
 }
 
+/// <summary>テスト用のシミュレータキャッシュチェンジャー。</summary>
+/// <param name="inv">在庫オブジェクト。</param>
+/// <param name="manager">マネージャーオブジェクト。</param>
 public class TestSimulatorCashChanger(Inventory inv, CashChangerManager manager) : SimulatorCashChanger(null, inv, null, manager, null, null)
 {
     public List<EventArgs> QueuedEvents { get; } = [];

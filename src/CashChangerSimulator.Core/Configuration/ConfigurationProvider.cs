@@ -2,12 +2,11 @@ using R3;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>
-/// アプリケーション全体で共有される設定を提供するプロバイダー。
-/// </summary>
+/// <summary>アプリケーション全体で共有される設定を提供するプロバイダー。</summary>
 public class ConfigurationProvider
 {
     private readonly Subject<Unit> _reloaded = new();
+    /// <summary>設定が再読み込みされたときに通知されるストリーム。</summary>
     public Observable<Unit> Reloaded => _reloaded;
 
     /// <summary>現在保持している設定インスタンス。</summary>

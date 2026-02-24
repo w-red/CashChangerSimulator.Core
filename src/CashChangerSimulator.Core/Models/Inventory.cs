@@ -6,27 +6,42 @@ using ZLogger;
 namespace CashChangerSimulator.Core.Models;
 
 /// <summary>金種を一意に識別するための複合キー（通貨コード、額面、硬貨/紙幣の種別）。</summary>
-public record DenominationKey(decimal Value, CashType Type, string CurrencyCode = "JPY")
+/// <param name="Value">額面。</param>
+/// <param name="Type">硬貨/紙幣の種別。</param>
+/// <param name="CurrencyCode">通貨コード。</param>
+public record DenominationKey(decimal Value, CashType Type, string CurrencyCode = DenominationKey.DefaultCurrencyCode)
 {
+    /// <summary>デフォルトの通貨コード。</summary>
+    public const string DefaultCurrencyCode = "JPY";
+
+    /// <summary>紙幣を表すプレフィックス文字。</summary>
+    public const char BillPrefix = 'B';
+
+    /// <summary>硬貨を表すプレフィックス文字。</summary>
+    public const char CoinPrefix = 'C';
+
+    /// <summary>キーのセパレータ文字。</summary>
+    public const char KeySeparator = ':';
+
+    /// <summary>種別に応じたプレフィックス文字を取得します。</summary>
+    public char PrefixChar => Type == CashType.Bill ? BillPrefix : CoinPrefix;
+
     /// <summary>文字列形式から金種キーを解析します。</summary>
-    /// <param name="s">解析対象の文字列。</param>
-    /// <param name="result">解析結果のキー。</param>
-    /// <returns>解析に成功した場合は true、それ以外は false。</returns>
     public static bool TryParse(string s, out DenominationKey? result)
     {
-        return TryParse(s, "JPY", out result);
+        return TryParse(s, DefaultCurrencyCode, out result);
     }
 
-    /// <summary>通貨コードと文字列形式から DenominationKey を解析します。</summary>
+    /// <summary>通貨コードと文字列形式から金種キーを解析します。</summary>
     public static bool TryParse(string s, string currencyCode, out DenominationKey? result)
     {
         result = null;
         if (string.IsNullOrEmpty(s) || s.Length < 2) return false;
 
-        var type = s[0] switch
+        var type = char.ToUpperInvariant(s[0]) switch
         {
-            'B' or 'b' => CashType.Bill,
-            'C' or 'c' => CashType.Coin,
+            BillPrefix => CashType.Bill,
+            CoinPrefix => CashType.Coin,
             _ => CashType.Undefined
         };
 
@@ -69,7 +84,7 @@ public class Inventory : IReadOnlyInventory
         // Normalize key if meaningful currency code is missing
         if (string.IsNullOrEmpty(key.CurrencyCode))
         {
-            key = key with { CurrencyCode = "JPY" };
+            key = key with { CurrencyCode = DenominationKey.DefaultCurrencyCode };
         }
         _logger.ZLogDebug($"Inventory.Add called. Key: {key}, Count: {count}");
         if (_counts.ContainsKey(key))
@@ -118,7 +133,7 @@ public class Inventory : IReadOnlyInventory
     public Dictionary<string, int> ToDictionary()
     {
         return _counts.ToDictionary(
-            kv => $"{kv.Key.CurrencyCode}:{(kv.Key.Type == CashType.Bill ? "B" : "C")}{kv.Key.Value}",
+            kv => $"{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}",
             kv => kv.Value
         );
     }
@@ -129,7 +144,7 @@ public class Inventory : IReadOnlyInventory
         foreach (var kv in data)
         {
             // "JPY:B1000" 形式を想定
-            var parts = kv.Key.Split(':');
+            var parts = kv.Key.Split(DenominationKey.KeySeparator);
             if (parts.Length == 2)
             {
                 var currencyCode = parts[0];

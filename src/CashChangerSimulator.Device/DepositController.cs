@@ -9,7 +9,7 @@ namespace CashChangerSimulator.Device;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー。</summary>
 /// <param name="inventory">在庫管理オブジェクト。</param>
-/// <param name="hardwareStatusManager">ハードウェア状態マネージャー。</param>
+/// <param name="hardwareStatusManager">ハードウェアステータスマネージャー。</param>
 public class DepositController(
     Inventory inventory,
     HardwareStatusManager? hardwareStatusManager = null) : IDisposable
@@ -139,7 +139,7 @@ public class DepositController(
     public void TrackDeposit(DenominationKey key)
         => TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, 1 } });
 
-    /// <summary>入金中に複数の金種を一括で追加するトラッキングメソッド。</summary>
+    /// <summary>入金中に複数の金種を一括で追加します。</summary>
     public void TrackBulkDeposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         if (_depositStatus != CashDepositStatus.Count) return;
