@@ -1,5 +1,10 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Monitoring;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Core.Opos;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;

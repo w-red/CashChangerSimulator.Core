@@ -1,5 +1,9 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using Shouldly;
@@ -97,11 +101,11 @@ public class ErrorScenarioTests
 
         // Jam ON
         hardware.SetJammed(true);
-        lastStatus.ShouldBe((int)CashChangerSimulator.Core.Models.UposCashChangerStatusUpdateCode.Jam);
+        lastStatus.ShouldBe((int)CashChangerSimulator.Core.Opos.UposCashChangerStatusUpdateCode.Jam);
 
         // Jam OFF
         hardware.SetJammed(false);
-        lastStatus.ShouldBe((int)CashChangerSimulator.Core.Models.UposCashChangerStatusUpdateCode.Ok);
+        lastStatus.ShouldBe((int)CashChangerSimulator.Core.Opos.UposCashChangerStatusUpdateCode.Ok);
     }
 
     /// <summary>重複した pauseDeposit 呼び出しが ErrorCode.Illegal を発生させることを検証する。</summary>
