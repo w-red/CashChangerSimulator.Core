@@ -16,7 +16,7 @@ public class DispenseControllerTest
 
     /// <summary>同期的な払い出し操作でステータスが遷移することを検証します。</summary>
     [Fact]
-    public async Task DispenseChangeAsync_ShouldTransitionToBusyAndBackToIdle()
+    public async Task DispenseChangeAsyncShouldTransitionToBusyAndBackToIdle()
     {
         // Arrange
         var inventory = new Inventory();
@@ -39,7 +39,7 @@ public class DispenseControllerTest
 
     /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証します。</summary>
     [Fact]
-    public async Task DispenseChangeAsync_ShouldThrowIfBusy()
+    public async Task DispenseChangeAsyncShouldThrowIfBusy()
     {
         // Arrange
         var inventory = new Inventory();
@@ -60,7 +60,7 @@ public class DispenseControllerTest
 
     /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証します。</summary>
     [Fact]
-    public async Task DispenseChangeAsync_ShouldCallSimulator()
+    public async Task DispenseChangeAsyncShouldCallSimulator()
     {
         // Arrange
         var inventory = new Inventory();

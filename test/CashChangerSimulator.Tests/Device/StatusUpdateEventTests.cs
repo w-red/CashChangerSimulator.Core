@@ -56,8 +56,9 @@ public class StatusUpdateEventTests
 
     // ========== DeviceStatus StatusUpdateEvent ==========
 
+    /// <summary>在庫が空になった際に StatusUpdateEvent が発火することを検証する。</summary>
     [Fact]
-    public void ShouldFireStatusUpdateEvent_WhenDeviceStatus_BecomesEmpty()
+    public void ShouldFireStatusUpdateEventWhenDeviceStatusBecomesEmpty()
     {
         var (cc, inv, hw, events) = CreateTestCashChanger();
 
@@ -70,8 +71,9 @@ public class StatusUpdateEventTests
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Empty);
     }
 
+    /// <summary>在庫が NearEmpty しきい値に達した際に StatusUpdateEvent が発火することを検証する。</summary>
     [Fact]
-    public void ShouldFireStatusUpdateEvent_WhenDeviceStatus_BecomesNearEmpty()
+    public void ShouldFireStatusUpdateEventWhenDeviceStatusBecomesNearEmpty()
     {
         var (cc, inv, hw, events) = CreateTestCashChanger();
 
@@ -83,8 +85,9 @@ public class StatusUpdateEventTests
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.NearEmpty);
     }
 
+    /// <summary>在庫が空の状態から復帰した際に StatusUpdateEvent が発火することを検証する。</summary>
     [Fact]
-    public void ShouldFireStatusUpdateEvent_WhenDeviceStatus_RecoversFromEmpty()
+    public void ShouldFireStatusUpdateEventWhenDeviceStatusRecoversFromEmpty()
     {
         var (cc, inv, hw, events) = CreateTestCashChanger();
 
@@ -102,8 +105,9 @@ public class StatusUpdateEventTests
 
     // ========== FullStatus OK transitions ==========
 
+    /// <summary>在庫がフルの状態から復帰した際に StatusUpdateEvent が発火することを検証する。</summary>
     [Fact]
-    public void ShouldFireStatusUpdateEvent_WhenFullStatus_RecoversFromFull()
+    public void ShouldFireStatusUpdateEventWhenFullStatusRecoversFromFull()
     {
         var (cc, inv, hw, events) = CreateTestCashChanger();
 
@@ -121,8 +125,9 @@ public class StatusUpdateEventTests
 
     // ========== Jam StatusUpdateEvent ==========
 
+    /// <summary>ジャムが発生した際に標準のジャムコードで StatusUpdateEvent が発火することを検証する。</summary>
     [Fact]
-    public void ShouldFireStatusUpdateEvent_WithStandardJamCode_WhenJammed()
+    public void ShouldFireStatusUpdateEventWithStandardJamCodeWhenJammed()
     {
         var (cc, inv, hw, events) = CreateTestCashChanger();
 
@@ -133,8 +138,9 @@ public class StatusUpdateEventTests
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Jam);
     }
 
+    /// <summary>ジャムが解消された際に OK コードで StatusUpdateEvent が発火することを検証する。</summary>
     [Fact]
-    public void ShouldFireStatusUpdateEvent_WithOkCode_WhenJamCleared()
+    public void ShouldFireStatusUpdateEventWithOkCodeWhenJamCleared()
     {
         var (cc, inv, hw, events) = CreateTestCashChanger();
 

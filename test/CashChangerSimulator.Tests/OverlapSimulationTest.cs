@@ -7,8 +7,9 @@ namespace CashChangerSimulator.Tests;
 /// <summary>重なりエラー（Overlap Error）のシミュレーションを検証するテストクラス。</summary>
 public class OverlapSimulationTest
 {
+    /// <summary>重なりエラー発生時に FixDeposit は成功するが、EndDeposit(NoChange) は失敗することを検証する。</summary>
     [Fact]
-    public void FixDeposit_ShouldSucceed_ButEndDepositNoChange_ShouldThrow_WhenOverlapped()
+    public void FixDepositShouldSucceedButEndDepositNoChangeShouldThrowWhenOverlapped()
     {
         // Arrange
         var inventory = new Inventory();
@@ -37,8 +38,9 @@ public class OverlapSimulationTest
         Assert.False(hardwareManager.IsOverlapped.Value);
     }
 
+    /// <summary>BeginDeposit を呼び出すと重なりエラー状態がクリアされることを検証する。</summary>
     [Fact]
-    public void BeginDeposit_ShouldClearOverlapStatus()
+    public void BeginDepositShouldClearOverlapStatus()
     {
         // Arrange
         var hardwareManager = new HardwareStatusManager();

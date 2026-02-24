@@ -31,8 +31,9 @@ public class UposLifecycleTests
         return new SimulatorCashChanger(config, inv, history, manager, null, null, null, hw);
     }
 
+    /// <summary>Claim されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。</summary>
     [Fact]
-    public void DispenseChange_ShouldThrow_WhenNotClaimed()
+    public void DispenseChangeShouldThrowWhenNotClaimed()
     {
         var cc = CreateCashChanger();
 
@@ -43,8 +44,9 @@ public class UposLifecycleTests
             .ShouldBeTrue($"Expected Closed or NotClaimed, but got {ex.ErrorCode}");
     }
 
+    /// <summary>Claim されていない状態で BeginDeposit を呼び出すと例外がスローされることを検証する。</summary>
     [Fact]
-    public void BeginDeposit_ShouldThrow_WhenNotClaimed()
+    public void BeginDepositShouldThrowWhenNotClaimed()
     {
         var cc = CreateCashChanger();
 
@@ -52,8 +54,9 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
+    /// <summary>Claim されていない状態で ReadCashCounts を呼び出すと例外がスローされることを検証する。</summary>
     [Fact]
-    public void ReadCashCounts_ShouldThrow_WhenNotClaimed()
+    public void ReadCashCountsShouldThrowWhenNotClaimed()
     {
         var cc = CreateCashChanger();
 
@@ -61,8 +64,9 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
+    /// <summary>CheckHealth が常に OK を返すことを検証する。</summary>
     [Fact]
-    public void CheckHealth_ShouldReturnOk()
+    public void CheckHealthShouldReturnOk()
     {
         var cc = CreateCashChanger();
 
