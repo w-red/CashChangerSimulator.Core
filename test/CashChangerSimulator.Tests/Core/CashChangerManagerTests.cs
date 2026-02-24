@@ -12,9 +12,7 @@ using Shouldly;
 using System.Collections.Generic;
 using Xunit;
 
-/// <summary>
-/// CashChangerManager のビジネスロジックを検証するテスト。
-/// </summary>
+/// <summary>CashChangerManager のビジネスロジックを検証するテスト。</summary>
 public class CashChangerManagerTests
 {
     /// <summary>入金時に在庫と履歴が正しく更新されることを検証する。</summary>

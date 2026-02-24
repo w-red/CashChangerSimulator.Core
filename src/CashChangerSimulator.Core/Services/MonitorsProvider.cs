@@ -4,9 +4,7 @@ using CashChangerSimulator.Core.Monitoring;
 
 namespace CashChangerSimulator.Core.Services;
 
-/// <summary>
-/// 全金種の CashStatusMonitor インスタンスを提供するプロバイダー。
-/// </summary>
+/// <summary>全金種の CashStatusMonitor インスタンスを提供するプロバイダー。</summary>
 public class MonitorsProvider
 {
     /// <summary>生成されたモニターのリスト。</summary>

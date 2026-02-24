@@ -14,9 +14,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-/// <summary>
-/// TransactionHistory の動作を検証するテスト。
-/// </summary>
+/// <summary>TransactionHistory の動作を検証するテスト。</summary>
 public class TransactionHistoryTests
 {
     /// <summary>取引履歴が追加された際、正しく通知され、格納されることを検証する。</summary>

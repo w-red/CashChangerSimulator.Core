@@ -10,9 +10,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>
-/// マルチ通貨（JPY/USD切り替え、フィルタリング、小数の名目値）の検証テスト。
-/// </summary>
+/// <summary>マルチ通貨（JPY/USD切り替え、フィルタリング、小数の名目値）の検証テスト。</summary>
 public class MultiCurrencyTests
 {
     private SimulatorCashChanger CreateDevice()

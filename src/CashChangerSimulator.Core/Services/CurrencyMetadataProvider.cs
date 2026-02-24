@@ -6,9 +6,7 @@ using System.Reflection;
 
 namespace CashChangerSimulator.Core.Services;
 
-/// <summary>
-/// 通貨コードに基づいて、MoneyKind4Opos から通貨のメタデータを提供するサービス。
-/// </summary>
+/// <summary>通貨コードに基づいて、MoneyKind4Opos から通貨のメタデータを提供するサービス。</summary>
 public class CurrencyMetadataProvider
 {
     private readonly Type _currencyType;

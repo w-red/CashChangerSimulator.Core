@@ -11,9 +11,7 @@ using R3;
 using Shouldly;
 using Xunit;
 
-/// <summary>
-/// Inventory クラスの基本機能を検証するテスト。
-/// </summary>
+/// <summary>Inventory クラスの基本機能を検証するテスト。</summary>
 public class InventoryTests
 {
     /// <summary>指定された金種の枚数を追加し、正しく保持されることを検証する。</summary>

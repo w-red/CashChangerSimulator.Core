@@ -11,9 +11,7 @@ using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 using Xunit;
 
-/// <summary>
-/// お釣り計算ロジック（欲張り法）を検証するテスト。
-/// </summary>
+/// <summary>お釣り計算ロジック（欲張り法）を検証するテスト。</summary>
 public class ChangeCalculatorTests
 {
     /// <summary>在庫が十分にある場合、お釣り計算が正しい枚数を返すことを検証する。</summary>

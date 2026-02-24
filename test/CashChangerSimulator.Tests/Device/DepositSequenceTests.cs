@@ -11,10 +11,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>
-/// UPOS 8.3.4 シーケンス図 / 8.3.5 状態遷移図に基づく
-/// Deposit シーケンスの検証テスト。
-/// </summary>
+/// <summary>Deposit シーケンスの検証テスト。</summary>
+/// <remarks>
+/// UPOS 8.3.4 シーケンス図 / 8.3.5 状態遷移図に基づく検証を行います。
+/// </remarks>
 public class DepositSequenceTests
 {
     private (DepositController Controller, Inventory Inventory) CreateController()

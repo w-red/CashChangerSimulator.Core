@@ -11,9 +11,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>
-/// 各種エラーシナリオ（ビジー、不正なパラメータ/シーケンス、在庫不足、ジャム）の検証テスト。
-/// </summary>
+/// <summary>各種エラーシナリオ（ビジー、不正なパラメータ/シーケンス、在庫不足、ジャム）の検証テスト。</summary>
 public class ErrorScenarioTests
 {
     private (SimulatorCashChanger Device, HardwareStatusManager Hardware) CreateDevice()
