@@ -9,7 +9,10 @@ namespace CashChangerSimulator.Core.Models;
 /// <param name="Value">額面。</param>
 /// <param name="Type">硬貨/紙幣の種別。</param>
 /// <param name="CurrencyCode">通貨コード。</param>
-public record DenominationKey(decimal Value, CashType Type, string CurrencyCode = DenominationKey.DefaultCurrencyCode)
+public record DenominationKey(
+    decimal Value,
+    CashType Type,
+    string CurrencyCode = DenominationKey.DefaultCurrencyCode)
 {
     /// <summary>デフォルトの通貨コード。</summary>
     public const string DefaultCurrencyCode = "JPY";
@@ -71,7 +74,7 @@ public interface IReadOnlyInventory
 /// <summary>金種ごとの在庫枚数を管理するクラス。</summary>
 public class Inventory : IReadOnlyInventory
 {
-    private readonly Microsoft.Extensions.Logging.ILogger<Inventory> _logger = LogProvider.CreateLogger<Inventory>();
+    private readonly ILogger<Inventory> _logger = LogProvider.CreateLogger<Inventory>();
     private readonly Dictionary<DenominationKey, int> _counts = [];
     private readonly Subject<DenominationKey> _changed = new();
 

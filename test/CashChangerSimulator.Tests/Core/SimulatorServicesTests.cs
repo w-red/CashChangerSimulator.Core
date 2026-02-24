@@ -76,7 +76,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.Provider = provider;
 
         // SimulatorCashChanger default constructor should pick up from SimulatorServices
-        var cc = new CashChangerSimulator.Device.SimulatorCashChanger();
+        var cc = new SimulatorCashChanger();
 
         // Verify via ReadCashCounts (which uses _inventory internally)
         var ex = Should.Throw<Microsoft.PointOfService.PosControlException>(
