@@ -1,6 +1,7 @@
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Exceptions;
 
-namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Services;
 
 /// <summary>お釣りの金種組み合わせを計算するクラス。</summary>
 public class ChangeCalculator

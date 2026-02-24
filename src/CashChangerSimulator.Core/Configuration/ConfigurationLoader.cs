@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Transactions;
 using CsToml.Extensions;
 using Microsoft.Extensions.Logging;
 using ZLogger;

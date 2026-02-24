@@ -1,4 +1,6 @@
-namespace CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Models;
+
+namespace CashChangerSimulator.Core.Transactions;
 
 /// <summary>1回の取引（履歴）を表すレコード。</summary>
 /// <param name="Timestamp">取引日時。</param>

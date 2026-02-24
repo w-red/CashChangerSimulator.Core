@@ -1,6 +1,6 @@
 using R3;
 
-namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Managers;
 
 /// <summary>釣銭機のハードウェア的な障害状態（ジャムなど）を管理するクラス。</summary>
 public class HardwareStatusManager : IDisposable

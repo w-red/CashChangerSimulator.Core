@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Monitoring;
 
 /// <summary>出金操作のステータスを定義する列挙型。</summary>
 public enum CashDispenseStatus

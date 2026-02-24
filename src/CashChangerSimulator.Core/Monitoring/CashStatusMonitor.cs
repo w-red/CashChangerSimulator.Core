@@ -1,6 +1,7 @@
+using CashChangerSimulator.Core.Models;
 using R3;
 
-namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Monitoring;
 
 /// <summary>特定の金種の枚数を監視し、しきい値に基づいた状態（CashStatus）を通知する。</summary>
 public class CashStatusMonitor : IDisposable

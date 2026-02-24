@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Transactions;
 
 /// <summary>取引の種類を表す列挙型。</summary>
 public enum TransactionType

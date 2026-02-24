@@ -1,7 +1,8 @@
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Models;
 using R3;
 
-namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Transactions;
 
 /// <summary>取引履歴を管理するクラス。</summary>
 public class TransactionHistory : IDisposable

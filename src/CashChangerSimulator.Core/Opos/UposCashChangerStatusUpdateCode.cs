@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Opos;
 
 /// <summary>UnifiedPOS CashChanger の StatusUpdateEvent 定数。</summary>
 public enum UposCashChangerStatusUpdateCode

@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Monitoring;
 
 /// <summary>釣銭機の状態を表す列挙型。</summary>
 public enum CashStatus
