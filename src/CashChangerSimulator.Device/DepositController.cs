@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
