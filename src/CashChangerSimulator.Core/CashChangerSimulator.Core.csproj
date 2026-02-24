@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsToml" Version="1.8.1" />
-    <PackageReference Include="CsToml.Extensions" Version="1.8.1" />
-    <PackageReference Include="CsToml.Generator" Version="1.8.1">
+    <PackageReference Include="CsToml" Version="1.8.2" />
+    <PackageReference Include="CsToml.Extensions" Version="1.8.2" />
+    <PackageReference Include="CsToml.Generator" Version="1.8.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
