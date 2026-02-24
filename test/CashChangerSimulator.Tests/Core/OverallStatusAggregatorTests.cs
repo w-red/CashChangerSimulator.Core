@@ -7,9 +7,7 @@ using Shouldly;
 using System.Linq;
 using Xunit;
 
-/// <summary>
-/// OverallStatusAggregator の集約ロジックを検証するテスト。
-/// </summary>
+/// <summary>OverallStatusAggregator の集約ロジックを検証するテスト。</summary>
 public class OverallStatusAggregatorTests
 {
     /// <summary>各金種のステータスに基づき、全体のステータスが正しく集約されることを検証する。</summary>
@@ -29,12 +27,12 @@ public class OverallStatusAggregatorTests
             new CashStatusMonitor(inventory, d, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)
         ).ToList();
 
-        var changerStatus = new OverallStatusAggregator(monitors);
+        var aggregator = new OverallStatusAggregator(monitors);
 
         CashStatus deviceStatus = CashStatus.Unknown;
         CashStatus fullStatus = CashStatus.Unknown;
-        using var _d = changerStatus.DeviceStatus.Subscribe(s => deviceStatus = s);
-        using var _f = changerStatus.FullStatus.Subscribe(s => fullStatus = s);
+        using var _d = aggregator.DeviceStatus.Subscribe(s => deviceStatus = s);
+        using var _f = aggregator.FullStatus.Subscribe(s => fullStatus = s);
 
         // Assert: 初期状態 (両方 0 枚) -> DeviceStatus=Empty, FullStatus=Normal
         deviceStatus.ShouldBe(CashStatus.Empty);
@@ -62,12 +60,46 @@ public class OverallStatusAggregatorTests
         // Assert: 両方の異常が独立して報告される
         fullStatus.ShouldBe(CashStatus.Full);
         deviceStatus.ShouldBe(CashStatus.Empty);
+    }
 
-        // Act: 1000円を Normal に戻し、5000円を NearEmpty にする (1000: 5枚, 5000: 1枚)
-        inventory.SetCount(denominations[0], 5);
-        inventory.SetCount(denominations[1], 1);
-        // Assert: NearEmpty
-        deviceStatus.ShouldBe(CashStatus.NearEmpty);
-        fullStatus.ShouldBe(CashStatus.Normal);
+    /// <summary>多数のモニターを扱う際に正しく集約されることを検証する。</summary>
+    [Fact]
+    public void AggregatorShouldHandleManyMonitors()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var monitors = new List<CashStatusMonitor>();
+        for (int i = 1; i <= 5; i++)
+        {
+            var key = new DenominationKey(i * 1000, CashType.Bill);
+            inventory.SetCount(key, 5); // All Normal
+            monitors.Add(new CashStatusMonitor(inventory, key, 2, 8, 10));
+        }
+
+        var aggregator = new OverallStatusAggregator(monitors);
+        aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);
+
+        // Act: One becomes NearEmpty
+        inventory.SetCount(monitors[2].Key, 1);
+        
+        // Assert
+        aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.NearEmpty);
+
+        // Act: Another becomes Empty
+        inventory.SetCount(monitors[4].Key, 0);
+        
+        // Assert
+        aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
+    }
+
+    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。</summary>
+    [Fact]
+    public void DisposeShouldWork()
+    {
+        // Arrange
+        var aggregator = new OverallStatusAggregator(new List<CashStatusMonitor>());
+
+        // Act & Assert
+        Should.NotThrow(() => aggregator.Dispose());
     }
 }

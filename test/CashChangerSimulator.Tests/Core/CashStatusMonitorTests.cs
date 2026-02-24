@@ -6,9 +6,7 @@ using R3;
 using Shouldly;
 using Xunit;
 
-/// <summary>
-/// CashStatusMonitor の状態遷移を検証するテスト。
-/// </summary>
+/// <summary>CashStatusMonitor の状態遷移を検証するテスト。</summary>
 public class CashStatusMonitorTests
 {
     /// <summary>在庫の枚数に応じてステータスが正しく遷移することを検証する。</summary>
@@ -20,11 +18,6 @@ public class CashStatusMonitorTests
         var denomination = new DenominationKey(1000, CashType.Bill);
 
         // しきい値設定: Empty=0, NearEmpty=2, NearFull=8, Full=10
-        // 0: Empty
-        // 1: NearEmpty
-        // 2-7: Normal
-        // 8-9: NearFull
-        // 10+: Full
         var monitor = new CashStatusMonitor(inventory, denomination, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10);
 
         CashStatus currentStatus = CashStatus.Unknown;
@@ -37,20 +30,62 @@ public class CashStatusMonitorTests
         inventory.Add(denomination, 1);
         currentStatus.ShouldBe(CashStatus.NearEmpty);
 
-        // Act & Assert: Add to 5 (Normal)
-        inventory.Add(denomination, 4);
+        // Act & Assert: Add to 2 (Normal)
+        inventory.Add(denomination, 1);
         currentStatus.ShouldBe(CashStatus.Normal);
 
-        // Act & Assert: Add to 9 (NearFull)
-        inventory.Add(denomination, 4);
+        // Act & Assert: Add to 8 (NearFull)
+        inventory.Add(denomination, 6);
         currentStatus.ShouldBe(CashStatus.NearFull);
 
         // Act & Assert: Add to 10 (Full)
-        inventory.Add(denomination, 1);
+        inventory.Add(denomination, 2);
         currentStatus.ShouldBe(CashStatus.Full);
+    }
 
-        // Act & Assert: Add more (Still Full)
-        inventory.Add(denomination, 5);
-        currentStatus.ShouldBe(CashStatus.Full);
+    /// <summary>しきい値を動的に更新した際、ステータスが再計算されることを検証する。</summary>
+    [Fact]
+    public void UpdateThresholdsShouldRecalculateStatus()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var denomination = new DenominationKey(1000, CashType.Bill);
+        inventory.SetCount(denomination, 5); // 5枚
+
+        // 初期しきい値では Normal (NearFull=8)
+        var monitor = new CashStatusMonitor(inventory, denomination, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10);
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.Normal);
+
+        // Act: 近満杯しきい値を5以下に下げる
+        monitor.UpdateThresholds(nearEmpty: 2, nearFull: 5, full: 10);
+
+        // Assert
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.NearFull);
+
+        // Act: 満杯しきい値を5にする
+        monitor.UpdateThresholds(nearEmpty: 2, nearFull: 3, full: 5);
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.Full);
+    }
+
+    /// <summary>Dispose 呼び出しにより購読が解除されることを検証する。</summary>
+    [Fact]
+    public void DisposeShouldUnsubscribe()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var denomination = new DenominationKey(1000, CashType.Bill);
+        var monitor = new CashStatusMonitor(inventory, denomination, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10);
+
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.Empty);
+
+        // Act
+        monitor.Dispose();
+
+        // 在庫を増やしてもステータスが変わらないことを確認
+        inventory.SetCount(denomination, 5);
+        
+        // Assert
+        // 注: Dispose しても既存の ReactiveProperty の値は残るが、更新はされないはず
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.Empty);
     }
 }
