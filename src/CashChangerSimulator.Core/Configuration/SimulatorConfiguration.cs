@@ -65,6 +65,10 @@ public partial class SimulatorConfiguration
     [TomlValueOnSerialized]
     public SimulationSettings Simulation { get; set; } = new();
 
+    /// <summary>カルチャコード（言語設定）。</summary>
+    [TomlValueOnSerialized]
+    public string CultureCode { get; set; } = "en-US";
+
     /// <summary>指定された金種の個別設定を取得する。存在しない場合はデフォルト値を返す。</summary>
     public DenominationSettings GetDenominationSetting(DenominationKey key)
     {
