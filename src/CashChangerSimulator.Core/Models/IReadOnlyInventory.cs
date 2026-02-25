@@ -11,4 +11,6 @@ public interface IReadOnlyInventory
     decimal CalculateTotal(string? currencyCode = null);
     /// <summary>在庫が変更されたときに通知されるイベントストリーム。</summary>
     Observable<DenominationKey> Changed { get; }
+    /// <summary>全在庫の金種キーと枚数の列挙を取得する。</summary>
+    System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<DenominationKey, int>> AllCounts { get; }
 }

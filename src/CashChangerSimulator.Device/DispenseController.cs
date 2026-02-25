@@ -31,7 +31,7 @@ public class DispenseController(
     private CashDispenseStatus _status = CashDispenseStatus.Idle;
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public Observable<Unit> Changed => _changed;
+    public virtual Observable<Unit> Changed => _changed;
 
     /// <summary>現在の出金ステータス。</summary>
     public CashDispenseStatus Status => _status;

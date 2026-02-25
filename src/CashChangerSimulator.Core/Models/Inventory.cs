@@ -63,7 +63,7 @@ public class Inventory : IReadOnlyInventory
     }
 
     /// <summary>全在庫の金種キーと枚数の列挙を取得する。</summary>
-    public IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => _counts;
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => _counts;
 
     /// <summary>現在の在庫を保存用のデータ形式に変換します。</summary>
     public Dictionary<string, int> ToDictionary()
