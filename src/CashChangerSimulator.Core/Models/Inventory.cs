@@ -1,75 +1,8 @@
-using MoneyKind4Opos.Currencies.Interfaces;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
 
 namespace CashChangerSimulator.Core.Models;
-
-/// <summary>金種を一意に識別するための複合キー（通貨コード、額面、硬貨/紙幣の種別）。</summary>
-/// <param name="Value">額面。</param>
-/// <param name="Type">硬貨/紙幣の種別。</param>
-/// <param name="CurrencyCode">通貨コード。</param>
-public record DenominationKey(
-    decimal Value,
-    CashType Type,
-    string CurrencyCode = DenominationKey.DefaultCurrencyCode)
-{
-    /// <summary>デフォルトの通貨コード。</summary>
-    public const string DefaultCurrencyCode = "JPY";
-
-    /// <summary>紙幣を表すプレフィックス文字。</summary>
-    public const char BillPrefix = 'B';
-
-    /// <summary>硬貨を表すプレフィックス文字。</summary>
-    public const char CoinPrefix = 'C';
-
-    /// <summary>キーのセパレータ文字。</summary>
-    public const char KeySeparator = ':';
-
-    /// <summary>種別に応じたプレフィックス文字を取得します。</summary>
-    public char PrefixChar => Type == CashType.Bill ? BillPrefix : CoinPrefix;
-
-    /// <summary>文字列形式から金種キーを解析します。</summary>
-    public static bool TryParse(string s, out DenominationKey? result)
-    {
-        return TryParse(s, DefaultCurrencyCode, out result);
-    }
-
-    /// <summary>通貨コードと文字列形式から金種キーを解析します。</summary>
-    public static bool TryParse(string s, string currencyCode, out DenominationKey? result)
-    {
-        result = null;
-        if (string.IsNullOrEmpty(s) || s.Length < 2) return false;
-
-        var type = char.ToUpperInvariant(s[0]) switch
-        {
-            BillPrefix => CashType.Bill,
-            CoinPrefix => CashType.Coin,
-            _ => CashType.Undefined
-        };
-
-        if (type == CashType.Undefined) return false;
-
-        if (decimal.TryParse(s[1..], out var value))
-        {
-            result = new DenominationKey(value, type, currencyCode);
-            return true;
-        }
-
-        return false;
-    }
-}
-
-/// <summary>読み取り専用の在庫情報のインターフェース。</summary>
-public interface IReadOnlyInventory
-{
-    /// <summary>指定された金種の現在の枚数を取得する。</summary>
-    int GetCount(DenominationKey key);
-    /// <summary>現在の在庫の合計金額を計算する。</summary>
-    decimal CalculateTotal(string? currencyCode = null);
-    /// <summary>在庫が変更されたときに通知されるイベントストリーム。</summary>
-    Observable<DenominationKey> Changed { get; }
-}
 
 /// <summary>金種ごとの在庫枚数を管理するクラス。</summary>
 public class Inventory : IReadOnlyInventory
