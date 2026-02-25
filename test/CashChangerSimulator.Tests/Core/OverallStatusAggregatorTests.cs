@@ -1,16 +1,10 @@
-namespace CashChangerSimulator.Tests.Core;
-
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Opos;
 using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
-using System.Linq;
-using Xunit;
+
+namespace CashChangerSimulator.Tests.Core;
 
 /// <summary>OverallStatusAggregator の集約ロジックを検証するテスト。</summary>
 public class OverallStatusAggregatorTests
@@ -102,7 +96,7 @@ public class OverallStatusAggregatorTests
     public void DisposeShouldWork()
     {
         // Arrange
-        var aggregator = new OverallStatusAggregator(new List<CashStatusMonitor>());
+        var aggregator = new OverallStatusAggregator([]);
 
         // Act & Assert
         Should.NotThrow(() => aggregator.Dispose());

@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using CsToml.Extensions;
 using Microsoft.Extensions.Logging;
@@ -36,7 +35,7 @@ public static class ConfigurationLoader
             config.Logging ??= new LoggingSettings();
             config.Simulation ??= new SimulationSettings();
             config.Thresholds ??= new ThresholdSettings();
-            config.Inventory ??= new Dictionary<string, InventorySettings>();
+            config.Inventory ??= [];
             
             return config;
         }

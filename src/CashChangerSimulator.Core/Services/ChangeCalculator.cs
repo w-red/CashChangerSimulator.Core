@@ -38,21 +38,14 @@ public class ChangeCalculator
             }
         }
 
-        if (remaining > 0)
-        {
-            throw new InsufficientCashException($"要求された金額 {targetAmount} を支払うための在庫が不足しているか、端数が合いません（残り: {remaining}）。");
-        }
-
-        return result;
+        return remaining > 0
+            ? throw new InsufficientCashException($"要求された金額 {targetAmount} を支払うための在庫が不足しているか、端数が合いません（残り: {remaining}）。")
+            : (IReadOnlyDictionary<DenominationKey, int>)result;
     }
 
     private IEnumerable<DenominationKey> GetAvailableDenominationKeys(IReadOnlyInventory inventory)
     {
         // 実際には IReadOnlyInventory の実装（Inventory クラス）から全金種キーを取得する
-        if (inventory is Inventory inv)
-        {
-            return inv.AllCounts.Select(kv => kv.Key);
-        }
-        return Enumerable.Empty<DenominationKey>();
+        return inventory is Inventory inv ? inv.AllCounts.Select(kv => kv.Key) : [];
     }
 }

@@ -4,7 +4,6 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Device;
 using Moq;
 using Shouldly;
@@ -87,7 +86,7 @@ public class SimulatorServicesTests : IDisposable
     /// <summary>テスト用の ISimulatorServiceProvider 実装。</summary>
     private class TestServiceProvider : ISimulatorServiceProvider
     {
-        private readonly Dictionary<Type, object> _services = new();
+        private readonly Dictionary<Type, object> _services = [];
 
         public TestServiceProvider(
             ConfigurationProvider? configProvider = null,

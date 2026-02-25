@@ -1,11 +1,7 @@
 namespace CashChangerSimulator.Tests.Core;
 
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Opos;
 using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;

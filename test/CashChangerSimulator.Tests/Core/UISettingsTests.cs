@@ -1,11 +1,9 @@
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.UI.Wpf;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using CsToml;
 using R3;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Core;
 
@@ -16,8 +14,10 @@ public class UISettingsTests
     [Fact]
     public void ConfigurationShouldSerializeAndDeserializeUIMode()
     {
-        var config = new SimulatorConfiguration();
-        config.UIMode = UIMode.PosTransaction;
+        var config = new SimulatorConfiguration
+        {
+            UIMode = UIMode.PosTransaction
+        };
 
         var toml = CsTomlSerializer.Serialize(config);
         var loaded = CsTomlSerializer.Deserialize<SimulatorConfiguration>(toml.ByteSpan);

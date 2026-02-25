@@ -1,13 +1,6 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Opos;
 using R3;
 using Shouldly;
-using Xunit;
-using System;
 
 namespace CashChangerSimulator.Tests.Core;
 

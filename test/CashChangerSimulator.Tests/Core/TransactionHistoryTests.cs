@@ -1,18 +1,11 @@
-namespace CashChangerSimulator.Tests.Core;
-
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Opos;
 using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
-using System;
-using System.Collections.Generic;
-using Xunit;
+
+namespace CashChangerSimulator.Tests.Core;
 
 /// <summary>TransactionHistory の動作を検証するテスト。</summary>
 public class TransactionHistoryTests
@@ -97,8 +90,8 @@ public class TransactionHistoryTests
         var history = new TransactionHistory();
         var state = new HistoryState
         {
-            Entries = new List<HistoryEntryState>
-            {
+            Entries =
+            [
                 new HistoryEntryState 
                 { 
                     Amount = 1000, 
@@ -106,7 +99,7 @@ public class TransactionHistoryTests
                     Timestamp = DateTimeOffset.Now, 
                     Counts = new Dictionary<string, int> { { "INVALID_KEY", 1 } } 
                 }
-            }
+            ]
         };
 
         // Act
@@ -125,7 +118,7 @@ public class TransactionHistoryTests
         var entries = new List<HistoryEntryState>();
         for (int i = 0; i < 1100; i++)
         {
-            entries.Add(new HistoryEntryState { Amount = i, Type = TransactionType.Adjustment, Timestamp = DateTimeOffset.Now, Counts = new Dictionary<string, int>() });
+            entries.Add(new HistoryEntryState { Amount = i, Type = TransactionType.Adjustment, Timestamp = DateTimeOffset.Now, Counts = [] });
         }
         var state = new HistoryState { Entries = entries };
 

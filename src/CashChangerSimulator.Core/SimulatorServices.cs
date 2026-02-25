@@ -1,5 +1,3 @@
-using CashChangerSimulator.Core.Models;
-
 namespace CashChangerSimulator.Core;
 
 /// <summary>シミュレータのサービスプロバイダーへの静的アクセスポイント。</summary>

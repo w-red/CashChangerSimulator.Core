@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using Moq;

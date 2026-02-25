@@ -69,13 +69,10 @@ public partial class SimulatorConfiguration
     public DenominationSettings GetDenominationSetting(DenominationKey key)
     {
         var keyStr = (key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? "B" : "C") + key.Value.ToString();
-        if (Inventory.TryGetValue(key.CurrencyCode, out var inventory) &&
-            inventory.Denominations.TryGetValue(keyStr, out var setting))
-        {
-            return setting;
-        }
-
-        return new DenominationSettings
+        return Inventory.TryGetValue(key.CurrencyCode, out var inventory) &&
+            inventory.Denominations.TryGetValue(keyStr, out var setting)
+            ? setting
+            : new DenominationSettings
         {
             NearEmpty = Thresholds.NearEmpty,
             NearFull = Thresholds.NearFull,

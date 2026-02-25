@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 
 namespace CashChangerSimulator.Core.Services;

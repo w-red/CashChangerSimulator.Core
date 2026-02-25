@@ -1,15 +1,12 @@
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Moq;
-using CashChangerSimulator.Core.Services;
 
 namespace CashChangerSimulator.Tests;
 
@@ -54,7 +51,6 @@ public class DispenseControllerTest
         // Act & Assert
         // Start first dispense (async mode keeps it in BUSY)
         _ = controller.DispenseChangeAsync(1000, true, IgnoreDispenseResult);
-
 
         // Wait briefly for status to transition
         await Task.Delay(TestTimingConstants.StartupCheckDelayMs, TestContext.Current.CancellationToken);

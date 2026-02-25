@@ -2,7 +2,6 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device;
 using Shouldly;
 using System.Diagnostics;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
