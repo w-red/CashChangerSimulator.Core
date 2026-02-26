@@ -21,7 +21,7 @@ public class DepositController(
     private readonly Subject<Unit> _changed = new();
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public Observable<Unit> Changed => _changed;
+    public virtual Observable<Unit> Changed => _changed;
 
     private decimal _depositAmount;
     private readonly Dictionary<DenominationKey, int> _depositCounts = [];
@@ -32,23 +32,23 @@ public class DepositController(
     // ========== Properties ==========
 
     /// <summary>入金合計額。</summary>
-    public decimal DepositAmount => _depositAmount;
+    public virtual decimal DepositAmount => _depositAmount;
 
     /// <summary>金種ごとの入金枚数。</summary>
-    public IReadOnlyDictionary<DenominationKey, int> DepositCounts => _depositCounts;
+    public virtual IReadOnlyDictionary<DenominationKey, int> DepositCounts => _depositCounts;
 
     /// <summary>入金ステータス。</summary>
-    public CashDepositStatus DepositStatus => _depositStatus;
+    public virtual CashDepositStatus DepositStatus => _depositStatus;
 
     /// <summary>入金受付中かどうか（払出ガード判定用）。</summary>
-    public bool IsDepositInProgress =>
+    public virtual bool IsDepositInProgress =>
         _depositStatus is CashDepositStatus.Start or CashDepositStatus.Count;
 
     /// <summary>一時停止中かどうか。</summary>
-    public bool IsPaused => _depositPaused;
+    public virtual bool IsPaused => _depositPaused;
 
     /// <summary>入金が確定（固定）されたかどうか。</summary>
-    public bool IsFixed => _depositFixed;
+    public virtual bool IsFixed => _depositFixed;
 
     // ========== Methods ==========
 
@@ -61,7 +61,11 @@ public class DepositController(
         _depositStatus = CashDepositStatus.Start;
         _depositPaused = false;
         _depositFixed = false;
-        _hardwareStatusManager.SetOverlapped(false); // Clear error on new deposit
+        
+        if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
+        {
+            throw new PosControlException("Device is in error state. Cannot begin deposit.", ErrorCode.Failure);
+        }
         _depositStatus = CashDepositStatus.Count;
         _changed.OnNext(Unit.Default);
         _logger.ZLogInformation($"BeginDeposit finished. New Status: {_depositStatus}");
@@ -111,7 +115,6 @@ public class DepositController(
         _depositFixed = false;
         _depositAmount = 0m;
         _depositCounts.Clear();
-        _hardwareStatusManager.SetOverlapped(false); // Clear error on end deposit
         _changed.OnNext(Unit.Default);
     }
 
@@ -145,7 +148,10 @@ public class DepositController(
     {
         if (_depositStatus != CashDepositStatus.Count) return;
         if (_depositPaused) return;
-        if (_hardwareStatusManager.IsOverlapped.Value) return;
+        if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
+        {
+            throw new PosControlException("Device is in error state. Cannot track deposit.", ErrorCode.Failure);
+        }
 
         foreach (var (key, count) in counts)
         {

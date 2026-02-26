@@ -23,7 +23,7 @@ public class DispenseController(
     : IDisposable
 {
     private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-    private readonly IDeviceSimulator _simulator = simulator ?? new HardwareSimulator(CashChangerSimulator.Core.SimulatorServices.TryResolve<ConfigurationProvider>()!);
+    private readonly IDeviceSimulator _simulator = simulator ?? new HardwareSimulator(CashChangerSimulator.Core.SimulatorServices.TryResolve<ConfigurationProvider>());
     private readonly ILogger<DispenseController> _logger = Core.LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> _changed = new();
     private readonly CompositeDisposable _disposables = [];
@@ -34,16 +34,19 @@ public class DispenseController(
     public virtual Observable<Unit> Changed => _changed;
 
     /// <summary>現在の出金ステータス。</summary>
-    public CashDispenseStatus Status => _status;
+    public virtual CashDispenseStatus Status => _status;
 
     /// <summary>出金処理中かどうか（BUSY 状態）。</summary>
-    public bool IsBusy => _status == CashDispenseStatus.Busy;
+    public virtual bool IsBusy => _status == CashDispenseStatus.Busy;
 
     /// <summary>指定された金額を払い出します（内訳自動計算）。</summary>
     public async Task DispenseChangeAsync(decimal amount, bool asyncMode, Action<ErrorCode, int> onComplete, string? currencyCode = null)
     {
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
-        if (_hardwareStatusManager.IsJammed.Value) throw new PosControlException("Device is jammed", ErrorCode.Failure);
+        if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
+        {
+            throw new PosControlException("Device is in error state. Cannot dispense.", ErrorCode.Failure);
+        }
 
         _status = CashDispenseStatus.Busy;
         _changed.OnNext(Unit.Default);
@@ -62,7 +65,10 @@ public class DispenseController(
     public async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode, Action<ErrorCode, int> onComplete)
     {
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
-        if (_hardwareStatusManager.IsJammed.Value) throw new PosControlException("Device is jammed", ErrorCode.Failure);
+        if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
+        {
+            throw new PosControlException("Device is in error state. Cannot dispense.", ErrorCode.Failure);
+        }
 
         _status = CashDispenseStatus.Busy;
         _changed.OnNext(Unit.Default);

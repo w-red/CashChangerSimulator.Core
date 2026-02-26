@@ -95,63 +95,48 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>サービスプロバイダーを使用して SimulatorCashChanger の新しいインスタンスを初期化します（DI用）。</summary>
     public SimulatorCashChanger()
         : this(
-            SimulatorServices.Resolve<ConfigurationProvider>(),
-            SimulatorServices.Resolve<Inventory>(),
-            SimulatorServices.Resolve<TransactionHistory>(),
-            SimulatorServices.Resolve<CashChangerManager>(),
-            SimulatorServices.Resolve<DepositController>(),
-            SimulatorServices.Resolve<DispenseController>(),
-            SimulatorServices.Resolve<OverallStatusAggregatorProvider>(),
-            SimulatorServices.Resolve<HardwareStatusManager>())
+            SimulatorServices.TryResolve<ConfigurationProvider>(),
+            SimulatorServices.TryResolve<Inventory>(),
+            SimulatorServices.TryResolve<TransactionHistory>(),
+            SimulatorServices.TryResolve<CashChangerManager>(),
+            SimulatorServices.TryResolve<DepositController>(),
+            SimulatorServices.TryResolve<DispenseController>(),
+            SimulatorServices.TryResolve<OverallStatusAggregatorProvider>(),
+            SimulatorServices.TryResolve<HardwareStatusManager>())
     {
     }
 
     /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。</summary>
     public SimulatorCashChanger(
-        ConfigurationProvider configProvider,
-        Inventory inventory,
-        TransactionHistory history,
-        CashChangerManager manager,
-        DepositController depositController,
-        DispenseController dispenseController,
-        OverallStatusAggregatorProvider aggregatorProvider,
-        HardwareStatusManager hardwareStatusManager)
+        ConfigurationProvider? configProvider,
+        Inventory? inventory,
+        TransactionHistory? history,
+        CashChangerManager? manager,
+        DepositController? depositController,
+        DispenseController? dispenseController,
+        OverallStatusAggregatorProvider? aggregatorProvider,
+        HardwareStatusManager? hardwareStatusManager)
     {
         // Load settings from TOML
-        _config = configProvider.Config;
+        _config = configProvider?.Config ?? new SimulatorConfiguration();
 
         DevicePath = "SimulatorCashChanger";
-        _hardwareStatusManager = hardwareStatusManager;
+        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
 
-        _logger =
-            LogProvider
-            .CreateLogger<SimulatorCashChanger>();
-        _logger
-            .ZLogInformation(
-                $"SimulatorCashChanger initialized.");
+        _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
+        _logger.ZLogInformation($"SimulatorCashChanger initialized.");
 
-        _inventory = inventory;
-        _history = history;
-        _manager = manager;
-        _depositController = depositController;
-        _dispenseController = dispenseController;
+        _inventory = inventory ?? new Inventory();
+        _history = history ?? new TransactionHistory();
+        _manager = manager ?? new CashChangerManager(_inventory, _history, new ChangeCalculator());
+        _depositController = depositController ?? new DepositController(_inventory, _hardwareStatusManager);
+        _dispenseController = dispenseController ?? new DispenseController(_manager, _hardwareStatusManager, new HardwareSimulator(configProvider));
 
         // Status monitors / Aggregator
-        var monitors =
-            _inventory
-            .AllCounts
-            .Select(kv =>
-                (kv.Key,
-                 _config.GetDenominationSetting(kv.Key)))
-            .Select(x =>
-                new CashStatusMonitor(
-                    _inventory,
-                    x.Key,
-                    x.Item2.NearEmpty,
-                    x.Item2.NearFull,
-                    x.Item2.Full))
+        var monitors = _inventory.AllCounts.Select(kv => (kv.Key, _config.GetDenominationSetting(kv.Key)))
+            .Select(x => new CashStatusMonitor(_inventory, x.Key, x.Item2.NearEmpty, x.Item2.NearFull, x.Item2.Full))
             .ToList();
-        _statusAggregator = aggregatorProvider.Aggregator;
+        _statusAggregator = aggregatorProvider?.Aggregator ?? new OverallStatusAggregator(monitors);
 
         // Active currency initialization
         _activeCurrencyCode =

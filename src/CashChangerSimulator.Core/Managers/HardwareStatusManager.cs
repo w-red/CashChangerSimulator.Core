@@ -26,6 +26,13 @@ public class HardwareStatusManager : IDisposable
         _isOverlapped.Value = overlapped;
     }
 
+    /// <summary>すべてのエラー状態を解除します。</summary>
+    public void ResetError()
+    {
+        _isJammed.Value = false;
+        _isOverlapped.Value = false;
+    }
+
     /// <inheritdoc/>
     public void Dispose()
     {
