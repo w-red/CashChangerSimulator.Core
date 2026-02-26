@@ -445,20 +445,25 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         switch (command)
         {
-            case 10: // SET_OVERLAP
+            case DirectIOCommands.SET_OVERLAP:
                 _hardwareStatusManager.SetOverlapped(data != 0);
                 _logger.ZLogInformation($"DirectIO: SET_OVERLAP to {data != 0}");
                 return new DirectIOData(data, obj);
 
-            case 11: // SET_JAM
+            case DirectIOCommands.SET_JAM:
                 _hardwareStatusManager.SetJammed(data != 0);
                 _logger.ZLogInformation($"DirectIO: SET_JAM to {data != 0}");
                 return new DirectIOData(data, obj);
 
-            case 100: // GET_VERSION
+            case DirectIOCommands.GET_VERSION:
                 var version = $"SimulatorCashChanger v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}";
                 _logger.ZLogInformation($"DirectIO: GET_VERSION -> {version}");
                 return new DirectIOData(data, version);
+
+            case DirectIOCommands.GET_DEPOSITED_SERIALS:
+                var serials = string.Join(",", _depositController.LastDepositedSerials);
+                _logger.ZLogInformation($"DirectIO: GET_DEPOSITED_SERIALS -> {serials}");
+                return new DirectIOData(data, serials);
 
             default:
                 return new DirectIOData(data, obj);

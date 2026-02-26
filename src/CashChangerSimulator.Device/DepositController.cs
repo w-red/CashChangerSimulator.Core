@@ -25,6 +25,8 @@ public class DepositController(
 
     private decimal _depositAmount;
     private readonly Dictionary<DenominationKey, int> _depositCounts = [];
+    private readonly List<string> _depositedSerials = [];
+    private readonly List<string> _lastDepositedSerials = [];
     private CashDepositStatus _depositStatus = CashDepositStatus.None;
     private bool _depositPaused;
     private bool _depositFixed;
@@ -50,6 +52,9 @@ public class DepositController(
     /// <summary>入金が確定（固定）されたかどうか。</summary>
     public virtual bool IsFixed => _depositFixed;
 
+    /// <summary>直前の入金セッションで投入されたシリアル番号一覧。</summary>
+    public virtual IReadOnlyList<string> LastDepositedSerials => _lastDepositedSerials;
+
     // ========== Methods ==========
 
     /// <summary>入金受付を開始します。</summary>
@@ -58,6 +63,7 @@ public class DepositController(
         _logger.ZLogInformation($"BeginDeposit called. Current Status: {_depositStatus}");
         _depositAmount = 0m;
         _depositCounts.Clear();
+        _depositedSerials.Clear();
         _depositStatus = CashDepositStatus.Start;
         _depositPaused = false;
         _depositFixed = false;
@@ -77,6 +83,8 @@ public class DepositController(
         if (!IsDepositInProgress) throw new PosControlException("Deposit not in progress", ErrorCode.Illegal);
 
         _depositFixed = true;
+        _lastDepositedSerials.Clear();
+        _lastDepositedSerials.AddRange(_depositedSerials);
         _changed.OnNext(Unit.Default);
     }
 
@@ -164,6 +172,16 @@ public class DepositController(
 
             // Logic Correction: Inventory is NOT updated here.
             // It will be updated in EndDeposit if action is Store.
+            
+            // Record serial numbers for Bills
+            if (key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    var serial = $"S{key.Value}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+                    _depositedSerials.Add(serial);
+                }
+            }
         }
         _changed.OnNext(Unit.Default);
     }
