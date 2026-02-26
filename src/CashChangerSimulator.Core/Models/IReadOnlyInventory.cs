@@ -13,4 +13,6 @@ public interface IReadOnlyInventory
     Observable<DenominationKey> Changed { get; }
     /// <summary>全在庫の金種キーと枚数の列挙を取得する。</summary>
     System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<DenominationKey, int>> AllCounts { get; }
+    /// <summary>在庫の不一致（物理在庫と論理在庫の差）が発生しているかどうか。</summary>
+    bool HasDiscrepancy { get; }
 }

@@ -13,6 +13,8 @@ public class Inventory : IReadOnlyInventory
 
     /// <inheritdoc/>
     public virtual Observable<DenominationKey> Changed => _changed;
+    /// <inheritdoc/>
+    public virtual bool HasDiscrepancy { get; set; } = false;
 
     /// <summary>指定された金種の枚数を追加する。</summary>
     public virtual void Add(DenominationKey key, int count)

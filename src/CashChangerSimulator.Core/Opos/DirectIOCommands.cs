@@ -16,4 +16,10 @@ public static class DirectIOCommands
 
     /// <summary>直前の入金セッションで投入された紙幣のシリアル番号一覧を取得します。</summary>
     public const int GET_DEPOSITED_SERIALS = 1002;
+
+    /// <summary>[シミュレーション用] デバイスの取り外し(REMOVED)をエミュレートします。</summary>
+    public const int SIMULATE_REMOVED = 20;
+
+    /// <summary>[シミュレーション用] デバイスの装着(INSERTED)をエミュレートします。</summary>
+    public const int SIMULATE_INSERTED = 21;
 }

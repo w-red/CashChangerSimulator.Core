@@ -51,6 +51,12 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>データイベント通知の有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
     public override bool DataEventEnabled { get; set; }
 
+    /// <summary>入金データのリアルタイム通知が有効かどうかを取得または設定します。</summary>
+    public override bool RealTimeDataEnabled { get; set; }
+
+    /// <summary>デバイスがリアルタイムデータの通知能力を持っているかどうか。</summary>
+    public override bool CapRealTimeData => true;
+
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">通知するイベント引数。</param>
     protected virtual void NotifyEvent(EventArgs e)
@@ -227,7 +233,11 @@ public class SimulatorCashChanger : CashChangerBasic
             {
                 if (_depositController.DepositStatus == CashDepositStatus.Count && !_depositController.IsPaused && DataEventEnabled)
                 {
-                    NotifyEvent(new DataEventArgs(0));
+                    // DataEvent is fired if RealTimeDataEnabled is true OR if the deposit has been fixed (FixDeposit called)
+                    if (RealTimeDataEnabled || _depositController.IsFixed)
+                    {
+                        NotifyEvent(new DataEventArgs(0));
+                    }
                 }
             }),
             _dispenseController.Changed.Subscribe(_ =>
@@ -437,7 +447,7 @@ public class SimulatorCashChanger : CashChangerBasic
             GetNominalValue(kv.Key),
             kv.Value)).ToList();
 
-        return new CashCounts([.. list], false);
+        return new CashCounts([.. list], _inventory.HasDiscrepancy);
     }
 
     /// <summary>ベンダー固有のコマンドをデバイスに送信します。</summary>
@@ -464,6 +474,14 @@ public class SimulatorCashChanger : CashChangerBasic
                 var serials = string.Join(",", _depositController.LastDepositedSerials);
                 _logger.ZLogInformation($"DirectIO: GET_DEPOSITED_SERIALS -> {serials}");
                 return new DirectIOData(data, serials);
+
+            case DirectIOCommands.SIMULATE_REMOVED:
+                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Removed));
+                return new DirectIOData(data, "REMOVED");
+
+            case DirectIOCommands.SIMULATE_INSERTED:
+                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Inserted));
+                return new DirectIOData(data, "INSERTED");
 
             default:
                 return new DirectIOData(data, obj);
