@@ -332,7 +332,7 @@ public class SimulatorCashChanger : CashChangerBasic
         var factor = GetCurrencyFactor();
         var decimalAmount = amount / factor;
 
-        async void OnComplete(ErrorCode code, int codeEx)
+        void OnComplete(ErrorCode code, int codeEx)
         {
             if (code == ErrorCode.Success)
             {
@@ -347,7 +347,7 @@ public class SimulatorCashChanger : CashChangerBasic
             {
                 _asyncResultCode = (int)code;
                 _asyncResultCodeExtended = codeEx;
-                _asyncProcessing = false; // State must be updated before firing the event
+                _asyncProcessing = false; // Set this BEFORE NotifyEvent
                 NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
             }
         }
@@ -379,7 +379,7 @@ public class SimulatorCashChanger : CashChangerBasic
             dict[key] = cc.Count;
         }
 
-        async void OnComplete(ErrorCode code, int codeEx)
+        void OnComplete(ErrorCode code, int codeEx)
         {
             if (AsyncMode)
             {
