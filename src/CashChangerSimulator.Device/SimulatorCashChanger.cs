@@ -499,7 +499,7 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>入金の一時停止をサポートしているかどうかを取得します。</summary>
     public override bool CapPauseDeposit => true;
     /// <summary>入金の返却（払い戻し）をサポートしているかどうかを取得します。</summary>
-    public override bool CapRepayDeposit => false;
+    public override bool CapRepayDeposit => true;
 
     /// <summary>不一致の検出をサポートしているかどうかを取得します。</summary>
     public override bool CapDiscrepancy => false;

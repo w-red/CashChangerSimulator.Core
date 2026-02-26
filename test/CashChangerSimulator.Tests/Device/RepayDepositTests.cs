@@ -1,0 +1,67 @@
+using CashChangerSimulator.Core;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Device;
+using Microsoft.PointOfService;
+using MoneyKind4Opos.Currencies.Interfaces;
+using Shouldly;
+using System.Collections.Generic;
+using System.Linq;
+using Xunit;
+
+namespace CashChangerSimulator.Tests.Device;
+
+public class RepayDepositTests
+{
+    private SimulatorCashChanger CreateSimulator()
+    {
+        // Using default constructor which resolves via SimulatorServices or creates defaults
+        return new SimulatorCashChanger();
+    }
+
+    [Fact]
+    public void CapRepayDepositShouldBeTrue()
+    {
+        var simulator = CreateSimulator();
+        simulator.CapRepayDeposit.ShouldBeTrue("UPOS standard requires CapRepayDeposit to be true to use Repay action.");
+    }
+
+    [Fact]
+    public void EndDepositWithRepayShouldNotUpdateInventory()
+    {
+        var simulator = CreateSimulator();
+        simulator.SkipStateVerification = true;
+        var b1000 = new DenominationKey(1000, CashType.Bill);
+        
+        // Initial inventory check
+        var initialCounts = simulator.ReadCashCounts();
+        var initialCount = initialCounts.Counts.Where(c => c.NominalValue == 1000).Select(c => c.Count).DefaultIfEmpty(0).FirstOrDefault();
+
+        simulator.Open();
+        simulator.Claim(0);
+        simulator.DeviceEnabled = true;
+
+        // Sequence: Begin -> Track -> Fix -> End(Repay)
+        simulator.BeginDeposit();
+        
+        // Simulate bill insertion (Directly via controller for test simplicity, 
+        // normally triggered by hardware/UI)
+        var controller = (DepositController)typeof(SimulatorCashChanger)
+            .GetField("_depositController", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(simulator)!;
+        
+        controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
+        simulator.DepositAmount.ShouldBe(1000);
+
+        simulator.FixDeposit();
+        simulator.EndDeposit(CashDepositAction.Repay);
+
+        // Verify state after Repay
+        simulator.DepositAmount.ShouldBe(0);
+        simulator.DepositStatus.ShouldBe(CashDepositStatus.End);
+        
+        // Verify inventory is UNCHANGED
+        var finalCounts = simulator.ReadCashCounts();
+        var finalCount = finalCounts.Counts.Where(c => c.NominalValue == 1000).Select(c => c.Count).DefaultIfEmpty(0).FirstOrDefault();
+        finalCount.ShouldBe(initialCount, "Inventory should not be updated when action is Repay.");
+    }
+}
