@@ -397,6 +397,29 @@ public class SimulatorCashChanger : CashChangerBasic
         }
     }
 
+    // ========== AdjustCashCounts ==========
+    
+    /// <summary>現在の現金在庫数を手動で調整（上書き）します。</summary>
+    public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts)
+    {
+        VerifyState();
+        ThrowIfBusy();
+
+        foreach (var cc in cashCounts)
+        {
+            var cashType = (cc.Type == CashCountType.Bill)
+                ? CashType.Bill
+                : CashType.Coin;
+
+            var factor = GetCurrencyFactor(_activeCurrencyCode);
+            var val = cc.NominalValue / factor;
+            var key = new DenominationKey(val, cashType, _activeCurrencyCode);
+            
+            _inventory.SetCount(key, cc.Count);
+        }
+        _logger.ZLogInformation($"AdjustCashCounts completed. Updated {cashCounts.Count()} denominations.");
+    }
+
     // ========== ReadCashCounts ==========
 
     /// <summary>現在の現金在庫数を読み取ります。</summary>
