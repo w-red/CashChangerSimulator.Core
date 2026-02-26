@@ -441,7 +441,29 @@ public class SimulatorCashChanger : CashChangerBasic
     }
 
     /// <summary>ベンダー固有のコマンドをデバイスに送信します。</summary>
-    public override DirectIOData DirectIO(int command, int data, object obj) => new(data, obj);
+    public override DirectIOData DirectIO(int command, int data, object obj)
+    {
+        switch (command)
+        {
+            case 10: // SET_OVERLAP
+                _hardwareStatusManager.SetOverlapped(data != 0);
+                _logger.ZLogInformation($"DirectIO: SET_OVERLAP to {data != 0}");
+                return new DirectIOData(data, obj);
+
+            case 11: // SET_JAM
+                _hardwareStatusManager.SetJammed(data != 0);
+                _logger.ZLogInformation($"DirectIO: SET_JAM to {data != 0}");
+                return new DirectIOData(data, obj);
+
+            case 100: // GET_VERSION
+                var version = $"SimulatorCashChanger v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}";
+                _logger.ZLogInformation($"DirectIO: GET_VERSION -> {version}");
+                return new DirectIOData(data, version);
+
+            default:
+                return new DirectIOData(data, obj);
+        }
+    }
 
     // ========== Status Properties ==========
 
