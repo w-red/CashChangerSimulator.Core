@@ -2,6 +2,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
+using Shouldly;
 
 namespace CashChangerSimulator.Tests;
 
@@ -29,19 +30,19 @@ public class OverlapSimulationTest
         // Act & Assert
         // Fix should succeed to allow Repay flow
         controller.FixDeposit();
-        Assert.True(controller.IsFixed);
+        controller.IsFixed.ShouldBeTrue();
 
         // EndDeposit(NoChange) should throw if overlapped
-        Assert.Throws<PosControlException>(() => controller.EndDeposit(CashDepositAction.NoChange));
+        Should.Throw<PosControlException>(() => controller.EndDeposit(CashDepositAction.NoChange));
 
-        // EndDeposit(Repay) should succeed and clear error
+        // EndDeposit(Repay) should succeed, but does not auto-clear hardware overlap
         controller.EndDeposit(CashDepositAction.Repay);
-        Assert.False(hardwareManager.IsOverlapped.Value);
+        hardwareManager.IsOverlapped.Value.ShouldBeTrue();
     }
 
-    /// <summary>BeginDeposit を呼び出すと重なりエラー状態がクリアされることを検証する。</summary>
+    /// <summary>BeginDeposit を呼び出すと重なりエラーの場合は例外が発生することを検証する。</summary>
     [Fact]
-    public void BeginDepositShouldClearOverlapStatus()
+    public void BeginDepositThrowsWhenOverlapped()
     {
         // Arrange
         var hardwareManager = new HardwareStatusManager();
@@ -50,10 +51,7 @@ public class OverlapSimulationTest
         var inventory = new Inventory();
         var controller = new DepositController(inventory, hardwareManager);
 
-        // Act
-        controller.BeginDeposit();
-
-        // Assert
-        Assert.False(hardwareManager.IsOverlapped.Value);
+        // Act & Assert
+        Should.Throw<PosControlException>(() => controller.BeginDeposit());
     }
 }
