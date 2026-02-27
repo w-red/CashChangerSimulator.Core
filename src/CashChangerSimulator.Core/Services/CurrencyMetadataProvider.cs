@@ -49,7 +49,7 @@ public class CurrencyMetadataProvider
             }
             else
             {
-                SymbolPrefix = "\\"; // Use backslash (or Yen mark) for English JPY
+                SymbolPrefix = "¥"; // Use Yen mark for English JPY
                 SymbolSuffix = "";
             }
         }
