@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Monitoring;
@@ -65,6 +66,14 @@ public class SimulatorCashChanger : CashChangerBasic
         if (e is DataEventArgs de)
         {
             QueueEvent(de);
+            
+            // Phase 24.1: Record DataEvent in TransactionHistory for UI Activity Feed
+            _history.Add(new TransactionEntry(
+                DateTime.Now,
+                TransactionType.DataEvent,
+                0,
+                new Dictionary<DenominationKey, int>()
+            ));
         }
         else if (e is StatusUpdateEventArgs se)
         {
@@ -77,13 +86,15 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>シミュレータUIからの Open 呼び出しを受け付けます。</summary>
     public new virtual void Open()
     {
-        _logger.LogInformation("OPOS Open called via simulator.");
+        _logger.LogInformation(
+            "OPOS Open called via simulator.");
     }
 
     /// <summary>シミュレータUIからの Close 呼び出しを受け付けます。</summary>
     public new virtual void Close()
     {
-        _logger.LogInformation("OPOS Close called via simulator.");
+        _logger.LogInformation(
+            "OPOS Close called via simulator.");
     }
 
     /// <summary>シミュレータUIからの Claim 呼び出しを受け付けます。</summary>
@@ -95,7 +106,8 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>シミュレータUIからの Release 呼び出しを受け付けます。</summary>
     public new virtual void Release()
     {
-        _logger.LogInformation("OPOS Release called via simulator.");
+        _logger.LogInformation(
+            "OPOS Release called via simulator.");
     }
 
     /// <summary>サービスプロバイダーを使用して SimulatorCashChanger の新しいインスタンスを初期化します（DI用）。</summary>
@@ -139,10 +151,21 @@ public class SimulatorCashChanger : CashChangerBasic
         _dispenseController = dispenseController ?? new DispenseController(_manager, _hardwareStatusManager, new HardwareSimulator(configProvider));
 
         // Status monitors / Aggregator
-        var monitors = _inventory.AllCounts.Select(kv => (kv.Key, _config.GetDenominationSetting(kv.Key)))
-            .Select(x => new CashStatusMonitor(_inventory, x.Key, x.Item2.NearEmpty, x.Item2.NearFull, x.Item2.Full))
+        var monitors = _inventory
+            .AllCounts
+            .Select(kv => (kv.Key, _config.GetDenominationSetting(kv.Key)))
+            .Select(x =>
+                new CashStatusMonitor(
+                    _inventory,
+                    x.Key,
+                    x.Item2.NearEmpty,
+                    x.Item2.NearFull,
+                    x.Item2.Full))
             .ToList();
-        _statusAggregator = aggregatorProvider?.Aggregator ?? new OverallStatusAggregator(monitors);
+        _statusAggregator =
+            aggregatorProvider
+            ?.Aggregator
+            ?? new OverallStatusAggregator(monitors);
 
         // Active currency initialization
         _activeCurrencyCode =
@@ -377,16 +400,34 @@ public class SimulatorCashChanger : CashChangerBasic
         ThrowIfBusy();
 
         var dict = new Dictionary<DenominationKey, int>();
-        foreach (var cc in cashCounts)
+        try
         {
-            var cashType = (cc.Type == CashCountType.Bill)
-                ? CashType.Bill
-                : CashType.Coin;
+            foreach (var cc in cashCounts)
+            {
+                if (cc.Count < 0)
+                {
+                    throw new PosControlException("Count cannot be negative.", ErrorCode.Illegal);
+                }
 
-            var factor = GetCurrencyFactor(_activeCurrencyCode);
-            var val = cc.NominalValue / factor;
-            var key = new DenominationKey(val, cashType, _activeCurrencyCode);
-            dict[key] = cc.Count;
+                var cashType = (cc.Type == CashCountType.Bill)
+                    ? CashType.Bill
+                    : CashType.Coin;
+
+                var factor = GetCurrencyFactor(_activeCurrencyCode);
+                var val = cc.NominalValue / factor;
+                var key = new DenominationKey(val, cashType, _activeCurrencyCode);
+
+                if (_inventory.GetCount(key) < cc.Count)
+                {
+                    throw new InsufficientCashException($"Insufficient inventory for {key}. Required: {cc.Count}, Available: {_inventory.GetCount(key)}");
+                }
+
+                dict[key] = cc.Count;
+            }
+        }
+        catch (InsufficientCashException ex)
+        {
+            throw new PosControlException(ex.Message, ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense, ex);
         }
 
         void OnComplete(ErrorCode code, int codeEx)
@@ -417,6 +458,11 @@ public class SimulatorCashChanger : CashChangerBasic
 
         foreach (var cc in cashCounts)
         {
+            if (cc.Count < 0)
+            {
+                throw new PosControlException("Count cannot be negative.", ErrorCode.Illegal);
+            }
+
             var cashType = (cc.Type == CashCountType.Bill)
                 ? CashType.Bill
                 : CashType.Coin;
@@ -455,33 +501,56 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         switch (command)
         {
-            case DirectIOCommands.SET_OVERLAP:
+            case DirectIOCommands.SetOverlap:
                 _hardwareStatusManager.SetOverlapped(data != 0);
                 _logger.ZLogInformation($"DirectIO: SET_OVERLAP to {data != 0}");
                 return new DirectIOData(data, obj);
 
-            case DirectIOCommands.SET_JAM:
+            case DirectIOCommands.SetJam:
                 _hardwareStatusManager.SetJammed(data != 0);
                 _logger.ZLogInformation($"DirectIO: SET_JAM to {data != 0}");
                 return new DirectIOData(data, obj);
 
-            case DirectIOCommands.GET_VERSION:
+            case DirectIOCommands.GetVersion:
                 var version = $"SimulatorCashChanger v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}";
                 _logger.ZLogInformation($"DirectIO: GET_VERSION -> {version}");
                 return new DirectIOData(data, version);
 
-            case DirectIOCommands.GET_DEPOSITED_SERIALS:
+            case DirectIOCommands.GetDepositedSerials:
                 var serials = string.Join(",", _depositController.LastDepositedSerials);
                 _logger.ZLogInformation($"DirectIO: GET_DEPOSITED_SERIALS -> {serials}");
                 return new DirectIOData(data, serials);
 
-            case DirectIOCommands.SIMULATE_REMOVED:
+            case DirectIOCommands.SimulateRemoved:
                 NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Removed));
                 return new DirectIOData(data, "REMOVED");
 
-            case DirectIOCommands.SIMULATE_INSERTED:
+            case DirectIOCommands.SimulateInserted:
                 NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Inserted));
                 return new DirectIOData(data, "INSERTED");
+
+            case DirectIOCommands.SetDiscrepancy:
+                _inventory.HasDiscrepancy = (data != 0);
+                _logger.ZLogInformation($"DirectIO: SET_DISCREPANCY to {_inventory.HasDiscrepancy}");
+                return new DirectIOData(data, obj);
+
+            case DirectIOCommands.AdjustCashCountsStr:
+                if (obj is string strVal)
+                {
+                    try
+                    {
+                        var activeKeys = _inventory.AllCounts.Select(kv => kv.Key).ToList();
+                        var counts = CashCountParser.Parse(strVal, activeKeys);
+                        AdjustCashCounts(counts); // Calls our core adjust logic
+                        _logger.ZLogInformation($"DirectIO: ADJUST_CASH_COUNTS_STR completed for '{strVal}'");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.ZLogError($"DirectIO: ADJUST_CASH_COUNTS_STR failed: {ex.Message}");
+                        throw new PosControlException($"Failed to parse adjust string: {ex.Message}", ErrorCode.Illegal, ex);
+                    }
+                }
+                return new DirectIOData(data, obj);
 
             default:
                 return new DirectIOData(data, obj);

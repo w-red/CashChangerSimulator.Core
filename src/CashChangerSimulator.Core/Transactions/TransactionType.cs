@@ -14,5 +14,7 @@ public enum TransactionType
     /// <summary>手動回収（管理者による取り出し）。</summary>
     Collection,
     /// <summary>在庫調整（棚卸し等による直接修正）。</summary>
-    Adjustment
+    Adjustment,
+    /// <summary>UPOS の DataEvent 等、ログ通知用のイベント。</summary>
+    DataEvent
 }
