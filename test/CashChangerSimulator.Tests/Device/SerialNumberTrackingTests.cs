@@ -8,6 +8,7 @@ using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>Test class for providing SerialNumberTrackingTests functionality.</summary>
 public class SerialNumberTrackingTests
 {
     private (SimulatorCashChanger changer, DepositController controller) CreateChanger()
@@ -24,8 +25,9 @@ public class SerialNumberTrackingTests
         return (changer, controller);
     }
 
+    /// <summary>Tests the behavior of DirectIOGetVersionShouldWorkWithConstant to ensure proper functionality.</summary>
     [Fact]
-    public void DirectIO_GetVersion_ShouldWorkWithConstant()
+    public void DirectIOGetVersionShouldWorkWithConstant()
     {
         // Arrange
         var (changer, _) = CreateChanger();
@@ -34,11 +36,13 @@ public class SerialNumberTrackingTests
         var result = changer.DirectIO(DirectIOCommands.GET_VERSION, 0, "");
 
         // Assert
-        result.Object?.ToString().ShouldContain("SimulatorCashChanger");
+        result.Object.ShouldNotBeNull();
+        result.Object.ToString()!.ShouldContain("SimulatorCashChanger");
     }
 
+    /// <summary>Tests the behavior of DirectIOGetDepositedSerialsShouldReturnEmptyInitially to ensure proper functionality.</summary>
     [Fact]
-    public void DirectIO_GetDepositedSerials_ShouldReturnEmpty_Initially()
+    public void DirectIOGetDepositedSerialsShouldReturnEmptyInitially()
     {
         // Arrange
         var (changer, _) = CreateChanger();
@@ -47,11 +51,13 @@ public class SerialNumberTrackingTests
         var result = changer.DirectIO(DirectIOCommands.GET_DEPOSITED_SERIALS, 0, "");
 
         // Assert
-        result.Object?.ToString().ShouldBe("");
+        result.Object.ShouldNotBeNull();
+        result.Object.ToString()!.ShouldBe("");
     }
 
+    /// <summary>Tests the behavior of DirectIOGetDepositedSerialsShouldReturnSerialsAfterDepositFix to ensure proper functionality.</summary>
     [Fact]
-    public void DirectIO_GetDepositedSerials_ShouldReturnSerials_AfterDepositFix()
+    public void DirectIOGetDepositedSerialsShouldReturnSerialsAfterDepositFix()
     {
         // Arrange
         var (changer, controller) = CreateChanger();
@@ -68,7 +74,8 @@ public class SerialNumberTrackingTests
 
         // Assert
         var result = changer.DirectIO(DirectIOCommands.GET_DEPOSITED_SERIALS, 0, "");
-        var serials = result.Object?.ToString()!.Split(',');
+        result.Object.ShouldNotBeNull();
+        var serials = result.Object.ToString()!.Split(',');
         
         serials?.Length.ShouldBe(2);
         serials?[0].ShouldStartWith("S1000-");
@@ -76,8 +83,9 @@ public class SerialNumberTrackingTests
         serials?[0].ShouldNotBe(serials?[1]);
     }
 
+    /// <summary>Tests the behavior of DirectIOGetDepositedSerialsShouldPersistAfterEndDeposit to ensure proper functionality.</summary>
     [Fact]
-    public void DirectIO_GetDepositedSerials_ShouldPersistAfterEndDeposit()
+    public void DirectIOGetDepositedSerialsShouldPersistAfterEndDeposit()
     {
         // Arrange
         var (changer, controller) = CreateChanger();
@@ -95,6 +103,7 @@ public class SerialNumberTrackingTests
 
         // Assert
         var resultAfter = changer.DirectIO(DirectIOCommands.GET_DEPOSITED_SERIALS, 0, "");
-        resultAfter.Object?.ToString().ShouldBe(serialBefore);
+        resultAfter.Object.ShouldNotBeNull();
+        resultAfter.Object.ToString()!.ShouldBe(serialBefore);
     }
 }

@@ -53,6 +53,7 @@ public class TestSimulatorCashChanger : SimulatorCashChanger
     }
 }
 
+/// <summary>Test class for providing DispenseAsyncTests functionality.</summary>
 public class DispenseAsyncTests
 {
     /// <summary>非同期の払出操作が呼び出し元をブロックせず、完了時にイベントを発火することを検証する。</summary>

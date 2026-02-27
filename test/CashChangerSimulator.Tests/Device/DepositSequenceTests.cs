@@ -13,6 +13,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <remarks>
 /// UPOS 8.3.4 シーケンス図 / 8.3.5 状態遷移図に基づく検証を行います。
 /// </remarks>
+/// <summary>Test class for providing DepositSequenceTests functionality.</summary>
 public class DepositSequenceTests
 {
     private (DepositController Controller, Inventory Inventory) CreateController()

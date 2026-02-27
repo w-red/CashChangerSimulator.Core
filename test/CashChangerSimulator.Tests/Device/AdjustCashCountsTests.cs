@@ -10,6 +10,7 @@ using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>Test class for providing AdjustCashCountsTests functionality.</summary>
 public class AdjustCashCountsTests
 {
     private SimulatorCashChanger CreateSimulator()
@@ -17,6 +18,7 @@ public class AdjustCashCountsTests
         return new SimulatorCashChanger();
     }
 
+    /// <summary>Tests the behavior of AdjustCashCountsShouldUpdateInventory to ensure proper functionality.</summary>
     [Fact]
     public void AdjustCashCountsShouldUpdateInventory()
     {
@@ -43,6 +45,7 @@ public class AdjustCashCountsTests
         coinCount.ShouldBe(5, "100 JPY coin count should be adjusted to 5.");
     }
 
+    /// <summary>Tests the behavior of AdjustCashCountsShouldHandleMultipleCurrenciesIfSupported to ensure proper functionality.</summary>
     [Fact]
     public void AdjustCashCountsShouldHandleMultipleCurrenciesIfSupported()
     {

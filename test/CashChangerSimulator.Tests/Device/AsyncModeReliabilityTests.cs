@@ -12,6 +12,7 @@ using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>Test class for providing AsyncModeReliabilityTests functionality.</summary>
 public class AsyncModeReliabilityTests
 {
     private class ReliabilityTestChanger : SimulatorCashChanger
@@ -49,6 +50,7 @@ public class AsyncModeReliabilityTests
         }
     }
 
+    /// <summary>Tests the behavior of AsyncDispenseShouldHaveCorrectStateWhenEventFires to ensure proper functionality.</summary>
     [Fact]
     public async Task AsyncDispenseShouldHaveCorrectStateWhenEventFires()
     {

@@ -9,6 +9,7 @@ using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>Test class for providing ComplianceTests functionality.</summary>
 public class ComplianceTests
 {
     private (SimulatorCashChanger changer, DepositController controller, Inventory inventory) CreateChanger()
@@ -24,8 +25,9 @@ public class ComplianceTests
         return (changer, controller, inventory);
     }
 
+    /// <summary>Tests the behavior of ReadCashCountsShouldReportDiscrepancy to ensure proper functionality.</summary>
     [Fact]
-    public void ReadCashCounts_ShouldReportDiscrepancy()
+    public void ReadCashCountsShouldReportDiscrepancy()
     {
         // Arrange
         var (changer, _, inventory) = CreateChanger();
@@ -38,8 +40,9 @@ public class ComplianceTests
         counts.Discrepancy.ShouldBeTrue();
     }
 
+    /// <summary>Tests the behavior of RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix to ensure proper functionality.</summary>
     [Fact]
-    public void RealTimeDataEnabled_False_ShouldFireDataEventOnlyOnFix()
+    public void RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix()
     {
         // Arrange
         var (changer, controller, _) = CreateChanger();
@@ -56,8 +59,9 @@ public class ComplianceTests
         eventCount.ShouldBe(1); // Fired on Fix
     }
 
+    /// <summary>Tests the behavior of RealTimeDataEnabledTrueShouldFireDataEventOnTrack to ensure proper functionality.</summary>
     [Fact]
-    public void RealTimeDataEnabled_True_ShouldFireDataEventOnTrack()
+    public void RealTimeDataEnabledTrueShouldFireDataEventOnTrack()
     {
         // Arrange
         var (changer, controller, _) = CreateChanger();
@@ -74,8 +78,9 @@ public class ComplianceTests
         eventCount.ShouldBe(1); // Fired immediately
     }
 
+    /// <summary>Tests the behavior of DirectIOSimulateRemovedShouldFireStatusUpdateEvent to ensure proper functionality.</summary>
     [Fact]
-    public void DirectIO_SimulateRemoved_ShouldFireStatusUpdateEvent()
+    public void DirectIOSimulateRemovedShouldFireStatusUpdateEvent()
     {
         // Arrange
         var (changer, _, _) = CreateChanger();
@@ -89,8 +94,9 @@ public class ComplianceTests
         status.ShouldBe(41); // CHAN_STATUS_REMOVED
     }
 
+    /// <summary>Tests the behavior of DirectIOSimulateInsertedShouldFireStatusUpdateEvent to ensure proper functionality.</summary>
     [Fact]
-    public void DirectIO_SimulateInserted_ShouldFireStatusUpdateEvent()
+    public void DirectIOSimulateInsertedShouldFireStatusUpdateEvent()
     {
         // Arrange
         var (changer, _, _) = CreateChanger();

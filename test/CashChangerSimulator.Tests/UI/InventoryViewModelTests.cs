@@ -15,6 +15,7 @@ using R3;
 
 namespace CashChangerSimulator.Tests.UI;
 
+/// <summary>Test class for providing InventoryViewModelTests functionality.</summary>
 public class InventoryViewModelTests
 {
     private (InventoryViewModel vm, Inventory inv, ConfigurationProvider config) CreateViewModel()
@@ -48,6 +49,7 @@ public class InventoryViewModelTests
         return (vm, inv, config);
     }
 
+    /// <summary>Tests the behavior of CollectAllCommandShouldSetAllCountsToZero to ensure proper functionality.</summary>
     [Fact]
     public void CollectAllCommandShouldSetAllCountsToZero()
     {
@@ -64,6 +66,7 @@ public class InventoryViewModelTests
         inv.GetCount(key1000).ShouldBe(0);
     }
 
+    /// <summary>Tests the behavior of ReplenishAllCommandShouldSetCountsToInitialValues to ensure proper functionality.</summary>
     [Fact]
     public void ReplenishAllCommandShouldSetCountsToInitialValues()
     {

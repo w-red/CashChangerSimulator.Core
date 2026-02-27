@@ -10,6 +10,7 @@ using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>Test class for providing RepayDepositTests functionality.</summary>
 public class RepayDepositTests
 {
     private SimulatorCashChanger CreateSimulator()
@@ -18,6 +19,7 @@ public class RepayDepositTests
         return new SimulatorCashChanger();
     }
 
+    /// <summary>Tests the behavior of CapRepayDepositShouldBeTrue to ensure proper functionality.</summary>
     [Fact]
     public void CapRepayDepositShouldBeTrue()
     {
@@ -25,6 +27,7 @@ public class RepayDepositTests
         simulator.CapRepayDeposit.ShouldBeTrue("UPOS standard requires CapRepayDeposit to be true to use Repay action.");
     }
 
+    /// <summary>Tests the behavior of EndDepositWithRepayShouldNotUpdateInventory to ensure proper functionality.</summary>
     [Fact]
     public void EndDepositWithRepayShouldNotUpdateInventory()
     {
