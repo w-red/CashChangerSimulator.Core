@@ -6,7 +6,13 @@ namespace CashChangerSimulator.Core.Configuration;
 [TomlSerializedObject]
 public partial class SimulationSettings
 {
+    private int _dispenseDelayMs = 500;
+
     /// <summary>払い出し操作にかかる遅延時間（ミリ秒）。</summary>
     [TomlValueOnSerialized]
-    public int DispenseDelayMs { get; set; } = 500;
+    public int DispenseDelayMs
+    {
+        get => _dispenseDelayMs;
+        set => _dispenseDelayMs = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "DispenseDelayMs cannot be negative.");
+    }
 }

@@ -89,8 +89,7 @@ public class DispenseController(
         {
             _logger.ZLogInformation($"Dispense operation started.");
             
-            // Simulate hardware delay
-            await _simulator.SimulateDispenseAsync();
+            await SimulateHardwareAsync();
 
             action();
             _status = CashDispenseStatus.Idle;
@@ -122,6 +121,13 @@ public class DispenseController(
         {
             _changed.OnNext(Unit.Default);
         }
+    }
+
+    /// <summary>シミュレーターを利用した非同期のハードウェア遅延処理を実行します。</summary>
+    private async Task SimulateHardwareAsync()
+    {
+        // ビジネスロジックから物理デバイス待機等のシミュレーションを切り離す
+        await _simulator.SimulateDispenseAsync();
     }
 
     /// <summary>エラー状態をクリアし、Idle に戻します。</summary>
