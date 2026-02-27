@@ -7,9 +7,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using MoneyKind4Opos.Currencies.Interfaces;
-using Moq;
 using Shouldly;
-using Xunit;
 
 using R3;
 

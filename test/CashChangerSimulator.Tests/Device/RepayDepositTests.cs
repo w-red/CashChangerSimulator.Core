@@ -1,12 +1,8 @@
-using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
-using System.Collections.Generic;
-using System.Linq;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

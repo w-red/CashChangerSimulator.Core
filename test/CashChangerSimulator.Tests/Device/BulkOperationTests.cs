@@ -6,7 +6,6 @@ using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Services;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

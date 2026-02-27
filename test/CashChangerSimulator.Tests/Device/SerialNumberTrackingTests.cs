@@ -4,7 +4,6 @@ using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -13,14 +12,20 @@ public class SerialNumberTrackingTests
 {
     private (SimulatorCashChanger changer, DepositController controller) CreateChanger()
     {
-        var changer = new SimulatorCashChanger();
-        // SkipStateVerification allows calling BeginDeposit etc without full OPOS lifecycle
-        changer.SkipStateVerification = true;
-        
+        var changer = new SimulatorCashChanger
+        {
+            // SkipStateVerification allows calling BeginDeposit etc without full OPOS lifecycle
+            SkipStateVerification = true
+        };
+
         // Retrieve internal controller for direct manipulation in test
-        var field = typeof(SimulatorCashChanger).GetField("_depositController", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var controller = (DepositController)field!.GetValue(changer)!;
+        var field = typeof(SimulatorCashChanger)
+            .GetField(
+                "_depositController",
+                System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Instance);
+        var controller =
+            (DepositController)field!.GetValue(changer)!;
         
         return (changer, controller);
     }
@@ -33,7 +38,7 @@ public class SerialNumberTrackingTests
         var (changer, _) = CreateChanger();
 
         // Act
-        var result = changer.DirectIO(DirectIOCommands.GET_VERSION, 0, "");
+        var result = changer.DirectIO(DirectIOCommands.GetVersion, 0, "");
 
         // Assert
         result.Object.ShouldNotBeNull();
@@ -48,7 +53,7 @@ public class SerialNumberTrackingTests
         var (changer, _) = CreateChanger();
 
         // Act
-        var result = changer.DirectIO(DirectIOCommands.GET_DEPOSITED_SERIALS, 0, "");
+        var result = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
 
         // Assert
         result.Object.ShouldNotBeNull();
@@ -73,7 +78,7 @@ public class SerialNumberTrackingTests
         changer.FixDeposit();
 
         // Assert
-        var result = changer.DirectIO(DirectIOCommands.GET_DEPOSITED_SERIALS, 0, "");
+        var result = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
         result.Object.ShouldNotBeNull();
         var serials = result.Object.ToString()!.Split(',');
         
@@ -95,14 +100,14 @@ public class SerialNumberTrackingTests
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key1000, 1 } });
         changer.FixDeposit();
         
-        var resultBeforeHeader = changer.DirectIO(DirectIOCommands.GET_DEPOSITED_SERIALS, 0, "");
+        var resultBeforeHeader = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
         string serialBefore = resultBeforeHeader.Object?.ToString() ?? "";
 
         // Act
         changer.EndDeposit(CashDepositAction.NoChange);
 
         // Assert
-        var resultAfter = changer.DirectIO(DirectIOCommands.GET_DEPOSITED_SERIALS, 0, "");
+        var resultAfter = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
         resultAfter.Object.ShouldNotBeNull();
         resultAfter.Object.ToString()!.ShouldBe(serialBefore);
     }

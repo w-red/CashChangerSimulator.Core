@@ -127,4 +127,39 @@ public class ErrorScenarioTests
         Should.Throw<PosControlException>(() => device.PauseDeposit(CashDepositPause.Restart))
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
+
+    /// <summary>AdjustCashCounts に 0 未満の枚数を指定した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    [Fact]
+    public void AdjustCashCountsWithNegativeCountShouldThrowIllegal()
+    {
+        var (device, _) = CreateDevice();
+        var counts = new[] { new CashCount(CashCountType.Bill, 1000, -1) };
+
+        Should.Throw<PosControlException>(() => device.AdjustCashCounts(counts))
+            .ErrorCode.ShouldBe(ErrorCode.Illegal);
+    }
+
+    /// <summary>DispenseCash に 0 未満の枚数を指定した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    [Fact]
+    public void DispenseCashWithNegativeCountShouldThrowIllegal()
+    {
+        var (device, _) = CreateDevice();
+        var counts = new[] { new CashCount(CashCountType.Bill, 1000, -1) };
+
+        Should.Throw<PosControlException>(() => device.DispenseCash(counts))
+            .ErrorCode.ShouldBe(ErrorCode.Illegal);
+    }
+
+    /// <summary>DispenseCash で特定の金種が不足している際、ECHAN_OVERDISPENSE が発生することを検証する。</summary>
+    [Fact]
+    public void DispenseCashWithSpecificShortageShouldThrowOverdispense()
+    {
+        var (device, _) = CreateDevice();
+        // 在庫 0 の金種を指定して払出
+        var counts = new[] { new CashCount(CashCountType.Bill, 1000, 1) };
+
+        var ex = Should.Throw<PosControlException>(() => device.DispenseCash(counts));
+        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
+        ex.ErrorCodeExtended.ShouldBe(201); // ECHAN_OVERDISPENSE
+    }
 }

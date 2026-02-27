@@ -5,24 +5,24 @@ using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>Test class for providing ComplianceTests functionality.</summary>
 public class ComplianceTests
 {
-    private (SimulatorCashChanger changer, DepositController controller, Inventory inventory) CreateChanger()
+    private (SimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history) CreateChanger()
     {
         var inventory = new Inventory();
         var hardwareStatusManager = new HardwareStatusManager();
+        var history = new CashChangerSimulator.Core.Transactions.TransactionHistory();
         var controller = new DepositController(inventory, hardwareStatusManager);
-        var changer = new SimulatorCashChanger(null, inventory, null, null, controller, null, null, hardwareStatusManager);
+        var changer = new SimulatorCashChanger(null, inventory, history, null, controller, null, null, hardwareStatusManager);
         changer.SkipStateVerification = true;
         changer.DeviceEnabled = true;
         changer.DataEventEnabled = true;
 
-        return (changer, controller, inventory);
+        return (changer, controller, inventory, history);
     }
 
     /// <summary>Tests the behavior of ReadCashCountsShouldReportDiscrepancy to ensure proper functionality.</summary>
@@ -30,7 +30,7 @@ public class ComplianceTests
     public void ReadCashCountsShouldReportDiscrepancy()
     {
         // Arrange
-        var (changer, _, inventory) = CreateChanger();
+        var (changer, _, inventory, _) = CreateChanger();
         inventory.HasDiscrepancy = true;
 
         // Act
@@ -45,7 +45,7 @@ public class ComplianceTests
     public void RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix()
     {
         // Arrange
-        var (changer, controller, _) = CreateChanger();
+        var (changer, controller, _, _) = CreateChanger();
         changer.RealTimeDataEnabled = false;
         int eventCount = 0;
         changer.OnEventQueued += (e) => { if (e is DataEventArgs) eventCount++; };
@@ -64,7 +64,7 @@ public class ComplianceTests
     public void RealTimeDataEnabledTrueShouldFireDataEventOnTrack()
     {
         // Arrange
-        var (changer, controller, _) = CreateChanger();
+        var (changer, controller, _, history) = CreateChanger();
         changer.RealTimeDataEnabled = true;
         changer.BeginDeposit();
 
@@ -76,6 +76,7 @@ public class ComplianceTests
         
         // Assert
         eventCount.ShouldBe(1); // Fired immediately
+        history.Entries.ShouldContain(e => e.Type == CashChangerSimulator.Core.Transactions.TransactionType.DataEvent);
     }
 
     /// <summary>Tests the behavior of DirectIOSimulateRemovedShouldFireStatusUpdateEvent to ensure proper functionality.</summary>
@@ -83,12 +84,17 @@ public class ComplianceTests
     public void DirectIOSimulateRemovedShouldFireStatusUpdateEvent()
     {
         // Arrange
-        var (changer, _, _) = CreateChanger();
+        var (changer, _, _, _) = CreateChanger();
         int status = -1;
-        changer.OnEventQueued += (e) => { if (e is StatusUpdateEventArgs se) status = se.Status; };
+        changer
+            .OnEventQueued
+            += (e) =>
+            {
+                if (e is StatusUpdateEventArgs se) status = se.Status;
+            };
 
         // Act
-        changer.DirectIO(DirectIOCommands.SIMULATE_REMOVED, 0, "");
+        changer.DirectIO(DirectIOCommands.SimulateRemoved, 0, "");
 
         // Assert
         status.ShouldBe(41); // CHAN_STATUS_REMOVED
@@ -99,14 +105,50 @@ public class ComplianceTests
     public void DirectIOSimulateInsertedShouldFireStatusUpdateEvent()
     {
         // Arrange
-        var (changer, _, _) = CreateChanger();
+        var (changer, _, _, _) = CreateChanger();
         int status = -1;
         changer.OnEventQueued += (e) => { if (e is StatusUpdateEventArgs se) status = se.Status; };
 
         // Act
-        changer.DirectIO(DirectIOCommands.SIMULATE_INSERTED, 0, "");
+        changer.DirectIO(DirectIOCommands.SimulateInserted, 0, "");
 
         // Assert
         status.ShouldBe(42); // CHAN_STATUS_INSERTED
+    }
+
+    /// <summary>Tests the behavior of DirectIOSetDiscrepancyShouldUpdateHasDiscrepancy to ensure proper functionality.</summary>
+    [Fact]
+    public void DirectIOSetDiscrepancyShouldUpdateHasDiscrepancy()
+    {
+        // Arrange
+        var (changer, _, _, _) = CreateChanger();
+        changer.ReadCashCounts().Discrepancy.ShouldBeFalse();
+
+        // Act & Assert (Enable)
+        changer.DirectIO(DirectIOCommands.SetDiscrepancy, 1, "");
+        changer.ReadCashCounts().Discrepancy.ShouldBeTrue();
+
+        // Act & Assert (Disable)
+        changer.DirectIO(DirectIOCommands.SetDiscrepancy, 0, "");
+        changer.ReadCashCounts().Discrepancy.ShouldBeFalse();
+    }
+
+    /// <summary>Tests the behavior of DirectIOAdjustCashCountsStrShouldUpdateInventory to ensure proper functionality.</summary>
+    [Fact]
+    public void DirectIOAdjustCashCountsStrShouldUpdateInventory()
+    {
+        // Arrange
+        var (changer, _, inventory, _) = CreateChanger();
+        var jpy1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        // Seed the inventory first so the parser knows this key exists
+        inventory.SetCount(jpy1000, 0);
+
+        inventory.GetCount(jpy1000).ShouldBe(0);
+
+        // Act
+        changer.DirectIO(DirectIOCommands.AdjustCashCountsStr, 0, "1000:15");
+
+        // Assert
+        inventory.GetCount(jpy1000).ShouldBe(15);
     }
 }
