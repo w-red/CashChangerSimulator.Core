@@ -81,7 +81,7 @@ public class StatusUpdateEventTests
         inv.SetCount(Coin100, 0);
 
         // Allow reactive pipeline to propagate
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
 
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Empty);
     }
@@ -95,7 +95,7 @@ public class StatusUpdateEventTests
         // Reduce count to NearEmpty threshold
         inv.SetCount(Coin100, 3);
 
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
 
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.NearEmpty);
     }
@@ -108,12 +108,12 @@ public class StatusUpdateEventTests
 
         // Go to Empty
         inv.SetCount(Coin100, 0);
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
         events.Clear();
 
         // Recover
         inv.SetCount(Coin100, 50);
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
 
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.EmptyOk);
     }
@@ -128,12 +128,12 @@ public class StatusUpdateEventTests
 
         // Go to Full
         inv.SetCount(Coin100, 100);
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
         events.Clear();
 
         // Recover
         inv.SetCount(Coin100, 50);
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
 
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.FullOk);
     }
@@ -147,7 +147,7 @@ public class StatusUpdateEventTests
         var (cc, inv, hw, events) = CreateTestCashChanger();
 
         hw.SetJammed(true);
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
 
         // UPOS standard: CHAN_STATUS_JAM = 31
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Jam);
@@ -160,11 +160,11 @@ public class StatusUpdateEventTests
         var (cc, inv, hw, events) = CreateTestCashChanger();
 
         hw.SetJammed(true);
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
         events.Clear();
 
         hw.SetJammed(false);
-        Thread.Sleep(50);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
 
         // UPOS standard: CHAN_STATUS_OK = 0
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Ok);

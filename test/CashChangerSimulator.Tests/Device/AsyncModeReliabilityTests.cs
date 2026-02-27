@@ -82,7 +82,7 @@ public class AsyncModeReliabilityTests
         int timeout = 0;
         while (!changer.EventCaptured && timeout < 50)
         {
-            await Task.Delay(50, TestContext.Current.CancellationToken);
+            await Task.Delay(TestTimingConstants.EventPropagationDelayMs, TestContext.Current.CancellationToken);
             timeout++;
         }
 

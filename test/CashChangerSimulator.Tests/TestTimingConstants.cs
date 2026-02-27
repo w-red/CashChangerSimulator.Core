@@ -18,5 +18,11 @@ public static class TestTimingConstants
     /// <summary>UI論理実行待機時間（ミリ秒）。</summary>
     public const int LogicExecutionDelayMs = 500;
 
+    /// <summary>イベント通知の伝播待機時間（ミリ秒）。</summary>
+    public const int EventPropagationDelayMs = 50;
+
+    /// <summary>アプリケーション終了・クリーンアップ待機時間（ミリ秒）。</summary>
+    public const int AppCleanupDelayMs = 1000;
+
 
 }
