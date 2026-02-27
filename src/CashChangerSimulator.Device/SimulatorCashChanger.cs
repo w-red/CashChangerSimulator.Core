@@ -417,6 +417,12 @@ public class SimulatorCashChanger : CashChangerBasic
                 var val = cc.NominalValue / factor;
                 var key = new DenominationKey(val, cashType, _activeCurrencyCode);
 
+                // Check if this denomination exists in the current currency's inventory
+                if (!_inventory.AllCounts.Any(kv => kv.Key == key))
+                {
+                    throw new PosControlException($"Denomination {key} is not registered for the current currency ({_activeCurrencyCode}).", ErrorCode.Illegal);
+                }
+
                 if (_inventory.GetCount(key) < cc.Count)
                 {
                     throw new InsufficientCashException($"Insufficient inventory for {key}. Required: {cc.Count}, Available: {_inventory.GetCount(key)}");
@@ -550,6 +556,10 @@ public class SimulatorCashChanger : CashChangerBasic
                         _logger.ZLogError($"DirectIO: ADJUST_CASH_COUNTS_STR failed: {ex.Message}");
                         throw new PosControlException($"Failed to parse adjust string: {ex.Message}", ErrorCode.Illegal, ex);
                     }
+                }
+                else
+                {
+                    throw new PosControlException("ADJUST_CASH_COUNTS_STR requires a string object.", ErrorCode.Illegal);
                 }
                 return new DirectIOData(data, obj);
 
