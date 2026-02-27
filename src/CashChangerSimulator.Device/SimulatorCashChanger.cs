@@ -540,7 +540,8 @@ public class SimulatorCashChanger : CashChangerBasic
                     try
                     {
                         var activeKeys = _inventory.AllCounts.Select(kv => kv.Key).ToList();
-                        var counts = CashCountParser.Parse(strVal, activeKeys);
+                        var factor = GetCurrencyFactor(_activeCurrencyCode);
+                        var counts = CashCountParser.Parse(strVal, activeKeys, factor);
                         AdjustCashCounts(counts); // Calls our core adjust logic
                         _logger.ZLogInformation($"DirectIO: ADJUST_CASH_COUNTS_STR completed for '{strVal}'");
                     }
