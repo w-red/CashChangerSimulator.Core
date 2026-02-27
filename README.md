@@ -1,48 +1,51 @@
 # CashChanger Simulator
 
-WPFベースの釣銭機シミュレーターです。UnifiedPOS (UPOS) 規格に準拠した動作をエミュレートし、POSアプリケーションのテストやデバッグを支援します。
+A WPF-based cash changer simulator that emulates UnifiedPOS (UPOS) standard operations. Designed to support testing and debugging of POS applications.
 
-## 主な機能
+## Key Features
 
-- **UPOS 準拠の挙動**: `DispenseChange`, `DispenseCash`, 入金サイクル（`BeginDeposit`〜`EndDeposit`）のシミュレーション。
-- **マルチ通貨サポート**: JPY、USD 等、通貨ごとの金種設定が可能。
-- **リアルタイムフィード**: 入金・払出・エラー状態の変更を即座に表示。
-- **不一致シミュレーション**: 在庫の不一致状態（Discrepancy）を意図的に発生させ、例外処理のテストが可能。
-- **スクリプト実行**: JSON形式のスクリプトによる自動シナリオテスト。
+- **UPOS Compliant Behavior**: Emulates `DispenseChange`, `DispenseCash`, and the full deposit cycle (`BeginDeposit` to `EndDeposit`).
+- **Multi-Currency Support**: Configurable denominations for various currencies (e.g., JPY, USD).
+- **Real-Time Feed**: Provides immediate visual feedback for all cash events, status changes, and errors.
+- **Discrepancy Simulation**: Explicitly simulate inventory discrepancy states for robust exception handling testing.
+- **Scripted Automation**: Execute complex scenarios via JSON-based automation scripts.
 
-## セットアップ
+## Setup
 
-### 前提条件
+### Prerequisites
 
 - .NET 10.0 SDK
-- Windows OS (WPF アプリケーションのため)
+- Windows OS (Required for WPF)
 
-### ビルドと実行
+### Build and Run
 
-1. リポジトリをクローンまたはダウンロードします。
-2. ターミナルでルートディレクトリに移動し、以下のコマンドを実行します。
+1. Clone or download the repository.
+2. Open a terminal in the root directory and run:
 
 ```powershell
-# ビルド
+# Build the project
 dotnet build
 
-# アプリケーションの実行
+# Run the simulator UI
 dotnet run --project src/CashChangerSimulator.UI.Wpf/CashChangerSimulator.UI.Wpf.csproj
 ```
 
-### テストの実行
+### Running Tests
 
 ```powershell
-# すべてのテスト（単体・結合・UI）を実行
+# Run all unit, integration, and UI tests
 dotnet test
 ```
 
-## ドキュメント
+## Documentation
 
-詳細な情報は `docs/` ディレクトリ配下のドキュメントを参照してください。
+For more detailed information, please refer to the documents in the `docs/` directory:
 
-- [Architecture Overview](docs/Architecture.md): アーキテクチャの概要
-- [UPOS Compliance Mapping](docs/UposComplianceMapping.md): UPOS インターフェースの対応状況
-- [OPOS Compliance Mapping](docs/OposComplianceMapping.md): OPOS エラーコードとの対応関係
-- [標準モード操作説明書](docs/ApplicationOperatingInstructions.md): アプリケーションの基本的な操作方法
-- [POSモード操作説明書](docs/PosModeApplicationOperatingInstructions.md): POS 連携シミュレーションのガイド
+- [Architecture Overview](docs/Architecture.md): High-level system design.
+- [UPOS Compliance Mapping](docs/UposComplianceMapping.md): Status of UPOS interface implementation.
+- [OPOS Compliance Mapping](docs/OposComplianceMapping.md): Mapping of OPOS error codes and result codes.
+- [Standard Mode Instructions](docs/ApplicationOperatingInstructions.md): Guide for manual GUI operations.
+- [POS Mode Instructions](docs/PosModeApplicationOperatingInstructions.md): Guide for POS integration and error scenario testing.
+
+---
+*For the Japanese version, see [README_JP.md](README_JP.md).*
