@@ -9,7 +9,7 @@ namespace CashChangerSimulator.Device.Services;
 /// <summary>
 /// スクリプトデータに基づいてシミュレーターの操作を自動実行するサービス。
 /// </summary>
-public class ScriptExecutionService(DepositController depositController, DispenseController dispenseController)
+public class ScriptExecutionService(DepositController depositController, DispenseController dispenseController) : IScriptExecutionService
 {
     public async Task ExecuteScriptAsync(string json)
     {
@@ -34,6 +34,7 @@ public class ScriptExecutionService(DepositController depositController, Dispens
                 var type = cmd.Type?.ToLower() == "coin" ? CashType.Coin : CashType.Bill;
                 var key = new DenominationKey(cmd.Value, type, cmd.Currency ?? "JPY");
                 depositController.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, cmd.Count } });
+                await Task.Delay(250); // Simulate hardware processing time to allow UI updates
                 break;
             case "fixdeposit":
                 depositController.FixDeposit();

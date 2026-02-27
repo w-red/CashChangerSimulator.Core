@@ -14,9 +14,15 @@ public class CurrencyMetadataProvider
     /// <summary>通貨コード（例: "JPY"）。</summary>
     public string CurrencyCode { get; }
 
-    /// <summary>通貨記号（例: "¥", "$"）。</summary>
+    /// <summary>通貨記号（プレフィックス優先）。</summary>
     public string Symbol { get; }
 
+    /// <summary>通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。</summary>
+    public string SymbolPrefix { get; }
+ 
+    /// <summary>通貨記号のサフィックス（例: "円"）。通常、金額の後ろに表示されます。</summary>
+    public string SymbolSuffix { get; }
+ 
     /// <summary>この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
     public IReadOnlyList<DenominationKey> SupportedDenominations { get; }
 
@@ -29,8 +35,33 @@ public class CurrencyMetadataProvider
         // MoneyKind4Opos アセンブリから対応する通貨クラスを探す
         _currencyType = FindCurrencyType(currencyCode) ?? FindCurrencyType("JPY")!;
 
-        // 通貨記号を取得 (Local.Symbol)
-        Symbol = GetStaticPropertyValue<CurrencyFormattingOptions>(_currencyType, "Local")?.Symbol ?? "";
+        // 通貨記号を取得
+        var rawSymbol = GetStaticPropertyValue<CurrencyFormattingOptions>(_currencyType, "Local")?.Symbol ?? "";
+        
+        // JPY の場合、ロケールによって表示位置を調整する
+        if (currencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
+        {
+            var isJapanese = configProvider.Config.CultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
+            if (isJapanese)
+            {
+                SymbolPrefix = "";
+                SymbolSuffix = "円";
+            }
+            else
+            {
+                SymbolPrefix = "\\"; // Use backslash (or Yen mark) for English JPY
+                SymbolSuffix = "";
+            }
+        }
+        else
+        {
+            // 他の通貨は一旦プレフィックスとして扱う（必要に応じて拡張可能）
+            SymbolPrefix = rawSymbol;
+            SymbolSuffix = "";
+        }
+
+        // 互換性のために Symbol も維持（基本は Prefix を返す）
+        Symbol = !string.IsNullOrEmpty(SymbolPrefix) ? SymbolPrefix : SymbolSuffix;
 
         // 金種リストを構築
         var denominations = new List<DenominationKey>();
