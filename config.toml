@@ -1,0 +1,159 @@
+[System]
+CurrencyCode = "JPY"
+CultureCode = "en-US"
+UIMode = "Standard"
+
+[Inventory.JPY.Denominations.B10000]
+DisplayName = "10000円"
+InitialCount = 10
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.JPY.Denominations.B5000]
+DisplayName = "5000円"
+InitialCount = 10
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.JPY.Denominations.B1000]
+DisplayName = "1000円"
+InitialCount = 50
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.JPY.Denominations.C500]
+DisplayName = "500円"
+InitialCount = 50
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.JPY.Denominations.C100]
+DisplayName = "100円"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.JPY.Denominations.C50]
+DisplayName = "50円"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.JPY.Denominations.C10]
+DisplayName = "10円"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.JPY.Denominations.C5]
+DisplayName = "5円"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.JPY.Denominations.C1]
+DisplayName = "1円"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations.B100]
+DisplayName = "$100"
+InitialCount = 5
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations.B50]
+DisplayName = "$50"
+InitialCount = 5
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations.B20]
+DisplayName = "$20"
+InitialCount = 10
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations.B10]
+DisplayName = "$10"
+InitialCount = 10
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations.B5]
+DisplayName = "$5"
+InitialCount = 20
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations.B1]
+DisplayName = "$1"
+InitialCount = 50
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations."C0.5"]
+DisplayName = "50¢"
+InitialCount = 50
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations."C0.25"]
+DisplayName = "25¢"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations."C0.1"]
+DisplayName = "10¢"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations."C0.05"]
+DisplayName = "5¢"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations."C0.01"]
+DisplayName = "1¢"
+InitialCount = 100
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Thresholds]
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Logging]
+EnableConsole = true
+EnableFile = true
+LogLevel = "Information"
+LogDirectory = "logs"
+LogFileName = "app.log"
+
+[Simulation]
+DispenseDelayMs = 500
