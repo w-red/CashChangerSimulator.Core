@@ -1,10 +1,9 @@
-namespace CashChangerSimulator.Tests.Core;
 
 using CashChangerSimulator.Core.Configuration;
 using R3;
 using Shouldly;
-using Xunit;
 
+namespace CashChangerSimulator.Tests.Core;
 /// <summary>ConfigurationProvider の動作を検証するテスト。</summary>
 public class ConfigurationProviderTests
 {

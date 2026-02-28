@@ -1,9 +1,9 @@
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;

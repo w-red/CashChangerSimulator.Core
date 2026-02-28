@@ -1,12 +1,11 @@
-namespace CashChangerSimulator.Tests.Core;
 
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
-using Xunit;
 
+namespace CashChangerSimulator.Tests.Core;
 /// <summary>お釣り計算ロジック（欲張り法）を検証するテスト。</summary>
 public class ChangeCalculatorTests
 {

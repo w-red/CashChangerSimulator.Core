@@ -1,12 +1,12 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;

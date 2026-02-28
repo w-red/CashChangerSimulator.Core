@@ -17,10 +17,21 @@ public class ComplianceTests
         var hardwareStatusManager = new HardwareStatusManager();
         var history = new CashChangerSimulator.Core.Transactions.TransactionHistory();
         var controller = new DepositController(inventory, hardwareStatusManager);
-        var changer = new SimulatorCashChanger(null, inventory, history, null, controller, null, null, hardwareStatusManager);
-        changer.SkipStateVerification = true;
-        changer.DeviceEnabled = true;
-        changer.DataEventEnabled = true;
+        var changer = 
+            new SimulatorCashChanger(
+                null,
+                inventory,
+                history,
+                null,
+                controller,
+                null,
+                null,
+                hardwareStatusManager)
+            {
+                SkipStateVerification = true,
+                DeviceEnabled = true,
+                DataEventEnabled = true
+            };
 
         return (changer, controller, inventory, history);
     }

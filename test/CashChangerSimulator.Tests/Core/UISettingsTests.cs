@@ -14,15 +14,13 @@ public class UISettingsTests
     [Fact]
     public void ConfigurationShouldSerializeAndDeserializeUIMode()
     {
-        var config = new SimulatorConfiguration
-        {
-            UIMode = UIMode.PosTransaction
-        };
+        var config = new SimulatorConfiguration();
+        config.System.UIMode = UIMode.PosTransaction;
 
         var toml = CsTomlSerializer.Serialize(config);
         var loaded = CsTomlSerializer.Deserialize<SimulatorConfiguration>(toml.ByteSpan);
 
-        loaded.UIMode.ShouldBe(UIMode.PosTransaction);
+        loaded.System.UIMode.ShouldBe(UIMode.PosTransaction);
     }
 
     /// <summary>ViewModel を介して UIMode が正しくロードおよび保存されることを検証する。</summary>
@@ -30,7 +28,7 @@ public class UISettingsTests
     public void ViewModelShouldLoadAndSaveUIMode()
     {
         var configProvider = new ConfigurationProvider();
-        configProvider.Config.UIMode = UIMode.PosTransaction;
+        configProvider.Config.System.UIMode = UIMode.PosTransaction;
 
         var vm = CreateViewModel(configProvider);
 
@@ -42,7 +40,7 @@ public class UISettingsTests
         // Save
         vm.SaveCommand.Execute(Unit.Default);
 
-        configProvider.Config.UIMode.ShouldBe(UIMode.Standard);
+        configProvider.Config.System.UIMode.ShouldBe(UIMode.Standard);
     }
 
     private static SettingsViewModel CreateViewModel(ConfigurationProvider? configProvider = null)

@@ -29,7 +29,7 @@ public class CurrencyMetadataProvider
     /// <summary>設定プロバイダーを指定してメタデータプロバイダーを初期化する。</summary>
     public CurrencyMetadataProvider(ConfigurationProvider configProvider)
     {
-        CurrencyCode = string.IsNullOrWhiteSpace(configProvider.Config.CurrencyCode) ? "JPY" : configProvider.Config.CurrencyCode;
+        CurrencyCode = string.IsNullOrWhiteSpace(configProvider.Config.System.CurrencyCode) ? "JPY" : configProvider.Config.System.CurrencyCode;
         var currencyCode = CurrencyCode;
 
         // MoneyKind4Opos アセンブリから対応する通貨クラスを探す
@@ -41,7 +41,7 @@ public class CurrencyMetadataProvider
         // JPY の場合、ロケールによって表示位置を調整する
         if (currencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
         {
-            var isJapanese = configProvider.Config.CultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
+            var isJapanese = configProvider.Config.System.CultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
             if (isJapanese)
             {
                 SymbolPrefix = "";

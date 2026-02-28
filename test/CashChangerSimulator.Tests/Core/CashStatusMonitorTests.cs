@@ -1,12 +1,11 @@
-namespace CashChangerSimulator.Tests.Core;
 
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
-using Xunit;
 
+namespace CashChangerSimulator.Tests.Core;
 /// <summary>CashStatusMonitor の状態遷移を検証するテスト。</summary>
 public class CashStatusMonitorTests
 {

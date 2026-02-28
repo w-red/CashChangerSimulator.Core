@@ -3,7 +3,6 @@ using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device.Parsers;
 

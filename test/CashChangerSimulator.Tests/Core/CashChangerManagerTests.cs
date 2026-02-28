@@ -1,15 +1,13 @@
-namespace CashChangerSimulator.Tests.Core;
 
-using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Exceptions;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
-using System.Collections.Generic;
-using Xunit;
 
+namespace CashChangerSimulator.Tests.Core;
 /// <summary>CashChangerManager のビジネスロジックを検証するテスト。</summary>
 public class CashChangerManagerTests
 {
