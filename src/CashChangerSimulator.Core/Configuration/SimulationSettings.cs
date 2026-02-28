@@ -1,15 +1,11 @@
-using CsToml;
-
 namespace CashChangerSimulator.Core.Configuration;
 
 /// <summary>シミュレーション動作の設定を保持するクラス。</summary>
-[TomlSerializedObject]
-public partial class SimulationSettings
+public class SimulationSettings
 {
     private int _dispenseDelayMs = 500;
 
     /// <summary>払い出し操作にかかる遅延時間（ミリ秒）。</summary>
-    [TomlValueOnSerialized]
     public int DispenseDelayMs
     {
         get => _dispenseDelayMs;

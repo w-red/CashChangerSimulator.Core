@@ -40,7 +40,7 @@ public class ConfigurationLoaderTests : IDisposable
 
         // Assert
         config.ShouldNotBeNull();
-        config.CurrencyCode.ShouldBe("JPY");
+        config.System.CurrencyCode.ShouldBe("JPY");
         File.Exists(_testConfigPath).ShouldBeTrue(); // Created default
     }
 
@@ -56,7 +56,7 @@ public class ConfigurationLoaderTests : IDisposable
 
         // Assert
         config.ShouldNotBeNull();
-        config.CurrencyCode.ShouldBe("JPY"); // Fallback to default
+        config.System.CurrencyCode.ShouldBe("JPY"); // Fallback to default
     }
 
     /// <summary>設定の保存と読み込みで値が維持されることを検証する。</summary>
@@ -64,7 +64,8 @@ public class ConfigurationLoaderTests : IDisposable
     public void SaveAndLoadConfigShouldMaintainValues()
     {
         // Arrange
-        var config = new SimulatorConfiguration { CurrencyCode = "USD" };
+        var config = new SimulatorConfiguration();
+        config.System.CurrencyCode = "USD";
         config.Inventory["USD"] = new InventorySettings();
         
         // Act
@@ -72,7 +73,7 @@ public class ConfigurationLoaderTests : IDisposable
         var loaded = ConfigurationLoader.Load(_testConfigPath);
 
         // Assert
-        loaded.CurrencyCode.ShouldBe("USD");
+        loaded.System.CurrencyCode.ShouldBe("USD");
         loaded.Inventory.ContainsKey("USD").ShouldBeTrue();
     }
 

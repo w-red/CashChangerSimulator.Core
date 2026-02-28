@@ -1,6 +1,6 @@
 using CashChangerSimulator.Core.Transactions;
-using CsToml.Extensions;
 using Microsoft.Extensions.Logging;
+using Tomlyn;
 using ZLogger;
 
 namespace CashChangerSimulator.Core.Configuration;
@@ -17,6 +17,12 @@ public static class ConfigurationLoader
     private static readonly string InventoryStatePath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "inventory.toml");
 
+    /// <summary>PascalCase プロパティ名をそのまま TOML キーとして使用するオプション。</summary>
+    private static readonly TomlModelOptions ModelOptions = new()
+    {
+        ConvertPropertyName = name => name
+    };
+
     /// <summary>設定ファイルを読み込む（存在しない場合はデフォルトを作成して返す）。</summary>
     public static SimulatorConfiguration Load(string? path = null)
     {
@@ -30,8 +36,10 @@ public static class ConfigurationLoader
 
         try
         {
-            var config = CsTomlFileSerializer.Deserialize<SimulatorConfiguration>(filePath);
+            var tomlText = File.ReadAllText(filePath);
+            var config = Toml.ToModel<SimulatorConfiguration>(tomlText, options: ModelOptions);
 
+            config.System ??= new SystemSettings();
             config.Logging ??= new LoggingSettings();
             config.Simulation ??= new SimulationSettings();
             config.Thresholds ??= new ThresholdSettings();
@@ -53,7 +61,8 @@ public static class ConfigurationLoader
     public static void Save(SimulatorConfiguration config, string? path = null)
     {
         var filePath = path ?? DefaultConfigPath;
-        CsTomlFileSerializer.Serialize(filePath, config);
+        var tomlText = Toml.FromModel(config, ModelOptions);
+        File.WriteAllText(filePath, tomlText);
     }
 
     /// <summary>在庫状態を読み込む。</summary>
@@ -66,7 +75,8 @@ public static class ConfigurationLoader
 
         try
         {
-            var state = CsTomlFileSerializer.Deserialize<InventoryState>(InventoryStatePath);
+            var tomlText = File.ReadAllText(InventoryStatePath);
+            var state = Toml.ToModel<InventoryState>(tomlText, options: ModelOptions);
             state.EnsureInitialized();
             return state;
         }
@@ -81,7 +91,8 @@ public static class ConfigurationLoader
     /// <summary>在庫状態を保存する。</summary>
     public static void SaveInventoryState(InventoryState state)
     {
-        CsTomlFileSerializer.Serialize(InventoryStatePath, state);
+        var tomlText = Toml.FromModel(state, ModelOptions);
+        File.WriteAllText(InventoryStatePath, tomlText);
     }
 
     /// <summary>取引履歴の保存先ファイルパス（バイナリ形式）。</summary>

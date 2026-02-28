@@ -1,18 +1,14 @@
 using CashChangerSimulator.Core.Models;
-using CsToml;
 
 namespace CashChangerSimulator.Core.Configuration;
 
 /// <summary>釣銭機シミュレーターの設定を保持するクラス。</summary>
-[TomlSerializedObject]
-public partial class SimulatorConfiguration
+public class SimulatorConfiguration
 {
-    /// <summary>現在の通貨コード。</summary>
-    [TomlValueOnSerialized]
-    public string CurrencyCode { get; set; } = "JPY";
+    /// <summary>全般的なシステム設定。</summary>
+    public SystemSettings System { get; set; } = new();
 
     /// <summary>通貨コードごとの在庫設定。</summary>
-    [TomlValueOnSerialized]
     public Dictionary<string, InventorySettings> Inventory { get; set; } = new()
     {
         ["JPY"] = new InventorySettings
@@ -49,25 +45,14 @@ public partial class SimulatorConfiguration
         }
     };
 
-    /// <summary>デフォルトのしきい値設定（金種別設定がない場合に使用）。</summary>
-    [TomlValueOnSerialized]
+    /// <summary>デフォルトのしきい値設定。</summary>
     public ThresholdSettings Thresholds { get; set; } = new();
 
-    /// <summary>UIの動作モード。</summary>
-    [TomlValueOnSerialized]
-    public UIMode UIMode { get; set; } = UIMode.Standard;
-
     /// <summary>ロギング設定。</summary>
-    [TomlValueOnSerialized]
     public LoggingSettings Logging { get; set; } = new();
 
     /// <summary>シミュレーション設定。</summary>
-    [TomlValueOnSerialized]
     public SimulationSettings Simulation { get; set; } = new();
-
-    /// <summary>カルチャコード（言語設定）。</summary>
-    [TomlValueOnSerialized]
-    public string CultureCode { get; set; } = "en-US";
 
     /// <summary>指定された金種の個別設定を取得する。存在しない場合はデフォルト値を返す。</summary>
     public DenominationSettings GetDenominationSetting(DenominationKey key)
