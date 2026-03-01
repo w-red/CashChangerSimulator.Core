@@ -10,6 +10,7 @@ namespace CashChangerSimulator.Core.Services;
 public class CurrencyMetadataProvider
 {
     private readonly Type _currencyType;
+    private readonly string _cultureCode;
 
     /// <summary>通貨コード（例: "JPY"）。</summary>
     public string CurrencyCode { get; }
@@ -30,6 +31,7 @@ public class CurrencyMetadataProvider
     public CurrencyMetadataProvider(ConfigurationProvider configProvider)
     {
         CurrencyCode = string.IsNullOrWhiteSpace(configProvider.Config.System.CurrencyCode) ? "JPY" : configProvider.Config.System.CurrencyCode;
+        _cultureCode = configProvider.Config.System.CultureCode ?? "en-US";
         var currencyCode = CurrencyCode;
 
         // MoneyKind4Opos アセンブリから対応する通貨クラスを探す
@@ -41,7 +43,7 @@ public class CurrencyMetadataProvider
         // JPY の場合、ロケールによって表示位置を調整する
         if (currencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
         {
-            var isJapanese = configProvider.Config.System.CultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
+            var isJapanese = _cultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
             if (isJapanese)
             {
                 SymbolPrefix = "";
@@ -84,9 +86,28 @@ public class CurrencyMetadataProvider
             .ThenByDescending(d => d.Type)];
     }
 
-    /// <summary>指定された金種の表示名を取得する。</summary>
-    public string GetDenominationName(DenominationKey key)
+    /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。</summary>
+    public string GetDenominationName(DenominationKey key) => GetDenominationName(key, _cultureCode);
+
+    /// <summary>指定された金種とカルチャの表示名を取得する。</summary>
+    public string GetDenominationName(DenominationKey key, string cultureCode)
     {
+        var isJapanese = cultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
+
+        // JPY の場合の特化処理
+        if (CurrencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
+        {
+            if (isJapanese)
+            {
+                return $"{key.Value}円";
+            }
+            else
+            {
+                // Format with group separator for English (e.g., 10,000 Yen)
+                return $"{key.Value:N0} Yen";
+            }
+        }
+
         var faces = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(_currencyType, key.Type == CashType.Coin ? "Coins" : "Bills");
         var face = faces?.FirstOrDefault(f => f.Value == key.Value);
 

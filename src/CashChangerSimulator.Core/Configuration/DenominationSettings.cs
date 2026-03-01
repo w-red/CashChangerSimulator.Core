@@ -3,8 +3,11 @@ namespace CashChangerSimulator.Core.Configuration;
 /// <summary>金種ごとの詳細設定を保持するクラス。</summary>
 public class DenominationSettings
 {
-    /// <summary>ユーザーが設定した表示名。</summary>
+    /// <summary>英語の表示名。</summary>
     public string? DisplayName { get; set; }
+
+    /// <summary>日本語の表示名。</summary>
+    public string? DisplayNameJP { get; set; }
 
     /// <summary>初期枚数。</summary>
     public int InitialCount { get; set; }
@@ -17,4 +20,7 @@ public class DenominationSettings
 
     /// <summary>Full 判定値。</summary>
     public int Full { get; set; } = 100;
+
+    /// <summary>この金種を釣銭（リサイクル）として使用するかどうか。false の場合、出金時の計算対象から除外されます。</summary>
+    public bool IsRecyclable { get; set; } = true;
 }
