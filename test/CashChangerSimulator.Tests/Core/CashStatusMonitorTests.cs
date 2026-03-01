@@ -1,4 +1,3 @@
-
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using MoneyKind4Opos.Currencies.Interfaces;
@@ -87,5 +86,36 @@ public class CashStatusMonitorTests
         // Assert
         // 注: Dispose しても既存の ReactiveProperty の値は残るが、更新はされないはず
         monitor.Status.CurrentValue.ShouldBe(CashStatus.Empty);
+    }
+
+    /// <summary>しきい値に -1 を設定した場合、そのステータス判定をスキップすることを検証する。</summary>
+    [Fact]
+    public void ThresholdOfMinusOneShouldDisableStatusCheck()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var denomination = new DenominationKey(1000, CashType.Bill);
+
+        // すべてのしきい値を -1 (無効) に設定
+        var monitor = new CashStatusMonitor(inventory, denomination, nearEmptyThreshold: -1, nearFullThreshold: -1, fullThreshold: -1);
+
+        // Assert: 0枚でも Empty にならない (NearEmpty=-1 のため)
+        inventory.SetCount(denomination, 0);
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.Normal);
+
+        // Act & Assert: 大量に在庫を増やしても Normal のまま
+        inventory.SetCount(denomination, 100);
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.Normal);
+
+        // Act: NearFull だけ有効にする
+        monitor.UpdateThresholds(nearEmpty: -1, nearFull: 50, full: -1);
+        inventory.SetCount(denomination, 49);
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.Normal);
+        inventory.SetCount(denomination, 50);
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.NearFull);
+
+        // Full は -1 なので 満杯にはならない
+        inventory.SetCount(denomination, 100);
+        monitor.Status.CurrentValue.ShouldBe(CashStatus.NearFull);
     }
 }

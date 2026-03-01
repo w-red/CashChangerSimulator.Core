@@ -66,4 +66,33 @@ public class ChangeCalculatorTests
             calculator.Calculate(inventory, 150m)
         );
     }
+
+    /// <summary>IsRecyclable が false の金種が釣銭計算から除外されることを検証する。</summary>
+    [Fact]
+    public void CalculateShouldExcludeNonRecyclableDenominations()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var denom1000 = new DenominationKey(1000, CashType.Bill);
+        var denom500 = new DenominationKey(500, CashType.Coin);
+        var denom100 = new DenominationKey(100, CashType.Coin);
+
+        inventory.SetCount(denom1000, 10);
+        inventory.SetCount(denom500, 10);
+        inventory.SetCount(denom100, 10);
+
+        var calculator = new ChangeCalculator();
+
+        // 500円玉を除外するフィルター（IsRecyclable = false の設定を想定）
+        bool RecycleFilter(DenominationKey k) => k.Value != 500;
+
+        // Act: 1500円を計算。通常なら 1000x1, 500x1 だが、500を除外すると 1000x1, 100x5 になるはず
+        // 注意: 現時点では引数 filter は存在しないため、コンパイルエラーになるのが正しい TDD Red です。
+        var result = calculator.Calculate(inventory, 1500m, filter: RecycleFilter);
+
+        // Assert
+        result[denom1000].ShouldBe(1);
+        result.ContainsKey(denom500).ShouldBeFalse();
+        result[denom100].ShouldBe(5);
+    }
 }
