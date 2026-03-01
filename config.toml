@@ -4,140 +4,174 @@ CultureCode = "en-US"
 UIMode = "Standard"
 
 [Inventory.JPY.Denominations.B10000]
-DisplayName = "10000円"
+DisplayName = "10,000 Yen Bill"
+DisplayNameJP = "一万円札"
 InitialCount = 10
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
 
 [Inventory.JPY.Denominations.B5000]
-DisplayName = "5000円"
+DisplayName = "5,000 Yen Bill"
+DisplayNameJP = "五千円札"
 InitialCount = 10
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
+
+[Inventory.JPY.Denominations.B2000]
+DisplayName = "2,000 Yen Bill"
+DisplayNameJP = "二千円札"
+InitialCount = 0
+NearEmpty = -1
+NearFull = 90
+Full = 100
+IsRecyclable = false
 
 [Inventory.JPY.Denominations.B1000]
-DisplayName = "1000円"
+DisplayName = "1,000 Yen Bill"
+DisplayNameJP = "千円札"
 InitialCount = 50
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
 
 [Inventory.JPY.Denominations.C500]
-DisplayName = "500円"
+DisplayName = "500 Yen Coin"
+DisplayNameJP = "五百円玉"
 InitialCount = 50
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
 
 [Inventory.JPY.Denominations.C100]
-DisplayName = "100円"
+DisplayName = "100 Yen Coin"
+DisplayNameJP = "百円玉"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
 
 [Inventory.JPY.Denominations.C50]
-DisplayName = "50円"
+DisplayName = "50 Yen Coin"
+DisplayNameJP = "五十円玉"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
 
 [Inventory.JPY.Denominations.C10]
-DisplayName = "10円"
+DisplayName = "10 Yen Coin"
+DisplayNameJP = "十円玉"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
 
 [Inventory.JPY.Denominations.C5]
-DisplayName = "5円"
+DisplayName = "5 Yen Coin"
+DisplayNameJP = "五円玉"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
 
 [Inventory.JPY.Denominations.C1]
-DisplayName = "1円"
+DisplayName = "1 Yen Coin"
+DisplayNameJP = "一円玉"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
 Full = 100
+IsRecyclable = true
 
 [Inventory.USD.Denominations.B100]
-DisplayName = "$100"
+DisplayName = "$100 Bill"
 InitialCount = 5
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations.B50]
-DisplayName = "$50"
+DisplayName = "$50 Bill"
 InitialCount = 5
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations.B20]
-DisplayName = "$20"
+DisplayName = "$20 Bill"
 InitialCount = 10
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations.B10]
-DisplayName = "$10"
+DisplayName = "$10 Bill"
 InitialCount = 10
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations.B5]
-DisplayName = "$5"
+DisplayName = "$5 Bill"
 InitialCount = 20
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations.B1]
-DisplayName = "$1"
+DisplayName = "$1 Bill"
+InitialCount = 50
+NearEmpty = 5
+NearFull = 90
+Full = 100
+
+[Inventory.USD.Denominations.C1]
+DisplayName = "$1 Coin"
 InitialCount = 50
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations."C0.5"]
-DisplayName = "50¢"
+DisplayName = "50¢ Coin"
 InitialCount = 50
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations."C0.25"]
-DisplayName = "25¢"
+DisplayName = "25¢ Coin"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations."C0.1"]
-DisplayName = "10¢"
+DisplayName = "10¢ Coin"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations."C0.05"]
-DisplayName = "5¢"
+DisplayName = "5¢ Coin"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
 Full = 100
 
 [Inventory.USD.Denominations."C0.01"]
-DisplayName = "1¢"
+DisplayName = "1¢ Coin"
 InitialCount = 100
 NearEmpty = 5
 NearFull = 90
