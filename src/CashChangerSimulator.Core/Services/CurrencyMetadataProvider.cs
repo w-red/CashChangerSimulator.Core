@@ -2,6 +2,7 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using MoneyKind4Opos.Codes;
 using MoneyKind4Opos.Currencies.Interfaces;
+using R3;
 using System.Reflection;
 
 namespace CashChangerSimulator.Core.Services;
@@ -9,72 +10,91 @@ namespace CashChangerSimulator.Core.Services;
 /// <summary>通貨コードに基づいて、MoneyKind4Opos から通貨のメタデータを提供するサービス。</summary>
 public class CurrencyMetadataProvider
 {
-    private readonly Type _currencyType;
-    private readonly string _cultureCode;
+    private readonly BindableReactiveProperty<string> _symbolPrefix;
+    private readonly BindableReactiveProperty<string> _symbolSuffix;
+    private readonly BindableReactiveProperty<string> _currencyCode;
+    private readonly BindableReactiveProperty<string> _cultureCode;
 
     /// <summary>通貨コード（例: "JPY"）。</summary>
-    public string CurrencyCode { get; }
+    public string CurrencyCode => _currencyCode.Value;
 
     /// <summary>通貨記号（プレフィックス優先）。</summary>
-    public string Symbol { get; }
+    public string Symbol => !string.IsNullOrEmpty(_symbolPrefix.Value) ? _symbolPrefix.Value : _symbolSuffix.Value;
 
     /// <summary>通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。</summary>
-    public string SymbolPrefix { get; }
+    public ReadOnlyReactiveProperty<string> SymbolPrefix { get; }
  
     /// <summary>通貨記号のサフィックス（例: "円"）。通常、金額の後ろに表示されます。</summary>
-    public string SymbolSuffix { get; }
- 
+    public ReadOnlyReactiveProperty<string> SymbolSuffix { get; }
+
     /// <summary>この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
-    public IReadOnlyList<DenominationKey> SupportedDenominations { get; }
+    public IReadOnlyList<DenominationKey> SupportedDenominations { get; private set; } = [];
 
     /// <summary>設定プロバイダーを指定してメタデータプロバイダーを初期化する。</summary>
     public CurrencyMetadataProvider(ConfigurationProvider configProvider)
     {
-        CurrencyCode = string.IsNullOrWhiteSpace(configProvider.Config.System.CurrencyCode) ? "JPY" : configProvider.Config.System.CurrencyCode;
-        _cultureCode = configProvider.Config.System.CultureCode ?? "en-US";
-        var currencyCode = CurrencyCode;
+        _currencyCode = new BindableReactiveProperty<string>(string.IsNullOrWhiteSpace(configProvider.Config.System.CurrencyCode) ? "JPY" : configProvider.Config.System.CurrencyCode);
+        _cultureCode = new BindableReactiveProperty<string>(configProvider.Config.System.CultureCode ?? "en-US");
+        _symbolPrefix = new BindableReactiveProperty<string>("");
+        _symbolSuffix = new BindableReactiveProperty<string>("");
+
+        SymbolPrefix = _symbolPrefix.ToReadOnlyReactiveProperty();
+        SymbolSuffix = _symbolSuffix.ToReadOnlyReactiveProperty();
+
+        UpdateMetadata(configProvider.Config);
+
+        configProvider.Reloaded.Subscribe(_ =>
+        {
+            UpdateMetadata(configProvider.Config);
+        });
+    }
+
+    private void UpdateMetadata(SimulatorConfiguration config)
+    {
+        _currencyCode.Value = string.IsNullOrWhiteSpace(config.System.CurrencyCode) ? "JPY" : config.System.CurrencyCode;
+        _cultureCode.Value = config.System.CultureCode ?? "en-US";
+
+        var currencyCode = _currencyCode.Value;
+        var cultureCode = _cultureCode.Value;
 
         // MoneyKind4Opos アセンブリから対応する通貨クラスを探す
-        _currencyType = FindCurrencyType(currencyCode) ?? FindCurrencyType("JPY")!;
+        var currencyType = FindCurrencyType(currencyCode) ?? FindCurrencyType("JPY")!;
 
         // 通貨記号を取得
-        var rawSymbol = GetStaticPropertyValue<CurrencyFormattingOptions>(_currencyType, "Local")?.Symbol ?? "";
+        var rawSymbol = GetStaticPropertyValue<CurrencyFormattingOptions>(currencyType, "Local")?.Symbol ?? "";
         
         // JPY の場合、ロケールによって表示位置を調整する
         if (currencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
         {
-            var isJapanese = _cultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
+            var isJapanese = cultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
             if (isJapanese)
             {
-                SymbolPrefix = "";
-                SymbolSuffix = "円";
+                _symbolPrefix.Value = "";
+                _symbolSuffix.Value = "円";
             }
             else
             {
-                SymbolPrefix = "¥"; // Use Yen mark for English JPY
-                SymbolSuffix = "";
+                _symbolPrefix.Value = "¥";
+                _symbolSuffix.Value = "";
             }
         }
         else
         {
-            // 他の通貨は一旦プレフィックスとして扱う（必要に応じて拡張可能）
-            SymbolPrefix = rawSymbol;
-            SymbolSuffix = "";
+            _symbolPrefix.Value = rawSymbol;
+            _symbolSuffix.Value = "";
         }
 
-        // 互換性のために Symbol も維持（基本は Prefix を返す）
-        Symbol = !string.IsNullOrEmpty(SymbolPrefix) ? SymbolPrefix : SymbolSuffix;
 
         // 金種リストを構築
         var denominations = new List<DenominationKey>();
 
-        var coins = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(_currencyType, "Coins");
+        var coins = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(currencyType, "Coins");
         if (coins != null)
         {
             denominations.AddRange(coins.Select(c => new DenominationKey(c.Value, CashType.Coin)));
         }
 
-        var bills = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(_currencyType, "Bills");
+        var bills = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(currencyType, "Bills");
         if (bills != null)
         {
             denominations.AddRange(bills.Select(b => new DenominationKey(b.Value, CashType.Bill)));
@@ -87,7 +107,7 @@ public class CurrencyMetadataProvider
     }
 
     /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。</summary>
-    public string GetDenominationName(DenominationKey key) => GetDenominationName(key, _cultureCode);
+    public string GetDenominationName(DenominationKey key) => GetDenominationName(key, _cultureCode.Value);
 
     /// <summary>指定された金種とカルチャの表示名を取得する。</summary>
     public string GetDenominationName(DenominationKey key, string cultureCode)
@@ -108,7 +128,8 @@ public class CurrencyMetadataProvider
             }
         }
 
-        var faces = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(_currencyType, key.Type == CashType.Coin ? "Coins" : "Bills");
+        var currencyType = FindCurrencyType(CurrencyCode) ?? FindCurrencyType("JPY")!;
+        var faces = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(currencyType, key.Type == CashType.Coin ? "Coins" : "Bills");
         var face = faces?.FirstOrDefault(f => f.Value == key.Value);
 
         if (face != null)
