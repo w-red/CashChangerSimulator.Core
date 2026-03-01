@@ -26,6 +26,9 @@ public record DenominationKey(
     /// <summary>種別に応じたプレフィックス文字を取得します。</summary>
     public char PrefixChar => Type == CashType.Bill ? BillPrefix : CoinPrefix;
 
+    /// <summary>設定ファイル等で使用する文字列形式を取得します（例: "B1000", "C500", "C0.25"）。</summary>
+    public string ToDenominationString() => $"{PrefixChar}{Value}";
+
     /// <summary>文字列形式から金種キーを解析します。</summary>
     public static bool TryParse(string s, out DenominationKey? result)
     {

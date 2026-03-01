@@ -42,19 +42,19 @@ public class CashStatusMonitor : IDisposable
     {
         var count = _inventory.GetCount(_key);
 
-        if (count == 0)
+        if (_nearEmptyThreshold != -1 && count == 0)
         {
             _status.Value = CashStatus.Empty;
         }
-        else if (count < _nearEmptyThreshold)
+        else if (_nearEmptyThreshold != -1 && count < _nearEmptyThreshold)
         {
             _status.Value = CashStatus.NearEmpty;
         }
-        else if (count >= _fullThreshold)
+        else if (_fullThreshold != -1 && count >= _fullThreshold)
         {
             _status.Value = CashStatus.Full;
         }
-        else if (count >= _nearFullThreshold)
+        else if (_nearFullThreshold != -1 && count >= _nearFullThreshold)
         {
             _status.Value = CashStatus.NearFull;
         }

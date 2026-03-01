@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
@@ -10,12 +11,33 @@ namespace CashChangerSimulator.Core.Managers;
 /// <param name="inventory">在庫管理オブジェクト。</param>
 /// <param name="history">履歴管理オブジェクト。</param>
 /// <param name="calculator">釣銭計算オブジェクト。</param>
-public class CashChangerManager(Inventory inventory, TransactionHistory history, ChangeCalculator calculator)
+/// <summary>入金・出金・在庫・履歴を調整するマネージャークラス。</summary>
+public class CashChangerManager
 {
-    private readonly Inventory _inventory = inventory;
-    private readonly TransactionHistory _history = history;
-    private readonly ChangeCalculator _calculator = calculator;
+    private readonly Inventory _inventory;
+    private readonly TransactionHistory _history;
+    private readonly ChangeCalculator _calculator;
+    private readonly ConfigurationProvider _configProvider;
     private readonly ILogger<CashChangerManager> _logger = LogProvider.CreateLogger<CashChangerManager>();
+
+    /// <summary>
+    /// コンストラクタ（後方互換用）。
+    /// </summary>
+    public CashChangerManager(Inventory inventory, TransactionHistory history, ChangeCalculator calculator)
+        : this(inventory, history, calculator, null)
+    {
+    }
+
+    /// <summary>
+    /// コンストラクタ。
+    /// </summary>
+    public CashChangerManager(Inventory inventory, TransactionHistory history, ChangeCalculator calculator, ConfigurationProvider? configProvider)
+    {
+        _inventory = inventory;
+        _history = history;
+        _calculator = calculator;
+        _configProvider = configProvider ?? new ConfigurationProvider();
+    }
 
     /// <summary>入金を処理する。</summary>
     /// <param name="counts">投入された金種ごとの枚数内訳。</param>
@@ -66,7 +88,11 @@ public class CashChangerManager(Inventory inventory, TransactionHistory history,
     /// <param name="currencyCode">通貨コード。</param>
     public virtual void Dispense(decimal amount, string? currencyCode = null)
     {
-        var counts = _calculator.Calculate(_inventory, amount, currencyCode);
+        var counts = _calculator.Calculate(_inventory, amount, currencyCode, filter: k =>
+        {
+            var setting = _configProvider.Config.GetDenominationSetting(k);
+            return setting?.IsRecyclable ?? true;
+        });
         Dispense(counts);
     }
 }

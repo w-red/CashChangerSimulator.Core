@@ -57,7 +57,7 @@ public class SimulatorConfiguration
     /// <summary>指定された金種の個別設定を取得する。存在しない場合はデフォルト値を返す。</summary>
     public DenominationSettings GetDenominationSetting(DenominationKey key)
     {
-        var keyStr = (key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? "B" : "C") + key.Value.ToString();
+        var keyStr = key.ToDenominationString();
         return Inventory.TryGetValue(key.CurrencyCode, out var inventory) &&
             inventory.Denominations.TryGetValue(keyStr, out var setting)
             ? setting
