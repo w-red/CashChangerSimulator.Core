@@ -12,16 +12,19 @@ public class ConfigurationProvider
     /// <summary>現在保持している設定インスタンス。</summary>
     public SimulatorConfiguration Config { get; private set; }
 
+    private readonly string? _configPath;
+
     /// <summary>設定を初期読み込みしてインスタンスを生成する。</summary>
-    public ConfigurationProvider()
+    public ConfigurationProvider(string? configPath = null)
     {
-        Config = ConfigurationLoader.Load();
+        _configPath = configPath;
+        Config = _configPath != null ? ConfigurationLoader.Load(_configPath) : ConfigurationLoader.Load();
     }
 
     /// <summary>設定ファイルを再読み込みして保持するインスタンスを更新する。</summary>
     public void Reload()
     {
-        Config = ConfigurationLoader.Load();
+        Config = _configPath != null ? ConfigurationLoader.Load(_configPath) : ConfigurationLoader.Load();
         _reloaded.OnNext(Unit.Default);
     }
 }

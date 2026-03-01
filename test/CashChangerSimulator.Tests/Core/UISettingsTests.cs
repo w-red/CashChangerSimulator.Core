@@ -133,4 +133,43 @@ public class UISettingsTests
         var mp = new MonitorsProvider(inventory, cp, meta);
         return new SettingsViewModel(cp, mp, meta);
     }
+
+    [Fact]
+    public void CurrencyMetadataProvider_ShouldUpdateSymbols_WhenConfigReloaded()
+    {
+        // Arrange
+        var config = new SimulatorConfiguration();
+        config.System.CurrencyCode = "JPY";
+        config.System.CultureCode = "en-US";
+
+        var tempFile = Path.Combine(Path.Combine(AppDomain.CurrentDomain.BaseDirectory), Guid.NewGuid().ToString() + ".toml");
+        ConfigurationLoader.Save(config, tempFile);
+
+        var provider = new ConfigurationProvider(tempFile);
+        var metadata = new CurrencyMetadataProvider(provider);
+
+        // Initial state (JPY, en-US) -> Prefix: ¥, Suffix: ""
+        metadata.SymbolPrefix.CurrentValue.ShouldBe("¥");
+        metadata.SymbolSuffix.CurrentValue.ShouldBe("");
+
+        // Act & Assert: Update to JPY, ja-JP -> Prefix: "", Suffix: "円"
+        config.System.CultureCode = "ja-JP";
+        ConfigurationLoader.Save(config, tempFile);
+        provider.Reload();
+
+        // This is expected to FAIL until we implement reactivity in CurrencyMetadataProvider
+        metadata.SymbolPrefix.CurrentValue.ShouldBe("");
+        metadata.SymbolSuffix.CurrentValue.ShouldBe("円");
+
+        // Act & Assert: Update to USD, en-US -> Prefix: "$", Suffix: ""
+        config.System.CurrencyCode = "USD";
+        config.System.CultureCode = "en-US";
+        ConfigurationLoader.Save(config, tempFile);
+        provider.Reload();
+
+        metadata.SymbolPrefix.CurrentValue.ShouldBe("$");
+        metadata.SymbolSuffix.CurrentValue.ShouldBe("");
+
+        if (File.Exists(tempFile)) File.Delete(tempFile);
+    }
 }
