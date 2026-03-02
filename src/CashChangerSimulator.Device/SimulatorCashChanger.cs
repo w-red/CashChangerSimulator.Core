@@ -38,13 +38,16 @@ public class SimulatorCashChanger : CashChangerBasic
 
     // Async processing state
     private bool _asyncProcessing;
-    private int _asyncResultCode;
-    private int _asyncResultCodeExtended;
 
     /// <summary>同期操作の最新の結果コードを取得します。</summary>
     public int ResultCode { get; private set; }
     /// <summary>同期操作の最新の拡張結果コードを取得します。</summary>
     public int ResultCodeExtended { get; private set; }
+
+    /// <summary>非同期操作の最新の結果コードを取得します。</summary>
+    public int ResultCodeAsync { get; private set; }
+    /// <summary>非同期操作の最新の拡張結果コードを取得します。</summary>
+    public int ResultCodeExtendsAsync { get; private set; }
 
     /// <summary>テスト用のイベント通知アクション。</summary>
     internal Action<EventArgs>? OnEventQueued; // For testing
@@ -432,8 +435,8 @@ public class SimulatorCashChanger : CashChangerBasic
 
             if (AsyncMode)
             {
-                _asyncResultCode = (int)code;
-                _asyncResultCodeExtended = codeEx;
+                ResultCodeAsync = (int)code;
+                ResultCodeExtendsAsync = codeEx;
                 _asyncProcessing = false; // Set this BEFORE NotifyEvent
                 NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
             }
@@ -495,8 +498,8 @@ public class SimulatorCashChanger : CashChangerBasic
         {
             if (AsyncMode)
             {
-                _asyncResultCode = (int)code;
-                _asyncResultCodeExtended = codeEx;
+                ResultCodeAsync = (int)code;
+                ResultCodeExtendsAsync = codeEx;
                 _asyncProcessing = false;
                 NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
             }
@@ -637,9 +640,9 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>非同期モードで動作するかどうかを取得または設定します。</summary>
     public override bool AsyncMode { get; set; }
     /// <summary>最後の非同期操作の結果コードを取得します。</summary>
-    public override int AsyncResultCode => _asyncResultCode;
+    public override int AsyncResultCode => ResultCodeAsync;
     /// <summary>最後の非同期操作の拡張結果コードを取得します。</summary>
-    public override int AsyncResultCodeExtended => _asyncResultCodeExtended;
+    public override int AsyncResultCodeExtended => ResultCodeExtendsAsync;
 
     // ========== Currency Properties ==========
 
