@@ -14,6 +14,7 @@ using Shouldly;
 using System.IO;
 using System.Threading.Tasks;
 using CashChangerSimulator.Device.Services;
+using Kokuban;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 
@@ -106,8 +107,11 @@ public class CliCommandsTests
     }
 
     [Fact]
-    public void ReadCashCountsShouldPrintTable()
+    public void ReadCashCountsShouldPrintColoredTable()
     {
+        // Force Kokuban to output ANSI codes in test environment
+        KokubanOptions.Default.Mode = KokubanColorMode.TrueColor;
+
         // Arrange
         var mockCashCounts = new CashCounts(
         [
@@ -121,10 +125,23 @@ public class CliCommandsTests
         _mockMetadata.Setup(x => x.CurrencyCode).Returns("JPY");
         _mockInventory.Setup(x => x.CalculateTotal("JPY")).Returns(15000m);
 
-        // Act
-        _commands.ReadCashCounts();
+        using var sw = new StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(sw);
 
-        // Assert
-        _mockChanger.Verify(x => x.ReadCashCounts(), Times.Once);
+        try
+        {
+            // Act
+            _commands.ReadCashCounts();
+
+            // Assert
+            var output = sw.ToString();
+            // ANSI escape sequence for colors starts with \u001b[
+            output.ShouldContain("\u001b["); 
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
     }
 }
