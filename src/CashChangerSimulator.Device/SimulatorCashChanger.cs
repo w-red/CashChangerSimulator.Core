@@ -83,31 +83,63 @@ public class SimulatorCashChanger : CashChangerBasic
 
     // ========== Simulator UI Helpers for Lifecycle Verification ==========
 
+    private bool _isOpen;
+    private bool _isClaimed;
+
     /// <summary>シミュレータUIからの Open 呼び出しを受け付けます。</summary>
     public new virtual void Open()
     {
-        _logger.LogInformation(
-            "OPOS Open called via simulator.");
+        if (_isOpen)
+        {
+            _logger.LogWarning("Device is already open.");
+            return;
+        }
+        _isOpen = true;
+        _logger.LogInformation("OPOS Open called via simulator.");
     }
 
     /// <summary>シミュレータUIからの Close 呼び出しを受け付けます。</summary>
     public new virtual void Close()
     {
-        _logger.LogInformation(
-            "OPOS Close called via simulator.");
+        if (!_isOpen)
+        {
+            throw new PosControlException("Device is not open.", ErrorCode.Closed);
+        }
+        if (_isClaimed)
+        {
+            Release();
+        }
+        DeviceEnabled = false;
+        _isOpen = false;
+        _logger.LogInformation("OPOS Close called via simulator.");
     }
 
     /// <summary>シミュレータUIからの Claim 呼び出しを受け付けます。</summary>
     public new virtual void Claim(int timeout)
     {
+        if (!_isOpen)
+        {
+            throw new PosControlException("Device must be opened before claiming.", ErrorCode.Closed);
+        }
+        if (_isClaimed)
+        {
+            _logger.LogWarning("Device is already claimed.");
+            return;
+        }
+        _isClaimed = true;
         _logger.LogInformation("OPOS Claim({0}) called via simulator.", timeout);
     }
 
     /// <summary>シミュレータUIからの Release 呼び出しを受け付けます。</summary>
     public new virtual void Release()
     {
-        _logger.LogInformation(
-            "OPOS Release called via simulator.");
+        if (!_isClaimed)
+        {
+            throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
+        }
+        DeviceEnabled = false;
+        _isClaimed = false;
+        _logger.LogInformation("OPOS Release called via simulator.");
     }
 
     /// <summary>サービスプロバイダーを使用して SimulatorCashChanger の新しいインスタンスを初期化します（DI用）。</summary>
