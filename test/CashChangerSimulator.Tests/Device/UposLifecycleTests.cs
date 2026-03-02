@@ -48,6 +48,10 @@ public class UposLifecycleTests
 
         // Device is not Open/Claimed — DispenseChange should throw
         var ex = Should.Throw<PosControlException>(() => cc.DispenseChange(100));
+        
+        // ResultCode should be updated reflecting the error
+        cc.ResultCode.ShouldBe((int)ErrorCode.Closed);
+        
         // BasicServiceObject should enforce Closed/NotClaimed
         (ex.ErrorCode == ErrorCode.Closed || ex.ErrorCode == ErrorCode.NotClaimed)
             .ShouldBeTrue($"Expected Closed or NotClaimed, but got {ex.ErrorCode}");
@@ -61,6 +65,7 @@ public class UposLifecycleTests
 
         var ex = Should.Throw<PosControlException>(() => cc.BeginDeposit());
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
+        cc.ResultCode.ShouldBe((int)ErrorCode.Closed);
     }
 
     /// <summary>Claim されていない状態で ReadCashCounts を呼び出すと例外がスローされることを検証する。</summary>
@@ -71,6 +76,31 @@ public class UposLifecycleTests
 
         var ex = Should.Throw<PosControlException>(() => cc.ReadCashCounts());
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
+        cc.ResultCode.ShouldBe((int)ErrorCode.Closed);
+    }
+
+    /// <summary>Open 前に Claim を呼び出すと ResultCode が Closed になることを検証する。</summary>
+    [Fact]
+    public void ClaimBeforeOpenShouldSetResultCodeToClosed()
+    {
+        var cc = CreateCashChanger();
+
+        var ex = Should.Throw<PosControlException>(() => cc.Claim(1000));
+        ex.ErrorCode.ShouldBe(ErrorCode.Closed);
+        cc.ResultCode.ShouldBe((int)ErrorCode.Closed);
+    }
+
+    /// <summary>正常な Open/Claim シーケンスで ResultCode が Success になることを検証する。</summary>
+    [Fact]
+    public void SuccessfulLifecycleShouldSetResultCodeToSuccess()
+    {
+        var cc = CreateCashChanger();
+
+        cc.Open();
+        cc.ResultCode.ShouldBe((int)ErrorCode.Success);
+
+        cc.Claim(1000);
+        cc.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 
     /// <summary>CheckHealth が常に OK を返すことを検証する。</summary>
