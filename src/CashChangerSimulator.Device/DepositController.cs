@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using MicroResolver;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
@@ -9,14 +10,23 @@ using ZLogger;
 namespace CashChangerSimulator.Device;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー。</summary>
-/// <param name="inventory">在庫管理オブジェクト。</param>
-/// <param name="hardwareStatusManager">ハードウェアステータスマネージャー。</param>
-public class DepositController(
-    Inventory inventory,
-    HardwareStatusManager? hardwareStatusManager = null) : IDisposable
+public class DepositController : IDisposable
 {
+    private readonly Inventory _inventory;
+    private readonly HardwareStatusManager _hardwareStatusManager;
+
+    /// <summary>在庫を指定して初期化する。</summary>
+    public DepositController(Inventory inventory) : this(inventory, null) { }
+
+    /// <summary>在庫とステータスマネージャーを指定して初期化する。</summary>
+    [Inject]
+    public DepositController(Inventory inventory, HardwareStatusManager? hardwareStatusManager)
+    {
+        _inventory = inventory;
+        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+    }
+
     private readonly ILogger<DepositController> _logger = LogProvider.CreateLogger<DepositController>();
-    private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
     private readonly CompositeDisposable _disposables = [];
     private readonly Subject<Unit> _changed = new();
 
@@ -108,7 +118,7 @@ public class DepositController(
             // Store (Change/NoChange): Commit deposit to inventory
             foreach (var kv in _depositCounts)
             {
-                inventory.Add(kv.Key, kv.Value);
+                _inventory.Add(kv.Key, kv.Value);
             }
         }
         // For NoChange/Change, we check if device is healthy

@@ -5,6 +5,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
+using MicroResolver;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
@@ -13,17 +14,26 @@ using ZLogger;
 namespace CashChangerSimulator.Device;
 
 /// <summary>出金（払出）シーケンスを管理するコントローラー。</summary>
-/// <param name="manager">キャッシュチェンジャーマネージャー。</param>
-/// <param name="hardwareStatusManager">ハードウェアステータスマネージャー。</param>
-/// <param name="simulator">デバイスシミュレーター。</param>
-public class DispenseController(
-    CashChangerManager manager,
-    HardwareStatusManager? hardwareStatusManager = null,
-    IDeviceSimulator? simulator = null)
-    : IDisposable
+public class DispenseController : IDisposable
 {
-    private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-    private readonly IDeviceSimulator _simulator = simulator ?? new HardwareSimulator(CashChangerSimulator.Core.SimulatorServices.TryResolve<ConfigurationProvider>());
+    private readonly CashChangerManager _manager;
+    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly IDeviceSimulator _simulator;
+
+    /// <summary>マネージャーを指定して初期化する。</summary>
+    public DispenseController(CashChangerManager manager) : this(manager, null, null) { }
+
+    /// <summary>全依存関係を指定して初期化する。</summary>
+    [Inject]
+    public DispenseController(
+        CashChangerManager manager,
+        HardwareStatusManager? hardwareStatusManager,
+        IDeviceSimulator? simulator)
+    {
+        _manager = manager;
+        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+        _simulator = simulator ?? new HardwareSimulator(CashChangerSimulator.Core.SimulatorServices.TryResolve<ConfigurationProvider>());
+    }
     private readonly ILogger<DispenseController> _logger = Core.LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> _changed = new();
     private readonly CompositeDisposable _disposables = [];
@@ -53,11 +63,11 @@ public class DispenseController(
 
         if (asyncMode)
         {
-            _ = Task.Run(() => ExecuteDispense(() => manager.Dispense(amount, currencyCode), onComplete));
+            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete));
         }
         else
         {
-            await ExecuteDispense(() => manager.Dispense(amount, currencyCode), onComplete);
+            await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete);
         }
     }
 
@@ -75,11 +85,11 @@ public class DispenseController(
 
         if (asyncMode)
         {
-            _ = Task.Run(() => ExecuteDispense(() => manager.Dispense(counts), onComplete));
+            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(counts), onComplete));
         }
         else
         {
-            await ExecuteDispense(() => manager.Dispense(counts), onComplete);
+            await ExecuteDispense(() => _manager.Dispense(counts), onComplete);
         }
     }
 
