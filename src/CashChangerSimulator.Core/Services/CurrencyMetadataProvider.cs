@@ -8,7 +8,7 @@ using System.Reflection;
 namespace CashChangerSimulator.Core.Services;
 
 /// <summary>通貨コードに基づいて、MoneyKind4Opos から通貨のメタデータを提供するサービス。</summary>
-public class CurrencyMetadataProvider
+public class CurrencyMetadataProvider : ICurrencyMetadataProvider
 {
     private readonly BindableReactiveProperty<string> _symbolPrefix;
     private readonly BindableReactiveProperty<string> _symbolSuffix;

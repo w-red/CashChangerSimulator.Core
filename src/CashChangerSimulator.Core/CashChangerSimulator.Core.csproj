@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="CashChangerSimulator.Tests" />
+    <InternalsVisibleTo Include="CashChangerSimulator.UI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MemoryPack" Version="1.21.4" />
     <PackageReference Include="MemoryPack.Core" Version="1.21.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.3" />

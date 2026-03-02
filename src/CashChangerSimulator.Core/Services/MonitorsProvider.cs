@@ -11,7 +11,7 @@ public class MonitorsProvider
     public IReadOnlyList<CashStatusMonitor> Monitors { get; }
 
     /// <summary>在庫と設定を元に、全金種のモニターを初期化する。</summary>
-    public MonitorsProvider(Inventory inventory, ConfigurationProvider configProvider, CurrencyMetadataProvider metadataProvider)
+    public MonitorsProvider(Inventory inventory, ConfigurationProvider configProvider, ICurrencyMetadataProvider metadataProvider)
     {
         var config = configProvider.Config;
         var keys = metadataProvider.SupportedDenominations;
