@@ -44,8 +44,9 @@ For more detailed information, please refer to the documents in the `docs/` dire
 - [Architecture Overview](docs/Architecture.md): High-level system design.
 - [UPOS Compliance Mapping](docs/UposComplianceMapping.md): Status of UPOS interface implementation.
 - [OPOS Compliance Mapping](docs/OposComplianceMapping.md): Mapping of OPOS error codes and result codes.
-- [Standard Mode Instructions](docs/ApplicationOperatingInstructions.md): Guide for manual GUI operations.
-- [POS Mode Instructions](docs/PosModeApplicationOperatingInstructions.md): Guide for POS integration and error scenario testing.
+- [Operating Instructions (GUI)](docs/ApplicationOperatingInstructions.md): Guide for manual GUI operations.
+- [Operating Instructions (CLI)](docs/CliOperatingInstructions.md)
+- [POS Mode Operation Guide](docs/PosModeApplicationOperatingInstructions.md): Guide for POS integration and error scenario testing.
 
 ---
 *For the Japanese version, see [README_JP.md](README_JP.md).*

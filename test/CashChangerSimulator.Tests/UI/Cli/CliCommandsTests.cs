@@ -11,6 +11,9 @@ using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
+using System.IO;
+using System.Threading.Tasks;
+using CashChangerSimulator.Device.Services;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 
@@ -20,6 +23,7 @@ public class CliCommandsTests
     private readonly Mock<Inventory> _mockInventory;
     private readonly Mock<ICurrencyMetadataProvider> _mockMetadata;
     private readonly Mock<TransactionHistory> _mockHistory;
+    private readonly Mock<IScriptExecutionService> _mockScriptService;
     private readonly CliCommands _commands;
 
     public CliCommandsTests()
@@ -32,12 +36,37 @@ public class CliCommandsTests
         var mockConfigProvider = new Mock<ConfigurationProvider>(new object?[] { null });
         _mockMetadata = new Mock<ICurrencyMetadataProvider>();
         _mockHistory = new Mock<TransactionHistory>();
+        _mockScriptService = new Mock<IScriptExecutionService>();
 
         _commands = new CliCommands(
             _mockChanger.Object,
             _mockInventory.Object,
             _mockMetadata.Object,
-            _mockHistory.Object);
+            _mockHistory.Object,
+            _mockScriptService.Object);
+    }
+
+    [Fact]
+    public async Task RunScriptShouldExecuteServiceAsync()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        var json = "[{\"Op\": \"BeginDeposit\"}]";
+        File.WriteAllText(tempFile, json);
+        try
+        {
+            _mockScriptService.Setup(x => x.ExecuteScriptAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+
+            // Act
+            await _commands.RunScript(tempFile);
+
+            // Assert
+            _mockScriptService.Verify(x => x.ExecuteScriptAsync(json), Times.Once);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
     }
 
     [Fact]

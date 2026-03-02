@@ -44,8 +44,10 @@ dotnet test
 - [Architecture Overview](docs/Architecture_JP.md): アーキテクチャの概要
 - [UPOS Compliance Mapping](docs/UposComplianceMapping_JP.md): UPOS インターフェースの対応状況
 - [OPOS Compliance Mapping](docs/OposComplianceMapping_JP.md): OPOS エラーコードとの対応関係
-- [標準モード操作説明書](docs/ApplicationOperatingInstructions_JP.md): アプリケーションの基本的な操作方法
-- [POSモード操作説明書](docs/PosModeApplicationOperatingInstructions_JP.md): POS 連携シミュレーションのガイド
+- [標準モード  - [操作説明書 (GUI)](docs/ApplicationOperatingInstructions_JP.md)
+  - [操作説明書 (CLI)](docs/CliOperatingInstructions_JP.md)
+  - [POS モード操作ガイド](docs/PosModeApplicationOperatingInstructions_JP.md)
+: POS 連携シミュレーションのガイド
 
 ---
 *英語版については、[README.md](README.md) を参照してください。*
