@@ -28,7 +28,7 @@ public class CashCountParserTests
     ];
 
     [Fact]
-    public void Parse_ParsesSemicolonFormatCorrectly_JPY()
+    public void ParseParsesSemicolonFormatCorrectlyJpy()
     {
         // JPY: Coins (500, 100) before semicolon, Bills (10000) after
         var input = "500:10, 100:20 ; 10000:2";
@@ -45,7 +45,7 @@ public class CashCountParserTests
     }
 
     [Fact]
-    public void Parse_ParsesSemicolonFormatCorrectly_USD_AmbiguityResolved()
+    public void ParseParsesSemicolonFormatCorrectlyUsdAmbiguityResolved()
     {
         // USD: $1 Coin (1) before semicolon, $1 Bill (1) after
         var input = "1:5 ; 1:10";
@@ -65,7 +65,7 @@ public class CashCountParserTests
     }
 
     [Fact]
-    public void Parse_SupportsDecimalShorthand()
+    public void ParseSupportsDecimalShorthand()
     {
         // .1 = 0.1. Section 1 = Coin.
         var input = ".1:50 ; ";
@@ -78,7 +78,7 @@ public class CashCountParserTests
     }
 
     [Fact]
-    public void Parse_ThrowsOnAmbiguousImplicitFormatWithoutSemicolon()
+    public void ParseThrowsOnAmbiguousImplicitFormatWithoutSemicolon()
     {
         // USD has both $1 Bill and $1 Coin. Without semicolon context, it's ambiguous.
         var input = "1:5";
@@ -88,14 +88,14 @@ public class CashCountParserTests
     }
 
     [Fact]
-    public void Parse_ThrowsOnInvalidSectionCount()
+    public void ParseThrowsOnInvalidSectionCount()
     {
         // Three sections is not standard
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("1:1;2:2;3:3", _usdKeys, 100));
     }
 
     [Fact]
-    public void Parse_ReturnsEmptyOnEmptyInput()
+    public void ParseReturnsEmptyOnEmptyInput()
     {
         CashCountParser.Parse(string.Empty, _jpyKeys, 1).ShouldBeEmpty();
         CashCountParser.Parse("   ", _usdKeys, 100).ShouldBeEmpty();

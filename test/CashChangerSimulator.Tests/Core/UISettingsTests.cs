@@ -135,7 +135,7 @@ public class UISettingsTests
     }
 
     [Fact]
-    public void CurrencyMetadataProvider_ShouldUpdateSymbols_WhenConfigReloaded()
+    public void CurrencyMetadataProviderShouldUpdateSymbolsWhenConfigReloaded()
     {
         // Arrange
         var config = new SimulatorConfiguration();

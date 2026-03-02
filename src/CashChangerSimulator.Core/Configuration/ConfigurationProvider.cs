@@ -1,3 +1,4 @@
+using MicroResolver;
 using R3;
 
 namespace CashChangerSimulator.Core.Configuration;
@@ -14,8 +15,12 @@ public class ConfigurationProvider
 
     private readonly string? _configPath;
 
-    /// <summary>設定を初期読み込みしてインスタンスを生成する。</summary>
-    public ConfigurationProvider(string? configPath = null)
+    /// <summary>デフォルト設定ファイルを読み込む。</summary>
+    [Inject]
+    public ConfigurationProvider() : this(null) { }
+
+    /// <summary>指定されたパスの設定ファイルを読み込む。</summary>
+    public ConfigurationProvider(string? configPath)
     {
         _configPath = configPath;
         Config = _configPath != null ? ConfigurationLoader.Load(_configPath) : ConfigurationLoader.Load();
