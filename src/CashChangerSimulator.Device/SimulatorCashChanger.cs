@@ -38,19 +38,8 @@ public class SimulatorCashChanger : CashChangerBasic
 
     // Async processing state
     private bool _asyncProcessing;
-
-    /// <summary>同期操作の最新の結果コードを取得します。</summary>
-    public int ResultCode { get; private set; }
-    /// <summary>同期操作の最新の拡張結果コードを取得します。</summary>
-    public int ResultCodeExtended { get; private set; }
-
-    /// <summary>非同期操作の最新の結果コードを取得します。</summary>
-    public int ResultCodeAsync { get; private set; }
-    /// <summary>非同期操作の最新の拡張結果コードを取得します。</summary>
-    public int ResultCodeExtendsAsync { get; private set; }
-
-    /// <summary>非同期エラーを通知するイベント。</summary>
-    public event DeviceErrorEventHandler? ErrorEvent;
+    private int _asyncResultCode;
+    private int _asyncResultCodeExtended;
 
     /// <summary>テスト用のイベント通知アクション。</summary>
     internal Action<EventArgs>? OnEventQueued; // For testing
@@ -58,11 +47,8 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>テスト用: VerifyState チェックをスキップする。OPOS ライフサイクルが利用できない単体テスト環境で使用。</summary>
     public bool SkipStateVerification { get; set; }
 
-    /// <summary>プロパティアクセス時の状態検証（未Claim時の DeviceEnabled=true 例外など）を強制するかどうかを取得または設定します。</summary>
-    public bool StrictDeviceEnabledCheck { get; set; }
-
     /// <summary>デバイスの有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
-
+    public override bool DeviceEnabled { get; set; }
     /// <summary>データイベント通知の有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
     public override bool DataEventEnabled { get; set; }
 
@@ -71,6 +57,12 @@ public class SimulatorCashChanger : CashChangerBasic
 
     /// <summary>デバイスがリアルタイムデータの通知能力を持っているかどうか。</summary>
     public override bool CapRealTimeData => true;
+
+    /// <summary>最新の操作の結果コードを取得または設定します。</summary>
+    public int ResultCode { get; set; }
+
+    /// <summary>最新の操作の拡張結果コードを取得または設定します。</summary>
+    public int ResultCodeExtended { get; set; }
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">通知するイベント引数。</param>
@@ -93,10 +85,6 @@ public class SimulatorCashChanger : CashChangerBasic
         {
             QueueEvent(se);
         }
-        else if (e is DeviceErrorEventArgs ee)
-        {
-            ErrorEvent?.Invoke(this, ee);
-        }
     }
 
     // ========== Simulator UI Helpers for Lifecycle Verification ==========
@@ -105,7 +93,7 @@ public class SimulatorCashChanger : CashChangerBasic
     private bool _isClaimed;
 
     /// <summary>シミュレータUIからの Open 呼び出しを受け付けます。</summary>
-    public override void Open()
+    public new virtual void Open()
     {
         if (_isOpen)
         {
@@ -113,34 +101,15 @@ public class SimulatorCashChanger : CashChangerBasic
             return;
         }
         _isOpen = true;
-        ResultCode = (int)ErrorCode.Success;
         _logger.LogInformation("OPOS Open called via simulator.");
     }
 
-    private bool _deviceEnabled;
-    /// <summary>デバイスの有効/無効状態を取得または設定します。</summary>
-    public override bool DeviceEnabled
-    {
-        get => _deviceEnabled;
-        set
-        {
-            if (value && !_isClaimed && StrictDeviceEnabledCheck)
-            {
-                ResultCode = (int)ErrorCode.NoHardware;
-                throw new PosControlException("Device must be claimed before enabling.", ErrorCode.NoHardware);
-            }
-            _deviceEnabled = value;
-            if (value) ResultCode = (int)ErrorCode.Success;
-        }
-    }
-
     /// <summary>シミュレータUIからの Close 呼び出しを受け付けます。</summary>
-    public override void Close()
+    public new virtual void Close()
     {
         if (!_isOpen)
         {
-            _logger.LogTrace("Close called but device is already closed.");
-            return;
+            throw new PosControlException("Device is not open.", ErrorCode.Closed);
         }
         if (_isClaimed)
         {
@@ -148,16 +117,14 @@ public class SimulatorCashChanger : CashChangerBasic
         }
         DeviceEnabled = false;
         _isOpen = false;
-        ResultCode = (int)ErrorCode.Success;
         _logger.LogInformation("OPOS Close called via simulator.");
     }
 
     /// <summary>シミュレータUIからの Claim 呼び出しを受け付けます。</summary>
-    public override void Claim(int timeout)
+    public new virtual void Claim(int timeout)
     {
         if (!_isOpen)
         {
-            ResultCode = (int)ErrorCode.Closed;
             throw new PosControlException("Device must be opened before claiming.", ErrorCode.Closed);
         }
         if (_isClaimed)
@@ -166,38 +133,19 @@ public class SimulatorCashChanger : CashChangerBasic
             return;
         }
         _isClaimed = true;
-        ResultCode = (int)ErrorCode.Success;
         _logger.LogInformation("OPOS Claim({0}) called via simulator.", timeout);
     }
 
     /// <summary>シミュレータUIからの Release 呼び出しを受け付けます。</summary>
-    public override void Release()
+    public new virtual void Release()
     {
         if (!_isClaimed)
         {
-            _logger.LogTrace("Release called but device is not claimed.");
-            return;
+            throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
         }
         DeviceEnabled = false;
         _isClaimed = false;
-        ResultCode = (int)ErrorCode.Success;
         _logger.LogInformation("OPOS Release called via simulator.");
-    }
-
-    /// <summary>リソースを解放します。</summary>
-    protected override void Dispose(bool disposing)
-    {
-        try
-        {
-            // base.Dispose(disposing) calls Close() internally in PosCommon/CashChangerBasic.
-            // We swallow PosControlException during disposal to ensure clean exit.
-            base.Dispose(disposing);
-        }
-        catch (PosControlException)
-        {
-            // Ignore exceptions during disposal
-        }
-        _statusSubscription.Dispose();
     }
 
     /// <summary>サービスプロバイダーを使用して SimulatorCashChanger の新しいインスタンスを初期化します（DI用）。</summary>
@@ -374,52 +322,22 @@ public class SimulatorCashChanger : CashChangerBasic
     public override void BeginDeposit()
     {
         VerifyState();
-        ResultCode = (int)ErrorCode.Success;
         ThrowIfBusy();
-        try
-        {
-            _depositController.BeginDeposit();
-        }
-        catch (PosControlException ex)
-        {
-            ResultCode = (int)ex.ErrorCode;
-            ResultCodeExtended = ex.ErrorCodeExtended;
-            throw;
-        }
+        _depositController.BeginDeposit();
     }
 
     /// <summary>現金投入処理を終了します。</summary>
     public override void EndDeposit(CashDepositAction action)
     {
         VerifyState();
-        ResultCode = (int)ErrorCode.Success;
-        try
-        {
-            _depositController.EndDeposit(action);
-        }
-        catch (PosControlException ex)
-        {
-            ResultCode = (int)ex.ErrorCode;
-            ResultCodeExtended = ex.ErrorCodeExtended;
-            throw;
-        }
+        _depositController.EndDeposit(action);
     }
 
     /// <summary>投入された現金の計数を確定します。</summary>
     public override void FixDeposit()
     {
         VerifyState();
-        ResultCode = (int)ErrorCode.Success;
-        try
-        {
-            _depositController.FixDeposit();
-        }
-        catch (PosControlException ex)
-        {
-            ResultCode = (int)ex.ErrorCode;
-            ResultCodeExtended = ex.ErrorCodeExtended;
-            throw;
-        }
+        _depositController.FixDeposit();
 
         if (DataEventEnabled && CapDepositDataEvent)
         {
@@ -431,17 +349,7 @@ public class SimulatorCashChanger : CashChangerBasic
     public override void PauseDeposit(CashDepositPause control)
     {
         VerifyState();
-        ResultCode = (int)ErrorCode.Success;
-        try
-        {
-            _depositController.PauseDeposit(control);
-        }
-        catch (PosControlException ex)
-        {
-            ResultCode = (int)ex.ErrorCode;
-            ResultCodeExtended = ex.ErrorCodeExtended;
-            throw;
-        }
+        _depositController.PauseDeposit(control);
     }
 
     // ========== Dispense Methods ==========
@@ -450,7 +358,6 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         if (_depositController.IsDepositInProgress)
         {
-            ResultCode = (int)ErrorCode.Illegal;
             throw new PosControlException(
                 "Cash cannot be dispensed because cash acceptance is in progress.",
                 ErrorCode.Illegal);
@@ -461,7 +368,6 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         if (_asyncProcessing)
         {
-            ResultCode = (int)ErrorCode.Busy;
             throw new PosControlException("Device is busy with an asynchronous operation.", ErrorCode.Busy);
         }
     }
@@ -473,23 +379,19 @@ public class SimulatorCashChanger : CashChangerBasic
 
         if (State == ControlState.Closed)
         {
-            ResultCode = (int)ErrorCode.Closed;
             throw new PosControlException("Device is not open.", ErrorCode.Closed);
         }
-        if (State == ControlState.Idle || State == ControlState.Error)
+        if (State is ControlState.Idle or ControlState.Error)
         {
             // Idle/Error means Open but not Claimed or not Enabled
             // For simplicity, we allow operations if State is Idle or Error (means at least Open)
         }
-        // If we reach here, at least it's not Closed. 
-        // Sync methods will set ResultCode = Success if they complete without throwing.
     }
 
     /// <summary>指定された金額の釣銭を払い出します。</summary>
     public override void DispenseChange(int amount)
     {
         VerifyState();
-        ResultCode = (int)ErrorCode.Success;
         if (amount <= 0)
         {
             throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
@@ -514,26 +416,24 @@ public class SimulatorCashChanger : CashChangerBasic
 
             if (AsyncMode)
             {
-                ResultCodeAsync = (int)code;
-                ResultCodeExtendsAsync = codeEx;
+                ResultCode = (int)code;
+                ResultCodeExtended = codeEx;
+                _asyncResultCode = (int)code;
+                _asyncResultCodeExtended = codeEx;
                 _asyncProcessing = false; // Set this BEFORE NotifyEvent
                 NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
             }
-        }
-
-        try
-        {
-            var task = _dispenseController.DispenseChangeAsync(decimalAmount, AsyncMode, OnComplete, CurrencyCode);
-            if (!AsyncMode)
+            else
             {
-                task.GetAwaiter().GetResult();
+                ResultCode = (int)code;
+                ResultCodeExtended = codeEx;
             }
         }
-        catch (PosControlException ex)
+
+        var task = _dispenseController.DispenseChangeAsync(decimalAmount, AsyncMode, OnComplete, CurrencyCode);
+        if (!AsyncMode)
         {
-            ResultCode = (int)ex.ErrorCode;
-            ResultCodeExtended = ex.ErrorCodeExtended;
-            throw;
+            task.GetAwaiter().GetResult();
         }
     }
 
@@ -543,7 +443,6 @@ public class SimulatorCashChanger : CashChangerBasic
         VerifyState();
         ThrowIfDepositInProgress();
         ThrowIfBusy();
-        ResultCode = (int)ErrorCode.Success;
 
         var dict = new Dictionary<DenominationKey, int>();
         try
@@ -584,10 +483,13 @@ public class SimulatorCashChanger : CashChangerBasic
 
         void OnComplete(ErrorCode code, int codeEx)
         {
+            ResultCode = (int)code;
+            ResultCodeExtended = codeEx;
+
             if (AsyncMode)
             {
-                ResultCodeAsync = (int)code;
-                ResultCodeExtendsAsync = codeEx;
+                _asyncResultCode = (int)code;
+                _asyncResultCodeExtended = codeEx;
                 _asyncProcessing = false;
                 NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
             }
@@ -607,7 +509,6 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         VerifyState();
         ThrowIfBusy();
-        ResultCode = (int)ErrorCode.Success;
 
         foreach (var cc in cashCounts)
         {
@@ -636,7 +537,6 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         VerifyState();
         ThrowIfBusy();
-        ResultCode = (int)ErrorCode.Success;
         var sorted = _inventory.AllCounts
             .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
             .OrderBy(kv => kv.Key.Type) // Coin(0) before Bill(1)
@@ -728,9 +628,9 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>非同期モードで動作するかどうかを取得または設定します。</summary>
     public override bool AsyncMode { get; set; }
     /// <summary>最後の非同期操作の結果コードを取得します。</summary>
-    public override int AsyncResultCode => ResultCodeAsync;
+    public override int AsyncResultCode => _asyncResultCode;
     /// <summary>最後の非同期操作の拡張結果コードを取得します。</summary>
-    public override int AsyncResultCodeExtended => ResultCodeExtendsAsync;
+    public override int AsyncResultCodeExtended => _asyncResultCodeExtended;
 
     // ========== Currency Properties ==========
 

@@ -71,6 +71,12 @@ public class DepositController : IDisposable
     public void BeginDeposit()
     {
         _logger.ZLogInformation($"BeginDeposit called. Current Status: {_depositStatus}");
+
+        if (!_hardwareStatusManager.IsConnected.Value)
+        {
+            throw new PosControlException("Device is not open (Closed).", ErrorCode.Closed);
+        }
+
         _depositAmount = 0m;
         _depositCounts.Clear();
         _depositedSerials.Clear();
@@ -166,6 +172,12 @@ public class DepositController : IDisposable
     {
         if (_depositStatus != CashDepositStatus.Count) return;
         if (_depositPaused) return;
+
+        if (!_hardwareStatusManager.IsConnected.Value)
+        {
+            throw new PosControlException("Device is not open (Closed).", ErrorCode.Closed);
+        }
+
         if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
         {
             throw new PosControlException("Device is in error state. Cannot track deposit.", ErrorCode.Failure);

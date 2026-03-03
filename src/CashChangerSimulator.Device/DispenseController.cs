@@ -32,7 +32,7 @@ public class DispenseController : IDisposable
     {
         _manager = manager;
         _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-        _simulator = simulator ?? new HardwareSimulator(CashChangerSimulator.Core.SimulatorServices.TryResolve<ConfigurationProvider>());
+        _simulator = simulator ?? new HardwareSimulator(Core.SimulatorServices.TryResolve<ConfigurationProvider>());
     }
     private readonly ILogger<DispenseController> _logger = Core.LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> _changed = new();
@@ -53,6 +53,12 @@ public class DispenseController : IDisposable
     public async Task DispenseChangeAsync(decimal amount, bool asyncMode, Action<ErrorCode, int> onComplete, string? currencyCode = null)
     {
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
+
+        if (!_hardwareStatusManager.IsConnected.Value)
+        {
+            throw new PosControlException("Device is not open (Closed).", ErrorCode.Closed);
+        }
+
         if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
         {
             throw new PosControlException("Device is in error state. Cannot dispense.", ErrorCode.Failure);
@@ -75,6 +81,12 @@ public class DispenseController : IDisposable
     public async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode, Action<ErrorCode, int> onComplete)
     {
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
+
+        if (!_hardwareStatusManager.IsConnected.Value)
+        {
+            throw new PosControlException("Device is not open (Closed).", ErrorCode.Closed);
+        }
+
         if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
         {
             throw new PosControlException("Device is in error state. Cannot dispense.", ErrorCode.Failure);
