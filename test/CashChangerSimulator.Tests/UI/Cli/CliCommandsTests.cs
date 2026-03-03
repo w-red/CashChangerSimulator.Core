@@ -19,7 +19,9 @@ using Spectre.Console;
 using Spectre.Console.Testing;
 using Microsoft.Extensions.Localization;
 using CashChangerSimulator.UI.Cli.Localization;
+using CashChangerSimulator.UI.Cli.Services;
 using System.Linq;
+using System;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 
@@ -69,6 +71,10 @@ ExitDescription = 'Exit'
 ErrorFormat = ""[red][[{0}: {1} ({2})]] {3}[/]""
 HintFormat = ""[yellow]Hint: {0}[/]""
 ErrorHint_Closed = ""Please open the device first.""
+ConfigHeader = 'Configuration'
+ConfigSaved = 'Config saved.'
+ConfigUpdated = ""Updated configuration '{0}' to '{1}'""
+InvalidConfigKey = ""Invalid config key '{0}'""
 ");
         File.WriteAllText(Path.Combine(_testI18nDir, "ja.toml"), "DeviceOpened = 'デバイスオープン'");
 
@@ -85,13 +91,19 @@ ErrorHint_Closed = ""Please open the device first.""
         _console = new TestConsole();
         _options = new CliSessionOptions();
 
+        var deviceService = new CliDeviceService(_mockChanger.Object, _console, _localizer);
+        var cashService = new CliCashService(_mockChanger.Object, _mockInventory.Object, _mockMetadata.Object, _options, _console, _localizer);
+        var configService = new CliConfigService(mockConfigProvider.Object, _console, _localizer);
+        var viewService = new CliViewService(_mockChanger.Object, _mockInventory.Object, _mockMetadata.Object, _mockHistory.Object, _console, _localizer);
+        var scriptService = new CliScriptService(_mockScriptService.Object, _console, _localizer);
+
         _commands = new CliCommands(
             _mockChanger.Object,
-            _mockInventory.Object,
-            _mockMetadata.Object,
-            _mockHistory.Object,
-            _mockScriptService.Object,
-            _options,
+            deviceService,
+            cashService,
+            configService,
+            viewService,
+            scriptService,
             _console,
             _localizer);
     }
@@ -217,6 +229,45 @@ ErrorHint_Closed = ""Please open the device first.""
         // Assert
         _mockChanger.Verify(x => x.DispenseChange(500), Times.Once);
         _console.Output.ShouldContain("Dispensed 500 successfully.");
+    }
+
+    [Fact]
+    public void ConfigGetShouldReturnCorrectValue()
+    {
+        // Arrange: テスト用の config.toml ファイルを作成し、ConfigurationProvider を構築
+        var tempConfigPath = Path.Combine(_testI18nDir, "test_config.toml");
+        File.WriteAllText(tempConfigPath, @"
+[System]
+CurrencyCode = 'EUR'
+");
+        var configProvider = new ConfigurationProvider(tempConfigPath);
+        var configService = new CliConfigService(configProvider, _console, _localizer);
+
+        // Act
+        configService.Get("System.CurrencyCode");
+
+        // Assert
+        _console.Output.ShouldContain("System.CurrencyCode");
+        _console.Output.ShouldContain("EUR");
+    }
+
+    [Fact]
+    public void ConfigSetShouldUpdateValue()
+    {
+        // Arrange: テスト用の config.toml ファイルを作成し、ConfigurationProvider を構築
+        var tempConfigPath = Path.Combine(_testI18nDir, "test_config_set.toml");
+        File.WriteAllText(tempConfigPath, @"
+[System]
+CurrencyCode = 'JPY'
+");
+        var configProvider = new ConfigurationProvider(tempConfigPath);
+        var configService = new CliConfigService(configProvider, _console, _localizer);
+
+        // Act
+        configService.Set("System.CurrencyCode", "USD");
+
+        // Assert
+        configProvider.Config.System.CurrencyCode.ShouldBe("USD");
     }
 
     [Fact]
