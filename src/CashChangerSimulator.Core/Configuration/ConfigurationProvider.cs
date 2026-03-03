@@ -35,4 +35,11 @@ public class ConfigurationProvider
         Config = _configPath != null ? ConfigurationLoader.Load(_configPath) : ConfigurationLoader.Load();
         _reloaded.OnNext(Unit.Default);
     }
+
+    /// <summary>設定インスタンスを直接更新する（主にテスト用）。</summary>
+    public void Update(SimulatorConfiguration config)
+    {
+        Config = config;
+        _reloaded.OnNext(Unit.Default);
+    }
 }
