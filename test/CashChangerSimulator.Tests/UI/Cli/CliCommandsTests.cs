@@ -66,6 +66,9 @@ EndDepositCompleted = 'EndDeposit completed.'
 DispensedSuccess = 'Dispensed {0} successfully.'
 HelpDescription = 'Show this help'
 ExitDescription = 'Exit'
+ErrorFormat = ""[red][[{0}: {1} ({2})]] {3}[/]""
+HintFormat = ""[yellow]Hint: {0}[/]""
+ErrorHint_Closed = ""Please open the device first.""
 ");
         File.WriteAllText(Path.Combine(_testI18nDir, "ja.toml"), "DeviceOpened = 'デバイスオープン'");
 
@@ -99,6 +102,20 @@ ExitDescription = 'Exit'
         {
             Directory.Delete(_testI18nDir, true);
         }
+    }
+
+    [Fact]
+    public void HandleExceptionShouldPrintDetailedErrorCodeAndHint()
+    {
+        // Arrange
+        _mockChanger.Setup(x => x.Open()).Throws(new PosControlException("Test message", ErrorCode.Closed, 1));
+
+        // Act
+        _commands.Open();
+
+        // Assert
+        _console.Output.ShouldContain("[Error: 101 (1)] Test message");
+        _console.Output.ShouldContain("Hint: Please open the device first.");
     }
 
     [Fact]
