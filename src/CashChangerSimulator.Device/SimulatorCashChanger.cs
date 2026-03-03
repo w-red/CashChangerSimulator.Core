@@ -95,7 +95,7 @@ public class SimulatorCashChanger : CashChangerBasic
     private bool _isClaimed;
 
     /// <summary>シミュレータUIからの Open 呼び出しを受け付けます。</summary>
-    public new virtual void Open()
+    public override void Open()
     {
         if (_isOpen)
         {
@@ -108,12 +108,12 @@ public class SimulatorCashChanger : CashChangerBasic
     }
 
     /// <summary>シミュレータUIからの Close 呼び出しを受け付けます。</summary>
-    public new virtual void Close()
+    public override void Close()
     {
         if (!_isOpen)
         {
-            ResultCode = (int)ErrorCode.Closed;
-            throw new PosControlException("Device is not open.", ErrorCode.Closed);
+            _logger.LogTrace("Close called but device is already closed.");
+            return;
         }
         if (_isClaimed)
         {
@@ -126,7 +126,7 @@ public class SimulatorCashChanger : CashChangerBasic
     }
 
     /// <summary>シミュレータUIからの Claim 呼び出しを受け付けます。</summary>
-    public new virtual void Claim(int timeout)
+    public override void Claim(int timeout)
     {
         if (!_isOpen)
         {
@@ -144,17 +144,33 @@ public class SimulatorCashChanger : CashChangerBasic
     }
 
     /// <summary>シミュレータUIからの Release 呼び出しを受け付けます。</summary>
-    public new virtual void Release()
+    public override void Release()
     {
         if (!_isClaimed)
         {
-            ResultCode = (int)ErrorCode.Illegal;
-            throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
+            _logger.LogTrace("Release called but device is not claimed.");
+            return;
         }
         DeviceEnabled = false;
         _isClaimed = false;
         ResultCode = (int)ErrorCode.Success;
         _logger.LogInformation("OPOS Release called via simulator.");
+    }
+
+    /// <summary>リソースを解放します。</summary>
+    protected override void Dispose(bool disposing)
+    {
+        try
+        {
+            // base.Dispose(disposing) calls Close() internally in PosCommon/CashChangerBasic.
+            // We swallow PosControlException during disposal to ensure clean exit.
+            base.Dispose(disposing);
+        }
+        catch (PosControlException)
+        {
+            // Ignore exceptions during disposal
+        }
+        _statusSubscription.Dispose();
     }
 
     /// <summary>サービスプロバイダーを使用して SimulatorCashChanger の新しいインスタンスを初期化します（DI用）。</summary>
