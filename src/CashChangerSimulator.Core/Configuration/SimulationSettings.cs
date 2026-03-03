@@ -11,4 +11,7 @@ public class SimulationSettings
         get => _dispenseDelayMs;
         set => _dispenseDelayMs = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "DispenseDelayMs cannot be negative.");
     }
+
+    /// <summary>起動時にデバイスが Closed 状態から開始するかどうか。</summary>
+    public bool ColdStart { get; set; } = false;
 }

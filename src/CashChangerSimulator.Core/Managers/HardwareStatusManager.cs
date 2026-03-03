@@ -8,6 +8,7 @@ public class HardwareStatusManager : IDisposable
     private readonly BindableReactiveProperty<bool> _isJammed = new(false);
     private readonly BindableReactiveProperty<bool> _isOverlapped = new(false);
     private readonly BindableReactiveProperty<bool> _isDeviceError = new(false);
+    private readonly BindableReactiveProperty<bool> _isConnected = new(true); // デフォルトは接続済み(HOT)
     private readonly BindableReactiveProperty<int?> _currentErrorCode = new(null);
     private readonly BindableReactiveProperty<int> _currentErrorCodeExtended = new(0);
 
@@ -19,6 +20,9 @@ public class HardwareStatusManager : IDisposable
 
     /// <summary>個別の特定可能なエラー（ジャムなど）以外の、一般的なデバイスエラーが発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsDeviceError => _isDeviceError;
+
+    /// <summary>デバイスが論理的に接続（Open）されているかどうか。</summary>
+    public BindableReactiveProperty<bool> IsConnected => _isConnected;
 
     /// <summary>現在発生中のデバイスエラーの ErrorCode 値 (Nullable)。</summary>
     public BindableReactiveProperty<int?> CurrentErrorCode => _currentErrorCode;
@@ -36,6 +40,12 @@ public class HardwareStatusManager : IDisposable
     public void SetOverlapped(bool overlapped)
     {
         _isOverlapped.Value = overlapped;
+    }
+
+    /// <summary>接続状態を切り替えます。</summary>
+    public void SetConnected(bool connected)
+    {
+        _isConnected.Value = connected;
     }
 
     /// <summary>デバイスエラー状態とそのエラーコードを設定します。</summary>
