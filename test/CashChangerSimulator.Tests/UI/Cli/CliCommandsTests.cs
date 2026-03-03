@@ -25,72 +25,13 @@ using System;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 
-public class CliCommandsTests : IDisposable
+public class CliCommandsTests : CliTestBase
 {
-    private readonly string _testI18nDir;
-    private readonly Mock<SimulatorCashChanger> _mockChanger;
-    private readonly Mock<Inventory> _mockInventory;
-    private readonly Mock<ICurrencyMetadataProvider> _mockMetadata;
-    private readonly Mock<TransactionHistory> _mockHistory;
-    private readonly Mock<IScriptExecutionService> _mockScriptService;
-    private readonly TestConsole _console;
-    private readonly IStringLocalizer _localizer;
-    private readonly CliSessionOptions _options;
     private readonly CliCommands _commands;
 
-    public CliCommandsTests()
+    public CliCommandsTests() : base()
     {
-        _testI18nDir = Path.Combine(Path.GetTempPath(), "CliCommandsI18nTests_" + Guid.NewGuid());
-        Directory.CreateDirectory(_testI18nDir);
-        File.WriteAllText(Path.Combine(_testI18nDir, "en.toml"), @"
-DeviceOpened = 'Device opened successfully.'
-StatusHeader = 'Device Status'
-StateLabel = 'State'
-EnabledLabel = 'Enabled'
-InventoryHeader = 'Inventory'
-DenominationLabel = 'Denomination'
-CountLabel = 'Count'
-AmountLabel = 'Amount'
-TotalCaption = 'Total'
-AvailableCommands = 'Available commands'
-CommandLabel = 'Command'
-DescriptionLabel = 'Description'
-TransactionHistoryHeader = 'Recent Transactions (up to {0})'
-TimestampLabel = 'Timestamp'
-TypeLabel = 'Type'
-CurrencyLabel = 'Currency'
-CashCountsUpdated = 'Cash counts updated'
-DepositStarted = 'Depositing {0} (Async: {1})...'
-DepositCompleted = 'Deposit completed.'
-DepositAsyncWarning = 'Deposit started in async mode'
-DepositFixed = 'Deposit fixed.'
-EndDepositCompleted = 'EndDeposit completed.'
-DispensedSuccess = 'Dispensed {0} successfully.'
-HelpDescription = 'Show this help'
-ExitDescription = 'Exit'
-ErrorFormat = ""[red][[{0}: {1} ({2})]] {3}[/]""
-HintFormat = ""[yellow]Hint: {0}[/]""
-ErrorHint_Closed = ""Please open the device first.""
-ConfigHeader = 'Configuration'
-ConfigSaved = 'Config saved.'
-ConfigUpdated = ""Updated configuration '{0}' to '{1}'""
-InvalidConfigKey = ""Invalid config key '{0}'""
-");
-        File.WriteAllText(Path.Combine(_testI18nDir, "ja.toml"), "DeviceOpened = 'デバイスオープン'");
-
-        _localizer = new TomlStringLocalizer(_testI18nDir);
-        CultureInfo.CurrentUICulture = new CultureInfo("en-US");
-
-        _mockChanger = new Mock<SimulatorCashChanger>();
-        _mockInventory = new Mock<Inventory>();
-        
         var mockConfigProvider = new Mock<ConfigurationProvider>(new object?[] { null });
-        _mockMetadata = new Mock<ICurrencyMetadataProvider>();
-        _mockHistory = new Mock<TransactionHistory>();
-        _mockScriptService = new Mock<IScriptExecutionService>();
-        _console = new TestConsole();
-        _options = new CliSessionOptions();
-
         var deviceService = new CliDeviceService(_mockChanger.Object, _console, _localizer);
         var cashService = new CliCashService(_mockChanger.Object, _mockInventory.Object, _mockMetadata.Object, _options, _console, _localizer);
         var configService = new CliConfigService(mockConfigProvider.Object, _console, _localizer);
@@ -106,14 +47,6 @@ InvalidConfigKey = ""Invalid config key '{0}'""
             scriptService,
             _console,
             _localizer);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testI18nDir))
-        {
-            Directory.Delete(_testI18nDir, true);
-        }
     }
 
     [Fact]
@@ -135,12 +68,6 @@ InvalidConfigKey = ""Invalid config key '{0}'""
     {
         // Arrange
         _options.Language = "en";
-        _mockChanger.Setup(x => x.State).Returns(ControlState.Idle);
-        _mockChanger.Setup(x => x.DeviceEnabled).Returns(true);
-        _mockMetadata.Setup(x => x.SupportedDenominations).Returns([]);
-        _mockMetadata.Setup(x => x.CurrencyCode).Returns("JPY");
-        _mockMetadata.Setup(x => x.SymbolPrefix).Returns(new ReactiveProperty<string>("¥"));
-        _mockMetadata.Setup(x => x.SymbolSuffix).Returns(new ReactiveProperty<string>(""));
 
         // Act
         _commands.Status();
@@ -171,10 +98,6 @@ InvalidConfigKey = ""Invalid config key '{0}'""
             new CashCount(CashCountType.Bill, 1000, 10),
         ], false);
         _mockChanger.Setup(x => x.ReadCashCounts()).Returns(mockCashCounts);
-        _mockMetadata.Setup(x => x.SupportedDenominations).Returns([]);
-        _mockMetadata.Setup(x => x.SymbolPrefix).Returns(new ReactiveProperty<string>("¥"));
-        _mockMetadata.Setup(x => x.SymbolSuffix).Returns(new ReactiveProperty<string>(""));
-        _mockMetadata.Setup(x => x.CurrencyCode).Returns("JPY");
         _mockInventory.Setup(x => x.CalculateTotal("JPY")).Returns(10000m);
 
         // Act
@@ -191,8 +114,6 @@ InvalidConfigKey = ""Invalid config key '{0}'""
     {
         // Arrange
         _options.IsAsync = true;
-        _mockChanger.Setup(x => x.State).Returns(ControlState.Idle);
-        _mockChanger.Setup(x => x.DeviceEnabled).Returns(true);
 
         // Act
         _commands.Deposit(1000);
@@ -208,8 +129,6 @@ InvalidConfigKey = ""Invalid config key '{0}'""
     {
         // Arrange
         _options.IsAsync = false;
-        _mockChanger.Setup(x => x.State).Returns(ControlState.Idle);
-        _mockChanger.Setup(x => x.DeviceEnabled).Returns(true);
 
         // Act
         _commands.Deposit(1000);
@@ -284,5 +203,20 @@ CurrencyCode = 'JPY'
         _console.Output.ShouldContain("open", Case.Insensitive);
         _console.Output.ShouldContain("claim", Case.Insensitive);
         _console.Output.ShouldContain("status", Case.Insensitive);
+    }
+
+    [Fact]
+    public void AsyncErrorEventShouldPrintErrorMessage()
+    {
+        // Arrange
+        var mockArgs = new DeviceErrorEventArgs(ErrorCode.Closed, 0, ErrorLocus.Output, ErrorResponse.Clear);
+
+        // Act
+        // CliCommands のメソッド HandleAsyncError を直接呼び出し、非同期エラーイベント受信時の動作を検証する。
+        _commands.HandleAsyncError(_mockChanger.Object, mockArgs);
+
+        // Assert
+        _console.Output.ShouldContain("[Async Error: 101 (0)] Async operation failed", Case.Insensitive);
+        _console.Output.ShouldContain("Hint: Please open the device first.");
     }
 }

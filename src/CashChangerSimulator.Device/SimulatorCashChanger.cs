@@ -58,8 +58,11 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>テスト用: VerifyState チェックをスキップする。OPOS ライフサイクルが利用できない単体テスト環境で使用。</summary>
     public bool SkipStateVerification { get; set; }
 
+    /// <summary>プロパティアクセス時の状態検証（未Claim時の DeviceEnabled=true 例外など）を強制するかどうかを取得または設定します。</summary>
+    public bool StrictDeviceEnabledCheck { get; set; }
+
     /// <summary>デバイスの有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
-    public override bool DeviceEnabled { get; set; }
+
     /// <summary>データイベント通知の有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
     public override bool DataEventEnabled { get; set; }
 
@@ -112,6 +115,23 @@ public class SimulatorCashChanger : CashChangerBasic
         _isOpen = true;
         ResultCode = (int)ErrorCode.Success;
         _logger.LogInformation("OPOS Open called via simulator.");
+    }
+
+    private bool _deviceEnabled;
+    /// <summary>デバイスの有効/無効状態を取得または設定します。</summary>
+    public override bool DeviceEnabled
+    {
+        get => _deviceEnabled;
+        set
+        {
+            if (value && !_isClaimed && StrictDeviceEnabledCheck)
+            {
+                ResultCode = (int)ErrorCode.NoHardware;
+                throw new PosControlException("Device must be claimed before enabling.", ErrorCode.NoHardware);
+            }
+            _deviceEnabled = value;
+            if (value) ResultCode = (int)ErrorCode.Success;
+        }
     }
 
     /// <summary>シミュレータUIからの Close 呼び出しを受け付けます。</summary>
@@ -356,7 +376,16 @@ public class SimulatorCashChanger : CashChangerBasic
         VerifyState();
         ResultCode = (int)ErrorCode.Success;
         ThrowIfBusy();
-        _depositController.BeginDeposit();
+        try
+        {
+            _depositController.BeginDeposit();
+        }
+        catch (PosControlException ex)
+        {
+            ResultCode = (int)ex.ErrorCode;
+            ResultCodeExtended = ex.ErrorCodeExtended;
+            throw;
+        }
     }
 
     /// <summary>現金投入処理を終了します。</summary>
@@ -364,7 +393,16 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         VerifyState();
         ResultCode = (int)ErrorCode.Success;
-        _depositController.EndDeposit(action);
+        try
+        {
+            _depositController.EndDeposit(action);
+        }
+        catch (PosControlException ex)
+        {
+            ResultCode = (int)ex.ErrorCode;
+            ResultCodeExtended = ex.ErrorCodeExtended;
+            throw;
+        }
     }
 
     /// <summary>投入された現金の計数を確定します。</summary>
@@ -372,7 +410,16 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         VerifyState();
         ResultCode = (int)ErrorCode.Success;
-        _depositController.FixDeposit();
+        try
+        {
+            _depositController.FixDeposit();
+        }
+        catch (PosControlException ex)
+        {
+            ResultCode = (int)ex.ErrorCode;
+            ResultCodeExtended = ex.ErrorCodeExtended;
+            throw;
+        }
 
         if (DataEventEnabled && CapDepositDataEvent)
         {
@@ -385,7 +432,16 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         VerifyState();
         ResultCode = (int)ErrorCode.Success;
-        _depositController.PauseDeposit(control);
+        try
+        {
+            _depositController.PauseDeposit(control);
+        }
+        catch (PosControlException ex)
+        {
+            ResultCode = (int)ex.ErrorCode;
+            ResultCodeExtended = ex.ErrorCodeExtended;
+            throw;
+        }
     }
 
     // ========== Dispense Methods ==========
@@ -465,10 +521,19 @@ public class SimulatorCashChanger : CashChangerBasic
             }
         }
 
-        var task = _dispenseController.DispenseChangeAsync(decimalAmount, AsyncMode, OnComplete, CurrencyCode);
-        if (!AsyncMode)
+        try
         {
-            task.GetAwaiter().GetResult();
+            var task = _dispenseController.DispenseChangeAsync(decimalAmount, AsyncMode, OnComplete, CurrencyCode);
+            if (!AsyncMode)
+            {
+                task.GetAwaiter().GetResult();
+            }
+        }
+        catch (PosControlException ex)
+        {
+            ResultCode = (int)ex.ErrorCode;
+            ResultCodeExtended = ex.ErrorCodeExtended;
+            throw;
         }
     }
 
