@@ -133,11 +133,11 @@ public class ErrorScenarioTests
 
         // Jam ON
         hardware.SetJammed(true);
-        lastStatus.ShouldBe((int)CashChangerSimulator.Core.Opos.UposCashChangerStatusUpdateCode.Jam);
+        lastStatus.ShouldBe((int)UposCashChangerStatusUpdateCode.Jam);
 
         // Jam OFF
         hardware.SetJammed(false);
-        lastStatus.ShouldBe((int)CashChangerSimulator.Core.Opos.UposCashChangerStatusUpdateCode.Ok);
+        lastStatus.ShouldBe((int)UposCashChangerStatusUpdateCode.Ok);
     }
 
     /// <summary>重複した pauseDeposit 呼び出しが ErrorCode.Illegal を発生させることを検証する。</summary>

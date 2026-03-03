@@ -15,6 +15,7 @@ using System.IO;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 
+/// <summary>CLI 関連のテストで共通して使用する基底クラス。</summary>
 public abstract class CliTestBase : IDisposable
 {
     protected readonly string _testI18nDir;
