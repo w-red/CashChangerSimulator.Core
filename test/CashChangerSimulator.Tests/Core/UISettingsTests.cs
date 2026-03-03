@@ -145,7 +145,7 @@ public class UISettingsTests
         var tempFile = Path.Combine(Path.Combine(AppDomain.CurrentDomain.BaseDirectory), Guid.NewGuid().ToString() + ".toml");
         ConfigurationLoader.Save(config, tempFile);
 
-        var provider = new ConfigurationProvider(tempFile);
+        var provider = ConfigurationProvider.CreateWithFilePath(tempFile);
         var metadata = new CurrencyMetadataProvider(provider);
 
         // Initial state (JPY, en-US) -> Prefix: ¥, Suffix: ""

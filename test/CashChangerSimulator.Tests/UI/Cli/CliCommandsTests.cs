@@ -31,7 +31,7 @@ public class CliCommandsTests : CliTestBase
 
     public CliCommandsTests() : base()
     {
-        var mockConfigProvider = new Mock<ConfigurationProvider>(new object?[] { null });
+        var mockConfigProvider = new Mock<ConfigurationProvider>();
         var deviceService = new CliDeviceService(_mockChanger.Object, _console, _localizer);
         var cashService = new CliCashService(_mockChanger.Object, _mockInventory.Object, _mockMetadata.Object, _options, _console, _localizer);
         var configService = new CliConfigService(mockConfigProvider.Object, _console, _localizer);
@@ -159,7 +159,7 @@ public class CliCommandsTests : CliTestBase
 [System]
 CurrencyCode = 'EUR'
 ");
-        var configProvider = new ConfigurationProvider(tempConfigPath);
+        var configProvider = ConfigurationProvider.CreateWithFilePath(tempConfigPath);
         var configService = new CliConfigService(configProvider, _console, _localizer);
 
         // Act
@@ -179,7 +179,7 @@ CurrencyCode = 'EUR'
 [System]
 CurrencyCode = 'JPY'
 ");
-        var configProvider = new ConfigurationProvider(tempConfigPath);
+        var configProvider = ConfigurationProvider.CreateWithFilePath(tempConfigPath);
         var configService = new CliConfigService(configProvider, _console, _localizer);
 
         // Act

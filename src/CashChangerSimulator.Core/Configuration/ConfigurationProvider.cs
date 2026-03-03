@@ -13,17 +13,20 @@ public class ConfigurationProvider
     /// <summary>現在保持している設定インスタンス。</summary>
     public SimulatorConfiguration Config { get; private set; }
 
-    private readonly string? _configPath;
+    private string? _configPath;
 
     /// <summary>デフォルト設定ファイルを読み込む。</summary>
     [Inject]
-    public ConfigurationProvider() : this(null) { }
+    public ConfigurationProvider()
+    {
+        _configPath = null;
+        Config = ConfigurationLoader.Load();
+    }
 
     /// <summary>指定されたパスの設定ファイルを読み込む。</summary>
-    public ConfigurationProvider(string? configPath)
+    public static ConfigurationProvider CreateWithFilePath(string configPath)
     {
-        _configPath = configPath;
-        Config = _configPath != null ? ConfigurationLoader.Load(_configPath) : ConfigurationLoader.Load();
+        return new ConfigurationProvider { _configPath = configPath, Config = ConfigurationLoader.Load(configPath) };
     }
 
     /// <summary>設定ファイルを再読み込みして保持するインスタンスを更新する。</summary>
