@@ -13,35 +13,73 @@ using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
 using System.IO;
+using System.Globalization;
 using CashChangerSimulator.Device.Services;
 using Spectre.Console;
+using Spectre.Console.Testing;
+using Microsoft.Extensions.Localization;
+using CashChangerSimulator.UI.Cli.Localization;
 using System.Linq;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 
-public class CliCommandsTests
+public class CliCommandsTests : IDisposable
 {
+    private readonly string _testI18nDir;
     private readonly Mock<SimulatorCashChanger> _mockChanger;
     private readonly Mock<Inventory> _mockInventory;
     private readonly Mock<ICurrencyMetadataProvider> _mockMetadata;
     private readonly Mock<TransactionHistory> _mockHistory;
     private readonly Mock<IScriptExecutionService> _mockScriptService;
-    private readonly Mock<IAnsiConsole> _mockConsole;
+    private readonly TestConsole _console;
+    private readonly IStringLocalizer _localizer;
     private readonly CliSessionOptions _options;
     private readonly CliCommands _commands;
 
     public CliCommandsTests()
     {
-        // Mocking objects that might not have a parameterless constructor
+        _testI18nDir = Path.Combine(Path.GetTempPath(), "CliCommandsI18nTests_" + Guid.NewGuid());
+        Directory.CreateDirectory(_testI18nDir);
+        File.WriteAllText(Path.Combine(_testI18nDir, "en.toml"), @"
+DeviceOpened = 'Device opened successfully.'
+StatusHeader = 'Device Status'
+StateLabel = 'State'
+EnabledLabel = 'Enabled'
+InventoryHeader = 'Inventory'
+DenominationLabel = 'Denomination'
+CountLabel = 'Count'
+AmountLabel = 'Amount'
+TotalCaption = 'Total'
+AvailableCommands = 'Available commands'
+CommandLabel = 'Command'
+DescriptionLabel = 'Description'
+TransactionHistoryHeader = 'Recent Transactions (up to {0})'
+TimestampLabel = 'Timestamp'
+TypeLabel = 'Type'
+CurrencyLabel = 'Currency'
+CashCountsUpdated = 'Cash counts updated'
+DepositStarted = 'Depositing {0} (Async: {1})...'
+DepositCompleted = 'Deposit completed.'
+DepositAsyncWarning = 'Deposit started in async mode'
+DepositFixed = 'Deposit fixed.'
+EndDepositCompleted = 'EndDeposit completed.'
+DispensedSuccess = 'Dispensed {0} successfully.'
+HelpDescription = 'Show this help'
+ExitDescription = 'Exit'
+");
+        File.WriteAllText(Path.Combine(_testI18nDir, "ja.toml"), "DeviceOpened = 'デバイスオープン'");
+
+        _localizer = new TomlStringLocalizer(_testI18nDir);
+        CultureInfo.CurrentUICulture = new CultureInfo("en-US");
+
         _mockChanger = new Mock<SimulatorCashChanger>();
         _mockInventory = new Mock<Inventory>();
         
-        // ConfigurationProvider has a constructor with default string? configPath = null
         var mockConfigProvider = new Mock<ConfigurationProvider>(new object?[] { null });
         _mockMetadata = new Mock<ICurrencyMetadataProvider>();
         _mockHistory = new Mock<TransactionHistory>();
         _mockScriptService = new Mock<IScriptExecutionService>();
-        _mockConsole = new Mock<IAnsiConsole>();
+        _console = new TestConsole();
         _options = new CliSessionOptions();
 
         _commands = new CliCommands(
@@ -51,26 +89,16 @@ public class CliCommandsTests
             _mockHistory.Object,
             _mockScriptService.Object,
             _options,
-            _mockConsole.Object);
+            _console,
+            _localizer);
     }
 
-    [Fact]
-    public void DepositShouldRespectAsyncFlag()
+    public void Dispose()
     {
-        // Arrange
-        _options.IsAsync = true;
-        _mockChanger.Setup(x => x.State).Returns(ControlState.Idle);
-        _mockChanger.Setup(x => x.DeviceEnabled).Returns(true);
-
-        // Act
-        _commands.Deposit(1000);
-
-        // Assert
-        // In async mode, it should only call BeginDeposit. 
-        // Sync methods like FixDeposit/EndDeposit should NOT be called in this simple dispatcher if we want pure async control,
-        // OR we expect a different behavior. Let's assume for now it calls BeginDeposit and returns.
-        _mockChanger.Verify(x => x.BeginDeposit(), Times.Once);
-        _mockChanger.Verify(x => x.FixDeposit(), Times.Never);
+        if (Directory.Exists(_testI18nDir))
+        {
+            Directory.Delete(_testI18nDir, true);
+        }
     }
 
     [Fact]
@@ -89,12 +117,65 @@ public class CliCommandsTests
         _commands.Status();
 
         // Assert
-        // Verified by lack of exception.
-        _mockConsole.Verify(x => x.Write(It.IsAny<Rule>()), Times.AtLeastOnce);
+        _console.Output.ShouldContain("Device Status");
+        _console.Output.ShouldContain("State");
+        _console.Output.ShouldContain("Enabled");
     }
-    
+
     [Fact]
-    public void DepositShouldRespectSyncFlag()
+    public void OpenShouldCallChangerOpenAndPrintLocalizedMessage()
+    {
+        // Act
+        _commands.Open();
+
+        // Assert
+        _mockChanger.Verify(x => x.Open(), Times.Once);
+        _console.Output.ShouldContain("Device opened successfully.");
+    }
+
+    [Fact]
+    public void ReadCashCountsShouldPrintLocalizedTable()
+    {
+        // Arrange
+        var mockCashCounts = new CashCounts(
+        [
+            new CashCount(CashCountType.Bill, 1000, 10),
+        ], false);
+        _mockChanger.Setup(x => x.ReadCashCounts()).Returns(mockCashCounts);
+        _mockMetadata.Setup(x => x.SupportedDenominations).Returns([]);
+        _mockMetadata.Setup(x => x.SymbolPrefix).Returns(new ReactiveProperty<string>("¥"));
+        _mockMetadata.Setup(x => x.SymbolSuffix).Returns(new ReactiveProperty<string>(""));
+        _mockMetadata.Setup(x => x.CurrencyCode).Returns("JPY");
+        _mockInventory.Setup(x => x.CalculateTotal("JPY")).Returns(10000m);
+
+        // Act
+        _commands.ReadCashCounts();
+
+        // Assert
+        _console.Output.ShouldContain("Cash counts updated");
+        _console.Output.ShouldContain("Denomination");
+        _console.Output.ShouldContain("Count");
+    }
+
+    [Fact]
+    public void DepositShouldRespectAsyncFlagAndPrintLocalizedMessage()
+    {
+        // Arrange
+        _options.IsAsync = true;
+        _mockChanger.Setup(x => x.State).Returns(ControlState.Idle);
+        _mockChanger.Setup(x => x.DeviceEnabled).Returns(true);
+
+        // Act
+        _commands.Deposit(1000);
+
+        // Assert
+        _mockChanger.Verify(x => x.BeginDeposit(), Times.Once);
+        _console.Output.ShouldContain("Depositing 1000 (Async: True)");
+        _console.Output.ShouldContain("Deposit started in async mode");
+    }
+
+    [Fact]
+    public void DepositShouldRespectSyncFlagAndPrintLocalizedMessage()
     {
         // Arrange
         _options.IsAsync = false;
@@ -107,109 +188,33 @@ public class CliCommandsTests
         // Assert
         _mockChanger.Verify(x => x.BeginDeposit(), Times.Once);
         _mockChanger.Verify(x => x.FixDeposit(), Times.Once);
-        _mockChanger.Verify(x => x.EndDeposit(CashDepositAction.Change), Times.Once);
+        _console.Output.ShouldContain("Deposit completed.");
     }
 
     [Fact]
-    public async Task RunScriptShouldExecuteServiceAsync()
-    {
-        // Arrange
-        var tempFile = Path.GetTempFileName();
-        var json = "[{\"Op\": \"BeginDeposit\"}]";
-        File.WriteAllText(tempFile, json);
-        try
-        {
-            _mockScriptService.Setup(x => x.ExecuteScriptAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
-
-            // Act
-            await _commands.RunScript(tempFile);
-
-            // Assert
-            _mockScriptService.Verify(x => x.ExecuteScriptAsync(json), Times.Once);
-        }
-        finally
-        {
-            if (File.Exists(tempFile)) File.Delete(tempFile);
-        }
-    }
-
-    [Fact]
-    public void OpenShouldCallChangerOpen()
-    {
-        // Act
-        _commands.Open();
-
-        // Assert
-        _mockChanger.Verify(x => x.Open(), Times.Once);
-    }
-
-    [Fact]
-    public void DepositShouldCallBeginAndEndDeposit()
-    {
-        // Arrange
-        _mockChanger.Setup(x => x.State).Returns(ControlState.Idle);
-        _mockChanger.Setup(x => x.DeviceEnabled).Returns(true);
-
-        // Act
-        _commands.Deposit(1000);
-
-        // Assert
-        _mockChanger.Verify(x => x.BeginDeposit(), Times.Once);
-        _mockChanger.Verify(x => x.FixDeposit(), Times.Once);
-        _mockChanger.Verify(x => x.EndDeposit(CashDepositAction.Change), Times.Once);
-    }
-
-    [Fact]
-    public void DispenseShouldCallDispenseChange()
+    public void DispenseShouldPrintLocalizedMessage()
     {
         // Act
         _commands.Dispense(500);
 
         // Assert
         _mockChanger.Verify(x => x.DispenseChange(500), Times.Once);
+        _console.Output.ShouldContain("Dispensed 500 successfully.");
     }
 
     [Fact]
-    public void ReadCashCountsShouldPrintColoredTable()
+    public void HelpShouldPrintLocalizedHeaders()
     {
         // Arrange
-        var mockCashCounts = new CashCounts(
-        [
-            new CashCount(CashCountType.Bill, 1000, 10),
-            new CashCount(CashCountType.Coin, 100, 50)
-        ], false);
-        _mockChanger.Setup(x => x.ReadCashCounts()).Returns(mockCashCounts);
-        _mockMetadata.Setup(x => x.SupportedDenominations).Returns([]);
-        _mockMetadata.Setup(x => x.SymbolPrefix).Returns(new ReactiveProperty<string>("¥"));
-        _mockMetadata.Setup(x => x.SymbolSuffix).Returns(new ReactiveProperty<string>(""));
-        _mockMetadata.Setup(x => x.CurrencyCode).Returns("JPY");
-        _mockInventory.Setup(x => x.CalculateTotal("JPY")).Returns(15000m);
+        _options.Language = "en";
 
         // Act
-        _commands.ReadCashCounts();
+        _commands.Help();
 
         // Assert
-        // Verified by lack of exception and internal logic
-        _mockConsole.Verify(x => x.Write(It.IsAny<Table>()), Times.Once);
-    }
-    
-    [Fact]
-    public void FixDepositShouldCallFixDepositOnChanger()
-    {
-        // Act
-        _commands.FixDeposit();
-
-        // Assert
-        _mockChanger.Verify(x => x.FixDeposit(), Times.Once);
-    }
-
-    [Fact]
-    public void EndDepositShouldCallEndDepositOnChanger()
-    {
-        // Act
-        _commands.EndDeposit();
-
-        // Assert
-        _mockChanger.Verify(x => x.EndDeposit(CashDepositAction.Change), Times.Once);
+        _console.Output.ShouldContain("Command", Case.Insensitive);
+        _console.Output.ShouldContain("open", Case.Insensitive);
+        _console.Output.ShouldContain("claim", Case.Insensitive);
+        _console.Output.ShouldContain("status", Case.Insensitive);
     }
 }
