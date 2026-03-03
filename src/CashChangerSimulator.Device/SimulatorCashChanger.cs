@@ -49,6 +49,9 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>非同期操作の最新の拡張結果コードを取得します。</summary>
     public int ResultCodeExtendsAsync { get; private set; }
 
+    /// <summary>非同期エラーを通知するイベント。</summary>
+    public event DeviceErrorEventHandler? ErrorEvent;
+
     /// <summary>テスト用のイベント通知アクション。</summary>
     internal Action<EventArgs>? OnEventQueued; // For testing
 
@@ -86,6 +89,10 @@ public class SimulatorCashChanger : CashChangerBasic
         else if (e is StatusUpdateEventArgs se)
         {
             QueueEvent(se);
+        }
+        else if (e is DeviceErrorEventArgs ee)
+        {
+            ErrorEvent?.Invoke(this, ee);
         }
     }
 
