@@ -21,8 +21,9 @@ using ZLogger;
 namespace CashChangerSimulator.Device;
 
 /// <summary>UPOS の CashChanger サービスオブジェクトをシミュレートするクラス。</summary>
+/// <remarks>プロパティオーバーライドは <seealso cref="SimulatorCashChanger"/> の部分クラス SimulatorCashChanger.Properties.cs に定義されています。</remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
-public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
+public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
 {
     internal readonly Inventory _inventory;
     private readonly TransactionHistory _history;
@@ -35,6 +36,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     internal readonly HardwareStatusManager _hardwareStatusManager;
     private readonly ILogger<SimulatorCashChanger> _logger;
     private StatusCoordinator? _statusCoordinator;
+    private UposDispenseFacade? _dispenseFacade;
 
     // Status tracking for StatusUpdateEvent transitions
 
@@ -237,6 +239,14 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
             _dispenseController);
         _statusCoordinator.Start();
 
+        // Dispense Facade initialization
+        _dispenseFacade = new UposDispenseFacade(
+            _dispenseController,
+            _depositController,
+            _hardwareStatusManager,
+            _inventory,
+            _logger);
+
         InitializeDirectIOCommands();
     }
 
@@ -343,121 +353,28 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     public override void DispenseChange(int amount)
     {
         VerifyState();
-        if (amount <= 0)
-        {
-            throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
-        }
-
-        ThrowIfDepositInProgress();
         ThrowIfBusy();
-        if (_hardwareStatusManager.IsJammed.Value)
-        {
-            throw new PosControlException("Device is jammed. Cannot dispense change.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
-        }
-
-        var factor = GetCurrencyFactor();
-        var decimalAmount = amount / factor;
-
-        void OnComplete(ErrorCode code, int codeEx)
-        {
-            if (code == ErrorCode.Success)
-            {
-                _logger.ZLogInformation($"DispenseChange completed successfully.");
-            }
-            else
-            {
-                _logger.ZLogError($"DispenseChange failed: {code}");
-            }
-
-            if (AsyncMode)
-            {
-                ResultCode = (int)code;
-                ResultCodeExtended = codeEx;
-                _asyncResultCode = (int)code;
-                _asyncResultCodeExtended = codeEx;
-                _asyncProcessing = false; // Set this BEFORE NotifyEvent
-                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
-            }
-            else
-            {
-                ResultCode = (int)code;
-                ResultCodeExtended = codeEx;
-            }
-        }
-
-        var task = _dispenseController.DispenseChangeAsync(decimalAmount, AsyncMode, OnComplete, CurrencyCode);
-        if (!AsyncMode)
-        {
-            task.GetAwaiter().GetResult();
-        }
+        _dispenseFacade!.DispenseByAmount(amount, CurrencyCode, GetCurrencyFactor(), AsyncMode, HandleDispenseResult);
     }
 
     /// <summary>指定された金種と枚数の現金を払い出します。</summary>
     public override void DispenseCash(CashCount[] cashCounts)
     {
         VerifyState();
-        ThrowIfDepositInProgress();
         ThrowIfBusy();
-        if (_hardwareStatusManager.IsJammed.Value)
+        _dispenseFacade!.DispenseByCashCounts(cashCounts, _activeCurrencyCode, GetCurrencyFactor(_activeCurrencyCode), AsyncMode, HandleDispenseResult);
+    }
+
+    private void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync)
+    {
+        ResultCode = (int)code;
+        ResultCodeExtended = codeEx;
+        if (wasAsync)
         {
-            throw new PosControlException("Device is jammed. Cannot dispense cash.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
-        }
-
-        var dict = new Dictionary<DenominationKey, int>();
-        try
-        {
-            foreach (var cc in cashCounts)
-            {
-                if (cc.Count < 0)
-                {
-                    throw new PosControlException("Count cannot be negative.", ErrorCode.Illegal);
-                }
-
-                var cashType = (cc.Type == CashCountType.Bill)
-                    ? CashType.Bill
-                    : CashType.Coin;
-
-                var factor = GetCurrencyFactor(_activeCurrencyCode);
-                var val = cc.NominalValue / factor;
-                var key = new DenominationKey(val, cashType, _activeCurrencyCode);
-
-                // Check if this denomination exists in the current currency's inventory
-                if (!_inventory.AllCounts.Any(kv => kv.Key == key))
-                {
-                    throw new PosControlException($"Denomination {key} is not registered for the current currency ({_activeCurrencyCode}).", ErrorCode.Illegal);
-                }
-
-                if (_inventory.GetCount(key) < cc.Count)
-                {
-                    throw new InsufficientCashException($"Insufficient inventory for {key}. Required: {cc.Count}, Available: {_inventory.GetCount(key)}");
-                }
-
-                dict[key] = cc.Count;
-            }
-        }
-        catch (InsufficientCashException ex)
-        {
-            throw new PosControlException(ex.Message, ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense, ex);
-        }
-
-        void OnComplete(ErrorCode code, int codeEx)
-        {
-            ResultCode = (int)code;
-            ResultCodeExtended = codeEx;
-
-            if (AsyncMode)
-            {
-                _asyncResultCode = (int)code;
-                _asyncResultCodeExtended = codeEx;
-                _asyncProcessing = false;
-                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
-            }
-        }
-
-        var task = _dispenseController.DispenseCashAsync(dict, AsyncMode, OnComplete);
-        if (!AsyncMode)
-        {
-            task.GetAwaiter().GetResult();
+            _asyncResultCode = (int)code;
+            _asyncResultCodeExtended = codeEx;
+            _asyncProcessing = false;
+            NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
         }
     }
 
@@ -473,24 +390,12 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
             throw new PosControlException("Device is jammed. Cannot adjust cash counts.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
         }
 
-        foreach (var cc in cashCounts)
+        var dict = CashCountAdapter.ToDenominationDict(cashCounts, _activeCurrencyCode, GetCurrencyFactor(_activeCurrencyCode));
+        foreach (var (key, count) in dict)
         {
-            if (cc.Count < 0)
-            {
-                throw new PosControlException("Count cannot be negative.", ErrorCode.Illegal);
-            }
-
-            var cashType = (cc.Type == CashCountType.Bill)
-                ? CashType.Bill
-                : CashType.Coin;
-
-            var factor = GetCurrencyFactor(_activeCurrencyCode);
-            var val = cc.NominalValue / factor;
-            var key = new DenominationKey(val, cashType, _activeCurrencyCode);
-            
-            _inventory.SetCount(key, cc.Count);
+            _inventory.SetCount(key, count);
         }
-        _logger.ZLogInformation($"AdjustCashCounts completed. Updated {cashCounts.Count()} denominations.");
+        _logger.ZLogInformation($"AdjustCashCounts completed. Updated {dict.Count} denominations.");
     }
 
     // ========== ReadCashCounts ==========
@@ -502,13 +407,10 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         ThrowIfBusy();
         var sorted = _inventory.AllCounts
             .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
-            .OrderBy(kv => kv.Key.Type) // Coin(0) before Bill(1)
+            .OrderBy(kv => kv.Key.Type)
             .ThenBy(kv => kv.Key.Value);
 
-        var list = sorted.Select(kv => new CashCount(
-            (kv.Key.Type == CashType.Bill) ? CashCountType.Bill : CashCountType.Coin,
-            GetNominalValue(kv.Key),
-            kv.Value)).ToList();
+        var list = sorted.Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, GetCurrencyFactor())).ToList();
 
         return new CashCounts([.. list], _inventory.HasDiscrepancy);
     }
@@ -524,128 +426,4 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         return new DirectIOData(data, obj);
     }
 
-    // ========== Status Properties ==========
-
-    /// <summary>デバイスの現在の状態（正常、空、ニアエンプティなど）を取得します。</summary>
-    public override CashChangerStatus DeviceStatus => _statusCoordinator?.LastCashChangerStatus ?? CashChangerStatus.OK;
-    /// <summary>デバイスの現在の満杯状態（正常、満杯、ニアフルなど）を取得します。</summary>
-    public override CashChangerFullStatus FullStatus => _statusCoordinator?.LastFullStatus ?? CashChangerFullStatus.OK;
-
-    // ========== Async Properties ==========
-
-    /// <summary>非同期モードで動作するかどうかを取得または設定します。</summary>
-    public override bool AsyncMode { get; set; }
-    /// <summary>最後の非同期操作の結果コードを取得します。</summary>
-    public override int AsyncResultCode => _asyncResultCode;
-    /// <summary>最後の非同期操作の拡張結果コードを取得します。</summary>
-    public override int AsyncResultCodeExtended => _asyncResultCodeExtended;
-
-    // ========== Currency Properties ==========
-
-    /// <summary>現在アクティブな通貨コードを取得または設定します。</summary>
-    public override string CurrencyCode
-    {
-        get => _activeCurrencyCode;
-        set
-        {
-            _activeCurrencyCode =
-                CurrencyCodeList.Contains(value)
-                ? value
-                : throw new PosControlException($"Unsupported currency: {value}", ErrorCode.Illegal);
-        }
-    }
-    /// <summary>サポートされている通貨コードの一覧を取得します。</summary>
-    public override string[] CurrencyCodeList => [.. _config.Inventory.Keys.OrderBy(c => c)];
-    /// <summary>入金可能な通貨コードの一覧を取得します。</summary>
-    public override string[] DepositCodeList => CurrencyCodeList;
-
-    /// <summary>アクティブな通貨の現在の現金一覧を取得します。</summary>
-    public override CashUnits CurrencyCashList => BuildCashUnits();
-    /// <summary>入金可能な現金の一覧を取得します。</summary>
-    public override CashUnits DepositCashList => CapDeposit ? BuildCashUnits() : new CashUnits();
-    /// <summary>払出可能な現金の一覧を取得します。</summary>
-    public override CashUnits ExitCashList => BuildCashUnits();
-
-    // ========== Deposit Properties ==========
-
-    /// <summary>現在投入されている現金の合計金額を取得します。</summary>
-    public override int DepositAmount => (int)Math.Round(_depositController.DepositAmount * GetCurrencyFactor());
-    /// <summary>現在投入されている現金の金種別枚数を取得します。</summary>
-    public override CashCount[] DepositCounts
-    {
-        get => [.. _depositController.DepositCounts
-            .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
-            .Select(kv => new CashCount(
-                kv.Key.Type == CashType.Bill ? CashCountType.Bill : CashCountType.Coin,
-                GetNominalValue(kv.Key),
-                kv.Value))];
-    }
-    /// <summary>現在の入金処理の状態を取得します。</summary>
-    public override CashDepositStatus DepositStatus => _depositController.DepositStatus;
-
-    // ========== Exit Properties ==========
-
-    /// <summary>現在の排出口インデックスを取得または設定します。</summary>
-    public override int CurrentExit { get => 1; set { } }
-    /// <summary>デバイスの排出口の総数を取得します。</summary>
-    public override int DeviceExits => 1;
-
-    // ========== Capability Properties ==========
-
-    /// <summary>入金機能があるかどうかを取得します。</summary>
-    public override bool CapDeposit => true;
-    /// <summary>入金データイベントをサポートしているかどうかを取得します。</summary>
-    public override bool CapDepositDataEvent => true;
-    /// <summary>入金の一時停止をサポートしているかどうかを取得します。</summary>
-    public override bool CapPauseDeposit => true;
-    /// <summary>入金の返却（払い戻し）をサポートしているかどうかを取得します。</summary>
-    public override bool CapRepayDeposit => true;
-
-    /// <summary>不一致の検出をサポートしているかどうかを取得します。</summary>
-    public override bool CapDiscrepancy => false;
-    /// <summary>満杯センサーをサポートしているかどうかを取得します。</summary>
-    public override bool CapFullSensor => true;
-    /// <summary>ニアフルセンサーをサポートしているかどうかを取得します。</summary>
-    public override bool CapNearFullSensor => true;
-    /// <summary>ニアエンプティセンサーをサポートしているかどうかを取得します。</summary>
-    public override bool CapNearEmptySensor => true;
-    /// <summary>空センサーをサポートしているかどうかを取得します。</summary>
-    public override bool CapEmptySensor => true;
-
-    // ========== Private Helpers ==========
-
-    private CashUnits BuildCashUnits()
-    {
-        var activeUnits = _inventory.AllCounts
-            .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
-            .OrderBy(kv => kv.Key.Value)
-            .ToList();
-
-        var coins = activeUnits
-            .Where(kv => kv.Key.Type == CashType.Coin)
-            .Select(kv => GetNominalValue(kv.Key))
-            .ToArray();
-
-        var bills = activeUnits
-            .Where(kv => kv.Key.Type == CashType.Bill)
-            .Select(kv => GetNominalValue(kv.Key))
-            .ToArray();
-
-        return new CashUnits(coins, bills);
-    }
-
-    internal int GetNominalValue(DenominationKey key)
-    {
-        return (int)Math.Round(key.Value * GetCurrencyFactor(key.CurrencyCode));
-    }
-
-    internal decimal GetCurrencyFactor(string? currencyCode = null)
-    {
-        var code = currencyCode ?? _activeCurrencyCode;
-        return code switch
-        {
-            "USD" or "EUR" or "GBP" or "CAD" or "AUD" => 100m,
-            _ => 1m
-        };
-    }
 }
