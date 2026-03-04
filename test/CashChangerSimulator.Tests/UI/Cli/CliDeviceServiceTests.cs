@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.UI.Cli.Services;
 using Microsoft.PointOfService;
@@ -17,10 +18,10 @@ public class CliDeviceServiceTests : CliTestBase
     {
         // Arrange
         var configProvider = new ConfigurationProvider();
-        configProvider.Config.Simulation.ColdStart = true;
+        configProvider.Config.Simulation.HotStart = false;
         var realChanger = new SimulatorCashChanger(configProvider, null, null, null, null, null, null, null)
         {
-            SkipStateVerification = true // Claim 内部で _isOpen のチェックが行われ、例外になる
+            // SkipStateVerification = true // Claim 内部で _isOpen のチェックが行われ、例外になる
         };
         // Open していない状態
 
@@ -41,7 +42,7 @@ public class CliDeviceServiceTests : CliTestBase
         // Arrange
         var realChanger = new SimulatorCashChanger(null, null, null, null, null, null, null, null)
         {
-            SkipStateVerification = true
+            // SkipStateVerification = true
         };
         realChanger.Open();
         // Claim していない状態で Enable しようとする

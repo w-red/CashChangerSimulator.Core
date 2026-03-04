@@ -1,3 +1,5 @@
+using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
@@ -77,11 +79,31 @@ InvalidConfigKey = ""Invalid config key '{0}'""
         _localizer = new TomlStringLocalizer(_testI18nDir);
         CultureInfo.CurrentUICulture = new CultureInfo("en-US");
 
-        _mockChanger = new Mock<SimulatorCashChanger>();
         _mockInventory = new Mock<Inventory>();
-        _mockMetadata = new Mock<ICurrencyMetadataProvider>();
+        _mockInventory.Setup(x => x.Changed).Returns(Observable.Empty<DenominationKey>());
         _mockHistory = new Mock<TransactionHistory>();
+        _mockMetadata = new Mock<ICurrencyMetadataProvider>();
         _mockScriptService = new Mock<IScriptExecutionService>();
+
+        var configProvider = new ConfigurationProvider();
+        var hardware = new HardwareStatusManager();
+        var manager = new CashChangerManager(_mockInventory.Object, _mockHistory.Object, new ChangeCalculator());
+        var metadataProvider = new CurrencyMetadataProvider(configProvider);
+        var monitorsProvider = new MonitorsProvider(_mockInventory.Object, configProvider, metadataProvider);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
+        var depositController = new DepositController(_mockInventory.Object, hardware);
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+
+        _mockChanger = new Mock<SimulatorCashChanger>(
+            configProvider,
+            _mockInventory.Object,
+            _mockHistory.Object,
+            manager,
+            depositController,
+            dispenseController,
+            aggregatorProvider,
+            hardware);
+
         _console = new TestConsole();
         _options = new CliSessionOptions();
 

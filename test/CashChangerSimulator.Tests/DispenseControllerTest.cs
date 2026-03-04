@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
@@ -25,7 +26,9 @@ public class DispenseControllerTest
         var key = new DenominationKey(1000, CashType.Bill, "JPY");
         inventory.SetCount(key, 10);
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
-        var controller = new DispenseController(manager);
+        var hw = new HardwareStatusManager();
+        hw.SetConnected(true);
+        var controller = new DispenseController(manager, hw, new HardwareSimulator(new ConfigurationProvider()));
 
         ErrorCode resultCode = ErrorCode.Failure;
 
@@ -46,7 +49,9 @@ public class DispenseControllerTest
         // Arrange
         var inventory = new Inventory();
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
-        var controller = new DispenseController(manager);
+        var hw = new HardwareStatusManager();
+        hw.SetConnected(true);
+        var controller = new DispenseController(manager, hw, new HardwareSimulator(new ConfigurationProvider()));
 
         // Act & Assert
         // Start first dispense (async mode keeps it in BUSY)
@@ -70,7 +75,9 @@ public class DispenseControllerTest
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
         var mockSimulator = new Mock<IDeviceSimulator>();
         
-        var controller = new DispenseController(manager, null, mockSimulator.Object);
+        var hw = new HardwareStatusManager();
+        hw.SetConnected(true);
+        var controller = new DispenseController(manager, hw, mockSimulator.Object);
 
         // Act
         await controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult);

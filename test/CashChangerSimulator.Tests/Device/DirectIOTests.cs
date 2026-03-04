@@ -58,6 +58,7 @@ public class DirectIOTests
     public void DirectIoCommand100ShouldReturnVersionInfo()
     {
         var simulator = CreateSimulator();
+        simulator.SkipStateVerification = true;
         
         var result = simulator.DirectIO(100, 0, "");
         result.Object.ShouldNotBeNull();
@@ -69,6 +70,7 @@ public class DirectIOTests
     public void DirectIoUnknownCommandShouldPassThrough()
     {
         var simulator = CreateSimulator();
+        simulator.SkipStateVerification = true;
         var myObj = new object();
         var result = simulator.DirectIO(999, 123, myObj);
         

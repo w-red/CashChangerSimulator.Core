@@ -31,15 +31,20 @@ public class TestSimulatorCashChanger : SimulatorCashChanger
     public List<EventArgs> QueuedEvents { get; } = [];
 
     public TestSimulatorCashChanger(Inventory inv, CashChangerManager manager) 
+        : this(inv, manager, new HardwareStatusManager())
+    {
+    }
+
+    private TestSimulatorCashChanger(Inventory inv, CashChangerManager manager, HardwareStatusManager hw)
         : base(
             new ConfigurationProvider(), 
             inv, 
             new TransactionHistory(), 
             manager, 
-            new DepositController(inv), 
-            new DispenseController(manager, null, new Mock<IDeviceSimulator>().Object), 
+            new DepositController(inv, hw), 
+            new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object), 
             new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))), 
-            new HardwareStatusManager())
+            hw)
     {
     }
 
@@ -69,6 +74,10 @@ public class DispenseAsyncTests
             AsyncMode = true,
             SkipStateVerification = true
         };
+
+        changer.Open();
+        changer.Claim(1000);
+        changer.DeviceEnabled = true;
 
         // Act
         changer.DispenseChange(100);
@@ -109,6 +118,10 @@ public class DispenseAsyncTests
             SkipStateVerification = true
         };
 
+        changer.Open();
+        changer.Claim(1000);
+        changer.DeviceEnabled = true;
+
         // Act: Start dispense but don't finish it
         var dispenseTask = Task.Run(() => changer.DispenseChange(100), TestContext.Current.CancellationToken);
 
@@ -137,6 +150,10 @@ public class DispenseAsyncTests
             AsyncMode = true,
             SkipStateVerification = true
         };
+
+        changer.Open();
+        changer.Claim(1000);
+        changer.DeviceEnabled = true;
 
         // Act: Start dispense but don't finish it
         var dispenseTask = Task.Run(() => changer.DispenseChange(100), TestContext.Current.CancellationToken);

@@ -57,8 +57,8 @@ public class SimulatorServicesTests : IDisposable
         var metadataProvider = new CurrencyMetadataProvider(configProvider);
         var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
-        var depositController = new DepositController(inventory);
-        var dispenseController = new DispenseController(manager, null, new Mock<IDeviceSimulator>().Object);
+        var depositController = new DepositController(inventory, hw);
+        var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
         var provider = new TestServiceProvider(
             configProvider, 

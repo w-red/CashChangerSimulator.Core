@@ -21,6 +21,7 @@ public class OverlapSimulationTest
         var key = new DenominationKey(1000, MoneyKind4Opos.Currencies.Interfaces.CashType.Bill);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
 
+        hardwareManager.SetConnected(true);
         controller.BeginDeposit();
         controller.TrackBulkDeposit(counts);
 
@@ -51,6 +52,7 @@ public class OverlapSimulationTest
         var inventory = new Inventory();
         var controller = new DepositController(inventory, hardwareManager);
 
+        hardwareManager.SetConnected(true);
         // Act & Assert
         Should.Throw<PosControlException>(() => controller.BeginDeposit());
     }

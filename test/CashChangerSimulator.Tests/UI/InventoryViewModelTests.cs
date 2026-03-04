@@ -40,7 +40,7 @@ public class InventoryViewModelTests
         var monitorsProvider = new MonitorsProvider(inv, config, metadataProvider);
         var aggregator = new OverallStatusAggregator(monitorsProvider.Monitors);
         var hw = new HardwareStatusManager();
-        var depositController = new DepositController(inv);
+        var depositController = new DepositController(inv, hw);
         var mockChanger = new Moq.Mock<SimulatorCashChanger>();
 
         var vm = new InventoryViewModel(inv, history, aggregator, config, monitorsProvider, metadataProvider, hw, depositController, mockChanger.Object);

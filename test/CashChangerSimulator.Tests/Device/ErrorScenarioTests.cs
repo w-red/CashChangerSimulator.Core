@@ -58,6 +58,7 @@ public class ErrorScenarioTests
         {
             SkipStateVerification = true
         };
+        device.Open();
         return (device, hardware);
     }
 
@@ -112,8 +113,9 @@ public class ErrorScenarioTests
         var (device, hardware) = CreateDevice();
         hardware.SetJammed(true);
 
-        Should.Throw<PosControlException>(() => device.DispenseChange(1000))
-            .ErrorCode.ShouldBe(ErrorCode.Failure);
+        var ex = Should.Throw<PosControlException>(() => device.DispenseChange(1000));
+        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
+        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.Jam);
     }
 
     /// <summary>ジャム発生・復旧時に正しい StatusUpdateEvent が発火することを検証する。</summary>

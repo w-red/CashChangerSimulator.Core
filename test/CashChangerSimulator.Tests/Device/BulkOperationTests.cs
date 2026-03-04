@@ -4,6 +4,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Services;
+using Moq;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
@@ -18,9 +19,10 @@ public class BulkOperationTests
     {
         // Arrange
         var inv = new Inventory();
-        var controller = new DepositController(inv);
+        var hardware = new HardwareStatusManager();
+        var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
-        var dispenseController = new DispenseController(manager);
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController);
 
         var json = @"
@@ -33,6 +35,7 @@ public class BulkOperationTests
         ]";
 
         // Act
+        hardware.SetConnected(true);
         await service.ExecuteScriptAsync(json);
 
         // Assert
@@ -46,9 +49,10 @@ public class BulkOperationTests
     {
         // Arrange
         var inv = new Inventory();
-        var controller = new DepositController(inv);
+        var hardware = new HardwareStatusManager();
+        var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
-        var dispenseController = new DispenseController(manager);
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController);
 
         var json = @"
@@ -60,6 +64,7 @@ public class BulkOperationTests
         ]";
 
         // Act
+        hardware.SetConnected(true);
         await service.ExecuteScriptAsync(json);
 
         // Assert

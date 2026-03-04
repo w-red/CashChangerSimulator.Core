@@ -18,7 +18,7 @@ public class UposLifecycleTests
     private static SimulatorCashChanger CreateCashChanger()
     {
         var configProvider = new ConfigurationProvider();
-        configProvider.Config.Simulation.ColdStart = true;
+        configProvider.Config.Simulation.HotStart = false; // ColdStart is now the baseline
         configProvider.Config.Inventory["JPY"] = new InventorySettings
         {
             Denominations = new()

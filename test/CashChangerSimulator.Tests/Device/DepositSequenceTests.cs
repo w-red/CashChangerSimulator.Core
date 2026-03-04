@@ -21,7 +21,9 @@ public class DepositSequenceTests
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
-        var controller = new DepositController(inventory);
+        var hw = new HardwareStatusManager();
+        hw.SetConnected(true);
+        var controller = new DepositController(inventory, hw);
         return (controller, inventory);
     }
 

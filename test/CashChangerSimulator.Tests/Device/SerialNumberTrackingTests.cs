@@ -17,6 +17,7 @@ public class SerialNumberTrackingTests
             // SkipStateVerification allows calling BeginDeposit etc without full OPOS lifecycle
             SkipStateVerification = true
         };
+        changer.Open();
 
         // Retrieve internal controller for direct manipulation in test
         var field = typeof(SimulatorCashChanger)

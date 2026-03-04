@@ -22,16 +22,16 @@ public class AsyncModeReliabilityTests
 
         private readonly DispenseController _controller;
 
-        public ReliabilityTestChanger(Inventory inv, CashChangerManager manager, DispenseController controller) 
+        public ReliabilityTestChanger(Inventory inv, CashChangerManager manager, DispenseController controller, HardwareStatusManager hw) 
             : base(
                 new ConfigurationProvider(), 
                 inv, 
                 new TransactionHistory(), 
                 manager, 
-                new DepositController(inv), 
+                new DepositController(inv, hw), 
                 controller, 
                 new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))), 
-                new HardwareStatusManager())
+                hw)
         {
             _controller = controller;
         }
@@ -57,8 +57,9 @@ public class AsyncModeReliabilityTests
         var inventory = new Inventory();
         inventory.SetCount(new DenominationKey(100, MoneyKind4Opos.Currencies.Interfaces.CashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
-        var controller = new DispenseController(manager, null, new Mock<IDeviceSimulator>().Object);
-        var changer = new ReliabilityTestChanger(inventory, manager, controller)
+        var hardware = new HardwareStatusManager();
+        var controller = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var changer = new ReliabilityTestChanger(inventory, manager, controller, hardware)
         {
             AsyncMode = true,
             SkipStateVerification = true
