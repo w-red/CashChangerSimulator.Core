@@ -1,0 +1,125 @@
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Monitoring;
+using CashChangerSimulator.Core.Opos;
+using Microsoft.PointOfService;
+using R3;
+using System;
+
+namespace CashChangerSimulator.Device.Coordination;
+
+/// <summary>釣銭機の各コンポーネントからの通知を集約し、UPOS イベントへ変換する調整クラス。</summary>
+public class StatusCoordinator(
+    ICashChangerStatusSink sink,
+    OverallStatusAggregator statusAggregator,
+    HardwareStatusManager hardwareStatusManager,
+    DepositController depositController,
+    DispenseController dispenseController) : IDisposable
+{
+    private readonly CompositeDisposable _disposables = [];
+    private CashChangerStatus _lastCashChangerStatus = CashChangerStatus.OK;
+    private CashChangerFullStatus _lastFullStatus = CashChangerFullStatus.OK;
+
+    /// <summary>現在のデバイスステータス。</summary>
+    public CashChangerStatus LastCashChangerStatus => _lastCashChangerStatus;
+
+    /// <summary>現在のフルステータス。</summary>
+    public CashChangerFullStatus LastFullStatus => _lastFullStatus;
+
+    /// <summary>全ステータスの購読を開始します。</summary>
+    public void Start()
+    {
+        _disposables.Add(statusAggregator.DeviceStatus.Subscribe(status =>
+        {
+            var newDeviceStatus = status switch
+            {
+                CashStatus.Empty => CashChangerStatus.Empty,
+                CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
+                _ => CashChangerStatus.OK
+            };
+
+            if (newDeviceStatus != _lastCashChangerStatus)
+            {
+                var previousStatus = _lastCashChangerStatus;
+                _lastCashChangerStatus = newDeviceStatus;
+
+                if (newDeviceStatus == CashChangerStatus.OK &&
+                    previousStatus is CashChangerStatus.Empty or CashChangerStatus.NearEmpty)
+                {
+                    sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.EmptyOk));
+                }
+                else
+                {
+                    var code = newDeviceStatus switch
+                    {
+                        CashChangerStatus.Empty => (int)UposCashChangerStatusUpdateCode.Empty,
+                        CashChangerStatus.NearEmpty => (int)UposCashChangerStatusUpdateCode.NearEmpty,
+                        _ => (int)UposCashChangerStatusUpdateCode.Ok
+                    };
+                    sink.FireEvent(new StatusUpdateEventArgs(code));
+                }
+            }
+        }));
+
+        _disposables.Add(statusAggregator.FullStatus.Subscribe(status =>
+        {
+            var newFullStatus = status switch
+            {
+                CashStatus.Full => CashChangerFullStatus.Full,
+                CashStatus.NearFull => CashChangerFullStatus.NearFull,
+                _ => CashChangerFullStatus.OK
+            };
+
+            if (newFullStatus != _lastFullStatus)
+            {
+                var previousFullStatus = _lastFullStatus;
+                _lastFullStatus = newFullStatus;
+
+                if (newFullStatus == CashChangerFullStatus.OK &&
+                    previousFullStatus is CashChangerFullStatus.Full or CashChangerFullStatus.NearFull)
+                {
+                    sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.FullOk));
+                }
+                else
+                {
+                    sink.FireEvent(new StatusUpdateEventArgs((int)newFullStatus));
+                }
+            }
+        }));
+
+        _disposables.Add(hardwareStatusManager.IsJammed.Subscribe(jammed =>
+        {
+            if (jammed)
+            {
+                sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Jam));
+            }
+            else
+            {
+                _lastCashChangerStatus = CashChangerStatus.OK;
+                sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
+            }
+        }));
+
+        _disposables.Add(depositController.Changed.Subscribe(_ =>
+        {
+            if (depositController.DepositStatus == CashDepositStatus.Count && !depositController.IsPaused && sink.DataEventEnabled)
+            {
+                if (sink.RealTimeDataEnabled || depositController.IsFixed)
+                {
+                    sink.FireEvent(new DataEventArgs(0));
+                }
+            }
+        }));
+
+        _disposables.Add(dispenseController.Changed.Subscribe(_ =>
+        {
+            sink.SetAsyncProcessing(dispenseController.IsBusy);
+        }));
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        _disposables.Dispose();
+    }
+}
