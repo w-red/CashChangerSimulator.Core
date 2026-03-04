@@ -6,19 +6,18 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>SimulatorCashChanger の StatusUpdateEvent 発火を検証するテストクラス (TDD Red)。</summary>
+/// <summary>InternalSimulatorCashChanger の StatusUpdateEvent 発火を検証するテストクラス (TDD Red)。</summary>
 public class StatusUpdateEventTests
 {
-    private static readonly DenominationKey Coin100 = new(100, CashType.Coin, "JPY");
+    private static readonly DenominationKey Coin100 = new(100, CurrencyCashType.Coin, "JPY");
 
-    /// <summary>テスト用の SimulatorCashChanger を生成する。</summary>
-    private static (SimulatorCashChanger cc, Inventory inv, HardwareStatusManager hw, List<int> events) CreateTestCashChanger(
+    /// <summary>テスト用の InternalSimulatorCashChanger を生成する。</summary>
+    private static (InternalSimulatorCashChanger cc, Inventory inv, HardwareStatusManager hw, List<int> events) CreateTestCashChanger(
         int nearEmpty = 5, int nearFull = 90, int full = 100)
     {
         var configProvider = new ConfigurationProvider();
@@ -52,7 +51,7 @@ public class StatusUpdateEventTests
         var depositController = new DepositController(inv, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
-        var cc = new SimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw)
+        var cc = new InternalSimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw)
         {
             SkipStateVerification = true
         };

@@ -17,7 +17,7 @@ public class DeviceEventHistoryObserverTest
     {
         // Arrange
         var history = new TransactionHistory();
-        var device = new SimulatorCashChanger(history: history);
+        var device = new InternalSimulatorCashChanger(history: history);
         
         // This instantiates the observer, subscribing to the device
         using var observer = new DeviceEventHistoryObserver(device, history);
@@ -41,7 +41,7 @@ public class DeviceEventHistoryObserverTest
     {
         // Arrange
         var history = new TransactionHistory();
-        var device = new SimulatorCashChanger(history: history);
+        var device = new InternalSimulatorCashChanger(history: history);
         using var observer = new DeviceEventHistoryObserver(device, history);
 
         // Act

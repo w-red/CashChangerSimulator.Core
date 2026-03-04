@@ -11,11 +11,11 @@ namespace CashChangerSimulator.Device;
 /// </summary>
 public class DeviceEventHistoryObserver : IDisposable
 {
-    private readonly SimulatorCashChanger _device;
+    private readonly InternalSimulatorCashChanger _device;
     private readonly TransactionHistory _history;
 
     /// <summary>オブザーバーを初期化し、イベントを購読します。</summary>
-    public DeviceEventHistoryObserver(SimulatorCashChanger device, TransactionHistory history)
+    public DeviceEventHistoryObserver(InternalSimulatorCashChanger device, TransactionHistory history)
     {
         _device = device ?? throw new ArgumentNullException(nameof(device));
         _history = history ?? throw new ArgumentNullException(nameof(history));

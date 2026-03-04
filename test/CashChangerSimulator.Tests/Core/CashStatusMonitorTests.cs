@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
-using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
 
@@ -14,7 +13,7 @@ public class CashStatusMonitorTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CashType.Bill);
+        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // しきい値設定: Empty=0, NearEmpty=2, NearFull=8, Full=10
         var monitor = new CashStatusMonitor(inventory, denomination, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10);
@@ -48,7 +47,7 @@ public class CashStatusMonitorTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CashType.Bill);
+        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
         inventory.SetCount(denomination, 5); // 5枚
 
         // 初期しきい値では Normal (NearFull=8)
@@ -72,7 +71,7 @@ public class CashStatusMonitorTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CashType.Bill);
+        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
         var monitor = new CashStatusMonitor(inventory, denomination, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10);
 
         monitor.Status.CurrentValue.ShouldBe(CashStatus.Empty);
@@ -94,7 +93,7 @@ public class CashStatusMonitorTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CashType.Bill);
+        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // すべてのしきい値を -1 (無効) に設定
         var monitor = new CashStatusMonitor(inventory, denomination, nearEmptyThreshold: -1, nearFullThreshold: -1, fullThreshold: -1);

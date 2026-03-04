@@ -4,7 +4,6 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -36,7 +35,7 @@ public class DepositSequenceTests
     public void FullDepositSequenceWithChange()
     {
         var (controller, inventory) = CreateController();
-        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // beginDeposit: 入金受付開始
         controller.BeginDeposit();
@@ -63,7 +62,7 @@ public class DepositSequenceTests
     public void FullDepositSequenceWithNoChange()
     {
         var (controller, inventory) = CreateController();
-        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
 
@@ -81,7 +80,7 @@ public class DepositSequenceTests
     public void FullDepositSequenceWithRepay()
     {
         var (controller, inventory) = CreateController();
-        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
 
@@ -101,7 +100,7 @@ public class DepositSequenceTests
     public void PauseAndRestartDuringDeposit()
     {
         var (controller, inventory) = CreateController();
-        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
 

@@ -26,7 +26,7 @@ public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new
 }
 
 /// <summary>テスト用のシミュレータキャッシュチェンジャー。</summary>
-public class TestSimulatorCashChanger : SimulatorCashChanger
+public class TestSimulatorCashChanger : InternalSimulatorCashChanger
 {
     public List<EventArgs> QueuedEvents { get; } = [];
 
@@ -67,7 +67,7 @@ public class DispenseAsyncTests
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(100, MoneyKind4Opos.Currencies.Interfaces.CashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
@@ -110,7 +110,7 @@ public class DispenseAsyncTests
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(100, MoneyKind4Opos.Currencies.Interfaces.CashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
@@ -143,7 +143,7 @@ public class DispenseAsyncTests
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(100, MoneyKind4Opos.Currencies.Interfaces.CashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {

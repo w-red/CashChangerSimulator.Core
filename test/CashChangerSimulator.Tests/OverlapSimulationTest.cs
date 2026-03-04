@@ -18,7 +18,7 @@ public class OverlapSimulationTest
         var hardwareManager = new HardwareStatusManager();
         var controller = new DepositController(inventory, hardwareManager);
 
-        var key = new DenominationKey(1000, MoneyKind4Opos.Currencies.Interfaces.CashType.Bill);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
 
         hardwareManager.SetConnected(true);

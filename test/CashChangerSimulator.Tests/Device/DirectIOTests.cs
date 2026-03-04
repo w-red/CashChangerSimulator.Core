@@ -7,9 +7,9 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing DirectIOTests functionality.</summary>
 public class DirectIOTests
 {
-    private SimulatorCashChanger CreateSimulator()
+    private InternalSimulatorCashChanger CreateSimulator()
     {
-        return new SimulatorCashChanger();
+        return new InternalSimulatorCashChanger();
     }
 
     /// <summary>Tests the behavior of DirectIoCommand10ShouldToggleOverlap to ensure proper functionality.</summary>
@@ -23,7 +23,7 @@ public class DirectIOTests
         var result = simulator.DirectIO(10, 1, null!);
         result.Data.ShouldBe(1);
         
-        var hardwareStatusManager = (HardwareStatusManager)typeof(SimulatorCashChanger)
+        var hardwareStatusManager = (HardwareStatusManager)typeof(InternalSimulatorCashChanger)
             .GetField("_hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .GetValue(simulator)!;
 
@@ -40,7 +40,7 @@ public class DirectIOTests
     {
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
-        var hardwareStatusManager = (HardwareStatusManager)typeof(SimulatorCashChanger)
+        var hardwareStatusManager = (HardwareStatusManager)typeof(InternalSimulatorCashChanger)
             .GetField("_hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .GetValue(simulator)!;
 
@@ -62,7 +62,7 @@ public class DirectIOTests
         
         var result = simulator.DirectIO(100, 0, "");
         result.Object.ShouldNotBeNull();
-        result.Object.ToString()!.ShouldContain("SimulatorCashChanger");
+        result.Object.ToString()!.ShouldContain("InternalSimulatorCashChanger");
     }
 
     /// <summary>Tests the behavior of DirectIoUnknownCommandShouldPassThrough to ensure proper functionality.</summary>

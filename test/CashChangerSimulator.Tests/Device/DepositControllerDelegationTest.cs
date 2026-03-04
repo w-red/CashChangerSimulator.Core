@@ -4,7 +4,6 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using Moq;
-using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -28,7 +27,7 @@ public class DepositControllerDelegationTest
 
         controller.BeginDeposit();
         // Simulate adding cash
-        var key = new DenominationKey(1000m, CashType.Bill, "JPY");
+        var key = new DenominationKey(1000m, CurrencyCashType.Bill, "JPY");
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, 2 } });
         controller.FixDeposit();
 

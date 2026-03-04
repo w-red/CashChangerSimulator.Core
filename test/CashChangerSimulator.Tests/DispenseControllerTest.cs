@@ -6,7 +6,6 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Moq;
 
 namespace CashChangerSimulator.Tests;
@@ -23,7 +22,7 @@ public class DispenseControllerTest
     {
         // Arrange
         var inventory = new Inventory();
-        var key = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inventory.SetCount(key, 10);
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
         var hw = new HardwareStatusManager();
@@ -70,7 +69,7 @@ public class DispenseControllerTest
     {
         // Arrange
         var inventory = new Inventory();
-        var key = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inventory.SetCount(key, 10);
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
         var mockSimulator = new Mock<IDeviceSimulator>();

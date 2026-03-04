@@ -2,7 +2,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -10,9 +9,9 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing SerialNumberTrackingTests functionality.</summary>
 public class SerialNumberTrackingTests
 {
-    private (SimulatorCashChanger changer, DepositController controller) CreateChanger()
+    private (InternalSimulatorCashChanger changer, DepositController controller) CreateChanger()
     {
-        var changer = new SimulatorCashChanger
+        var changer = new InternalSimulatorCashChanger
         {
             // SkipStateVerification allows calling BeginDeposit etc without full OPOS lifecycle
             SkipStateVerification = true
@@ -20,7 +19,7 @@ public class SerialNumberTrackingTests
         changer.Open();
 
         // Retrieve internal controller for direct manipulation in test
-        var field = typeof(SimulatorCashChanger)
+        var field = typeof(InternalSimulatorCashChanger)
             .GetField(
                 "_depositController",
                 System.Reflection.BindingFlags.NonPublic
@@ -43,7 +42,7 @@ public class SerialNumberTrackingTests
 
         // Assert
         result.Object.ShouldNotBeNull();
-        result.Object.ToString()!.ShouldContain("SimulatorCashChanger");
+        result.Object.ToString()!.ShouldContain("InternalSimulatorCashChanger");
     }
 
     /// <summary>Tests the behavior of DirectIOGetDepositedSerialsShouldReturnEmptyInitially to ensure proper functionality.</summary>
@@ -67,7 +66,7 @@ public class SerialNumberTrackingTests
     {
         // Arrange
         var (changer, controller) = CreateChanger();
-        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         
         changer.BeginDeposit();
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key1000, 2 } });
@@ -95,7 +94,7 @@ public class SerialNumberTrackingTests
     {
         // Arrange
         var (changer, controller) = CreateChanger();
-        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         
         changer.BeginDeposit();
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key1000, 1 } });

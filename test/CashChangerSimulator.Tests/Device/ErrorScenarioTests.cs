@@ -14,7 +14,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>各種エラーシナリオ（ビジー、不正なパラメータ/シーケンス、在庫不足、ジャム）の検証テスト。</summary>
 public class ErrorScenarioTests
 {
-    private (SimulatorCashChanger Device, HardwareStatusManager Hardware) CreateDevice()
+    private (InternalSimulatorCashChanger Device, HardwareStatusManager Hardware) CreateDevice()
     {
         var configProvider = new ConfigurationProvider();
         
@@ -54,7 +54,7 @@ public class ErrorScenarioTests
         var depositController = new DepositController(inventory, hardware);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
 
-        var device = new SimulatorCashChanger(configProvider, inventory, history, manager, depositController, dispenseController, aggregatorProvider, hardware)
+        var device = new InternalSimulatorCashChanger(configProvider, inventory, history, manager, depositController, dispenseController, aggregatorProvider, hardware)
         {
             SkipStateVerification = true
         };

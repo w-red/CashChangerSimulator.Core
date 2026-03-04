@@ -7,9 +7,9 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing AdjustCashCountsTests functionality.</summary>
 public class AdjustCashCountsTests
 {
-    private SimulatorCashChanger CreateSimulator()
+    private InternalSimulatorCashChanger CreateSimulator()
     {
-        return new SimulatorCashChanger();
+        return new InternalSimulatorCashChanger();
     }
 
     /// <summary>Tests the behavior of AdjustCashCountsShouldUpdateInventory to ensure proper functionality.</summary>

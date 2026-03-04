@@ -4,7 +4,6 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
@@ -19,8 +18,8 @@ public class CashChangerManagerTests
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
-        var b1000 = new DenominationKey(1000, CashType.Bill);
-        var c100 = new DenominationKey(100, CashType.Coin);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var c100 = new DenominationKey(100, CurrencyCashType.Coin);
         var depositCounts = new Dictionary<DenominationKey, int> { { b1000, 2 }, { c100, 5 } };
 
         // Act
@@ -46,7 +45,7 @@ public class CashChangerManagerTests
     {
         // Arrange
         var inventory = new Inventory();
-        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         inventory.SetCount(b1000, 10);
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
@@ -71,8 +70,8 @@ public class CashChangerManagerTests
     {
         // Arrange
         var inventory = new Inventory();
-        var b1000 = new DenominationKey(1000, CashType.Bill);
-        var c100 = new DenominationKey(100, CashType.Coin);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var c100 = new DenominationKey(100, CurrencyCashType.Coin);
         inventory.SetCount(b1000, 5);
         inventory.SetCount(c100, 10);
         var history = new TransactionHistory();
@@ -100,7 +99,7 @@ public class CashChangerManagerTests
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
-        var usd20 = new DenominationKey(20, CashType.Bill, "USD");
+        var usd20 = new DenominationKey(20, CurrencyCashType.Bill, "USD");
         var depositCounts = new Dictionary<DenominationKey, int> { { usd20, 2 } };
 
         // Act

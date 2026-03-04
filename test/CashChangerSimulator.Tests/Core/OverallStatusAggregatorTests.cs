@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
-using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
 
@@ -17,8 +16,8 @@ public class OverallStatusAggregatorTests
         var inventory = new Inventory();
         var denominations = new[]
         {
-            new DenominationKey(1000, CashType.Bill),
-            new DenominationKey(5000, CashType.Bill)
+            new DenominationKey(1000, CurrencyCashType.Bill),
+            new DenominationKey(5000, CurrencyCashType.Bill)
         };
 
         // モニター作成
@@ -70,7 +69,7 @@ public class OverallStatusAggregatorTests
         var monitors = new List<CashStatusMonitor>();
         for (int i = 1; i <= 5; i++)
         {
-            var key = new DenominationKey(i * 1000, CashType.Bill);
+            var key = new DenominationKey(i * 1000, CurrencyCashType.Bill);
             inventory.SetCount(key, 5); // All Normal
             monitors.Add(new CashStatusMonitor(inventory, key, 2, 8, 10));
         }

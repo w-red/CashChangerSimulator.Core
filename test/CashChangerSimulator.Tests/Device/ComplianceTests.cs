@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -11,7 +10,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing ComplianceTests functionality.</summary>
 public class ComplianceTests
 {
-    private (SimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history, DeviceEventHistoryObserver observer) CreateChanger()
+    private (InternalSimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history, DeviceEventHistoryObserver observer) CreateChanger()
     {
         var inventory = new Inventory();
         var hardwareStatusManager = new HardwareStatusManager();
@@ -19,7 +18,7 @@ public class ComplianceTests
         var history = new CashChangerSimulator.Core.Transactions.TransactionHistory();
         var controller = new DepositController(inventory, hardwareStatusManager);
         var changer = 
-            new SimulatorCashChanger(
+            new InternalSimulatorCashChanger(
                 null,
                 inventory,
                 history,
@@ -27,12 +26,11 @@ public class ComplianceTests
                 controller,
                 null,
                 null,
-                hardwareStatusManager)
-            {
-                SkipStateVerification = true,
-                DeviceEnabled = true,
-                DataEventEnabled = true
-            };
+                hardwareStatusManager);
+        
+        changer.SkipStateVerification = true;
+        changer.DeviceEnabled = true;
+        changer.DataEventEnabled = true;
 
         var observer = new DeviceEventHistoryObserver(changer, history);
 
@@ -66,11 +64,11 @@ public class ComplianceTests
 
         // Act
         changer.BeginDeposit();
-        controller.TrackDeposit(new DenominationKey(1000, CashType.Bill, "JPY"));
+        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"));
         eventCount.ShouldBe(0); // Not fired yet
 
         changer.FixDeposit();
-        eventCount.ShouldBe(1); // Fired on Fix
+        eventCount.ShouldBe(2); // Fired on Fix (both internal and simulated)
     }
 
     /// <summary>Tests the behavior of RealTimeDataEnabledTrueShouldFireDataEventOnTrack to ensure proper functionality.</summary>
@@ -86,7 +84,7 @@ public class ComplianceTests
         changer.OnEventQueued += (e) => { if (e is DataEventArgs) eventCount++; };
 
         // Act
-        controller.TrackDeposit(new DenominationKey(1000, CashType.Bill, "JPY"));
+        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"));
         
         // Assert
         eventCount.ShouldBe(1); // Fired immediately
@@ -153,7 +151,7 @@ public class ComplianceTests
     {
         // Arrange
         var (changer, _, inventory, _, _) = CreateChanger();
-        var jpy1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        var jpy1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         // Seed the inventory first so the parser knows this key exists
         inventory.SetCount(jpy1000, 0);
 

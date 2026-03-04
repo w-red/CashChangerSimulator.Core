@@ -20,7 +20,7 @@ public class MonitorsProvider
         {
             var activeCurrency = config.System.CurrencyCode ?? "JPY";
             // 金種キーを文字列に変換 (B1000, C100 等)
-            var keyStr = (k.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? "B" : "C") + k.Value.ToString();
+            var keyStr = (k.Type == CurrencyCashType.Bill ? "B" : "C") + k.Value.ToString();
 
             // 個別設定があるか確認
             if (config.Inventory.TryGetValue(activeCurrency, out var inventorySettings) &&
@@ -51,7 +51,7 @@ public class MonitorsProvider
         foreach (var monitor in Monitors)
         {
             var k = monitor.Key;
-            var keyStr = (k.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill ? "B" : "C") + k.Value.ToString();
+            var keyStr = (k.Type == CurrencyCashType.Bill ? "B" : "C") + k.Value.ToString();
 
             if (config.Inventory.TryGetValue(activeCurrency, out var inventorySettings) &&
                 inventorySettings.Denominations.TryGetValue(keyStr, out var setting))

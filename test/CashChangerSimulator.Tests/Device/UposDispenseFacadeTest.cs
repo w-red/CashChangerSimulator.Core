@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Moq;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -22,8 +21,8 @@ public class UposDispenseFacadeTest
     public UposDispenseFacadeTest()
     {
         _inventory = new Inventory();
-        _inventory.SetCount(new DenominationKey(1000m, CashType.Bill, "JPY"), 10);
-        _inventory.SetCount(new DenominationKey(500m, CashType.Coin, "JPY"), 20);
+        _inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 10);
+        _inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 20);
 
         _hardwareStatusManager = new HardwareStatusManager();
         _hardwareStatusManager.SetConnected(true);

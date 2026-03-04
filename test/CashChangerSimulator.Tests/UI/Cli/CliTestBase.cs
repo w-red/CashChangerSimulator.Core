@@ -19,7 +19,7 @@ namespace CashChangerSimulator.Tests.Ui.Cli;
 public abstract class CliTestBase : IDisposable
 {
     protected readonly string _testI18nDir;
-    protected readonly Mock<SimulatorCashChanger> _mockChanger;
+    protected readonly Mock<InternalSimulatorCashChanger> _mockChanger;
     protected readonly Mock<Inventory> _mockInventory;
     protected readonly Mock<ICurrencyMetadataProvider> _mockMetadata;
     protected readonly Mock<TransactionHistory> _mockHistory;
@@ -92,7 +92,7 @@ InvalidConfigKey = ""Invalid config key '{0}'""
         var depositController = new DepositController(_mockInventory.Object, hardware);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
 
-        _mockChanger = new Mock<SimulatorCashChanger>(
+        _mockChanger = new Mock<InternalSimulatorCashChanger>(
             configProvider,
             _mockInventory.Object,
             _mockHistory.Object,

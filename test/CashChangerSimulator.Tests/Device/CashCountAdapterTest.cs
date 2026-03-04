@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -16,7 +15,7 @@ public class CashCountAdapterTest
         var key = CashCountAdapter.ToDenominationKey(cc, "JPY", 1m);
 
         Assert.Equal(1000m, key.Value);
-        Assert.Equal(CashType.Bill, key.Type);
+        Assert.Equal(CurrencyCashType.Bill, key.Type);
         Assert.Equal("JPY", key.CurrencyCode);
     }
 
@@ -28,7 +27,7 @@ public class CashCountAdapterTest
         var key = CashCountAdapter.ToDenominationKey(cc, "JPY", 1m);
 
         Assert.Equal(500m, key.Value);
-        Assert.Equal(CashType.Coin, key.Type);
+        Assert.Equal(CurrencyCashType.Coin, key.Type);
     }
 
     /// <summary>通貨係数を適用した変換が正しいことを確認します (USD: factor=100)。</summary>
@@ -39,7 +38,7 @@ public class CashCountAdapterTest
         var key = CashCountAdapter.ToDenominationKey(cc, "USD", 100m);
 
         Assert.Equal(5m, key.Value);
-        Assert.Equal(CashType.Bill, key.Type);
+        Assert.Equal(CurrencyCashType.Bill, key.Type);
         Assert.Equal("USD", key.CurrencyCode);
     }
 
@@ -47,7 +46,7 @@ public class CashCountAdapterTest
     [Fact]
     public void ToCashCount_ShouldConvertCorrectly()
     {
-        var key = new DenominationKey(1000m, CashType.Bill, "JPY");
+        var key = new DenominationKey(1000m, CurrencyCashType.Bill, "JPY");
         var cc = CashCountAdapter.ToCashCount(key, 5, 1m);
 
         Assert.Equal(CashCountType.Bill, cc.Type);
@@ -68,8 +67,8 @@ public class CashCountAdapterTest
         var dict = CashCountAdapter.ToDenominationDict(cashCounts, "JPY", 1m);
 
         Assert.Equal(2, dict.Count);
-        Assert.Equal(3, dict[new DenominationKey(1000m, CashType.Bill, "JPY")]);
-        Assert.Equal(5, dict[new DenominationKey(100m, CashType.Coin, "JPY")]);
+        Assert.Equal(3, dict[new DenominationKey(1000m, CurrencyCashType.Bill, "JPY")]);
+        Assert.Equal(5, dict[new DenominationKey(100m, CurrencyCashType.Coin, "JPY")]);
     }
 
     /// <summary>負の Count を持つ CashCount で例外がスローされることを確認します。</summary>

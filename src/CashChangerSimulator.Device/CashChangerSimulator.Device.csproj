@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -32,14 +32,11 @@
     </Reference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="MoneyKind4Opos">
-      <HintPath>..\..\..\MoneyKind4Opos\src\MoneyKind4Opos\bin\Debug\net10.0\MoneyKind4Opos.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+  
 
   <ItemGroup>
     <ProjectReference Include="..\CashChangerSimulator.Core\CashChangerSimulator.Core.csproj" />
   </ItemGroup>
 
 </Project>
+

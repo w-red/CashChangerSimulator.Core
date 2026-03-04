@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
-using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -24,11 +23,11 @@ public class UposCurrencyHelperTest
     [Fact]
     public void GetNominalValue_ShouldCalculateCorrectly()
     {
-        var keyJpy = new DenominationKey(1000m, CashType.Bill, "JPY");
+        var keyJpy = new DenominationKey(1000m, CurrencyCashType.Bill, "JPY");
         var valJpy = UposCurrencyHelper.GetNominalValue(keyJpy);
         Assert.Equal(1000, valJpy);
 
-        var keyUsd = new DenominationKey(5m, CashType.Bill, "USD");
+        var keyUsd = new DenominationKey(5m, CurrencyCashType.Bill, "USD");
         var valUsd = UposCurrencyHelper.GetNominalValue(keyUsd);
         Assert.Equal(500, valUsd); // 5 * 100
     }
@@ -38,9 +37,9 @@ public class UposCurrencyHelperTest
     public void BuildCashUnits_ShouldBuildCorrectly()
     {
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(1000m, CashType.Bill, "JPY"), 1);
-        inventory.SetCount(new DenominationKey(500m, CashType.Coin, "JPY"), 1);
-        inventory.SetCount(new DenominationKey(10m, CashType.Bill, "USD"), 1); // Should be ignored since active currency is JPY
+        inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 1);
+        inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 1);
+        inventory.SetCount(new DenominationKey(10m, CurrencyCashType.Bill, "USD"), 1); // Should be ignored since active currency is JPY
 
         var cashUnits = UposCurrencyHelper.BuildCashUnits(inventory, "JPY");
 

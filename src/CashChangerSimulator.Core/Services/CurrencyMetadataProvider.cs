@@ -1,13 +1,10 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
-using MoneyKind4Opos.Codes;
-using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
-using System.Reflection;
 
 namespace CashChangerSimulator.Core.Services;
 
-/// <summary>通貨コードに基づいて、MoneyKind4Opos から通貨のメタデータを提供するサービス。</summary>
+/// <summary>通貨コードに基づいて通貨のメタデータを提供するサービス。</summary>
 public class CurrencyMetadataProvider : ICurrencyMetadataProvider
 {
     private readonly BindableReactiveProperty<string> _symbolPrefix;
@@ -29,6 +26,66 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
 
     /// <summary>この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
     public IReadOnlyList<DenominationKey> SupportedDenominations { get; private set; } = [];
+
+    // ハードコードされた主要通貨の金種定義
+    private static readonly Dictionary<string, (string DefaultSymbol, DenominationKey[] Denominations)> _currencyDatabase = new(StringComparer.OrdinalIgnoreCase)
+    {
+        {
+            "JPY",
+            ("¥", new[]
+            {
+                new DenominationKey(10000, CurrencyCashType.Bill, "JPY"),
+                new DenominationKey(5000, CurrencyCashType.Bill, "JPY"),
+                new DenominationKey(2000, CurrencyCashType.Bill, "JPY"),
+                new DenominationKey(1000, CurrencyCashType.Bill, "JPY"),
+                new DenominationKey(500, CurrencyCashType.Coin, "JPY"),
+                new DenominationKey(100, CurrencyCashType.Coin, "JPY"),
+                new DenominationKey(50, CurrencyCashType.Coin, "JPY"),
+                new DenominationKey(10, CurrencyCashType.Coin, "JPY"),
+                new DenominationKey(5, CurrencyCashType.Coin, "JPY"),
+                new DenominationKey(1, CurrencyCashType.Coin, "JPY")
+            })
+        },
+        {
+            "USD",
+            ("$", new[]
+            {
+                new DenominationKey(100, CurrencyCashType.Bill, "USD"),
+                new DenominationKey(50, CurrencyCashType.Bill, "USD"),
+                new DenominationKey(20, CurrencyCashType.Bill, "USD"),
+                new DenominationKey(10, CurrencyCashType.Bill, "USD"),
+                new DenominationKey(5, CurrencyCashType.Bill, "USD"),
+                new DenominationKey(1, CurrencyCashType.Bill, "USD"),
+                new DenominationKey(1, CurrencyCashType.Coin, "USD"),
+                new DenominationKey(0.5m, CurrencyCashType.Coin, "USD"),
+                new DenominationKey(0.25m, CurrencyCashType.Coin, "USD"),
+                new DenominationKey(0.1m, CurrencyCashType.Coin, "USD"),
+                new DenominationKey(0.05m, CurrencyCashType.Coin, "USD"),
+                new DenominationKey(0.01m, CurrencyCashType.Coin, "USD")
+            })
+        },
+        {
+            "EUR",
+            ("€", new[]
+            {
+                new DenominationKey(500, CurrencyCashType.Bill, "EUR"),
+                new DenominationKey(200, CurrencyCashType.Bill, "EUR"),
+                new DenominationKey(100, CurrencyCashType.Bill, "EUR"),
+                new DenominationKey(50, CurrencyCashType.Bill, "EUR"),
+                new DenominationKey(20, CurrencyCashType.Bill, "EUR"),
+                new DenominationKey(10, CurrencyCashType.Bill, "EUR"),
+                new DenominationKey(5, CurrencyCashType.Bill, "EUR"),
+                new DenominationKey(2, CurrencyCashType.Coin, "EUR"),
+                new DenominationKey(1, CurrencyCashType.Coin, "EUR"),
+                new DenominationKey(0.5m, CurrencyCashType.Coin, "EUR"),
+                new DenominationKey(0.2m, CurrencyCashType.Coin, "EUR"),
+                new DenominationKey(0.1m, CurrencyCashType.Coin, "EUR"),
+                new DenominationKey(0.05m, CurrencyCashType.Coin, "EUR"),
+                new DenominationKey(0.02m, CurrencyCashType.Coin, "EUR"),
+                new DenominationKey(0.01m, CurrencyCashType.Coin, "EUR")
+            })
+        }
+    };
 
     /// <summary>設定プロバイダーを指定してメタデータプロバイダーを初期化する。</summary>
     public CurrencyMetadataProvider(ConfigurationProvider configProvider)
@@ -57,11 +114,13 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
         var currencyCode = _currencyCode.Value;
         var cultureCode = _cultureCode.Value;
 
-        // MoneyKind4Opos アセンブリから対応する通貨クラスを探す
-        var currencyType = FindCurrencyType(currencyCode) ?? FindCurrencyType("JPY")!;
+        if (!_currencyDatabase.TryGetValue(currencyCode, out var currencyData))
+        {
+            currencyData = _currencyDatabase["JPY"];
+        }
 
         // 通貨記号を取得
-        var rawSymbol = GetStaticPropertyValue<CurrencyFormattingOptions>(currencyType, "Local")?.Symbol ?? "";
+        var rawSymbol = currencyData.DefaultSymbol;
         
         // JPY の場合、ロケールによって表示位置を調整する
         if (currencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
@@ -84,26 +143,7 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
             _symbolSuffix.Value = "";
         }
 
-
-        // 金種リストを構築
-        var denominations = new List<DenominationKey>();
-
-        var coins = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(currencyType, "Coins");
-        if (coins != null)
-        {
-            denominations.AddRange(coins.Select(c => new DenominationKey(c.Value, CashType.Coin)));
-        }
-
-        var bills = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(currencyType, "Bills");
-        if (bills != null)
-        {
-            denominations.AddRange(bills.Select(b => new DenominationKey(b.Value, CashType.Bill)));
-        }
-
-        // 額面の降順、同じ額面なら紙幣優先でソート
-        SupportedDenominations = [.. denominations
-            .OrderByDescending(d => d.Value)
-            .ThenByDescending(d => d.Type)];
+        SupportedDenominations = currencyData.Denominations;
     }
 
     /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。</summary>
@@ -114,45 +154,28 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
     {
         var isJapanese = cultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
 
-        // JPY の場合の特化処理
         if (CurrencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
         {
             if (isJapanese)
             {
-                return $"{key.Value}円";
+                return $"{key.Value:N0}円";
             }
             else
             {
-                // Format with group separator for English (e.g., 10,000 Yen)
                 return $"{key.Value:N0} Yen";
             }
         }
-
-        var currencyType = FindCurrencyType(CurrencyCode) ?? FindCurrencyType("JPY")!;
-        var faces = GetStaticPropertyValue<IEnumerable<CashFaceInfo>>(currencyType, key.Type == CashType.Coin ? "Coins" : "Bills");
-        var face = faces?.FirstOrDefault(f => f.Value == key.Value);
-
-        if (face != null)
+        
+        if (CurrencyCode.Equals("USD", StringComparison.OrdinalIgnoreCase))
         {
-            // MoneyKind4Opos の Name を使用（例: "100 Yen Coin", "1 Dollar Bill"）
-            return face.Name ?? $"{key.Value} ({key.Type})";
+            return key.Type == CurrencyCashType.Bill ? $"${key.Value:N0} Bill" : $"${key.Value} Coin";
+        }
+        
+        if (CurrencyCode.Equals("EUR", StringComparison.OrdinalIgnoreCase))
+        {
+            return key.Type == CurrencyCashType.Bill ? $"€{key.Value:N0} Note" : $"€{key.Value} Coin";
         }
 
-        return $"{key.Value} ({key.Type})";
-    }
-
-    private static Type? FindCurrencyType(string code)
-    {
-        return typeof(ICurrency).Assembly.GetTypes()
-            .FirstOrDefault(t =>
-                typeof(ICurrency).IsAssignableFrom(t) &&
-                !t.IsInterface && !t.IsAbstract &&
-                GetStaticPropertyValue<Iso4217>(t, "Code").ToString().Equals(code, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static T? GetStaticPropertyValue<T>(Type type, string propertyName)
-    {
-        var prop = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Static);
-        return (T?)prop?.GetValue(null);
+        return $"{key.Value:N0} ({key.Type})";
     }
 }

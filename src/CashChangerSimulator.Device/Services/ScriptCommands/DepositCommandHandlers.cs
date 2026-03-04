@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Services.ScriptCommands;
@@ -25,7 +24,7 @@ public class TrackDepositCommandHandler(DepositController depositController) : I
 
     public async Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
     {
-        var type = cmd.Type?.ToLower() == "coin" ? CashType.Coin : CashType.Bill;
+        var type = cmd.Type?.ToLower() == "coin" ? CurrencyCashType.Coin : CurrencyCashType.Bill;
         var value = ScriptExecutionService.ResolveValue(cmd.Value, context);
         var key = new DenominationKey(value, type, cmd.Currency ?? "JPY");
         logger.ZLogDebug($"TrackDeposit: {key} (Count: {cmd.Count})");
@@ -90,7 +89,7 @@ public class AssertCommandHandler(Inventory inventory) : IScriptCommandHandler
         if (target == "inventory")
         {
             var denomValue = ScriptExecutionService.ResolveValue(cmd.Denom ?? 0, context);
-            var key = new DenominationKey(denomValue, cmd.Type?.ToLower() == "coin" ? CashType.Coin : CashType.Bill, cmd.Currency ?? "JPY");
+            var key = new DenominationKey(denomValue, cmd.Type?.ToLower() == "coin" ? CurrencyCashType.Coin : CurrencyCashType.Bill, cmd.Currency ?? "JPY");
             var count = inventory.GetCount(key);
             if (count != expected)
             {

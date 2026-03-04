@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -9,10 +8,10 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing RepayDepositTests functionality.</summary>
 public class RepayDepositTests
 {
-    private SimulatorCashChanger CreateSimulator()
+    private InternalSimulatorCashChanger CreateSimulator()
     {
         // Using default constructor which resolves via SimulatorServices or creates defaults
-        return new SimulatorCashChanger();
+        return new InternalSimulatorCashChanger();
     }
 
     /// <summary>Tests the behavior of CapRepayDepositShouldBeTrue to ensure proper functionality.</summary>
@@ -29,7 +28,7 @@ public class RepayDepositTests
     {
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
-        var b1000 = new DenominationKey(1000, CashType.Bill);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         
         // Initial inventory check
         var initialCounts = simulator.ReadCashCounts();
@@ -44,7 +43,7 @@ public class RepayDepositTests
         
         // Simulate bill insertion (Directly via controller for test simplicity, 
         // normally triggered by hardware/UI)
-        var controller = (DepositController)typeof(SimulatorCashChanger)
+        var controller = (DepositController)typeof(InternalSimulatorCashChanger)
             .GetField("_depositController", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .GetValue(simulator)!;
         

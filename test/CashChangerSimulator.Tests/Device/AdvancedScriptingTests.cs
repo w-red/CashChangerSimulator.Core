@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Services;
 using Moq;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -44,7 +43,7 @@ public class AdvancedScriptingTests
         await service.ExecuteScriptAsync(json);
 
         // Assert
-        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inv.GetCount(key1000).ShouldBe(3);
     }
 
@@ -76,7 +75,7 @@ public class AdvancedScriptingTests
         await service.ExecuteScriptAsync(json);
 
         // Assert
-        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inv.GetCount(key1000).ShouldBe(1); // 3 deposited - 2 dispensed
         inv.CalculateTotal().ShouldBe(1000); // 3000 - 2000
     }
@@ -132,7 +131,7 @@ public class AdvancedScriptingTests
         await service.ExecuteScriptAsync(json);
 
         // Assert (スクリプト内で Assert が通れば例外は出ない)
-        var key500 = new DenominationKey(500, CashType.Coin, "JPY");
+        var key500 = new DenominationKey(500, CurrencyCashType.Coin, "JPY");
         inv.GetCount(key500).ShouldBe(2);
     }
 }

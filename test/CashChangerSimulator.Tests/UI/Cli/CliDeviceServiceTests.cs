@@ -16,7 +16,7 @@ public class CliDeviceServiceTests : CliTestBase
         // Arrange
         var configProvider = new ConfigurationProvider();
         configProvider.Config.Simulation.HotStart = false;
-        var realChanger = new SimulatorCashChanger(configProvider, null, null, null, null, null, null, null)
+        var realChanger = new InternalSimulatorCashChanger(configProvider, null, null, null, null, null, null, null)
         {
             // SkipStateVerification = true // Claim 内部で _isOpen のチェックが行われ、例外になる
         };
@@ -37,7 +37,7 @@ public class CliDeviceServiceTests : CliTestBase
     public void EnableShouldHandlePosControlExceptionWhenDeviceIsNotClaimed()
     {
         // Arrange
-        var realChanger = new SimulatorCashChanger(null, null, null, null, null, null, null, null)
+        var realChanger = new InternalSimulatorCashChanger(null, null, null, null, null, null, null, null)
         {
             // SkipStateVerification = true
         };

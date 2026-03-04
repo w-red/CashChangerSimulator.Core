@@ -14,7 +14,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing AsyncModeReliabilityTests functionality.</summary>
 public class AsyncModeReliabilityTests
 {
-    private class ReliabilityTestChanger : SimulatorCashChanger
+    private class ReliabilityTestChanger : InternalSimulatorCashChanger
     {
         public CashDispenseStatus StatusAtEvent { get; private set; }
         public int ResultCodeAtEvent { get; private set; }
@@ -55,7 +55,7 @@ public class AsyncModeReliabilityTests
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(100, MoneyKind4Opos.Currencies.Interfaces.CashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
         var hardware = new HardwareStatusManager();
         var controller = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);

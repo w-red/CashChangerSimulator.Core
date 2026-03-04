@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
@@ -14,8 +13,8 @@ public class StatusHierarchyTests
     {
         // Arrange
         var inventory = new Inventory();
-        var d1 = new DenominationKey(1000, CashType.Bill);
-        var d2 = new DenominationKey(5000, CashType.Bill);
+        var d1 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var d2 = new DenominationKey(5000, CurrencyCashType.Bill);
 
         var monitors = new List<CashStatusMonitor>
         {

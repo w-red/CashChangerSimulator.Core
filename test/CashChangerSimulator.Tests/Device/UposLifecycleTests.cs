@@ -10,10 +10,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>SimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。</summary>
+/// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。</summary>
 public class UposLifecycleTests
 {
-    private static SimulatorCashChanger CreateCashChanger()
+    private static InternalSimulatorCashChanger CreateCashChanger()
     {
         var configProvider = new ConfigurationProvider();
         configProvider.Config.Simulation.HotStart = false; // ColdStart is now the baseline
@@ -35,7 +35,7 @@ public class UposLifecycleTests
         var depositController = new DepositController(inv, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
-        return new SimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw);
+        return new InternalSimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw);
     }
 
     /// <summary>占有されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。</summary>

@@ -6,12 +6,12 @@ namespace CashChangerSimulator.Tests.Device;
 
 public class DirectIOStrategyTest
 {
-    private readonly SimulatorCashChanger _device;
+    private readonly InternalSimulatorCashChanger _device;
 
     public DirectIOStrategyTest()
     {
-        // SimulatorCashChanger を初期化（SkipStateVerification = true にして OPOS API の制約を回避）
-        _device = new SimulatorCashChanger();
+        // InternalSimulatorCashChanger を初期化（SkipStateVerification = true にして OPOS API の制約を回避）
+        _device = new InternalSimulatorCashChanger();
         _device.SkipStateVerification = true;
         _device.Open();
     }
@@ -28,7 +28,7 @@ public class DirectIOStrategyTest
         // Assert
         Assert.Equal(1, result.Data);
         // HardwareStatusManager を通じて状態が変わったかを確認したいが、
-        // SimulatorCashChanger の非公開フィールドなので間接的に確認するか、
+        // InternalSimulatorCashChanger の非公開フィールドなので間接的に確認するか、
         // DirectIO の実行結果で判断する。
         // ここでは Strategy 単体の責務を検証する。
     }
@@ -65,6 +65,6 @@ public class DirectIOStrategyTest
 
         // GetVersion
         var resultVersion = _device.DirectIO(DirectIOCommands.GetVersion, 0, "");
-        Assert.StartsWith("SimulatorCashChanger v", resultVersion.Object as string);
+        Assert.StartsWith("InternalSimulatorCashChanger v", resultVersion.Object as string);
     }
 }

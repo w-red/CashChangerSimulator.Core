@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Parsers;
@@ -10,21 +9,21 @@ public class CashCountParserTests
 {
     private readonly List<DenominationKey> _jpyKeys =
     [
-        new DenominationKey(10000, CashType.Bill, "JPY"),
-        new DenominationKey(5000, CashType.Bill, "JPY"),
-        new DenominationKey(1000, CashType.Bill, "JPY"),
-        new DenominationKey(500, CashType.Coin, "JPY"),
-        new DenominationKey(100, CashType.Coin, "JPY")
+        new DenominationKey(10000, CurrencyCashType.Bill, "JPY"),
+        new DenominationKey(5000, CurrencyCashType.Bill, "JPY"),
+        new DenominationKey(1000, CurrencyCashType.Bill, "JPY"),
+        new DenominationKey(500, CurrencyCashType.Coin, "JPY"),
+        new DenominationKey(100, CurrencyCashType.Coin, "JPY")
     ];
 
     private readonly List<DenominationKey> _usdKeys =
     [
-        new DenominationKey(10, CashType.Bill, "USD"),
-        new DenominationKey(5, CashType.Bill, "USD"),
-        new DenominationKey(1, CashType.Bill, "USD"), // $1 Bill
-        new DenominationKey(1, CashType.Coin, "USD"), // $1 Coin
-        new DenominationKey(0.25m, CashType.Coin, "USD"),
-        new DenominationKey(0.1m, CashType.Coin, "USD")
+        new DenominationKey(10, CurrencyCashType.Bill, "USD"),
+        new DenominationKey(5, CurrencyCashType.Bill, "USD"),
+        new DenominationKey(1, CurrencyCashType.Bill, "USD"), // $1 Bill
+        new DenominationKey(1, CurrencyCashType.Coin, "USD"), // $1 Coin
+        new DenominationKey(0.25m, CurrencyCashType.Coin, "USD"),
+        new DenominationKey(0.1m, CurrencyCashType.Coin, "USD")
     ];
 
     [Fact]

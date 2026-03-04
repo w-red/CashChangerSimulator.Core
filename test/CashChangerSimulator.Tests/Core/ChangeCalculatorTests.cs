@@ -2,7 +2,6 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
-using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
@@ -15,11 +14,11 @@ public class ChangeCalculatorTests
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(1000, CashType.Bill), 10);
-        inventory.SetCount(new DenominationKey(500, CashType.Coin), 10);
-        inventory.SetCount(new DenominationKey(100, CashType.Coin), 10);
-        inventory.SetCount(new DenominationKey(50, CashType.Coin), 10);
-        inventory.SetCount(new DenominationKey(10, CashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
+        inventory.SetCount(new DenominationKey(500, CurrencyCashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(50, CurrencyCashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(10, CurrencyCashType.Coin), 10);
 
         var calculator = new ChangeCalculator();
 
@@ -27,11 +26,11 @@ public class ChangeCalculatorTests
         var result = calculator.Calculate(inventory, 1860m);
 
         // Assert
-        result[new DenominationKey(1000, CashType.Bill)].ShouldBe(1);
-        result[new DenominationKey(500, CashType.Coin)].ShouldBe(1);
-        result[new DenominationKey(100, CashType.Coin)].ShouldBe(3);
-        result[new DenominationKey(50, CashType.Coin)].ShouldBe(1);
-        result[new DenominationKey(10, CashType.Coin)].ShouldBe(1);
+        result[new DenominationKey(1000, CurrencyCashType.Bill)].ShouldBe(1);
+        result[new DenominationKey(500, CurrencyCashType.Coin)].ShouldBe(1);
+        result[new DenominationKey(100, CurrencyCashType.Coin)].ShouldBe(3);
+        result[new DenominationKey(50, CurrencyCashType.Coin)].ShouldBe(1);
+        result[new DenominationKey(10, CurrencyCashType.Coin)].ShouldBe(1);
     }
 
     /// <summary>在庫が不足している場合、例外がスローされることを検証する。</summary>
@@ -40,7 +39,7 @@ public class ChangeCalculatorTests
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(100, CashType.Coin), 2); // 200円分のみ
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 2); // 200円分のみ
 
         var calculator = new ChangeCalculator();
 
@@ -56,7 +55,7 @@ public class ChangeCalculatorTests
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(100, CashType.Coin), 10);
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         // 50円玉がない
 
         var calculator = new ChangeCalculator();
@@ -73,9 +72,9 @@ public class ChangeCalculatorTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denom1000 = new DenominationKey(1000, CashType.Bill);
-        var denom500 = new DenominationKey(500, CashType.Coin);
-        var denom100 = new DenominationKey(100, CashType.Coin);
+        var denom1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var denom500 = new DenominationKey(500, CurrencyCashType.Coin);
+        var denom100 = new DenominationKey(100, CurrencyCashType.Coin);
 
         inventory.SetCount(denom1000, 10);
         inventory.SetCount(denom500, 10);

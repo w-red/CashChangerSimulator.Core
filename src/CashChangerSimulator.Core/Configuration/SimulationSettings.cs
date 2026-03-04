@@ -14,4 +14,7 @@ public class SimulationSettings
 
     /// <summary>起動時にデバイスを自動オープン (Hot Start) するかどうか。</summary>
     public bool HotStart { get; set; } = false;
+
+    /// <summary>リアルタイムデータの通知能力を持っているかどうか。</summary>
+    public bool CapRealTimeData { get; set; } = true;
 }

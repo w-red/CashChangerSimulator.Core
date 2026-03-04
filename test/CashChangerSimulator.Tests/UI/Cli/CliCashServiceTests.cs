@@ -12,7 +12,7 @@ public class CliCashServiceTests : CliTestBase
     [Fact]
     public void EndDepositShouldUpdateResultCodeAndPrintErrorMessageWhenNotInDepositMode()
     {
-        var realChanger = new SimulatorCashChanger(null, null, null, null, null, null, null, null)
+        var realChanger = new InternalSimulatorCashChanger(null, null, null, null, null, null, null, null)
         {
             SkipStateVerification = true
         };
@@ -36,7 +36,7 @@ public class CliCashServiceTests : CliTestBase
     public void DispenseShouldHandlePosControlExceptionAndCheckExtendedErrorCodeWhenInventoryIsInsufficient()
     {
         // Arrange
-        var realChanger = new SimulatorCashChanger(null, null, null, null, null, null, null, null)
+        var realChanger = new InternalSimulatorCashChanger(null, null, null, null, null, null, null, null)
         {
             SkipStateVerification = true
         };

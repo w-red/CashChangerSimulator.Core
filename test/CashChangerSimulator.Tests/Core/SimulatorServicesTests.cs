@@ -45,7 +45,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeSameAs(inventory);
     }
 
-    /// <summary>SimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証する。</summary>
+    /// <summary>InternalSimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証する。</summary>
     [Fact]
     public void SimulatorCashChangerShouldUseProviderInstancesWhenAvailable()
     {
@@ -74,8 +74,8 @@ public class SimulatorServicesTests : IDisposable
             
         SimulatorServices.Provider = provider;
 
-        // SimulatorCashChanger default constructor should pick up from SimulatorServices
-        var cc = new SimulatorCashChanger();
+        // InternalSimulatorCashChanger default constructor should pick up from SimulatorServices
+        var cc = new InternalSimulatorCashChanger();
 
         // Verify via ReadCashCounts (which uses _inventory internally)
         var ex = Should.Throw<Microsoft.PointOfService.PosControlException>(

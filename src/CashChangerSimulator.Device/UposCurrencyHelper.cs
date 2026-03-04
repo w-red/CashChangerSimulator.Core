@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Models;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Device;
 
@@ -32,12 +31,12 @@ public static class UposCurrencyHelper
             .ToList();
 
         var coins = activeUnits
-            .Where(kv => kv.Key.Type == CashType.Coin)
+            .Where(kv => kv.Key.Type == CurrencyCashType.Coin)
             .Select(kv => GetNominalValue(kv.Key))
             .ToArray();
 
         var bills = activeUnits
-            .Where(kv => kv.Key.Type == CashType.Bill)
+            .Where(kv => kv.Key.Type == CurrencyCashType.Bill)
             .Select(kv => GetNominalValue(kv.Key))
             .ToArray();
 

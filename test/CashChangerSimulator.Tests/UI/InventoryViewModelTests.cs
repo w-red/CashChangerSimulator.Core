@@ -6,7 +6,6 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.UI.Wpf.ViewModels;
-using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
 
@@ -29,8 +28,8 @@ public class InventoryViewModelTests
         };
 
         var inv = new Inventory();
-        var key100 = new DenominationKey(100, CashType.Coin, "JPY");
-        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
+        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inv.SetCount(key100, 10);
         inv.SetCount(key1000, 5);
 
@@ -41,7 +40,7 @@ public class InventoryViewModelTests
         var aggregator = new OverallStatusAggregator(monitorsProvider.Monitors);
         var hw = new HardwareStatusManager();
         var depositController = new DepositController(inv, hw);
-        var mockChanger = new Moq.Mock<SimulatorCashChanger>();
+        var mockChanger = new Moq.Mock<InternalSimulatorCashChanger>();
 
         var vm = new InventoryViewModel(inv, history, aggregator, config, monitorsProvider, metadataProvider, hw, depositController, mockChanger.Object);
         return (vm, inv, config);
@@ -53,8 +52,8 @@ public class InventoryViewModelTests
     {
         // Arrange
         var (vm, inv, config) = CreateViewModel();
-        var key100 = new DenominationKey(100, CashType.Coin, "JPY");
-        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
+        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
 
         // Act
         vm.CollectAllCommand.Execute(Unit.Default);
@@ -70,8 +69,8 @@ public class InventoryViewModelTests
     {
         // Arrange
         var (vm, inv, config) = CreateViewModel();
-        var key100 = new DenominationKey(100, CashType.Coin, "JPY");
-        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
+        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
 
         // Act
         vm.ReplenishAllCommand.Execute(Unit.Default);

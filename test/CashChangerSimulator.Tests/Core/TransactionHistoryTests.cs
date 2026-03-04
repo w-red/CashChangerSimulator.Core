@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
-using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
 
@@ -18,8 +17,8 @@ public class TransactionHistoryTests
         var history = new TransactionHistory();
         var counts = new Dictionary<DenominationKey, int>
         {
-            { new DenominationKey(1000, CashType.Bill), 2 },
-            { new DenominationKey(500, CashType.Coin), 1 }
+            { new DenominationKey(1000, CurrencyCashType.Bill), 2 },
+            { new DenominationKey(500, CurrencyCashType.Coin), 1 }
         };
         var entry = new TransactionEntry(DateTimeOffset.Now, TransactionType.Deposit, 2500m, counts);
 
@@ -56,7 +55,7 @@ public class TransactionHistoryTests
     public void TransactionHistoryShouldConvertStateCorrectly()
     {
         var history = new TransactionHistory();
-        var key = new DenominationKey(1000, CashType.Bill, "JPY");
+        var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Refill, 5000m, new Dictionary<DenominationKey, int> { { key, 5 } }));
 
         var state = history.ToState();

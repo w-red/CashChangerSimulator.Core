@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core.Models;
-using MoneyKind4Opos.Currencies.Interfaces;
 using R3;
 using Shouldly;
 
@@ -14,7 +13,7 @@ public class InventoryTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CashType.Bill);
+        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // Act
         inventory.Add(denomination, 5);
@@ -29,7 +28,7 @@ public class InventoryTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = new DenominationKey(500, CashType.Coin);
+        var denomination = new DenominationKey(500, CurrencyCashType.Coin);
 
         // Act
         var count = inventory.GetCount(denomination);
@@ -44,9 +43,9 @@ public class InventoryTests
     {
         // Arrange
         var inventory = new Inventory();
-        inventory.Add(new DenominationKey(1000, CashType.Bill), 2); // 2000
-        inventory.Add(new DenominationKey(500, CashType.Coin), 3);  // 1500
-        inventory.Add(new DenominationKey(100, CashType.Coin), 10); // 1000
+        inventory.Add(new DenominationKey(1000, CurrencyCashType.Bill), 2); // 2000
+        inventory.Add(new DenominationKey(500, CurrencyCashType.Coin), 3);  // 1500
+        inventory.Add(new DenominationKey(100, CurrencyCashType.Coin), 10); // 1000
         // Total: 4500
 
         // Act
@@ -62,7 +61,7 @@ public class InventoryTests
     {
         // Arrange
         var inventory = new Inventory();
-        var denomination = new DenominationKey(100, CashType.Coin);
+        var denomination = new DenominationKey(100, CurrencyCashType.Coin);
         DenominationKey? notifiedDenomination = null;
         using var _ = inventory.Changed.Subscribe(d => notifiedDenomination = d);
 
@@ -79,8 +78,8 @@ public class InventoryTests
     {
         // Arrange
         var inventory = new Inventory();
-        var b1000 = new DenominationKey(1000, CashType.Bill);
-        var c100 = new DenominationKey(100, CashType.Coin);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var c100 = new DenominationKey(100, CurrencyCashType.Coin);
         inventory.SetCount(b1000, 10);
         inventory.SetCount(c100, 50);
 
