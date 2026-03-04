@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;

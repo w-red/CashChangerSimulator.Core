@@ -1,8 +1,5 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using Microsoft.PointOfService;
-using System;
-using System.Linq;
 
 namespace CashChangerSimulator.Device.Strategies;
 
@@ -18,7 +15,7 @@ public class AdjustCashCountsStrStrategy : IDirectIOCommand
             try
             {
                 var activeKeys = device._inventory.AllCounts.Select(kv => kv.Key).ToList();
-                var factor = device.GetCurrencyFactor(device.CurrencyCode);
+                var factor = UposCurrencyHelper.GetCurrencyFactor(device.CurrencyCode);
                 var counts = CashCountParser.Parse(strVal, activeKeys, factor);
                 device.AdjustCashCounts(counts);
                 return new DirectIOData(data, obj);

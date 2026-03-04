@@ -1,8 +1,6 @@
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Strategies;
-using Microsoft.PointOfService;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

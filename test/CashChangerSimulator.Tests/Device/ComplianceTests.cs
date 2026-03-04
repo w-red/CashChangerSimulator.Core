@@ -11,7 +11,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing ComplianceTests functionality.</summary>
 public class ComplianceTests
 {
-    private (SimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history) CreateChanger()
+    private (SimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history, DeviceEventHistoryObserver observer) CreateChanger()
     {
         var inventory = new Inventory();
         var hardwareStatusManager = new HardwareStatusManager();
@@ -34,7 +34,9 @@ public class ComplianceTests
                 DataEventEnabled = true
             };
 
-        return (changer, controller, inventory, history);
+        var observer = new DeviceEventHistoryObserver(changer, history);
+
+        return (changer, controller, inventory, history, observer);
     }
 
     /// <summary>Tests the behavior of ReadCashCountsShouldReportDiscrepancy to ensure proper functionality.</summary>
@@ -42,7 +44,7 @@ public class ComplianceTests
     public void ReadCashCountsShouldReportDiscrepancy()
     {
         // Arrange
-        var (changer, _, inventory, _) = CreateChanger();
+        var (changer, _, inventory, _, _) = CreateChanger();
         inventory.HasDiscrepancy = true;
 
         // Act
@@ -57,7 +59,7 @@ public class ComplianceTests
     public void RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix()
     {
         // Arrange
-        var (changer, controller, _, _) = CreateChanger();
+        var (changer, controller, _, _, _) = CreateChanger();
         changer.RealTimeDataEnabled = false;
         int eventCount = 0;
         changer.OnEventQueued += (e) => { if (e is DataEventArgs) eventCount++; };
@@ -76,7 +78,7 @@ public class ComplianceTests
     public void RealTimeDataEnabledTrueShouldFireDataEventOnTrack()
     {
         // Arrange
-        var (changer, controller, _, history) = CreateChanger();
+        var (changer, controller, _, history, _) = CreateChanger();
         changer.RealTimeDataEnabled = true;
         changer.BeginDeposit();
 
@@ -96,7 +98,7 @@ public class ComplianceTests
     public void DirectIOSimulateRemovedShouldFireStatusUpdateEvent()
     {
         // Arrange
-        var (changer, _, _, _) = CreateChanger();
+        var (changer, _, _, _, _) = CreateChanger();
         int status = -1;
         changer
             .OnEventQueued
@@ -117,7 +119,7 @@ public class ComplianceTests
     public void DirectIOSimulateInsertedShouldFireStatusUpdateEvent()
     {
         // Arrange
-        var (changer, _, _, _) = CreateChanger();
+        var (changer, _, _, _, _) = CreateChanger();
         int status = -1;
         changer.OnEventQueued += (e) => { if (e is StatusUpdateEventArgs se) status = se.Status; };
 
@@ -133,7 +135,7 @@ public class ComplianceTests
     public void DirectIOSetDiscrepancyShouldUpdateHasDiscrepancy()
     {
         // Arrange
-        var (changer, _, _, _) = CreateChanger();
+        var (changer, _, _, _, _) = CreateChanger();
         changer.ReadCashCounts().Discrepancy.ShouldBeFalse();
 
         // Act & Assert (Enable)
@@ -150,7 +152,7 @@ public class ComplianceTests
     public void DirectIOAdjustCashCountsStrShouldUpdateInventory()
     {
         // Arrange
-        var (changer, _, inventory, _) = CreateChanger();
+        var (changer, _, inventory, _, _) = CreateChanger();
         var jpy1000 = new DenominationKey(1000, CashType.Bill, "JPY");
         // Seed the inventory first so the parser knows this key exists
         inventory.SetCount(jpy1000, 0);

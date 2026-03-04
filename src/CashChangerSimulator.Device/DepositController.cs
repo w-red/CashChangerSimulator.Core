@@ -15,16 +15,18 @@ public class DepositController : IDisposable
 {
     private readonly Inventory _inventory;
     private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly CashChangerManager? _manager;
 
     /// <summary>在庫を指定して初期化する。</summary>
-    public DepositController(Inventory inventory) : this(inventory, null) { }
+    public DepositController(Inventory inventory) : this(inventory, null, null) { }
 
     /// <summary>在庫とステータスマネージャーを指定して初期化する。</summary>
     [Inject]
-    public DepositController(Inventory inventory, HardwareStatusManager? hardwareStatusManager)
+    public DepositController(Inventory inventory, HardwareStatusManager? hardwareStatusManager = null, CashChangerManager? manager = null)
     {
         _inventory = inventory;
         _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+        _manager = manager;
     }
 
     private readonly ILogger<DepositController> _logger = LogProvider.CreateLogger<DepositController>();
@@ -126,10 +128,18 @@ public class DepositController : IDisposable
         }
         else
         {
-            // Store (Change/NoChange): Commit deposit to inventory
-            foreach (var kv in _depositCounts)
+            // Store (Change/NoChange): Commit deposit to inventory via Manager
+            if (_manager != null)
             {
-                _inventory.Add(kv.Key, kv.Value);
+                _manager.Deposit(new Dictionary<DenominationKey, int>(_depositCounts));
+            }
+            else
+            {
+                // Fallback for tests lacking manager injection
+                foreach (var kv in _depositCounts)
+                {
+                    _inventory.Add(kv.Key, kv.Value);
+                }
             }
         }
         // For NoChange/Change, we check if device is healthy

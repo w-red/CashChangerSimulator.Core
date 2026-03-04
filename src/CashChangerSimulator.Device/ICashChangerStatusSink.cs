@@ -1,5 +1,3 @@
-using System;
-
 namespace CashChangerSimulator.Device;
 
 /// <summary>デバイスの状態変更通知を受け取るためのシンクインターフェース。</summary>

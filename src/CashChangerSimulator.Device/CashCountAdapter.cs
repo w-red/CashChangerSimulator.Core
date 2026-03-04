@@ -1,8 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
-using System;
-using System.Collections.Generic;
 
 namespace CashChangerSimulator.Device;
 

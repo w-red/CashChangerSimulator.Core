@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Services.ScriptCommands;
 using Microsoft.Extensions.Logging;
-using Microsoft.PointOfService;
 using System.Text.Json;
 using ZLogger;
 

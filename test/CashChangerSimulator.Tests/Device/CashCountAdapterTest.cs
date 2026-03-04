@@ -2,7 +2,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
@@ -10,7 +9,6 @@ using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
-using MoneyKind4Opos.Currencies.Interfaces;
 using MicroResolver;
 using R3;
 using CashChangerSimulator.Device.Strategies;
@@ -21,7 +19,7 @@ using ZLogger;
 namespace CashChangerSimulator.Device;
 
 /// <summary>UPOS の CashChanger サービスオブジェクトをシミュレートするクラス。</summary>
-/// <remarks>プロパティオーバーライドは <seealso cref="SimulatorCashChanger"/> の部分クラス SimulatorCashChanger.Properties.cs に定義されています。</remarks>
+/// <remarks>プロパティオーバーライドは部分クラス SimulatorCashChanger.Properties.cs に定義されています。</remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
 public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
 {
@@ -48,7 +46,7 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     private readonly Dictionary<int, IDirectIOCommand> _directIOCommands = new();
 
     /// <summary>テスト用のイベント通知アクション。</summary>
-    internal Action<EventArgs>? OnEventQueued; // For testing
+    public Action<EventArgs>? OnEventQueued; // For UI Activity Feed & testing
 
     /// <summary>テスト用: VerifyState チェックをスキップする。OPOS ライフサイクルが利用できない単体テスト環境で使用。</summary>
     public bool SkipStateVerification { get; set; }
@@ -94,12 +92,11 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     /// <summary>現在のデバイスの状態を取得します。</summary>
     public override ControlState State
     {
-        get
-        {
-            if (_lifecycleState is ClosedState) return ControlState.Closed;
-            if (_asyncProcessing) return ControlState.Busy;
-            return ControlState.Idle;
-        }
+        get => _lifecycleState is ClosedState
+            ? ControlState.Closed
+            : _asyncProcessing
+                ? ControlState.Busy
+                : ControlState.Idle;
     }
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
@@ -110,14 +107,6 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
         if (e is DataEventArgs de)
         {
             QueueEvent(de);
-            
-            // Phase 24.1: Record DataEvent in TransactionHistory for UI Activity Feed
-            _history.Add(new TransactionEntry(
-                DateTime.Now,
-                TransactionType.DataEvent,
-                0,
-                new Dictionary<DenominationKey, int>()
-            ));
         }
         else if (e is StatusUpdateEventArgs se)
         {
@@ -126,16 +115,12 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     }
 
     /// <summary>外部クラス（Strategy/Coordinator等）からイベントを発生させます。</summary>
-    public void FireEvent(EventArgs e)
-    {
+    public void FireEvent(EventArgs e) =>
         NotifyEvent(e);
-    }
 
     /// <summary>非同期処理中フラグを設定します。</summary>
-    public void SetAsyncProcessing(bool isBusy)
-    {
+    public void SetAsyncProcessing(bool isBusy) =>
         _asyncProcessing = isBusy;
-    }
 
     // ========== Simulator UI Helpers for Lifecycle Verification ==========
 
@@ -354,7 +339,7 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     {
         VerifyState();
         ThrowIfBusy();
-        _dispenseFacade!.DispenseByAmount(amount, CurrencyCode, GetCurrencyFactor(), AsyncMode, HandleDispenseResult);
+        _dispenseFacade!.DispenseByAmount(amount, CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode), AsyncMode, HandleDispenseResult);
     }
 
     /// <summary>指定された金種と枚数の現金を払い出します。</summary>
@@ -362,7 +347,7 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     {
         VerifyState();
         ThrowIfBusy();
-        _dispenseFacade!.DispenseByCashCounts(cashCounts, _activeCurrencyCode, GetCurrencyFactor(_activeCurrencyCode), AsyncMode, HandleDispenseResult);
+        _dispenseFacade!.DispenseByCashCounts(cashCounts, _activeCurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode), AsyncMode, HandleDispenseResult);
     }
 
     private void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync)
@@ -390,7 +375,7 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
             throw new PosControlException("Device is jammed. Cannot adjust cash counts.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
         }
 
-        var dict = CashCountAdapter.ToDenominationDict(cashCounts, _activeCurrencyCode, GetCurrencyFactor(_activeCurrencyCode));
+        var dict = CashCountAdapter.ToDenominationDict(cashCounts, _activeCurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode));
         foreach (var (key, count) in dict)
         {
             _inventory.SetCount(key, count);
@@ -410,7 +395,7 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
             .OrderBy(kv => kv.Key.Type)
             .ThenBy(kv => kv.Key.Value);
 
-        var list = sorted.Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, GetCurrencyFactor())).ToList();
+        var list = sorted.Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode))).ToList();
 
         return new CashCounts([.. list], _inventory.HasDiscrepancy);
     }

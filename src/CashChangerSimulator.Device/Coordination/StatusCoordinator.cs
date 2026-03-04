@@ -1,10 +1,8 @@
 using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using Microsoft.PointOfService;
 using R3;
-using System;
 
 namespace CashChangerSimulator.Device.Coordination;
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace CashChangerSimulator.Device.Lifecycle;
 
 /// <summary>デバイスのライフサイクル状態を表すインターフェース。</summary>

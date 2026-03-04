@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Services;
 using Microsoft.Extensions.Logging;
 
 namespace CashChangerSimulator.Device.Services.ScriptCommands;

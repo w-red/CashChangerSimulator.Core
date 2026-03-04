@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -8,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Moq;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

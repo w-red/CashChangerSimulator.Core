@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
@@ -9,8 +8,6 @@ using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Moq;
-using System.Collections.Generic;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

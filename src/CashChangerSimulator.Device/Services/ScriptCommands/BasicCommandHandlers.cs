@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Device.Services;
 using Microsoft.Extensions.Logging;
 using ZLogger;
 

@@ -1,7 +1,4 @@
-using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Opos;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Device;
 
@@ -44,22 +41,22 @@ public partial class SimulatorCashChanger
     public override string[] DepositCodeList => CurrencyCodeList;
 
     /// <summary>アクティブな通貨の現在の現金一覧を取得します。</summary>
-    public override CashUnits CurrencyCashList => BuildCashUnits();
+    public override CashUnits CurrencyCashList => UposCurrencyHelper.BuildCashUnits(_inventory, _activeCurrencyCode);
     /// <summary>入金可能な現金の一覧を取得します。</summary>
-    public override CashUnits DepositCashList => CapDeposit ? BuildCashUnits() : new CashUnits();
+    public override CashUnits DepositCashList => CapDeposit ? UposCurrencyHelper.BuildCashUnits(_inventory, _activeCurrencyCode) : new CashUnits();
     /// <summary>払出可能な現金の一覧を取得します。</summary>
-    public override CashUnits ExitCashList => BuildCashUnits();
+    public override CashUnits ExitCashList => UposCurrencyHelper.BuildCashUnits(_inventory, _activeCurrencyCode);
 
     // ========== Deposit Properties ==========
 
     /// <summary>現在投入されている現金の合計金額を取得します。</summary>
-    public override int DepositAmount => (int)Math.Round(_depositController.DepositAmount * GetCurrencyFactor());
+    public override int DepositAmount => (int)Math.Round(_depositController.DepositAmount * UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode));
     /// <summary>現在投入されている現金の金種別枚数を取得します。</summary>
     public override CashCount[] DepositCounts
     {
         get => [.. _depositController.DepositCounts
             .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
-            .Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, GetCurrencyFactor()))];
+            .Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode)))];
     }
     /// <summary>現在の入金処理の状態を取得します。</summary>
     public override CashDepositStatus DepositStatus => _depositController.DepositStatus;
@@ -93,40 +90,4 @@ public partial class SimulatorCashChanger
     /// <summary>空センサーをサポートしているかどうかを取得します。</summary>
     public override bool CapEmptySensor => true;
 
-    // ========== Private Helpers ==========
-
-    private CashUnits BuildCashUnits()
-    {
-        var activeUnits = _inventory.AllCounts
-            .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
-            .OrderBy(kv => kv.Key.Value)
-            .ToList();
-
-        var coins = activeUnits
-            .Where(kv => kv.Key.Type == CashType.Coin)
-            .Select(kv => GetNominalValue(kv.Key))
-            .ToArray();
-
-        var bills = activeUnits
-            .Where(kv => kv.Key.Type == CashType.Bill)
-            .Select(kv => GetNominalValue(kv.Key))
-            .ToArray();
-
-        return new CashUnits(coins, bills);
-    }
-
-    internal int GetNominalValue(DenominationKey key)
-    {
-        return (int)Math.Round(key.Value * GetCurrencyFactor(key.CurrencyCode));
-    }
-
-    internal decimal GetCurrencyFactor(string? currencyCode = null)
-    {
-        var code = currencyCode ?? _activeCurrencyCode;
-        return code switch
-        {
-            "USD" or "EUR" or "GBP" or "CAD" or "AUD" => 100m,
-            _ => 1m
-        };
-    }
 }
