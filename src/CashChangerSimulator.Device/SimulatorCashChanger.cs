@@ -13,34 +13,37 @@ using Microsoft.PointOfService.BasicServiceObjects;
 using MoneyKind4Opos.Currencies.Interfaces;
 using MicroResolver;
 using R3;
+using CashChangerSimulator.Device.Strategies;
+using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Lifecycle;
 using ZLogger;
 
 namespace CashChangerSimulator.Device;
 
 /// <summary>UPOS の CashChanger サービスオブジェクトをシミュレートするクラス。</summary>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
-public class SimulatorCashChanger : CashChangerBasic
+public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
 {
-    private readonly Inventory _inventory;
+    internal readonly Inventory _inventory;
     private readonly TransactionHistory _history;
     private readonly CashChangerManager _manager;
     private readonly OverallStatusAggregator _statusAggregator;
-    private readonly IDisposable _statusSubscription;
     private readonly SimulatorConfiguration _config;
 
-    private readonly DepositController _depositController;
+    internal readonly DepositController _depositController;
     private readonly DispenseController _dispenseController;
-    private readonly HardwareStatusManager _hardwareStatusManager;
+    internal readonly HardwareStatusManager _hardwareStatusManager;
     private readonly ILogger<SimulatorCashChanger> _logger;
+    private StatusCoordinator? _statusCoordinator;
 
     // Status tracking for StatusUpdateEvent transitions
-    private CashChangerStatus _lastCashChangerStatus = CashChangerStatus.OK;
-    private CashChangerFullStatus _lastFullStatus = CashChangerFullStatus.OK;
 
     // Async processing state
     private bool _asyncProcessing;
     private int _asyncResultCode;
     private int _asyncResultCodeExtended;
+
+    private readonly Dictionary<int, IDirectIOCommand> _directIOCommands = new();
 
     /// <summary>テスト用のイベント通知アクション。</summary>
     internal Action<EventArgs>? OnEventQueued; // For testing
@@ -58,11 +61,11 @@ public class SimulatorCashChanger : CashChangerBasic
         {
             if (!SkipStateVerification)
             {
-                if (value && !_isOpen)
+                if (value && _lifecycleState is ClosedState)
                 {
                     throw new PosControlException("Device is not open.", ErrorCode.Closed);
                 }
-                if (value && !_isClaimed)
+                if (value && _lifecycleState is not ClaimedState)
                 {
                     throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
                 }
@@ -91,9 +94,8 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         get
         {
-            if (!_isOpen) return ControlState.Closed;
+            if (_lifecycleState is ClosedState) return ControlState.Closed;
             if (_asyncProcessing) return ControlState.Busy;
-            // NOTE: In a more complex SO, we might return ControlState.Error here if in an error condition.
             return ControlState.Idle;
         }
     }
@@ -121,67 +123,49 @@ public class SimulatorCashChanger : CashChangerBasic
         }
     }
 
+    /// <summary>外部クラス（Strategy/Coordinator等）からイベントを発生させます。</summary>
+    public void FireEvent(EventArgs e)
+    {
+        NotifyEvent(e);
+    }
+
+    /// <summary>非同期処理中フラグを設定します。</summary>
+    public void SetAsyncProcessing(bool isBusy)
+    {
+        _asyncProcessing = isBusy;
+    }
+
     // ========== Simulator UI Helpers for Lifecycle Verification ==========
 
-    private bool _isOpen;
-    private bool _isClaimed;
+    private IDeviceState _lifecycleState = new ClosedState();
+    private DeviceLifecycleContext? _lifecycleContext;
 
     /// <summary>シミュレータUIからの Open 呼び出しを受け付けます。</summary>
     public new virtual void Open()
     {
-        if (_isOpen)
-        {
-            _logger.LogWarning("Device is already open.");
-            return;
-        }
-        _isOpen = true;
-        _hardwareStatusManager.SetConnected(true);
-        _logger.LogInformation("OPOS Open called via simulator.");
+        _lifecycleContext ??= new DeviceLifecycleContext(_hardwareStatusManager, _logger, v => DeviceEnabled = v);
+        _lifecycleState = _lifecycleState.Open(_lifecycleContext);
     }
 
     /// <summary>シミュレータUIからの Close 呼び出しを受け付けます。</summary>
     public new virtual void Close()
     {
-        if (!_isOpen)
-        {
-            throw new PosControlException("Device is not open.", ErrorCode.Closed);
-        }
-        if (_isClaimed)
-        {
-            Release();
-        }
-        DeviceEnabled = false;
-        _isOpen = false;
-        _hardwareStatusManager.SetConnected(false);
-        _logger.LogInformation("OPOS Close called via simulator.");
+        _lifecycleContext ??= new DeviceLifecycleContext(_hardwareStatusManager, _logger, v => DeviceEnabled = v);
+        _lifecycleState = _lifecycleState.Close(_lifecycleContext);
     }
 
     /// <summary>シミュレータUIからの Claim 呼び出しを受け付けます。</summary>
     public new virtual void Claim(int timeout)
     {
-        if (!_isOpen)
-        {
-            throw new PosControlException("Device must be opened before claiming.", ErrorCode.Closed);
-        }
-        if (_isClaimed)
-        {
-            _logger.LogWarning("Device is already claimed.");
-            return;
-        }
-        _isClaimed = true;
-        _logger.LogInformation("OPOS Claim({0}) called via simulator.", timeout);
+        _lifecycleContext ??= new DeviceLifecycleContext(_hardwareStatusManager, _logger, v => DeviceEnabled = v);
+        _lifecycleState = _lifecycleState.Claim(_lifecycleContext, timeout);
     }
 
     /// <summary>シミュレータUIからの Release 呼び出しを受け付けます。</summary>
     public new virtual void Release()
     {
-        if (!_isClaimed)
-        {
-            throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
-        }
-        DeviceEnabled = false;
-        _isClaimed = false;
-        _logger.LogInformation("OPOS Release called via simulator.");
+        _lifecycleContext ??= new DeviceLifecycleContext(_hardwareStatusManager, _logger, v => DeviceEnabled = v);
+        _lifecycleState = _lifecycleState.Release(_lifecycleContext);
     }
 
     /// <summary>デフォルト構成で SimulatorCashChanger の新しいインスタンスを初期化します（主にテスト用）。</summary>
@@ -244,100 +228,36 @@ public class SimulatorCashChanger : CashChangerBasic
             .FirstOrDefault()
             ?? "JPY";
 
-        // Subscribe to status changes for StatusUpdateEvent
-        _statusSubscription = Disposable.Combine(
-            _statusAggregator.DeviceStatus.Subscribe(status =>
-            {
-                var newDeviceStatus = status switch
-                {
-                    CashStatus.Empty => CashChangerStatus.Empty,
-                    CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
-                    _ => CashChangerStatus.OK
-                };
+        // Subscribe to status changes via StatusCoordinator (Observer Pattern)
+        _statusCoordinator = new StatusCoordinator(
+            this,
+            _statusAggregator,
+            _hardwareStatusManager,
+            _depositController,
+            _dispenseController);
+        _statusCoordinator.Start();
 
-                if (newDeviceStatus != _lastCashChangerStatus)
-                {
-                    var previousStatus = _lastCashChangerStatus;
-                    _lastCashChangerStatus = newDeviceStatus;
+        InitializeDirectIOCommands();
+    }
 
-                    if (newDeviceStatus == CashChangerStatus.OK &&
-                        previousStatus is CashChangerStatus.Empty or CashChangerStatus.NearEmpty)
-                    {
-                        NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.EmptyOk));
-                    }
-                    else
-                    {
-                        var code = newDeviceStatus switch
-                        {
-                            CashChangerStatus.Empty => (int)UposCashChangerStatusUpdateCode.Empty,
-                            CashChangerStatus.NearEmpty => (int)UposCashChangerStatusUpdateCode.NearEmpty,
-                            _ => (int)UposCashChangerStatusUpdateCode.Ok
-                        };
-                        NotifyEvent(new StatusUpdateEventArgs(code));
-                    }
-                }
-            }),
-            _statusAggregator.FullStatus.Subscribe(status =>
-            {
-                var newFullStatus = status switch
-                {
-                    CashStatus.Full => CashChangerFullStatus.Full,
-                    CashStatus.NearFull => CashChangerFullStatus.NearFull,
-                    _ => CashChangerFullStatus.OK
-                };
+    private void InitializeDirectIOCommands()
+    {
+        var strategies = new IDirectIOCommand[]
+        {
+            new SetOverlapStrategy(),
+            new SetJamStrategy(),
+            new SetDiscrepancyStrategy(),
+            new SimulateRemovedStrategy(),
+            new SimulateInsertedStrategy(),
+            new GetVersionStrategy(),
+            new AdjustCashCountsStrStrategy(),
+            new GetDepositedSerialsStrategy()
+        };
 
-                if (newFullStatus != _lastFullStatus)
-                {
-                    var previousFullStatus = _lastFullStatus;
-                    _lastFullStatus = newFullStatus;
-
-                    if (newFullStatus == CashChangerFullStatus.OK &&
-                        previousFullStatus is CashChangerFullStatus.Full or CashChangerFullStatus.NearFull)
-                    {
-                        NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.FullOk));
-                    }
-                    else
-                    {
-                        NotifyEvent(new StatusUpdateEventArgs((int)newFullStatus));
-                    }
-                }
-            }),
-            _hardwareStatusManager.IsJammed.Subscribe(jammed =>
-            {
-                if (jammed)
-                {
-                    NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Jam));
-                }
-                else
-                {
-                    _lastCashChangerStatus = CashChangerStatus.OK;
-                    NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
-                }
-            }),
-            _hardwareStatusManager.IsOverlapped.Subscribe(overlapped =>
-            {
-                if (overlapped)
-                {
-                    _logger.ZLogWarning($"Device reported OVERLAP error.");
-                }
-            }),
-            _depositController.Changed.Subscribe(_ =>
-            {
-                if (_depositController.DepositStatus == CashDepositStatus.Count && !_depositController.IsPaused && DataEventEnabled)
-                {
-                    // DataEvent is fired if RealTimeDataEnabled is true OR if the deposit has been fixed (FixDeposit called)
-                    if (RealTimeDataEnabled || _depositController.IsFixed)
-                    {
-                        NotifyEvent(new DataEventArgs(0));
-                    }
-                }
-            }),
-            _dispenseController.Changed.Subscribe(_ =>
-            {
-                // Map Busy state to UPOS State
-                _asyncProcessing = _dispenseController.IsBusy;
-            })
-        );
+        foreach (var strategy in strategies)
+        {
+            _directIOCommands[strategy.CommandCode] = strategy;
+        }
     }
 
     private string _activeCurrencyCode;
@@ -597,75 +517,19 @@ public class SimulatorCashChanger : CashChangerBasic
     public override DirectIOData DirectIO(int command, int data, object obj)
     {
         VerifyState();
-        switch (command)
+        if (_directIOCommands.TryGetValue(command, out var strategy))
         {
-            case DirectIOCommands.SetOverlap:
-                _hardwareStatusManager.SetOverlapped(data != 0);
-                _logger.ZLogInformation($"DirectIO: SET_OVERLAP to {data != 0}");
-                return new DirectIOData(data, obj);
-
-            case DirectIOCommands.SetJam:
-                _hardwareStatusManager.SetJammed(data != 0);
-                _logger.ZLogInformation($"DirectIO: SET_JAM to {data != 0}");
-                return new DirectIOData(data, obj);
-
-            case DirectIOCommands.GetVersion:
-                var version = $"SimulatorCashChanger v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}";
-                _logger.ZLogInformation($"DirectIO: GET_VERSION -> {version}");
-                return new DirectIOData(data, version);
-
-            case DirectIOCommands.GetDepositedSerials:
-                var serials = string.Join(",", _depositController.LastDepositedSerials);
-                _logger.ZLogInformation($"DirectIO: GET_DEPOSITED_SERIALS -> {serials}");
-                return new DirectIOData(data, serials);
-
-            case DirectIOCommands.SimulateRemoved:
-                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Removed));
-                return new DirectIOData(data, "REMOVED");
-
-            case DirectIOCommands.SimulateInserted:
-                NotifyEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Inserted));
-                return new DirectIOData(data, "INSERTED");
-
-            case DirectIOCommands.SetDiscrepancy:
-                _inventory.HasDiscrepancy = (data != 0);
-                _logger.ZLogInformation($"DirectIO: SET_DISCREPANCY to {_inventory.HasDiscrepancy}");
-                return new DirectIOData(data, obj);
-
-            case DirectIOCommands.AdjustCashCountsStr:
-                if (obj is string strVal)
-                {
-                    try
-                    {
-                        var activeKeys = _inventory.AllCounts.Select(kv => kv.Key).ToList();
-                        var factor = GetCurrencyFactor(_activeCurrencyCode);
-                        var counts = CashCountParser.Parse(strVal, activeKeys, factor);
-                        AdjustCashCounts(counts); // Calls our core adjust logic
-                        _logger.ZLogInformation($"DirectIO: ADJUST_CASH_COUNTS_STR completed for '{strVal}'");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.ZLogError($"DirectIO: ADJUST_CASH_COUNTS_STR failed: {ex.Message}");
-                        throw new PosControlException($"Failed to parse adjust string: {ex.Message}", ErrorCode.Illegal, ex);
-                    }
-                }
-                else
-                {
-                    throw new PosControlException("ADJUST_CASH_COUNTS_STR requires a string object.", ErrorCode.Illegal);
-                }
-                return new DirectIOData(data, obj);
-
-            default:
-                return new DirectIOData(data, obj);
+            return strategy.Execute(data, obj, this);
         }
+        return new DirectIOData(data, obj);
     }
 
     // ========== Status Properties ==========
 
     /// <summary>デバイスの現在の状態（正常、空、ニアエンプティなど）を取得します。</summary>
-    public override CashChangerStatus DeviceStatus => _lastCashChangerStatus;
+    public override CashChangerStatus DeviceStatus => _statusCoordinator?.LastCashChangerStatus ?? CashChangerStatus.OK;
     /// <summary>デバイスの現在の満杯状態（正常、満杯、ニアフルなど）を取得します。</summary>
-    public override CashChangerFullStatus FullStatus => _lastFullStatus;
+    public override CashChangerFullStatus FullStatus => _statusCoordinator?.LastFullStatus ?? CashChangerFullStatus.OK;
 
     // ========== Async Properties ==========
 
@@ -770,12 +634,12 @@ public class SimulatorCashChanger : CashChangerBasic
         return new CashUnits(coins, bills);
     }
 
-    private int GetNominalValue(DenominationKey key)
+    internal int GetNominalValue(DenominationKey key)
     {
         return (int)Math.Round(key.Value * GetCurrencyFactor(key.CurrencyCode));
     }
 
-    private decimal GetCurrencyFactor(string? currencyCode = null)
+    internal decimal GetCurrencyFactor(string? currencyCode = null)
     {
         var code = currencyCode ?? _activeCurrencyCode;
         return code switch
