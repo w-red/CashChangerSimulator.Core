@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
 using MoneyKind4Opos.Currencies.Interfaces;
+using MicroResolver;
 using R3;
 using ZLogger;
 
@@ -48,7 +49,28 @@ public class SimulatorCashChanger : CashChangerBasic
     public bool SkipStateVerification { get; set; }
 
     /// <summary>デバイスの有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
-    public override bool DeviceEnabled { get; set; }
+    private bool _deviceEnabled;
+    /// <summary>デバイスの有効状態を取得または設定します。</summary>
+    public override bool DeviceEnabled
+    {
+        get => _deviceEnabled;
+        set
+        {
+            if (!SkipStateVerification)
+            {
+                if (value && !_isOpen)
+                {
+                    throw new PosControlException("Device is not open.", ErrorCode.Closed);
+                }
+                if (value && !_isClaimed)
+                {
+                    throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
+                }
+            }
+            _deviceEnabled = value;
+            _logger.ZLogInformation($"DeviceEnabled set to {value}.");
+        }
+    }
     /// <summary>データイベント通知の有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
     public override bool DataEventEnabled { get; set; }
 
@@ -63,6 +85,18 @@ public class SimulatorCashChanger : CashChangerBasic
 
     /// <summary>最新の操作の拡張結果コードを取得または設定します。</summary>
     public int ResultCodeExtended { get; set; }
+
+    /// <summary>現在のデバイスの状態を取得します。</summary>
+    public override ControlState State
+    {
+        get
+        {
+            if (!_isOpen) return ControlState.Closed;
+            if (_asyncProcessing) return ControlState.Busy;
+            // NOTE: In a more complex SO, we might return ControlState.Error here if in an error condition.
+            return ControlState.Idle;
+        }
+    }
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">通知するイベント引数。</param>
@@ -101,6 +135,7 @@ public class SimulatorCashChanger : CashChangerBasic
             return;
         }
         _isOpen = true;
+        _hardwareStatusManager.SetConnected(true);
         _logger.LogInformation("OPOS Open called via simulator.");
     }
 
@@ -117,6 +152,7 @@ public class SimulatorCashChanger : CashChangerBasic
         }
         DeviceEnabled = false;
         _isOpen = false;
+        _hardwareStatusManager.SetConnected(false);
         _logger.LogInformation("OPOS Close called via simulator.");
     }
 
@@ -148,33 +184,26 @@ public class SimulatorCashChanger : CashChangerBasic
         _logger.LogInformation("OPOS Release called via simulator.");
     }
 
-    /// <summary>サービスプロバイダーを使用して SimulatorCashChanger の新しいインスタンスを初期化します（DI用）。</summary>
+    /// <summary>デフォルト構成で SimulatorCashChanger の新しいインスタンスを初期化します（主にテスト用）。</summary>
     public SimulatorCashChanger()
-        : this(
-            SimulatorServices.TryResolve<ConfigurationProvider>(),
-            SimulatorServices.TryResolve<Inventory>(),
-            SimulatorServices.TryResolve<TransactionHistory>(),
-            SimulatorServices.TryResolve<CashChangerManager>(),
-            SimulatorServices.TryResolve<DepositController>(),
-            SimulatorServices.TryResolve<DispenseController>(),
-            SimulatorServices.TryResolve<OverallStatusAggregatorProvider>(),
-            SimulatorServices.TryResolve<HardwareStatusManager>())
+        : this(null, null, null, null, null, null, null, null)
     {
     }
 
-    /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。</summary>
+    /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。DI時は [Inject] 属性のものが優先されます。</summary>
+    [Inject]
     public SimulatorCashChanger(
-        ConfigurationProvider? configProvider,
-        Inventory? inventory,
-        TransactionHistory? history,
-        CashChangerManager? manager,
-        DepositController? depositController,
-        DispenseController? dispenseController,
-        OverallStatusAggregatorProvider? aggregatorProvider,
-        HardwareStatusManager? hardwareStatusManager)
+        ConfigurationProvider? configProvider = null,
+        Inventory? inventory = null,
+        TransactionHistory? history = null,
+        CashChangerManager? manager = null,
+        DepositController? depositController = null,
+        DispenseController? dispenseController = null,
+        OverallStatusAggregatorProvider? aggregatorProvider = null,
+        HardwareStatusManager? hardwareStatusManager = null)
     {
-        // Load settings from TOML
-        _config = configProvider?.Config ?? new SimulatorConfiguration();
+        var actualConfigProvider = configProvider ?? new ConfigurationProvider();
+        _config = actualConfigProvider.Config;
 
         DevicePath = "SimulatorCashChanger";
         _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
@@ -185,8 +214,9 @@ public class SimulatorCashChanger : CashChangerBasic
         _inventory = inventory ?? new Inventory();
         _history = history ?? new TransactionHistory();
         _manager = manager ?? new CashChangerManager(_inventory, _history, new ChangeCalculator());
+        
         _depositController = depositController ?? new DepositController(_inventory, _hardwareStatusManager);
-        _dispenseController = dispenseController ?? new DispenseController(_manager, _hardwareStatusManager, new HardwareSimulator(configProvider));
+        _dispenseController = dispenseController ?? new DispenseController(_manager, _hardwareStatusManager, new HardwareSimulator(actualConfigProvider));
 
         // Status monitors / Aggregator
         var monitors = _inventory
@@ -200,6 +230,7 @@ public class SimulatorCashChanger : CashChangerBasic
                     x.Item2.NearFull,
                     x.Item2.Full))
             .ToList();
+        
         _statusAggregator =
             aggregatorProvider
             ?.Aggregator
@@ -399,6 +430,10 @@ public class SimulatorCashChanger : CashChangerBasic
 
         ThrowIfDepositInProgress();
         ThrowIfBusy();
+        if (_hardwareStatusManager.IsJammed.Value)
+        {
+            throw new PosControlException("Device is jammed. Cannot dispense change.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
+        }
 
         var factor = GetCurrencyFactor();
         var decimalAmount = amount / factor;
@@ -443,6 +478,10 @@ public class SimulatorCashChanger : CashChangerBasic
         VerifyState();
         ThrowIfDepositInProgress();
         ThrowIfBusy();
+        if (_hardwareStatusManager.IsJammed.Value)
+        {
+            throw new PosControlException("Device is jammed. Cannot dispense cash.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
+        }
 
         var dict = new Dictionary<DenominationKey, int>();
         try
@@ -509,6 +548,10 @@ public class SimulatorCashChanger : CashChangerBasic
     {
         VerifyState();
         ThrowIfBusy();
+        if (_hardwareStatusManager.IsJammed.Value)
+        {
+            throw new PosControlException("Device is jammed. Cannot adjust cash counts.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
+        }
 
         foreach (var cc in cashCounts)
         {
@@ -553,6 +596,7 @@ public class SimulatorCashChanger : CashChangerBasic
     /// <summary>ベンダー固有のコマンドをデバイスに送信します。</summary>
     public override DirectIOData DirectIO(int command, int data, object obj)
     {
+        VerifyState();
         switch (command)
         {
             case DirectIOCommands.SetOverlap:
@@ -640,14 +684,10 @@ public class SimulatorCashChanger : CashChangerBasic
         get => _activeCurrencyCode;
         set
         {
-            if (CurrencyCodeList.Contains(value))
-            {
-                _activeCurrencyCode = value;
-            }
-            else
-            {
-                throw new PosControlException($"Unsupported currency: {value}", ErrorCode.Illegal);
-            }
+            _activeCurrencyCode =
+                CurrencyCodeList.Contains(value)
+                ? value
+                : throw new PosControlException($"Unsupported currency: {value}", ErrorCode.Illegal);
         }
     }
     /// <summary>サポートされている通貨コードの一覧を取得します。</summary>

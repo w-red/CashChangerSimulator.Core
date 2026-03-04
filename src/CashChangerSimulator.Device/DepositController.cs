@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
 using ZLogger;
+using CashChangerSimulator.Core.Opos;
 
 namespace CashChangerSimulator.Device;
 
@@ -84,9 +85,13 @@ public class DepositController : IDisposable
         _depositPaused = false;
         _depositFixed = false;
         
-        if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
+        if (_hardwareStatusManager.IsJammed.Value)
         {
-            throw new PosControlException("Device is in error state. Cannot begin deposit.", ErrorCode.Failure);
+            throw new PosControlException("Device is jammed. Cannot begin deposit.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
+        }
+        if (_hardwareStatusManager.IsOverlapped.Value)
+        {
+            throw new PosControlException("Device has overlapped cash. Cannot begin deposit.", ErrorCode.Failure);
         }
         _depositStatus = CashDepositStatus.Count;
         _changed.OnNext(Unit.Default);
@@ -178,9 +183,13 @@ public class DepositController : IDisposable
             throw new PosControlException("Device is not open (Closed).", ErrorCode.Closed);
         }
 
-        if (_hardwareStatusManager.IsJammed.Value || _hardwareStatusManager.IsOverlapped.Value)
+        if (_hardwareStatusManager.IsJammed.Value)
         {
-            throw new PosControlException("Device is in error state. Cannot track deposit.", ErrorCode.Failure);
+            throw new PosControlException("Device is jammed. Cannot track deposit.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
+        }
+        if (_hardwareStatusManager.IsOverlapped.Value)
+        {
+            throw new PosControlException("Device has overlapped cash. Cannot track deposit.", ErrorCode.Failure);
         }
 
         foreach (var (key, count) in counts)

@@ -8,7 +8,7 @@ public class HardwareStatusManager : IDisposable
     private readonly BindableReactiveProperty<bool> _isJammed = new(false);
     private readonly BindableReactiveProperty<bool> _isOverlapped = new(false);
     private readonly BindableReactiveProperty<bool> _isDeviceError = new(false);
-    private readonly BindableReactiveProperty<bool> _isConnected = new(true); // デフォルトは接続済み(HOT)
+    private readonly BindableReactiveProperty<bool> _isConnected = new(false); // Default is disconnected (COLD start baseline)
     private readonly BindableReactiveProperty<int?> _currentErrorCode = new(null);
     private readonly BindableReactiveProperty<int> _currentErrorCodeExtended = new(0);
 

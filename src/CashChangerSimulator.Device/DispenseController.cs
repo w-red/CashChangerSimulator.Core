@@ -32,7 +32,7 @@ public class DispenseController : IDisposable
     {
         _manager = manager;
         _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-        _simulator = simulator ?? new HardwareSimulator(Core.SimulatorServices.TryResolve<ConfigurationProvider>());
+        _simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
     }
     private readonly ILogger<DispenseController> _logger = Core.LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> _changed = new();
