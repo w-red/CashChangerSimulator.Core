@@ -11,7 +11,7 @@ public class GetVersionStrategy : IDirectIOCommand
 
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
-        var version = $"SimulatorCashChanger v{Assembly.GetExecutingAssembly().GetName().Version}";
+        var version = $"{device.GetType().Name} v{Assembly.GetExecutingAssembly().GetName().Version}";
         return new DirectIOData(data, version);
     }
 }
