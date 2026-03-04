@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.UI.Cli;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 

@@ -1,13 +1,7 @@
-using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.UI.Cli;
 using CashChangerSimulator.UI.Cli.Services;
 using Microsoft.PointOfService;
 using Shouldly;
-using System;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 

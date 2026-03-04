@@ -11,9 +11,7 @@ using CashChangerSimulator.Core.Services;
 using Moq;
 using R3;
 using Spectre.Console.Testing;
-using System;
 using System.Globalization;
-using System.IO;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 

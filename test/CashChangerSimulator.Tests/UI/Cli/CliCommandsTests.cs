@@ -1,27 +1,9 @@
-using Cocona;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.UI.Cli;
-using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Configuration;
 using Moq;
-using Xunit;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
-using R3;
 using Shouldly;
-using System.IO;
-using System.Globalization;
-using Spectre.Console;
-using Spectre.Console.Testing;
-using Microsoft.Extensions.Localization;
-using CashChangerSimulator.UI.Cli.Localization;
 using CashChangerSimulator.UI.Cli.Services;
-using System.Linq;
-using System;
-using CashChangerSimulator.Device.Services;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 

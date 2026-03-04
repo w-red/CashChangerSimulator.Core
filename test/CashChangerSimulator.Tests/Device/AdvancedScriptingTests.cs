@@ -7,8 +7,6 @@ using CashChangerSimulator.Device.Services;
 using Moq;
 using MoneyKind4Opos.Currencies.Interfaces;
 using Shouldly;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace CashChangerSimulator.Tests.Device;
 
