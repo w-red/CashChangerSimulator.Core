@@ -9,6 +9,7 @@ namespace CashChangerSimulator.Core;
 public static class LogProvider
 {
     private static ILoggerFactory? _factory;
+    private static LoggingSettings _currentSettings = new() { LogLevel = "Information", EnableConsole = true };
 
     /// <summary>全体で共有するロガーファクトリ。初期化前は NullLoggerFactory を返します。</summary>
     public static ILoggerFactory Factory => _factory ?? NullLoggerFactory.Instance;
@@ -17,6 +18,7 @@ public static class LogProvider
     /// <param name="settings">ロギング設定。</param>
     public static void Initialize(LoggingSettings settings)
     {
+        _currentSettings = settings;
         _factory = LoggerFactory.Create(builder =>
         {
             // ログレベルの設定
@@ -64,6 +66,14 @@ public static class LogProvider
                 });
             }
         });
+    }
+
+    /// <summary>ログレベルのみを動的に変更します。</summary>
+    /// <param name="level">設定するログレベル文字列。</param>
+    public static void SetLogLevel(string level)
+    {
+        _currentSettings.LogLevel = level;
+        Initialize(_currentSettings);
     }
 
     /// <summary>指定された型のロガーを生成します。</summary>

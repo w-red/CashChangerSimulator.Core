@@ -54,13 +54,9 @@ public class CashStatusMonitor : IDisposable
         {
             _status.Value = CashStatus.Full;
         }
-        else if (_nearFullThreshold != -1 && count >= _nearFullThreshold)
-        {
-            _status.Value = CashStatus.NearFull;
-        }
         else
         {
-            _status.Value = CashStatus.Normal;
+            _status.Value = _nearFullThreshold != -1 && count >= _nearFullThreshold ? CashStatus.NearFull : CashStatus.Normal;
         }
     }
 

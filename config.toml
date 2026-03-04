@@ -191,3 +191,4 @@ LogFileName = "app.log"
 
 [Simulation]
 DispenseDelayMs = 500
+HotStart = false
