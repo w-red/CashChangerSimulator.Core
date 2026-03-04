@@ -5,5 +5,5 @@ namespace CashChangerSimulator.Device.Services;
 /// </summary>
 public interface IScriptExecutionService
 {
-    Task ExecuteScriptAsync(string json);
+    Task ExecuteScriptAsync(string json, Action<string>? onProgress = null);
 }
