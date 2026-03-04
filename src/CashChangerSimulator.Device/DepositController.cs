@@ -215,7 +215,7 @@ public class DepositController : IDisposable
             // It will be updated in EndDeposit if action is Store.
             
             // Record serial numbers for Bills
-            if (key.Type == MoneyKind4Opos.Currencies.Interfaces.CashType.Bill)
+            if (key.Type == CurrencyCashType.Bill)
             {
                 for (int i = 0; i < count; i++)
                 {

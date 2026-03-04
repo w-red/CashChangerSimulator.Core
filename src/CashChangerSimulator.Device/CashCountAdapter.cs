@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Models;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Device;
 
@@ -10,15 +9,15 @@ public static class CashCountAdapter
     /// <summary>CashCount を DenominationKey に変換します。</summary>
     public static DenominationKey ToDenominationKey(CashCount cc, string currencyCode, decimal factor)
     {
-        var cashType = cc.Type == CashCountType.Bill ? CashType.Bill : CashType.Coin;
+        var type = cc.Type == CashCountType.Bill ? CurrencyCashType.Bill : CurrencyCashType.Coin;
         var value = cc.NominalValue / factor;
-        return new DenominationKey(value, cashType, currencyCode);
+        return new DenominationKey(value, type, currencyCode);
     }
 
     /// <summary>DenominationKey を CashCount に変換します。</summary>
     public static CashCount ToCashCount(DenominationKey key, int count, decimal factor)
     {
-        var type = key.Type == CashType.Bill ? CashCountType.Bill : CashCountType.Coin;
+        var type = key.Type == CurrencyCashType.Bill ? CashCountType.Bill : CashCountType.Coin;
         var nominalValue = (int)Math.Round(key.Value * factor);
         return new CashCount(type, nominalValue, count);
     }

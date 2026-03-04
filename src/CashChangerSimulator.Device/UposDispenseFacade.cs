@@ -14,6 +14,7 @@ public class UposDispenseFacade(
     Inventory inventory,
     ILogger logger)
 {
+    private readonly ILogger _logger = logger;
     /// <summary>金額指定の出金を実行します。</summary>
     public void DispenseByAmount(
         int amount,

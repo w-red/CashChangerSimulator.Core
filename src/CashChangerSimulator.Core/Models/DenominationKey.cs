@@ -1,4 +1,3 @@
-using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Core.Models;
 
@@ -8,7 +7,7 @@ namespace CashChangerSimulator.Core.Models;
 /// <param name="CurrencyCode">通貨コード。</param>
 public record DenominationKey(
     decimal Value,
-    CashType Type,
+    CurrencyCashType Type,
     string CurrencyCode = DenominationKey.DefaultCurrencyCode)
 {
     /// <summary>デフォルトの通貨コード。</summary>
@@ -24,7 +23,7 @@ public record DenominationKey(
     public const char KeySeparator = ':';
 
     /// <summary>種別に応じたプレフィックス文字を取得します。</summary>
-    public char PrefixChar => Type == CashType.Bill ? BillPrefix : CoinPrefix;
+    public char PrefixChar => Type == CurrencyCashType.Bill ? BillPrefix : CoinPrefix;
 
     /// <summary>設定ファイル等で使用する文字列形式を取得します（例: "B1000", "C500", "C0.25"）。</summary>
     public string ToDenominationString() => $"{PrefixChar}{Value}";
@@ -43,12 +42,12 @@ public record DenominationKey(
 
         var type = char.ToUpperInvariant(s[0]) switch
         {
-            BillPrefix => CashType.Bill,
-            CoinPrefix => CashType.Coin,
-            _ => CashType.Undefined
+            BillPrefix => CurrencyCashType.Bill,
+            CoinPrefix => CurrencyCashType.Coin,
+            _ => CurrencyCashType.Undefined
         };
 
-        if (type == CashType.Undefined) return false;
+        if (type == CurrencyCashType.Undefined) return false;
 
         if (decimal.TryParse(s[1..], out var value))
         {

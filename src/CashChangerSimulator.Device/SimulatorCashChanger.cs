@@ -19,9 +19,8 @@ using ZLogger;
 namespace CashChangerSimulator.Device;
 
 /// <summary>UPOS の CashChanger サービスオブジェクトをシミュレートするクラス。</summary>
-/// <remarks>プロパティオーバーライドは部分クラス SimulatorCashChanger.Properties.cs に定義されています。</remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
-public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
+public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
 {
     internal readonly Inventory _inventory;
     private readonly TransactionHistory _history;
@@ -33,56 +32,71 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     private readonly DispenseController _dispenseController;
     internal readonly HardwareStatusManager _hardwareStatusManager;
     private readonly ILogger<SimulatorCashChanger> _logger;
-    private StatusCoordinator? _statusCoordinator;
-    private UposDispenseFacade? _dispenseFacade;
-
-    // Status tracking for StatusUpdateEvent transitions
+    private readonly StatusCoordinator _statusCoordinator;
+    private readonly UposDispenseFacade _dispenseFacade;
+    private readonly DirectIOHandler _directIOHandler = new();
 
     // Async processing state
     private bool _asyncProcessing;
     private int _asyncResultCode;
     private int _asyncResultCodeExtended;
-
-    private readonly Dictionary<int, IDirectIOCommand> _directIOCommands = new();
-
-    /// <summary>テスト用のイベント通知アクション。</summary>
-    public Action<EventArgs>? OnEventQueued; // For UI Activity Feed & testing
-
-    /// <summary>テスト用: VerifyState チェックをスキップする。OPOS ライフサイクルが利用できない単体テスト環境で使用。</summary>
-    public bool SkipStateVerification { get; set; }
-
-    /// <summary>デバイスの有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
     private bool _deviceEnabled;
+    private bool _dataEventEnabled;
+
+    /// <summary>VerifyState チェックをスキップするかどうかを取得または設定します。</summary>
+    public virtual bool SkipStateVerification { get; set; }
+    private readonly UposOperationHelper _operationHelper;
+ 
     /// <summary>デバイスの有効状態を取得または設定します。</summary>
     public override bool DeviceEnabled
     {
-        get => _deviceEnabled;
+        get => SkipStateVerification ? _deviceEnabled : base.DeviceEnabled;
         set
         {
-            if (!SkipStateVerification)
+            if (SkipStateVerification)
             {
-                if (value && _lifecycleState is ClosedState)
+                _deviceEnabled = value;
+                _logger.ZLogInformation($"DeviceEnabled set to {value}.");
+                return;
+            }
+
+            if (value == base.DeviceEnabled) return;
+
+            if (value)
+            {
+                if (State == ControlState.Closed)
                 {
                     throw new PosControlException("Device is not open.", ErrorCode.Closed);
                 }
-                if (value && _lifecycleState is not ClaimedState)
-                {
-                    throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
-                }
             }
-            _deviceEnabled = value;
+
+            base.DeviceEnabled = value;
             _logger.ZLogInformation($"DeviceEnabled set to {value}.");
         }
     }
-    /// <summary>データイベント通知の有効状態を取得または設定します。シミュレータでは常に成功するようにオーバーライドします。</summary>
-    public override bool DataEventEnabled { get; set; }
+
+    /// <summary>データイベントの通知が有効かどうかを取得または設定します。</summary>
+    public override bool DataEventEnabled
+    {
+        get => SkipStateVerification ? _dataEventEnabled : base.DataEventEnabled;
+        set
+        {
+            if (SkipStateVerification)
+            {
+                _dataEventEnabled = value;
+                return;
+            }
+            base.DataEventEnabled = value;
+        }
+    }
+
 
     /// <summary>入金データのリアルタイム通知が有効かどうかを取得または設定します。</summary>
     public override bool RealTimeDataEnabled { get; set; }
 
     /// <summary>デバイスがリアルタイムデータの通知能力を持っているかどうか。</summary>
-    public override bool CapRealTimeData => true;
-
+    public override bool CapRealTimeData => _config.Simulation.CapRealTimeData;
+ 
     /// <summary>最新の操作の結果コードを取得または設定します。</summary>
     public int ResultCode { get; set; }
 
@@ -92,18 +106,28 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     /// <summary>現在のデバイスの状態を取得します。</summary>
     public override ControlState State
     {
-        get => _lifecycleState is ClosedState
-            ? ControlState.Closed
-            : _asyncProcessing
-                ? ControlState.Busy
-                : ControlState.Idle;
+        get
+        {
+            var baseState = base.State;
+            if (baseState == ControlState.Closed && SkipStateVerification)
+            {
+                return ControlState.Idle;
+            }
+
+            return baseState == ControlState.Closed
+                ? ControlState.Closed
+                : _asyncProcessing
+                    ? ControlState.Busy
+                    : ControlState.Idle;
+        }
     }
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">通知するイベント引数。</param>
     protected virtual void NotifyEvent(EventArgs e)
     {
-        OnEventQueued?.Invoke(e);
+        if (SkipStateVerification) return;
+
         if (e is DataEventArgs de)
         {
             QueueEvent(de);
@@ -122,44 +146,20 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     public void SetAsyncProcessing(bool isBusy) =>
         _asyncProcessing = isBusy;
 
-    // ========== Simulator UI Helpers for Lifecycle Verification ==========
+    // ========== Simulator UI Helpers (Overridden in InternalSimulatorCashChanger) ==========
 
-    private IDeviceState _lifecycleState = new ClosedState();
-    private DeviceLifecycleContext? _lifecycleContext;
+    /// <summary>デバイスをオープンします。外部（シミュレータ）からは継承クラスのメソッドを使用してください。</summary>
+    public override void Open() => base.Open();
 
-    /// <summary>シミュレータUIからの Open 呼び出しを受け付けます。</summary>
-    public new virtual void Open()
-    {
-        _lifecycleContext ??= new DeviceLifecycleContext(_hardwareStatusManager, _logger, v => DeviceEnabled = v);
-        _lifecycleState = _lifecycleState.Open(_lifecycleContext);
-    }
+    /// <summary>デバイスをクローズします。</summary>
+    public override void Close() => base.Close();
 
-    /// <summary>シミュレータUIからの Close 呼び出しを受け付けます。</summary>
-    public new virtual void Close()
-    {
-        _lifecycleContext ??= new DeviceLifecycleContext(_hardwareStatusManager, _logger, v => DeviceEnabled = v);
-        _lifecycleState = _lifecycleState.Close(_lifecycleContext);
-    }
+    /// <summary>デバイスを占有します。</summary>
+    public override void Claim(int timeout) => base.Claim(timeout);
 
-    /// <summary>シミュレータUIからの Claim 呼び出しを受け付けます。</summary>
-    public new virtual void Claim(int timeout)
-    {
-        _lifecycleContext ??= new DeviceLifecycleContext(_hardwareStatusManager, _logger, v => DeviceEnabled = v);
-        _lifecycleState = _lifecycleState.Claim(_lifecycleContext, timeout);
-    }
+    /// <summary>デバイスを解放します。</summary>
+    public override void Release() => base.Release();
 
-    /// <summary>シミュレータUIからの Release 呼び出しを受け付けます。</summary>
-    public new virtual void Release()
-    {
-        _lifecycleContext ??= new DeviceLifecycleContext(_hardwareStatusManager, _logger, v => DeviceEnabled = v);
-        _lifecycleState = _lifecycleState.Release(_lifecycleContext);
-    }
-
-    /// <summary>デフォルト構成で SimulatorCashChanger の新しいインスタンスを初期化します（主にテスト用）。</summary>
-    public SimulatorCashChanger()
-        : this(null, null, null, null, null, null, null, null)
-    {
-    }
 
     /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。DI時は [Inject] 属性のものが優先されます。</summary>
     [Inject]
@@ -177,6 +177,7 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
         _config = actualConfigProvider.Config;
 
         DevicePath = "SimulatorCashChanger";
+        
         _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
 
         _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
@@ -232,27 +233,7 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
             _inventory,
             _logger);
 
-        InitializeDirectIOCommands();
-    }
-
-    private void InitializeDirectIOCommands()
-    {
-        var strategies = new IDirectIOCommand[]
-        {
-            new SetOverlapStrategy(),
-            new SetJamStrategy(),
-            new SetDiscrepancyStrategy(),
-            new SimulateRemovedStrategy(),
-            new SimulateInsertedStrategy(),
-            new GetVersionStrategy(),
-            new AdjustCashCountsStrStrategy(),
-            new GetDepositedSerialsStrategy()
-        };
-
-        foreach (var strategy in strategies)
-        {
-            _directIOCommands[strategy.CommandCode] = strategy;
-        }
+        _operationHelper = new UposOperationHelper(this);
     }
 
     private string _activeCurrencyCode;
@@ -267,86 +248,54 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     /// <summary>現金投入処理を開始します。</summary>
     public override void BeginDeposit()
     {
-        VerifyState();
-        ThrowIfBusy();
+        _operationHelper.VerifyState(SkipStateVerification);
+        _operationHelper.ThrowIfBusy(_asyncProcessing);
         _depositController.BeginDeposit();
     }
 
     /// <summary>現金投入処理を終了します。</summary>
     public override void EndDeposit(CashDepositAction action)
     {
-        VerifyState();
+        _operationHelper.VerifyState(SkipStateVerification);
         _depositController.EndDeposit(action);
     }
 
     /// <summary>投入された現金の計数を確定します。</summary>
     public override void FixDeposit()
     {
-        VerifyState();
+        _operationHelper.VerifyState(SkipStateVerification);
         _depositController.FixDeposit();
 
         if (DataEventEnabled && CapDepositDataEvent)
         {
-            QueueEvent(new DataEventArgs(0));
+            NotifyEvent(new DataEventArgs(0));
         }
     }
 
     /// <summary>現金投入処理を一時停止または再開します。</summary>
     public override void PauseDeposit(CashDepositPause control)
     {
-        VerifyState();
+        _operationHelper.VerifyState(SkipStateVerification);
         _depositController.PauseDeposit(control);
     }
 
     // ========== Dispense Methods ==========
 
-    private void ThrowIfDepositInProgress()
-    {
-        if (_depositController.IsDepositInProgress)
-        {
-            throw new PosControlException(
-                "Cash cannot be dispensed because cash acceptance is in progress.",
-                ErrorCode.Illegal);
-        }
-    }
-
-    private void ThrowIfBusy()
-    {
-        if (_asyncProcessing)
-        {
-            throw new PosControlException("Device is busy with an asynchronous operation.", ErrorCode.Busy);
-        }
-    }
-
-    /// <summary>UPOS ライフサイクルの状態を検証します。Open/Claim/Enable が行われていない場合は例外をスローします。</summary>
-    private void VerifyState()
-    {
-        if (SkipStateVerification) return;
-
-        if (State == ControlState.Closed)
-        {
-            throw new PosControlException("Device is not open.", ErrorCode.Closed);
-        }
-        if (State is ControlState.Idle or ControlState.Error)
-        {
-            // Idle/Error means Open but not Claimed or not Enabled
-            // For simplicity, we allow operations if State is Idle or Error (means at least Open)
-        }
-    }
-
     /// <summary>指定された金額の釣銭を払い出します。</summary>
     public override void DispenseChange(int amount)
     {
-        VerifyState();
-        ThrowIfBusy();
+        _operationHelper.VerifyState(SkipStateVerification);
+        _operationHelper.ThrowIfBusy(_asyncProcessing);
+        _operationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
         _dispenseFacade!.DispenseByAmount(amount, CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode), AsyncMode, HandleDispenseResult);
     }
 
     /// <summary>指定された金種と枚数の現金を払い出します。</summary>
     public override void DispenseCash(CashCount[] cashCounts)
     {
-        VerifyState();
-        ThrowIfBusy();
+        _operationHelper.VerifyState(SkipStateVerification);
+        _operationHelper.ThrowIfBusy(_asyncProcessing);
+        _operationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
         _dispenseFacade!.DispenseByCashCounts(cashCounts, _activeCurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode), AsyncMode, HandleDispenseResult);
     }
 
@@ -368,8 +317,9 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     /// <summary>現在の現金在庫数を手動で調整（上書き）します。</summary>
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts)
     {
-        VerifyState();
-        ThrowIfBusy();
+        _operationHelper.VerifyState(SkipStateVerification);
+        _operationHelper.ThrowIfBusy(_asyncProcessing);
+        _operationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
         if (_hardwareStatusManager.IsJammed.Value)
         {
             throw new PosControlException("Device is jammed. Cannot adjust cash counts.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
@@ -388,8 +338,8 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     /// <summary>現在の現金在庫数を読み取ります。</summary>
     public override CashCounts ReadCashCounts()
     {
-        VerifyState();
-        ThrowIfBusy();
+        _operationHelper.VerifyState(SkipStateVerification);
+        _operationHelper.ThrowIfBusy(_asyncProcessing);
         var sorted = _inventory.AllCounts
             .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
             .OrderBy(kv => kv.Key.Type)
@@ -403,12 +353,87 @@ public partial class SimulatorCashChanger : CashChangerBasic, ICashChangerStatus
     /// <summary>ベンダー固有のコマンドをデバイスに送信します。</summary>
     public override DirectIOData DirectIO(int command, int data, object obj)
     {
-        VerifyState();
-        if (_directIOCommands.TryGetValue(command, out var strategy))
-        {
-            return strategy.Execute(data, obj, this);
-        }
-        return new DirectIOData(data, obj);
+        _operationHelper.VerifyState(SkipStateVerification);
+        return _directIOHandler.Handle(command, data, obj, this);
     }
 
+    // ========== UPOS Property Overrides (Merged from Properties.cs) ==========
+
+    /// <summary>デバイスの現在の状態（正常、空、ニアエンプティなど）を取得します。</summary>
+    public override CashChangerStatus DeviceStatus => _statusCoordinator?.LastCashChangerStatus ?? CashChangerStatus.OK;
+    /// <summary>デバイスの現在の満杯状態（正常、満杯、ニアフルなど）を取得します。</summary>
+    public override CashChangerFullStatus FullStatus => _statusCoordinator?.LastFullStatus ?? CashChangerFullStatus.OK;
+
+    /// <summary>非同期モードで動作するかどうかを取得または設定します。</summary>
+    public override bool AsyncMode { get; set; }
+    /// <summary>最後の非同期操作の結果コードを取得します。</summary>
+    public override int AsyncResultCode => _asyncResultCode;
+    /// <summary>最後の非同期操作の拡張結果コードを取得します。</summary>
+    public override int AsyncResultCodeExtended => _asyncResultCodeExtended;
+
+    /// <summary>現在アクティブな通貨コードを取得または設定します。</summary>
+    public override string CurrencyCode
+    {
+        get => _activeCurrencyCode;
+        set
+        {
+            _activeCurrencyCode =
+                CurrencyCodeList.Contains(value)
+                ? value
+                : throw new PosControlException($"Unsupported currency: {value}", ErrorCode.Illegal);
+        }
+    }
+    /// <summary>サポートされている通貨コードの一覧を取得します。</summary>
+    public override string[] CurrencyCodeList => [.. _config.Inventory.Keys.OrderBy(c => c)];
+    /// <summary>入金可能な通貨コードの一覧を取得します。</summary>
+    public override string[] DepositCodeList => CurrencyCodeList;
+
+    /// <summary>アクティブな通貨の現在の現金一覧を取得します。</summary>
+    public override CashUnits CurrencyCashList => UposCurrencyHelper.BuildCashUnits(_inventory, _activeCurrencyCode);
+    /// <summary>入金可能な現金の一覧を取得します。</summary>
+    public override CashUnits DepositCashList => CapDeposit ? UposCurrencyHelper.BuildCashUnits(_inventory, _activeCurrencyCode) : new CashUnits();
+    /// <summary>払出可能な現金の一覧を取得します。</summary>
+    public override CashUnits ExitCashList => UposCurrencyHelper.BuildCashUnits(_inventory, _activeCurrencyCode);
+
+    /// <summary>現在投入されている現金の合計金額を取得します。</summary>
+    public override int DepositAmount => (int)Math.Round(_depositController.DepositAmount * UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode));
+    /// <summary>現在投入されている現金の金種別枚数を取得します。</summary>
+    public override CashCount[] DepositCounts
+    {
+        get => [.. _depositController.DepositCounts
+            .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
+            .Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode)))];
+    }
+    /// <summary>現在の入金処理の状態を取得します。</summary>
+    public override CashDepositStatus DepositStatus => _depositController.DepositStatus;
+
+    /// <summary>現在の排出口インデックスを取得または設定します。</summary>
+    public override int CurrentExit { get => 1; set { } }
+    /// <summary>デバイスの排出口の総数を取得します。</summary>
+    public override int DeviceExits => 1;
+
+    /// <summary>入金機能があるかどうかを取得します。</summary>
+    public override bool CapDeposit => true;
+    /// <summary>入金データイベントをサポートしているかどうかを取得します。</summary>
+    public override bool CapDepositDataEvent => true;
+    /// <summary>入金の一時停止をサポートしているかどうかを取得します。</summary>
+    public override bool CapPauseDeposit => true;
+    /// <summary>入金の返却（払い戻し）をサポートしているかどうかを取得します。</summary>
+    public override bool CapRepayDeposit => true;
+
+    /// <summary>不一致の検出をサポートしているかどうかを取得します。</summary>
+    public override bool CapDiscrepancy => false;
+    /// <summary>満杯センサーをサポートしているかどうかを取得します。</summary>
+    public override bool CapFullSensor => true;
+    /// <summary>ニアフルセンサーをサポートしているかどうかを取得します。</summary>
+    public override bool CapNearFullSensor => true;
+    /// <summary>ニアエンプティセンサーをサポートしているかどうかを取得します。</summary>
+    public override bool CapNearEmptySensor => true;
+    /// <summary>空センサーをサポートしているかどうかを取得します。</summary>
+    public override bool CapEmptySensor => true;
+
+    /// <summary>デバイス名を取得します。</summary>
+    public override string DeviceName => "SimulatorCashChanger";
+    /// <summary>デバイスの説明を取得します。</summary>
+    public override string DeviceDescription => "Virtual Cash Changer Simulator";
 }

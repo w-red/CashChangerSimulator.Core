@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Models;
 using Microsoft.PointOfService;
-using MoneyKind4Opos.Currencies.Interfaces;
 
 namespace CashChangerSimulator.Device;
 
@@ -41,10 +40,10 @@ public static class CashCountParser
 
             // Session context: 0 = Coin, 1 = Bill (if 2 sections exist)
             // If only 1 section exists and no semicolon, we treat it as "implicit" but following the same parser.
-            CashType? sectionType = null;
+            CurrencyCashType? sectionType = null;
             if (sections.Length == 2)
             {
-                sectionType = (i == 0) ? CashType.Coin : CashType.Bill;
+                sectionType = (i == 0) ? CurrencyCashType.Coin : CurrencyCashType.Bill;
             }
 
             var parts = section.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -105,7 +104,7 @@ public static class CashCountParser
                 }
 
                 results.Add(new CashCount(
-                    finalKey.Type == CashType.Bill ? CashCountType.Bill : CashCountType.Coin,
+                    finalKey.Type == CurrencyCashType.Bill ? CashCountType.Bill : CashCountType.Coin,
                     (int)(decimalValue * currencyFactor),
                     count));
             }
