@@ -23,7 +23,7 @@ public class BulkOperationTests
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
-        var service = new ScriptExecutionService(controller, dispenseController);
+        var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         var json = @"
         [
@@ -53,7 +53,7 @@ public class BulkOperationTests
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
-        var service = new ScriptExecutionService(controller, dispenseController);
+        var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         var json = @"
         [

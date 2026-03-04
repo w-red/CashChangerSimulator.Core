@@ -1,0 +1,140 @@
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Services;
+using Moq;
+using MoneyKind4Opos.Currencies.Interfaces;
+using Shouldly;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace CashChangerSimulator.Tests.Device;
+
+/// <summary>高度なスクリプト機能（ループ、変数）のテストクラス。</summary>
+public class AdvancedScriptingTests
+{
+    [Fact]
+    public async Task ExecuteScriptAsyncRepeatShouldExecuteMultipleTimes()
+    {
+        // Arrange
+        var inv = new Inventory();
+        var hardware = new HardwareStatusManager();
+        hardware.SetConnected(true);
+        var controller = new DepositController(inv, hardware);
+        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
+
+        // 1000円を3回投入するループ
+        var json = @"
+        [
+            { 
+                ""Op"": ""Repeat"", 
+                ""Count"": 3, 
+                ""Commands"": [
+                    { ""Op"": ""BeginDeposit"" },
+                    { ""Op"": ""TrackDeposit"", ""Value"": 1000, ""Count"": 1 },
+                    { ""Op"": ""FixDeposit"" },
+                    { ""Op"": ""EndDeposit"", ""Action"": ""Store"" }
+                ]
+            }
+        ]";
+
+        // Act
+        await service.ExecuteScriptAsync(json);
+
+        // Assert
+        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        inv.GetCount(key1000).ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task ExecuteScriptAsyncSetVariableShouldAllowDynamicParameters()
+    {
+        // Arrange
+        var inv = new Inventory();
+        var hardware = new HardwareStatusManager();
+        hardware.SetConnected(true);
+        var controller = new DepositController(inv, hardware);
+        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
+
+        // 変数 'amount' をセットし、それを Dispense で使用する
+        // Note: 実装前なので形式は仮定
+        var json = @"
+        [
+            { ""Op"": ""Set"", ""Variable"": ""amount"", ""Value"": 2000 },
+            { ""Op"": ""BeginDeposit"" },
+            { ""Op"": ""TrackDeposit"", ""Value"": 1000, ""Count"": 3 },
+            { ""Op"": ""FixDeposit"" },
+            { ""Op"": ""EndDeposit"", ""Action"": ""Store"" },
+            { ""Op"": ""Dispense"", ""Value"": ""$amount"" }
+        ]";
+
+        // Act
+        await service.ExecuteScriptAsync(json);
+
+        // Assert
+        var key1000 = new DenominationKey(1000, CashType.Bill, "JPY");
+        inv.GetCount(key1000).ShouldBe(1); // 3 deposited - 2 dispensed
+        inv.CalculateTotal().ShouldBe(1000); // 3000 - 2000
+    }
+
+    [Fact]
+    public async Task ExecuteScriptAsyncInjectErrorShouldChangeHardwareState()
+    {
+        // Arrange
+        var inv = new Inventory();
+        var hardware = new HardwareStatusManager();
+        hardware.SetConnected(true);
+        var controller = new DepositController(inv, hardware);
+        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
+
+        // ジャムを注入し、その後の操作が失敗することを確認する
+        var json = @"
+        [
+            { ""Op"": ""Inject-Error"", ""Error"": ""Jam"" },
+            { ""Op"": ""BeginDeposit"" }
+        ]";
+
+        // Act & Assert
+        // BeginDeposit はハードウェアエラー状態（Jammed）なので PosControlException を投げるべき
+        await Should.ThrowAsync<Microsoft.PointOfService.PosControlException>(async () => await service.ExecuteScriptAsync(json));
+        hardware.IsJammed.Value.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ExecuteScriptAsyncAssertShouldVerifyInventory()
+    {
+        // Arrange
+        var inv = new Inventory();
+        var hardware = new HardwareStatusManager();
+        hardware.SetConnected(true);
+        var controller = new DepositController(inv, hardware);
+        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
+
+        // 在庫の枚数をアサーションする
+        var json = @"
+        [
+            { ""Op"": ""BeginDeposit"" },
+            { ""Op"": ""TrackDeposit"", ""Value"": 500, ""Count"": 2, ""Type"": ""Coin"" },
+            { ""Op"": ""FixDeposit"" },
+            { ""Op"": ""EndDeposit"", ""Action"": ""Store"" },
+            { ""Op"": ""Assert"", ""Target"": ""Inventory"", ""Denom"": 500, ""Value"": 2, ""Type"": ""Coin"" }
+        ]";
+
+        // Act
+        await service.ExecuteScriptAsync(json);
+
+        // Assert (スクリプト内で Assert が通れば例外は出ない)
+        var key500 = new DenominationKey(500, CashType.Coin, "JPY");
+        inv.GetCount(key500).ShouldBe(2);
+    }
+}
