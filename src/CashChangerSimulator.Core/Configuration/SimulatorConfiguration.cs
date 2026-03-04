@@ -15,32 +15,33 @@ public class SimulatorConfiguration
         {
             Denominations = new()
             {
-                ["B10000"] = new() { InitialCount = 10, DisplayName = "10000円" },
-                ["B5000"] = new() { InitialCount = 10, DisplayName = "5000円" },
-                ["B1000"] = new() { InitialCount = 50, DisplayName = "1000円" },
-                ["C500"] = new() { InitialCount = 50, DisplayName = "500円" },
-                ["C100"] = new() { InitialCount = 100, DisplayName = "100円" },
-                ["C50"] = new() { InitialCount = 100, DisplayName = "50円" },
-                ["C10"] = new() { InitialCount = 100, DisplayName = "10円" },
-                ["C5"] = new() { InitialCount = 100, DisplayName = "5円" },
-                ["C1"] = new() { InitialCount = 100, DisplayName = "1円" },
+                ["B10000"] = new() { InitialCount = 10, DisplayName = "10,000 Yen Bill", DisplayNameJP = "一万円札" },
+                ["B5000"] = new() { InitialCount = 10, DisplayName = "5,000 Yen Bill", DisplayNameJP = "五千円札" },
+                ["B1000"] = new() { InitialCount = 50, DisplayName = "1,000 Yen Bill", DisplayNameJP = "千円札" },
+                ["C500"] = new() { InitialCount = 50, DisplayName = "500 Yen Coin", DisplayNameJP = "五百円玉" },
+                ["C100"] = new() { InitialCount = 100, DisplayName = "100 Yen Coin", DisplayNameJP = "百円玉" },
+                ["C50"] = new() { InitialCount = 100, DisplayName = "50 Yen Coin", DisplayNameJP = "五十円玉" },
+                ["C10"] = new() { InitialCount = 100, DisplayName = "10 Yen Coin", DisplayNameJP = "十円玉" },
+                ["C5"] = new() { InitialCount = 100, DisplayName = "5 Yen Coin", DisplayNameJP = "五円玉" },
+                ["C1"] = new() { InitialCount = 100, DisplayName = "1 Yen Coin", DisplayNameJP = "一円玉" },
             }
         },
         ["USD"] = new InventorySettings
         {
             Denominations = new()
             {
-                ["B100"] = new() { InitialCount = 5, DisplayName = "$100" },
-                ["B50"] = new() { InitialCount = 5, DisplayName = "$50" },
-                ["B20"] = new() { InitialCount = 10, DisplayName = "$20" },
-                ["B10"] = new() { InitialCount = 10, DisplayName = "$10" },
-                ["B5"] = new() { InitialCount = 20, DisplayName = "$5" },
-                ["B1"] = new() { InitialCount = 50, DisplayName = "$1" },
-                ["C0.5"] = new() { InitialCount = 50, DisplayName = "50¢" },
-                ["C0.25"] = new() { InitialCount = 100, DisplayName = "25¢" },
-                ["C0.1"] = new() { InitialCount = 100, DisplayName = "10¢" },
-                ["C0.05"] = new() { InitialCount = 100, DisplayName = "5¢" },
-                ["C0.01"] = new() { InitialCount = 100, DisplayName = "1¢" },
+                ["B100"] = new() { InitialCount = 5, DisplayName = "$100 Bill" },
+                ["B50"] = new() { InitialCount = 5, DisplayName = "$50 Bill" },
+                ["B20"] = new() { InitialCount = 10, DisplayName = "$20 Bill" },
+                ["B10"] = new() { InitialCount = 10, DisplayName = "$10 Bill" },
+                ["B5"] = new() { InitialCount = 20, DisplayName = "$5 Bill" },
+                ["B1"] = new() { InitialCount = 50, DisplayName = "$1 Bill" },
+                ["C1"] = new() { InitialCount = 50, DisplayName = "$1 Coin" },
+                ["C0.5"] = new() { InitialCount = 50, DisplayName = "50¢ Coin" },
+                ["C0.25"] = new() { InitialCount = 100, DisplayName = "25¢ Coin" },
+                ["C0.1"] = new() { InitialCount = 100, DisplayName = "10¢ Coin" },
+                ["C0.05"] = new() { InitialCount = 100, DisplayName = "5¢ Coin" },
+                ["C0.01"] = new() { InitialCount = 100, DisplayName = "1¢ Coin" },
             }
         }
     };
