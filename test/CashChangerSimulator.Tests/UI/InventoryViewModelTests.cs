@@ -42,7 +42,8 @@ public class InventoryViewModelTests
         var depositController = new DepositController(inv, hw);
         var mockChanger = new Moq.Mock<InternalSimulatorCashChanger>();
 
-        var vm = new InventoryViewModel(inv, history, aggregator, config, monitorsProvider, metadataProvider, hw, depositController, mockChanger.Object);
+        var notifyService = new Moq.Mock<INotifyService>().Object;
+        var vm = new InventoryViewModel(inv, history, aggregator, config, monitorsProvider, metadataProvider, hw, depositController, mockChanger.Object, notifyService);
         return (vm, inv, config);
     }
 
