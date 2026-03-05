@@ -21,6 +21,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
     public InternalSimulatorCashChanger()
         : base(null, null, null, null, null, null, null, null)
     {
+        SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
@@ -55,6 +56,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
         HardwareStatusManager? hardwareStatusManager = null)
         : base(configProvider, inventory, history, manager, depositController, dispenseController, aggregatorProvider, hardwareStatusManager)
     {
+        SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
