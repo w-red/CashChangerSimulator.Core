@@ -29,18 +29,19 @@ public class MonitorsProvider
                 return new CashStatusMonitor(
                     inventory,
                     k,
-                    setting.NearEmpty,
-                    setting.NearFull,
-                    setting.Full);
+                    setting.IsRecyclable ? setting.NearEmpty : -1,
+                    setting.IsRecyclable ? setting.NearFull : -1,
+                    setting.IsRecyclable ? setting.Full : -1);
             }
 
-            // 個別設定がない場合はグローバルなデフォルトを使用
+            // 個別設定がない場合は全体のデフォルト（およびグローバルの IsRecyclable 指定）を使用
+            var globalSetting = config.GetDenominationSetting(k);
             return new CashStatusMonitor(
                 inventory,
                 k,
-                config.Thresholds.NearEmpty,
-                config.Thresholds.NearFull,
-                config.Thresholds.Full);
+                globalSetting.IsRecyclable ? config.Thresholds.NearEmpty : -1,
+                globalSetting.IsRecyclable ? config.Thresholds.NearFull : -1,
+                globalSetting.IsRecyclable ? config.Thresholds.Full : -1);
         }).ToList();
     }
 
@@ -57,16 +58,17 @@ public class MonitorsProvider
                 inventorySettings.Denominations.TryGetValue(keyStr, out var setting))
             {
                 monitor.UpdateThresholds(
-                    setting.NearEmpty,
-                    setting.NearFull,
-                    setting.Full);
+                    setting.IsRecyclable ? setting.NearEmpty : -1,
+                    setting.IsRecyclable ? setting.NearFull : -1,
+                    setting.IsRecyclable ? setting.Full : -1);
             }
             else
             {
+                var globalSetting = config.GetDenominationSetting(k);
                 monitor.UpdateThresholds(
-                    config.Thresholds.NearEmpty,
-                    config.Thresholds.NearFull,
-                    config.Thresholds.Full);
+                    globalSetting.IsRecyclable ? config.Thresholds.NearEmpty : -1,
+                    globalSetting.IsRecyclable ? config.Thresholds.NearFull : -1,
+                    globalSetting.IsRecyclable ? config.Thresholds.Full : -1);
             }
         }
     }
