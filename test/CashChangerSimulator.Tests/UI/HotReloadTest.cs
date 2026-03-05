@@ -11,6 +11,7 @@ using R3;
 using Shouldly;
 using System.Windows;
 using Xunit;
+using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Tests.UI;
 
@@ -99,5 +100,71 @@ public class HotReloadTest
         // Assert
         vm.BillGridWidth.Value.Value.ShouldBe(6);
         vm.CoinGridWidth.Value.Value.ShouldBe(6);
+    }
+}
+
+public class SimulatorOpenTest
+{
+    [Fact]
+    public void InternalCashChangerShouldDefaultToSkipVerification()
+    {
+        // This test represents the "Red" state where InternalSimulatorCashChanger
+        // might default to SkipStateVerification = false without environment variables.
+        var changer = new InternalSimulatorCashChanger();
+        changer.SkipStateVerification.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void OpenShouldBeIdempotent()
+    {
+        var changer = new InternalSimulatorCashChanger();
+        changer.SkipStateVerification = true;
+        
+        // Act & Assert
+        Should.NotThrow(() => 
+        {
+            changer.Open();
+            changer.Open(); // Second call should not throw PosControlException
+        });
+    }
+
+    [Fact]
+    public void CloseShouldBeIdempotent()
+    {
+        var changer = new InternalSimulatorCashChanger();
+        changer.SkipStateVerification = true;
+        
+        // Act & Assert
+        Should.NotThrow(() => 
+        {
+            changer.Open();
+            changer.Close();
+            changer.Close(); // Second call should not throw
+        });
+    }
+
+    [Fact]
+    public void ReloadedShouldNotClearInventoryIfDeviceIsClosed()
+    {
+        var config = new ConfigurationProvider();
+        var inv = new Inventory();
+        var key = new DenominationKey(10000m, CurrencyCashType.Bill, "JPY");
+        inv.SetCount(key, 10);
+        
+        // InternalSimulatorCashChanger handles the subscription in its base (SimulatorCashChanger)
+        var changer = new InternalSimulatorCashChanger(configProvider: config, inventory: inv);
+        
+        // Act: Trigger reload while closed
+        config.Update(config.Config);
+        
+        // Assert: Count should still be 10
+        inv.GetCount(key).ShouldBe(10);
+        
+        // Act: Open and then reload
+        changer.Open();
+        config.Update(config.Config);
+        
+        // Assert: Now it should be cleared
+        inv.GetCount(key).ShouldBe(0);
     }
 }
