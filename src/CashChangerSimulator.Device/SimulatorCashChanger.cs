@@ -18,7 +18,8 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device;
 
-/// <summary>UPOS の CashChanger サービスオブジェクトをシミュレートするクラス。</summary>
+/// <summary>UPOS の CashChanger サービスオブジェクトのシミュレータークラス。</summary>
+/// <remarks>仮想的な現金処理デバイスの振る舞いをシミュレートします。</remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
 public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
 {
@@ -97,7 +98,11 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     }
 
     /// <summary>入金データのリアルタイム通知が有効かどうかを取得または設定します。</summary>
-    public override bool RealTimeDataEnabled { get; set; }
+    public override bool RealTimeDataEnabled
+    {
+        get => _depositController.RealTimeDataEnabled;
+        set => _depositController.RealTimeDataEnabled = value;
+    }
 
     /// <summary>デバイスがリアルタイムデータの通知能力を持っているかどうか。</summary>
     public override bool CapRealTimeData => _config.Simulation.CapRealTimeData;
@@ -228,7 +233,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         _history = history ?? new TransactionHistory();
         _manager = manager ?? new CashChangerManager(_inventory, _history, new ChangeCalculator());
 
-        _depositController = depositController ?? new DepositController(_inventory, _hardwareStatusManager);
+        _depositController = depositController ?? new DepositController(_inventory, _hardwareStatusManager, _manager, actualConfigProvider);
         _dispenseController = dispenseController ?? new DispenseController(_manager, _hardwareStatusManager, new HardwareSimulator(actualConfigProvider));
 
         // Status monitors / Aggregator
@@ -355,7 +360,8 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
 
     // ========== AdjustCashCounts ==========
 
-    /// <summary>現在の現金在庫数を手動で調整（上書き）します。</summary>
+    /// <summary>現在の現金在庫数を手動で調整します。</summary>
+    /// <remarks>指定された金種の枚数で現在の在庫を上書きします。</remarks>
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts)
     {
         _operationHelper.VerifyState(SkipStateVerification);
@@ -463,7 +469,8 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     public override bool CapRepayDeposit => true;
 
     /// <summary>不一致の検出をサポートしているかどうかを取得します。</summary>
-    public override bool CapDiscrepancy => false;
+    /// <remarks>回収庫やリジェクト庫が存在する場合の在庫不一致検出能力を示します。</remarks>
+    public override bool CapDiscrepancy => true;
     /// <summary>満杯センサーをサポートしているかどうかを取得します。</summary>
     public override bool CapFullSensor => true;
     /// <summary>ニアフルセンサーをサポートしているかどうかを取得します。</summary>

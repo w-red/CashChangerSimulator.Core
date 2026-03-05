@@ -6,7 +6,8 @@ using R3;
 
 namespace CashChangerSimulator.Device.Coordination;
 
-/// <summary>釣銭機の各コンポーネントからの通知を集約し、UPOS イベントへ変換する調整クラス。</summary>
+/// <summary>釣銭機の各コンポーネントからの通知を集約する調整クラス。</summary>
+/// <remarks>内部状態の変化を UPOS イベントへ変換して通知します。</remarks>
 public class StatusCoordinator(
     ICashChangerStatusSink sink,
     OverallStatusAggregator statusAggregator,
@@ -83,6 +84,12 @@ public class StatusCoordinator(
                     sink.FireEvent(new StatusUpdateEventArgs((int)newFullStatus));
                 }
             }
+        }));
+
+        _disposables.Add(hardwareStatusManager.IsConnected.Subscribe(connected =>
+        {
+            var code = connected ? UposCashChangerStatusUpdateCode.Inserted : UposCashChangerStatusUpdateCode.Removed;
+            sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
         _disposables.Add(hardwareStatusManager.IsJammed.Subscribe(jammed =>
