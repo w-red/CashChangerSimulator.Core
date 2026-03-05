@@ -43,6 +43,11 @@ public class Inventory : IReadOnlyInventory
             key = key with { CurrencyCode = DenominationKey.DefaultCurrencyCode };
         }
         _logger.ZLogDebug($"Inventory.Add called. Key: {key}, Count: {count}");
+        if (count <= 0)
+        {
+            _logger.ZLogWarning($"Inventory.Add: Ignoring non-positive count {count} for {key}");
+            return;
+        }
         if (_counts.ContainsKey(key))
         {
             _counts[key] += count;
@@ -58,6 +63,11 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数を設定する。</summary>
     public virtual void SetCount(DenominationKey key, int count)
     {
+        if (count < 0)
+        {
+            _logger.ZLogWarning($"Inventory.SetCount: Ignoring negative count {count} for {key}");
+            return;
+        }
         _counts[key] = count;
         _changed.OnNext(key);
     }
