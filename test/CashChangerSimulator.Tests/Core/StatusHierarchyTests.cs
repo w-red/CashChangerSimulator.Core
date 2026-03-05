@@ -18,8 +18,8 @@ public class StatusHierarchyTests
 
         var monitors = new List<CashStatusMonitor>
         {
-            new CashStatusMonitor(inventory, d1, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10),
-            new CashStatusMonitor(inventory, d2, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)
+            new(inventory, d1, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10),
+            new(inventory, d2, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)
         };
 
         var aggregator = new OverallStatusAggregator(monitors);
