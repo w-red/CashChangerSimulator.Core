@@ -34,7 +34,7 @@ public class InventoryViewModelTests
         inv.SetCount(key1000, 5);
 
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history, new ChangeCalculator());
+        _ = new CashChangerManager(inv, history, new ChangeCalculator());
         var metadataProvider = new CurrencyMetadataProvider(config);
         var monitorsProvider = new MonitorsProvider(inv, config, metadataProvider);
         var aggregator = new OverallStatusAggregator(monitorsProvider.Monitors);
@@ -52,7 +52,7 @@ public class InventoryViewModelTests
     public void CollectAllCommandShouldSetAllCountsToZero()
     {
         // Arrange
-        var (vm, inv, config) = CreateViewModel();
+        var (vm, inv, _) = CreateViewModel();
         var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
         var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
 
@@ -69,7 +69,7 @@ public class InventoryViewModelTests
     public void ReplenishAllCommandShouldSetCountsToInitialValues()
     {
         // Arrange
-        var (vm, inv, config) = CreateViewModel();
+        var (vm, inv, _) = CreateViewModel();
         var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
         var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
 

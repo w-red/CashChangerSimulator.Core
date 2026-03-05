@@ -19,7 +19,7 @@ public class DepositSequenceTests
     {
         var inventory = new Inventory();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        _ = new CashChangerManager(inventory, history, new ChangeCalculator());
         var hw = new HardwareStatusManager();
         hw.SetConnected(true);
         var controller = new DepositController(inventory, hw);
@@ -34,7 +34,7 @@ public class DepositSequenceTests
     [Fact]
     public void FullDepositSequenceWithChange()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // beginDeposit: 入金受付開始
@@ -61,7 +61,7 @@ public class DepositSequenceTests
     [Fact]
     public void FullDepositSequenceWithNoChange()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
@@ -79,7 +79,7 @@ public class DepositSequenceTests
     [Fact]
     public void FullDepositSequenceWithRepay()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
