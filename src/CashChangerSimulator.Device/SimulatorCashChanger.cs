@@ -154,6 +154,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         if (State != ControlState.Closed)
         {
             _logger.LogInformation("Open called but device is already {0}.", State);
+            _operationHelper.SetSuccess();
             return;
         }
 
@@ -161,10 +162,12 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         {
             _hardwareStatusManager.SetConnected(true);
             _logger.LogInformation("Device opened (Verification Skipped).");
+            _operationHelper.SetSuccess();
             return;
         }
         base.Open();
         _hardwareStatusManager.SetConnected(true);
+        _operationHelper.SetSuccess();
     }
 
     /// <summary>デバイスをクローズします。</summary>
@@ -173,6 +176,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         if (State == ControlState.Closed)
         {
             _logger.LogInformation("Close called but device is already Closed.");
+            _operationHelper.SetSuccess();
             return;
         }
 
@@ -180,10 +184,12 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         {
             _hardwareStatusManager.SetConnected(false);
             _logger.LogInformation("Device closed (Verification Skipped).");
+            _operationHelper.SetSuccess();
             return;
         }
         base.Close();
         _hardwareStatusManager.SetConnected(false);
+        _operationHelper.SetSuccess();
     }
 
     /// <summary>デバイスを占有します。</summary>
@@ -197,9 +203,11 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
             }
             _isClaimed = true;
             _logger.LogInformation("Device claimed (Verification Skipped).");
+            _operationHelper.SetSuccess();
             return;
         }
         base.Claim(timeout);
+        _operationHelper.SetSuccess();
     }
 
     /// <summary>デバイスを解放します。</summary>
@@ -209,9 +217,11 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         {
             _isClaimed = false;
             _logger.LogInformation("Device released (Verification Skipped).");
+            _operationHelper.SetSuccess();
             return;
         }
         base.Release();
+        _operationHelper.SetSuccess();
     }
 
     /// <summary>デバイスが現在占有されているかどうかを取得します。</summary>
@@ -326,6 +336,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         _operationHelper.VerifyState(SkipStateVerification);
         UposOperationHelper.ThrowIfBusy(_asyncProcessing);
         _depositController.BeginDeposit();
+        _operationHelper.SetSuccess();
     }
 
     /// <summary>現金投入処理を終了します。</summary>
@@ -333,6 +344,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     {
         _operationHelper.VerifyState(SkipStateVerification);
         _depositController.EndDeposit(action);
+        _operationHelper.SetSuccess();
     }
 
     /// <summary>投入された現金の計数を確定します。</summary>
@@ -345,6 +357,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         {
             NotifyEvent(new DataEventArgs(0));
         }
+        _operationHelper.SetSuccess();
     }
 
     /// <summary>現金投入処理を一時停止または再開します。</summary>
@@ -352,6 +365,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     {
         _operationHelper.VerifyState(SkipStateVerification);
         _depositController.PauseDeposit(control);
+        _operationHelper.SetSuccess();
     }
 
     // ========== Dispense Methods ==========
@@ -407,6 +421,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
             _inventory.SetCount(key, count);
         }
         _logger.ZLogInformation($"AdjustCashCounts completed. Updated {dict.Count} denominations.");
+        _operationHelper.SetSuccess();
     }
 
     // ========== ReadCashCounts ==========
@@ -430,7 +445,9 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     public override DirectIOData DirectIO(int command, int data, object obj)
     {
         _operationHelper.VerifyState(SkipStateVerification);
-        return _directIOHandler.Handle(command, data, obj, this);
+        var result = _directIOHandler.Handle(command, data, obj, this);
+        _operationHelper.SetSuccess();
+        return result;
     }
 
     // ========== UPOS Property Overrides (Merged from Properties.cs) ==========

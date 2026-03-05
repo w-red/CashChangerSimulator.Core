@@ -48,11 +48,24 @@ public class UposOperationHelper
         }
     }
 
-    /// <summary>払い出し操作の結果を処理し、SOの状態とイベントを更新します。</summary>
-    public void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync)
+    /// <summary>操作が成功したことを記録し、ResultCode を更新します。</summary>
+    public void SetSuccess()
+    {
+        _so.ResultCode = (int)ErrorCode.Success;
+        _so.ResultCodeExtended = 0;
+    }
+
+    /// <summary>操作が失敗したことを記録し、ResultCode を更新します。</summary>
+    public void SetFailure(ErrorCode code, int codeEx = 0)
     {
         _so.ResultCode = (int)code;
         _so.ResultCodeExtended = codeEx;
+    }
+
+    /// <summary>払い出し操作の結果を処理し、SOの状態とイベントを更新します。</summary>
+    public void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync)
+    {
+        SetFailure(code, codeEx);
         if (wasAsync)
         {
             _so.SetAsyncProcessing(false);
