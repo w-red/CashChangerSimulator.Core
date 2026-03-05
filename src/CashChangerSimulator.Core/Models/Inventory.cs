@@ -156,7 +156,7 @@ public class Inventory : IReadOnlyInventory
                 if (kv.Key.StartsWith("COL:"))
                 {
                     var actualKey = kv.Key[4..];
-                    if (TryParseKey(actualKey, out var denKey, out var currency))
+                    if (TryParseKey(actualKey, out var denKey, out var currency) && denKey != null)
                     {
                         AddCollection(denKey, kv.Value);
                     }
@@ -164,14 +164,14 @@ public class Inventory : IReadOnlyInventory
                 else if (kv.Key.StartsWith("REJ:"))
                 {
                     var actualKey = kv.Key[4..];
-                    if (TryParseKey(actualKey, out var denKey, out var currency))
+                    if (TryParseKey(actualKey, out var denKey, out var currency) && denKey != null)
                     {
                         AddReject(denKey, kv.Value);
                     }
                 }
                 else
                 {
-                    if (TryParseKey(kv.Key, out var denKey, out var currency))
+                    if (TryParseKey(kv.Key, out var denKey, out var currency) && denKey != null)
                     {
                         SetCount(denKey, kv.Value);
                     }
