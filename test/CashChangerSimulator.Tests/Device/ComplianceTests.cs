@@ -17,7 +17,7 @@ public class ComplianceTests
         hardwareStatusManager.SetConnected(true);
         var history = new CashChangerSimulator.Core.Transactions.TransactionHistory();
         var controller = new DepositController(inventory, hardwareStatusManager);
-        var changer = 
+        var changer =
             new InternalSimulatorCashChanger(
                 null,
                 inventory,
@@ -27,7 +27,7 @@ public class ComplianceTests
                 null,
                 null,
                 hardwareStatusManager);
-        
+
         changer.SkipStateVerification = true;
         changer.Open();
         changer.Claim(0);
@@ -87,7 +87,7 @@ public class ComplianceTests
 
         // Act
         controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"));
-        
+
         // Assert
         eventCount.ShouldBe(1); // Fired immediately
         history.Entries.ShouldContain(e => e.Type == CashChangerSimulator.Core.Transactions.TransactionType.DataEvent);

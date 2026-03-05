@@ -49,7 +49,7 @@ public class CliCashServiceTests : CliTestBase
 
         // Act
         // 1000万など、初期在庫（通常は数万円程度）を明らかに超える金額を出金しようと試みる
-        cashService.Dispense(10000000); 
+        cashService.Dispense(10000000);
 
         // Assert
         // UI に正しくエラーコードが反映されているか

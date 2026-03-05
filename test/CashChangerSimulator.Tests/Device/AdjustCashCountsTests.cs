@@ -21,7 +21,7 @@ public class AdjustCashCountsTests
     {
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
-        
+
         // Define adjustment: 10 bills of 1000 JPY, 5 coins of 100 JPY
         var cashCounts = new CashCounts([
             new CashCount(CashCountType.Bill, 1000, 10),
@@ -33,7 +33,7 @@ public class AdjustCashCountsTests
 
         // Verify Inventory via ReadCashCounts (which uses the internal inventory)
         var results = simulator.ReadCashCounts().Counts;
-        
+
         var billCount = results.Where(c => c.NominalValue == 1000 && c.Type == CashCountType.Bill).Select(c => c.Count).DefaultIfEmpty(0).FirstOrDefault();
         var coinCount = results.Where(c => c.NominalValue == 100 && c.Type == CashCountType.Coin).Select(c => c.Count).DefaultIfEmpty(0).FirstOrDefault();
 
@@ -49,7 +49,7 @@ public class AdjustCashCountsTests
         // and updates the inventory accordingly.
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
-        
+
         // JPY is default
         var cashCounts = new CashCounts(new[]
         {

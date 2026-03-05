@@ -22,7 +22,7 @@ public class DepositControllerDelegationTest
         var inventory = new Inventory();
         var hardwareManager = new HardwareStatusManager();
         hardwareManager.SetConnected(true);
-        var managerMock = 
+        var managerMock =
             new Mock<CashChangerManager>(
                 inventory,
                 new TransactionHistory(),

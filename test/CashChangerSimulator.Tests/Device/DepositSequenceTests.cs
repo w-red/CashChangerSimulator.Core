@@ -61,7 +61,7 @@ public class DepositSequenceTests
     [Fact]
     public void FullDepositSequenceWithNoChange()
     {
-        var (controller, _) = CreateController();
+        var (controller, inventory) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
@@ -79,7 +79,7 @@ public class DepositSequenceTests
     [Fact]
     public void FullDepositSequenceWithRepay()
     {
-        var (controller, _) = CreateController();
+        var (controller, inventory) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();

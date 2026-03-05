@@ -23,7 +23,7 @@ public interface ICurrencyMetadataProvider
 
     /// <summary>指定された金種の表示名を取得する。</summary>
     string GetDenominationName(DenominationKey key);
-    
+
     /// <summary>指定された金種とカルチャの表示名を取得する。</summary>
     string GetDenominationName(DenominationKey key, string cultureCode);
 }

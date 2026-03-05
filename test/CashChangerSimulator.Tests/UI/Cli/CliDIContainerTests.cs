@@ -16,7 +16,7 @@ public class CliDIContainerTests
         CliDIContainer.Initialize(args);
         var serviceProvider = CliDIContainer.Resolve<IServiceProvider>();
         CliDIContainer.PostInitialize(serviceProvider, args);
-        
+
         var configProvider = CliDIContainer.Resolve<ConfigurationProvider>();
 
         // Assert

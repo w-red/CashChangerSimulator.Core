@@ -25,7 +25,7 @@ public class DirectIOTests
         // Force Overlap ON
         var result = simulator.DirectIO(10, 1, null!);
         result.Data.ShouldBe(1);
-        
+
         var hardwareStatusManager = (HardwareStatusManager)typeof(InternalSimulatorCashChanger)
             .GetField("_hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .GetValue(simulator)!;
@@ -62,7 +62,7 @@ public class DirectIOTests
     {
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
-        
+
         var result = simulator.DirectIO(100, 0, "");
         result.Object.ShouldNotBeNull();
         result.Object.ToString()!.ShouldContain("InternalSimulatorCashChanger");
@@ -76,7 +76,7 @@ public class DirectIOTests
         simulator.SkipStateVerification = true;
         var myObj = new object();
         var result = simulator.DirectIO(999, 123, myObj);
-        
+
         result.Data.ShouldBe(123);
         result.Object.ShouldBe(myObj);
     }

@@ -30,20 +30,20 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
 {
     public List<EventArgs> QueuedEvents { get; } = [];
 
-    public TestSimulatorCashChanger(Inventory inv, CashChangerManager manager) 
+    public TestSimulatorCashChanger(Inventory inv, CashChangerManager manager)
         : this(inv, manager, new HardwareStatusManager())
     {
     }
 
     private TestSimulatorCashChanger(Inventory inv, CashChangerManager manager, HardwareStatusManager hw)
         : base(
-            new ConfigurationProvider(), 
-            inv, 
-            new TransactionHistory(), 
-            manager, 
-            new DepositController(inv, hw), 
-            new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object), 
-            new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))), 
+            new ConfigurationProvider(),
+            inv,
+            new TransactionHistory(),
+            manager,
+            new DepositController(inv, hw),
+            new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object),
+            new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))),
             hw)
     {
     }

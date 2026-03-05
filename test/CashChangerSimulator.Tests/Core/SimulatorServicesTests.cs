@@ -62,17 +62,17 @@ public class SimulatorServicesTests : IDisposable
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
         var provider = new TestServiceProvider(
-            configProvider, 
-            inventory, 
-            history, 
-            manager, 
-            hw, 
-            metadataProvider, 
-            monitorsProvider, 
-            aggregatorProvider, 
-            depositController, 
+            configProvider,
+            inventory,
+            history,
+            manager,
+            hw,
+            metadataProvider,
+            monitorsProvider,
+            aggregatorProvider,
+            depositController,
             dispenseController);
-            
+
         SimulatorServices.Provider = provider;
 
         // InternalSimulatorCashChanger default constructor should pick up from SimulatorServices

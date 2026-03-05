@@ -67,7 +67,7 @@ public class ConfigurationLoaderTests : IDisposable
         var config = new SimulatorConfiguration();
         config.System.CurrencyCode = "USD";
         config.Inventory["USD"] = new InventorySettings();
-        
+
         // Act
         ConfigurationLoader.Save(config, _testConfigPath);
         var loaded = ConfigurationLoader.Load(_testConfigPath);

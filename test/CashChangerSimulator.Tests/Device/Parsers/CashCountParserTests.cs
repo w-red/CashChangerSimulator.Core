@@ -34,7 +34,7 @@ public class CashCountParserTests
         var result = CashCountParser.Parse(input, _jpyKeys, 1).ToList();
 
         result.Count.ShouldBe(3);
-        
+
         // Coins
         result.ShouldContain(c => c.Type == CashCountType.Coin && c.NominalValue == 500 && c.Count == 10);
         result.ShouldContain(c => c.Type == CashCountType.Coin && c.NominalValue == 100 && c.Count == 20);
@@ -51,7 +51,7 @@ public class CashCountParserTests
         var result = CashCountParser.Parse(input, _usdKeys, 100).ToList();
 
         result.Count.ShouldBe(2);
-        
+
         // Coin
         result[0].Type.ShouldBe(CashCountType.Coin);
         result[0].NominalValue.ShouldBe(100); // 1.0 * 100
@@ -81,7 +81,7 @@ public class CashCountParserTests
     {
         // USD has both $1 Bill and $1 Coin. Without semicolon context, it's ambiguous.
         var input = "1:5";
-        
+
         var exception = Should.Throw<ArgumentException>(() => CashCountParser.Parse(input, _usdKeys, 100));
         exception.Message.ShouldContain("Ambiguous denomination value '1'");
     }

@@ -18,7 +18,7 @@ public class DeviceEventHistoryObserverTest
         // Arrange
         var history = new TransactionHistory();
         var device = new InternalSimulatorCashChanger(history: history);
-        
+
         // This instantiates the observer, subscribing to the device
         using var observer = new DeviceEventHistoryObserver(device, history);
 
@@ -34,7 +34,7 @@ public class DeviceEventHistoryObserverTest
         entry.Amount.ShouldBe(0);
         entry.Counts.ShouldBeEmpty();
     }
-    
+
     /// <summary>DataEventArgs 以外のデバイスイベントが発生した際、履歴に追加「されない」ことを検証します。</summary>
     [Fact]
     public void HandleDeviceEvent_WhenNotDataEventArgs_DoesNotRecordToHistory()

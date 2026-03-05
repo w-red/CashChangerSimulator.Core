@@ -33,20 +33,20 @@ public class RepayDepositTests
         simulator.DeviceEnabled = true;
 
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         // Initial inventory check
         var initialCounts = simulator.ReadCashCounts();
         var initialCount = initialCounts.Counts.Where(c => c.NominalValue == 1000).Select(c => c.Count).DefaultIfEmpty(0).FirstOrDefault();
 
         // Sequence: Begin -> Track -> Fix -> End(Repay)
         simulator.BeginDeposit();
-        
+
         // Simulate bill insertion (Directly via controller for test simplicity, 
         // normally triggered by hardware/UI)
         var controller = (DepositController)typeof(InternalSimulatorCashChanger)
             .GetField("_depositController", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .GetValue(simulator)!;
-        
+
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
         simulator.DepositAmount.ShouldBe(1000);
 
@@ -56,7 +56,7 @@ public class RepayDepositTests
         // Verify state after Repay
         simulator.DepositAmount.ShouldBe(0);
         simulator.DepositStatus.ShouldBe(CashDepositStatus.End);
-        
+
         // Verify inventory is UNCHANGED
         var finalCounts = simulator.ReadCashCounts();
         var finalCount = finalCounts.Counts.Where(c => c.NominalValue == 1000).Select(c => c.Count).DefaultIfEmpty(0).FirstOrDefault();

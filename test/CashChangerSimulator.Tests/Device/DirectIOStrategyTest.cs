@@ -22,7 +22,7 @@ public class DirectIOStrategyTest
     {
         // Arrange
         var strategy = new SetOverlapStrategy();
-        
+
         // Act
         var result = strategy.Execute(1, "test", _device);
 
@@ -39,7 +39,7 @@ public class DirectIOStrategyTest
     {
         // Arrange
         var strategy = new SetJamStrategy();
-        
+
         // Act
         var result = strategy.Execute(1, "test", _device);
 

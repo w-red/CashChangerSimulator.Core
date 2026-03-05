@@ -28,7 +28,7 @@ public class SerialNumberTrackingTests
                 | System.Reflection.BindingFlags.Instance);
         var controller =
             (DepositController)field!.GetValue(changer)!;
-        
+
         return (changer, controller);
     }
 
@@ -69,10 +69,10 @@ public class SerialNumberTrackingTests
         // Arrange
         var (changer, controller) = CreateChanger();
         var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        
+
         changer.BeginDeposit();
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key1000, 2 } });
-        
+
         // Serials are captured but not and "last" yet until FixDeposit
         controller.LastDepositedSerials.Count.ShouldBe(0);
 
@@ -83,7 +83,7 @@ public class SerialNumberTrackingTests
         var result = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
         result.Object.ShouldNotBeNull();
         var serials = result.Object.ToString()!.Split(',');
-        
+
         serials?.Length.ShouldBe(2);
         serials?[0].ShouldStartWith("S1000-");
         serials?[1].ShouldStartWith("S1000-");
@@ -97,11 +97,11 @@ public class SerialNumberTrackingTests
         // Arrange
         var (changer, controller) = CreateChanger();
         var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        
+
         changer.BeginDeposit();
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key1000, 1 } });
         changer.FixDeposit();
-        
+
         var resultBeforeHeader = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
         string serialBefore = resultBeforeHeader.Object?.ToString() ?? "";
 

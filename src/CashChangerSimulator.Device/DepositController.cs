@@ -86,7 +86,7 @@ public class DepositController : IDisposable
         _depositStatus = CashDepositStatus.Start;
         _depositPaused = false;
         _depositFixed = false;
-        
+
         if (_hardwareStatusManager.IsJammed.Value)
         {
             throw new PosControlException("Device is jammed. Cannot begin deposit.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
@@ -213,7 +213,7 @@ public class DepositController : IDisposable
 
             // Logic Correction: Inventory is NOT updated here.
             // It will be updated in EndDeposit if action is Store.
-            
+
             // Record serial numbers for Bills
             if (key.Type == CurrencyCashType.Bill)
             {

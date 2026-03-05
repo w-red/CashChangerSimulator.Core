@@ -134,7 +134,7 @@ public class ScriptExecutionService(
                     var varName = str[1..];
                     if (context.Variables.TryGetValue(varName, out var varValue))
                     {
-                        return 
+                        return
                             varValue is JsonElement varElement
                             && varElement.ValueKind == JsonValueKind.Number
                                 ? varElement.GetInt32()

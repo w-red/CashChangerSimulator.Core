@@ -79,13 +79,13 @@ public class OverallStatusAggregatorTests
 
         // Act: One becomes NearEmpty
         inventory.SetCount(monitors[2].Key, 1);
-        
+
         // Assert
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.NearEmpty);
 
         // Act: Another becomes Empty
         inventory.SetCount(monitors[4].Key, 0);
-        
+
         // Assert
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
     }

@@ -17,7 +17,7 @@ public class ErrorScenarioTests
     private static (InternalSimulatorCashChanger Device, HardwareStatusManager Hardware) CreateDevice()
     {
         var configProvider = new ConfigurationProvider();
-        
+
         // Ensure USD is in the config for tests that need it
         if (!configProvider.Config.Inventory.ContainsKey("USD"))
         {
@@ -25,14 +25,18 @@ public class ErrorScenarioTests
             {
                 Denominations = new Dictionary<string, DenominationSettings>
                 {
-                    ["B10"] = new(), ["B5"] = new(), ["B1"] = new(),
-                    ["C1"] = new(), ["C0.25"] = new(), ["C0.1"] = new()
+                    ["B10"] = new(),
+                    ["B5"] = new(),
+                    ["B1"] = new(),
+                    ["C1"] = new(),
+                    ["C0.25"] = new(),
+                    ["C0.1"] = new()
                 }
             };
         }
 
         var inventory = new Inventory();
-        
+
         // Initialize inventory with keys from config for JPY and USD
         foreach (var currency in configProvider.Config.Inventory)
         {
@@ -226,7 +230,7 @@ public class ErrorScenarioTests
     public void DirectIOAdjustWithInvalidArgumentsShouldThrowIllegal()
     {
         var (device, _) = CreateDevice();
-        
+
         // Non-string object
         Should.Throw<PosControlException>(() => device.DirectIO(DirectIOCommands.AdjustCashCountsStr, 0, 123))
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
@@ -241,7 +245,7 @@ public class ErrorScenarioTests
     public void ParseWithInvalidSectionsShouldThrowIllegal()
     {
         var (device, _) = CreateDevice();
-        
+
         // 3セクション以上
         Should.Throw<PosControlException>(() => device.DirectIO(DirectIOCommands.AdjustCashCountsStr, 0, "1:1;2:2;3:3"))
             .ErrorCode.ShouldBe(ErrorCode.Illegal);

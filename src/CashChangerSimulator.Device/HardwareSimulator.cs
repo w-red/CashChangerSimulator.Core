@@ -18,7 +18,7 @@ public class HardwareSimulator : IDeviceSimulator
     {
         _configProvider = configProvider;
     }
- 
+
     /// <inheritdoc/>
     public async Task SimulateDispenseAsync(CancellationToken ct = default)
     {

@@ -25,7 +25,7 @@ public static class CashCountParser
         }
 
         var results = new List<CashCount>();
-        
+
         // UPOS Standard: Coins ; Bills
         var sections = input.Split(';');
         if (sections.Length > 2)

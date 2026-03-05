@@ -81,7 +81,7 @@ public class CashStatusMonitorTests
 
         // 在庫を増やしてもステータスが変わらないことを確認
         inventory.SetCount(denomination, 5);
-        
+
         // Assert
         // 注: Dispose しても既存の ReactiveProperty の値は残るが、更新はされないはず
         monitor.Status.CurrentValue.ShouldBe(CashStatus.Empty);

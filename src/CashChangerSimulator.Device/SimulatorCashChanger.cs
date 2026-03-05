@@ -47,7 +47,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     /// <summary>VerifyState チェックをスキップするかどうかを取得または設定します。</summary>
     public virtual bool SkipStateVerification { get; set; }
     private readonly UposOperationHelper _operationHelper;
- 
+
     /// <summary>デバイスの有効状態を取得または設定します。</summary>
     public override bool DeviceEnabled
     {
@@ -101,7 +101,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
 
     /// <summary>デバイスがリアルタイムデータの通知能力を持っているかどうか。</summary>
     public override bool CapRealTimeData => _config.Simulation.CapRealTimeData;
- 
+
     /// <summary>最新の操作の結果コードを取得または設定します。</summary>
     public int ResultCode { get; set; }
 
@@ -218,7 +218,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         _config = actualConfigProvider.Config;
 
         DevicePath = "SimulatorCashChanger";
-        
+
         _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
 
         _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
@@ -227,7 +227,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         _inventory = inventory ?? new Inventory();
         _history = history ?? new TransactionHistory();
         _manager = manager ?? new CashChangerManager(_inventory, _history, new ChangeCalculator());
-        
+
         _depositController = depositController ?? new DepositController(_inventory, _hardwareStatusManager);
         _dispenseController = dispenseController ?? new DispenseController(_manager, _hardwareStatusManager, new HardwareSimulator(actualConfigProvider));
 
@@ -243,7 +243,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
                     x.Item2.NearFull,
                     x.Item2.Full))
             .ToList();
-        
+
         _statusAggregator =
             aggregatorProvider
             ?.Aggregator
@@ -354,7 +354,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     }
 
     // ========== AdjustCashCounts ==========
-    
+
     /// <summary>現在の現金在庫数を手動で調整（上書き）します。</summary>
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts)
     {

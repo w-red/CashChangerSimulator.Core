@@ -122,7 +122,7 @@ public class CashChangerManagerTests
 
         // Act & Assert
         Should.Throw<InsufficientCashException>(() => manager.Dispense(100m));
-        
+
         inventory.CalculateTotal().ShouldBe(0m);
         history.Entries.ShouldBeEmpty();
     }

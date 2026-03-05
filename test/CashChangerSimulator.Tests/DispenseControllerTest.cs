@@ -73,7 +73,7 @@ public class DispenseControllerTest
         inventory.SetCount(key, 10);
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
         var mockSimulator = new Mock<IDeviceSimulator>();
-        
+
         var hw = new HardwareStatusManager();
         hw.SetConnected(true);
         var controller = new DispenseController(manager, hw, mockSimulator.Object);

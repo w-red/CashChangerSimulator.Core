@@ -63,10 +63,10 @@ public class SimulatorConfiguration
             inventory.Denominations.TryGetValue(keyStr, out var setting)
             ? setting
             : new DenominationSettings
-        {
-            NearEmpty = Thresholds.NearEmpty,
-            NearFull = Thresholds.NearFull,
-            Full = Thresholds.Full
-        };
+            {
+                NearEmpty = Thresholds.NearEmpty,
+                NearFull = Thresholds.NearFull,
+                Full = Thresholds.Full
+            };
     }
 }

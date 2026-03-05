@@ -45,7 +45,7 @@ public static class ConfigurationLoader
             config.Simulation ??= new SimulationSettings();
             config.Thresholds ??= new ThresholdSettings();
             config.Inventory ??= [];
-            
+
             return config;
         }
         catch (Exception ex)

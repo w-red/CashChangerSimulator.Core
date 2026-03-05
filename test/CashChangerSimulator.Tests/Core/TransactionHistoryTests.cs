@@ -91,12 +91,12 @@ public class TransactionHistoryTests
         {
             Entries =
             [
-                new HistoryEntryState 
-                { 
-                    Amount = 1000, 
-                    Type = TransactionType.Deposit, 
-                    Timestamp = DateTimeOffset.Now, 
-                    Counts = new Dictionary<string, int> { { "INVALID_KEY", 1 } } 
+                new HistoryEntryState
+                {
+                    Amount = 1000,
+                    Type = TransactionType.Deposit,
+                    Timestamp = DateTimeOffset.Now,
+                    Counts = new Dictionary<string, int> { { "INVALID_KEY", 1 } }
                 }
             ]
         };

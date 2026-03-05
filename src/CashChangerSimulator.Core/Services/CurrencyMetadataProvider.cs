@@ -20,7 +20,7 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
 
     /// <summary>通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolPrefix { get; }
- 
+
     /// <summary>通貨記号のサフィックス（例: "円"）。通常、金額の後ろに表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolSuffix { get; }
 
@@ -121,7 +121,7 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
 
         // 通貨記号を取得
         var rawSymbol = currencyData.DefaultSymbol;
-        
+
         // JPY の場合、ロケールによって表示位置を調整する
         if (currencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
         {
@@ -158,7 +158,7 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
         {
             return isJapanese ? $"{key.Value:N0}円" : $"{key.Value:N0} Yen";
         }
-        
+
         if (CurrencyCode.Equals("USD", StringComparison.OrdinalIgnoreCase))
         {
             return key.Type == CurrencyCashType.Bill ? $"${key.Value:N0} Bill" : $"${key.Value} Coin";

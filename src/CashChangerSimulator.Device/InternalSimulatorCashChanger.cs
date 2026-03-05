@@ -62,7 +62,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
     protected override void NotifyEvent(EventArgs e)
     {
         OnEventQueued?.Invoke(e);
-        
+
         if (SkipStateVerification) return;
         base.NotifyEvent(e);
     }

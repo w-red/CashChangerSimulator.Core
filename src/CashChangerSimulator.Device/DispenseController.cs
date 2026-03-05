@@ -110,7 +110,7 @@ public class DispenseController : IDisposable
         try
         {
             _logger.ZLogInformation($"Dispense operation started.");
-            
+
             await SimulateHardwareAsync();
 
             action();

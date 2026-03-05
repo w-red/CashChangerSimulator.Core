@@ -63,9 +63,9 @@ public class AsyncModeReliabilityTests
         changer.Open();
         changer.Claim(1000);
         changer.DeviceEnabled = true;
-        
+
         changer.DispenseChange(100);
-        
+
         // Assert: Capture whatever the state is during operation
         controller.IsBusy.ShouldBeTrue("Dispense operation should be busy.");
 
