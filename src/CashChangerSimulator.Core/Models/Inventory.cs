@@ -184,7 +184,7 @@ public class Inventory : IReadOnlyInventory
         }
     }
 
-    private bool TryParseKey(string fullKey, out DenominationKey key, out string currencyCode)
+    private bool TryParseKey(string fullKey, out DenominationKey? key, out string? currencyCode)
     {
         key = null;
         currencyCode = null;
@@ -193,7 +193,11 @@ public class Inventory : IReadOnlyInventory
         {
             currencyCode = parts[0];
             var denomStr = parts[1];
-            return DenominationKey.TryParse(denomStr, currencyCode, out key) && key != null;
+            if (DenominationKey.TryParse(denomStr, currencyCode, out var parsedKey) && parsedKey != null)
+            {
+                key = parsedKey;
+                return true;
+            }
         }
         return false;
     }
