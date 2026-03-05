@@ -7,11 +7,7 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using Moq;
-using R3;
 using Shouldly;
-using System.Windows;
-using Xunit;
-using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Tests.UI;
 
