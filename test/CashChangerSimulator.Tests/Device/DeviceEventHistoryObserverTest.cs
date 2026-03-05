@@ -29,7 +29,7 @@ public class DeviceEventHistoryObserverTest
 
         // Assert
         history.Entries.Count.ShouldBe(1);
-        var entry = history.Entries.First();
+        var entry = history.Entries[0];
         entry.Type.ShouldBe(TransactionType.DataEvent);
         entry.Amount.ShouldBe(0);
         entry.Counts.ShouldBeEmpty();

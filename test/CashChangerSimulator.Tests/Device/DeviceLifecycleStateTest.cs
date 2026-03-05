@@ -13,7 +13,7 @@ public class DeviceLifecycleStateTest
     private readonly HardwareStatusManager _hardwareStatusManager = new();
     private readonly Mock<ILogger> _mockLogger = new();
     private bool _deviceEnabled;
-    private DeviceLifecycleContext _context;
+    private readonly DeviceLifecycleContext _context;
     private IDeviceState _state;
 
     public DeviceLifecycleStateTest()
