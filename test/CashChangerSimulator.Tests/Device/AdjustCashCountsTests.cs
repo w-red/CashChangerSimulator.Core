@@ -23,11 +23,10 @@ public class AdjustCashCountsTests
         simulator.SkipStateVerification = true;
         
         // Define adjustment: 10 bills of 1000 JPY, 5 coins of 100 JPY
-        var cashCounts = new CashCounts(new[]
-        {
+        var cashCounts = new CashCounts([
             new CashCount(CashCountType.Bill, 1000, 10),
             new CashCount(CashCountType.Coin, 100, 5)
-        }, false);
+        ], false);
 
         // Execute Adjustment
         simulator.AdjustCashCounts(cashCounts.Counts);

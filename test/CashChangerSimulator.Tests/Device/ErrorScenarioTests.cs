@@ -200,7 +200,7 @@ public class ErrorScenarioTests
     {
         var (device, _) = CreateDevice();
         // 1000円札 1枚のみの設定
-        device.AdjustCashCounts(new[] { new CashCount(CashCountType.Bill, 1000, 1) });
+        device.AdjustCashCounts([new CashCount(CashCountType.Bill, 1000, 1)]);
 
         // 500円を要求（在庫金額はあるが、組み合わせがない）
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(500));
