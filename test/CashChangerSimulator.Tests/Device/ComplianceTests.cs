@@ -10,7 +10,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing ComplianceTests functionality.</summary>
 public class ComplianceTests
 {
-    private (InternalSimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history, DeviceEventHistoryObserver observer) CreateChanger()
+    private static (InternalSimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history, DeviceEventHistoryObserver observer) CreateChanger()
     {
         var inventory = new Inventory();
         var hardwareStatusManager = new HardwareStatusManager();

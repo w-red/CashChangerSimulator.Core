@@ -8,7 +8,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing RepayDepositTests functionality.</summary>
 public class RepayDepositTests
 {
-    private InternalSimulatorCashChanger CreateSimulator()
+    private static InternalSimulatorCashChanger CreateSimulator()
     {
         // Using default constructor which resolves via SimulatorServices or creates defaults
         return new InternalSimulatorCashChanger();

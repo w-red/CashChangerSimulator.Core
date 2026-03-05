@@ -290,7 +290,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     public override void BeginDeposit()
     {
         _operationHelper.VerifyState(SkipStateVerification);
-        _operationHelper.ThrowIfBusy(_asyncProcessing);
+        UposOperationHelper.ThrowIfBusy(_asyncProcessing);
         _depositController.BeginDeposit();
     }
 
@@ -326,8 +326,8 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     public override void DispenseChange(int amount)
     {
         _operationHelper.VerifyState(SkipStateVerification);
-        _operationHelper.ThrowIfBusy(_asyncProcessing);
-        _operationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
+        UposOperationHelper.ThrowIfBusy(_asyncProcessing);
+        UposOperationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
         _dispenseFacade!.DispenseByAmount(amount, CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode), AsyncMode, HandleDispenseResult);
     }
 
@@ -335,8 +335,8 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     public override void DispenseCash(CashCount[] cashCounts)
     {
         _operationHelper.VerifyState(SkipStateVerification);
-        _operationHelper.ThrowIfBusy(_asyncProcessing);
-        _operationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
+        UposOperationHelper.ThrowIfBusy(_asyncProcessing);
+        UposOperationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
         _dispenseFacade!.DispenseByCashCounts(cashCounts, _activeCurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_activeCurrencyCode), AsyncMode, HandleDispenseResult);
     }
 
@@ -359,8 +359,8 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts)
     {
         _operationHelper.VerifyState(SkipStateVerification);
-        _operationHelper.ThrowIfBusy(_asyncProcessing);
-        _operationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
+        UposOperationHelper.ThrowIfBusy(_asyncProcessing);
+        UposOperationHelper.ThrowIfDepositInProgress(_depositController.IsDepositInProgress);
         if (_hardwareStatusManager.IsJammed.Value)
         {
             throw new PosControlException("Device is jammed. Cannot adjust cash counts.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
@@ -380,7 +380,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     public override CashCounts ReadCashCounts()
     {
         _operationHelper.VerifyState(SkipStateVerification);
-        _operationHelper.ThrowIfBusy(_asyncProcessing);
+        UposOperationHelper.ThrowIfBusy(_asyncProcessing);
         var sorted = _inventory.AllCounts
             .Where(kv => kv.Key.CurrencyCode == _activeCurrencyCode)
             .OrderBy(kv => kv.Key.Type)

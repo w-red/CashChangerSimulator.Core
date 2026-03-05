@@ -13,7 +13,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>マルチ通貨（JPY/USD切り替え、フィルタリング、小数の名目値）の検証テスト。</summary>
 public class MultiCurrencyTests
 {
-    private InternalSimulatorCashChanger CreateDevice()
+    private static InternalSimulatorCashChanger CreateDevice()
     {
         var configProvider = new ConfigurationProvider();
         configProvider.Config.Inventory = new()

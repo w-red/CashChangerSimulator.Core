@@ -30,7 +30,7 @@ public class UposOperationHelper
     }
 
     /// <summary>デバイスが非同期処理中でないことを確認します。</summary>
-    public void ThrowIfBusy(bool asyncProcessing)
+    public static void ThrowIfBusy(bool asyncProcessing)
     {
         if (asyncProcessing)
         {
@@ -39,7 +39,7 @@ public class UposOperationHelper
     }
 
     /// <summary>入金処理が進行中でないことを確認します。</summary>
-    public void ThrowIfDepositInProgress(bool inProgress)
+    public static void ThrowIfDepositInProgress(bool inProgress)
     {
         if (inProgress)
         {

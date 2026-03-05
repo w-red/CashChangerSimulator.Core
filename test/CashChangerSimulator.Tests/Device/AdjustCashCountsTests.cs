@@ -7,7 +7,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing AdjustCashCountsTests functionality.</summary>
 public class AdjustCashCountsTests
 {
-    private InternalSimulatorCashChanger CreateSimulator()
+    private static InternalSimulatorCashChanger CreateSimulator()
     {
         var simulator = new InternalSimulatorCashChanger { SkipStateVerification = true };
         simulator.Open();

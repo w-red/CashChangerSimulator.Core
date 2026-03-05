@@ -9,7 +9,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing SerialNumberTrackingTests functionality.</summary>
 public class SerialNumberTrackingTests
 {
-    private (InternalSimulatorCashChanger changer, DepositController controller) CreateChanger()
+    private static (InternalSimulatorCashChanger changer, DepositController controller) CreateChanger()
     {
         var changer = new InternalSimulatorCashChanger
         {
