@@ -5,29 +5,48 @@ namespace CashChangerSimulator.Core.Monitoring;
 /// <summary>釣銭機全体のステータスを集約管理するクラス。</summary>
 public class OverallStatusAggregator : IDisposable
 {
-    private readonly IEnumerable<CashStatusMonitor> _monitors;
-    private readonly ReadOnlyReactiveProperty<CashStatus> _deviceStatus;
-    private readonly ReadOnlyReactiveProperty<CashStatus> _fullStatus;
+    private IEnumerable<CashStatusMonitor> _monitors;
+    private readonly BindableReactiveProperty<CashStatus> _deviceStatus;
+    private readonly BindableReactiveProperty<CashStatus> _fullStatus;
+    private IDisposable? _currentSubscription;
 
     /// <summary>空・ニアエンプティに関する集約ステータス。</summary>
-    public ReadOnlyReactiveProperty<CashStatus> DeviceStatus => _deviceStatus;
+    public ReadOnlyReactiveProperty<CashStatus> DeviceStatus { get; }
 
     /// <summary>満杯・ニアフルに関する集約ステータス。</summary>
-    public ReadOnlyReactiveProperty<CashStatus> FullStatus => _fullStatus;
+    public ReadOnlyReactiveProperty<CashStatus> FullStatus { get; }
 
     /// <summary>監視対象のモニター一覧を指定して初期化します。</summary>
     public OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
     {
         _monitors = monitors;
-        var statuses = Observable.CombineLatest(_monitors.Select(m => m.Status.AsObservable()));
+        _deviceStatus = new BindableReactiveProperty<CashStatus>(CashStatus.Unknown);
+        _fullStatus = new BindableReactiveProperty<CashStatus>(CashStatus.Unknown);
+        DeviceStatus = _deviceStatus.ToReadOnlyReactiveProperty();
+        FullStatus = _fullStatus.ToReadOnlyReactiveProperty();
 
-        _deviceStatus = statuses
-            .Select(s => AggregateDevice(s))
-            .ToReadOnlyReactiveProperty(CashStatus.Unknown);
+        Refresh(monitors);
+    }
 
-        _fullStatus = statuses
-            .Select(s => AggregateFull(s))
-            .ToReadOnlyReactiveProperty(CashStatus.Unknown);
+    /// <summary>金種モニターのリストを更新し、集計ロジックを再構築します。</summary>
+    public void Refresh(IEnumerable<CashStatusMonitor> monitors)
+    {
+        _currentSubscription?.Dispose();
+        _monitors = monitors;
+
+        if (!_monitors.Any())
+        {
+            _deviceStatus.Value = CashStatus.Unknown;
+            _fullStatus.Value = CashStatus.Unknown;
+            return;
+        }
+
+        _currentSubscription = Observable.CombineLatest(_monitors.Select(m => m.Status.AsObservable()))
+            .Subscribe(s =>
+            {
+                _deviceStatus.Value = AggregateDevice(s);
+                _fullStatus.Value = AggregateFull(s);
+            });
     }
 
     private static CashStatus AggregateDevice(IList<CashStatus> statuses)
