@@ -11,9 +11,7 @@ using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
 using MicroResolver;
 using R3;
-using CashChangerSimulator.Device.Strategies;
 using CashChangerSimulator.Device.Coordination;
-using CashChangerSimulator.Device.Lifecycle;
 using ZLogger;
 
 namespace CashChangerSimulator.Device;
@@ -27,7 +25,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     private readonly TransactionHistory _history;
     private readonly CashChangerManager _manager;
     private readonly OverallStatusAggregator _statusAggregator;
-    private readonly SimulatorConfiguration _config;
+    private SimulatorConfiguration _config;
 
     internal readonly DepositController _depositController;
     private readonly DispenseController _dispenseController;
@@ -280,6 +278,21 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
             _logger);
 
         _operationHelper = new UposOperationHelper(this);
+
+        // Subscribe to configuration reloads
+        actualConfigProvider.Reloaded.Subscribe(_ =>
+        {
+            _logger.LogInformation("Configuration reloaded, updating SimulatorCashChanger state.");
+            _config = actualConfigProvider.Config;
+            
+            // Re-detect active currency
+            _activeCurrencyCode = _config.Inventory.Keys.FirstOrDefault() ?? "JPY";
+            
+            // Clear inventory to avoid cross-currency pollution
+            _inventory.Clear();
+            
+            _logger.LogInformation("SimulatorCashChanger state updated. Active Currency: {0}", _activeCurrencyCode);
+        });
     }
 
     private string _activeCurrencyCode;
