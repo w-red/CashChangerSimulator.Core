@@ -21,6 +21,9 @@ public interface ICurrencyMetadataProvider
     /// <summary>この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
     IReadOnlyList<DenominationKey> SupportedDenominations { get; }
 
+    /// <summary>メタデータが変更されたときに通知されるストリーム。</summary>
+    Observable<Unit> Changed { get; }
+
     /// <summary>指定された金種の表示名を取得する。</summary>
     string GetDenominationName(DenominationKey key);
 

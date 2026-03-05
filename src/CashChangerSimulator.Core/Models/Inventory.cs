@@ -92,10 +92,15 @@ public class Inventory : IReadOnlyInventory
         _changed.OnNext(key);
     }
 
-    /// <inheritdoc/>
-    public virtual int GetCount(DenominationKey key)
+    /// <summary>在庫の枚数を取得します。</summary>
+    public int GetCount(DenominationKey key) => _counts.GetValueOrDefault(key);
+
+    /// <summary>在庫をすべてクリアします。</summary>
+    public void Clear()
     {
-        return _counts.GetValueOrDefault(key, 0);
+        _counts.Clear();
+        _collectionCounts.Clear();
+        _rejectCounts.Clear();
     }
 
     /// <summary>現在の在庫の合計金額を計算します。</summary>

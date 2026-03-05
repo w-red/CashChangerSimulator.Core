@@ -11,6 +11,10 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
     private readonly BindableReactiveProperty<string> _symbolSuffix;
     private readonly BindableReactiveProperty<string> _currencyCode;
     private readonly BindableReactiveProperty<string> _cultureCode;
+    private readonly Subject<Unit> _changed = new();
+
+    /// <inheritdoc/>
+    public Observable<Unit> Changed => _changed;
 
     /// <summary>通貨コード（例: "JPY"）。</summary>
     public string CurrencyCode => _currencyCode.Value;
@@ -144,6 +148,7 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
         }
 
         SupportedDenominations = currencyData.Denominations;
+        _changed.OnNext(Unit.Default);
     }
 
     /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。</summary>
