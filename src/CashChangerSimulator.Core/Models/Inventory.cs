@@ -43,19 +43,20 @@ public class Inventory : IReadOnlyInventory
             key = key with { CurrencyCode = DenominationKey.DefaultCurrencyCode };
         }
         _logger.ZLogDebug($"Inventory.Add called. Key: {key}, Count: {count}");
-        if (count <= 0)
+        if (count == 0)
         {
-            _logger.ZLogWarning($"Inventory.Add: Ignoring non-positive count {count} for {key}");
             return;
         }
-        if (_counts.ContainsKey(key))
+
+        var current = GetCount(key);
+        var next = current + count;
+        if (next < 0)
         {
-            _counts[key] += count;
+            _logger.ZLogWarning($"Inventory.Add: Resulting count for {key} is negative ({next}). Setting to 0.");
+            next = 0;
         }
-        else
-        {
-            _counts[key] = count;
-        }
+
+        _counts[key] = next;
         _changed.OnNext(key);
         _logger.ZLogDebug($"Inventory.Add finished. New Total: {CalculateTotal()}");
     }

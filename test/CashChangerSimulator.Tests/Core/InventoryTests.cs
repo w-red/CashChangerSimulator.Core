@@ -94,18 +94,21 @@ public class InventoryTests
         newInventory.GetCount(b1000).ShouldBe(10);
         newInventory.GetCount(c100).ShouldBe(50);
     }
-    /// <summary>負の枚数を追加しようとした場合、無視されることを検証する。</summary>
+    /// <summary>負の枚数を追加（減算）した場合、正しく減算され、0未満にはならないことを検証する。</summary>
     [Fact]
-    public void InventoryAddNegativeShouldBeIgnored()
+    public void InventoryAddNegativeShouldSubtractAndClampToZero()
     {
         // Arrange
         var inventory = new Inventory();
         var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
+        inventory.SetCount(denomination, 10);
 
-        // Act
+        // Act & Assert: Subtraction works
         inventory.Add(denomination, -5);
+        inventory.GetCount(denomination).ShouldBe(5);
 
-        // Assert
+        // Act & Assert: Clamping works
+        inventory.Add(denomination, -10);
         inventory.GetCount(denomination).ShouldBe(0);
     }
 
