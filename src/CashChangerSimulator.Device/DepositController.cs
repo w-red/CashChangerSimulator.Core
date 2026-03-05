@@ -7,27 +7,38 @@ using Microsoft.PointOfService;
 using R3;
 using ZLogger;
 using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Device;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー。</summary>
+/// <remarks>入金プロセスの開始、確定、一時停止、および在庫への反映を制御します。</remarks>
 public class DepositController : IDisposable
 {
     private readonly Inventory _inventory;
     private readonly HardwareStatusManager _hardwareStatusManager;
     private readonly CashChangerManager? _manager;
+    private readonly ConfigurationProvider _configProvider;
 
     /// <summary>在庫を指定して初期化する。</summary>
-    public DepositController(Inventory inventory) : this(inventory, null, null) { }
+    public DepositController(Inventory inventory) : this(inventory, null, null, null) { }
 
     /// <summary>在庫とステータスマネージャーを指定して初期化する。</summary>
     [Inject]
-    public DepositController(Inventory inventory, HardwareStatusManager? hardwareStatusManager = null, CashChangerManager? manager = null)
+    public DepositController(
+        Inventory inventory,
+        HardwareStatusManager? hardwareStatusManager = null,
+        CashChangerManager? manager = null,
+        ConfigurationProvider? configProvider = null)
     {
         _inventory = inventory;
         _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
         _manager = manager;
+        _configProvider = configProvider ?? new ConfigurationProvider();
     }
+    
+    /// <summary>リアルタイムデータの通知能力を外部から受け取ります。</summary>
+    public bool RealTimeDataEnabled { get; set; }
 
     private readonly ILogger<DepositController> _logger = LogProvider.CreateLogger<DepositController>();
     private readonly CompositeDisposable _disposables = [];
@@ -55,7 +66,8 @@ public class DepositController : IDisposable
     /// <summary>入金ステータス。</summary>
     public virtual CashDepositStatus DepositStatus => _depositStatus;
 
-    /// <summary>入金受付中かどうか（払出ガード判定用）。</summary>
+    /// <summary>入金受付中かどうかを取得します。</summary>
+    /// <remarks>払出ガードなどの判定に使用されます。</remarks>
     public virtual bool IsDepositInProgress =>
         _depositStatus is CashDepositStatus.Start or CashDepositStatus.Count;
 
@@ -74,11 +86,6 @@ public class DepositController : IDisposable
     public void BeginDeposit()
     {
         _logger.ZLogInformation($"BeginDeposit called. Current Status: {_depositStatus}");
-
-        if (!_hardwareStatusManager.IsConnected.Value)
-        {
-            throw new PosControlException("Device is not open (Closed).", ErrorCode.Closed);
-        }
 
         _depositAmount = 0m;
         _depositCounts.Clear();
@@ -188,11 +195,6 @@ public class DepositController : IDisposable
         if (_depositStatus != CashDepositStatus.Count) return;
         if (_depositPaused) return;
 
-        if (!_hardwareStatusManager.IsConnected.Value)
-        {
-            throw new PosControlException("Device is not open (Closed).", ErrorCode.Closed);
-        }
-
         if (_hardwareStatusManager.IsJammed.Value)
         {
             throw new PosControlException("Device is jammed. Cannot track deposit.", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam);
@@ -205,6 +207,18 @@ public class DepositController : IDisposable
         foreach (var (key, count) in counts)
         {
             if (count <= 0) continue;
+
+            // オーバーフロー・リサイクル可否のチェック
+            var setting = _configProvider.Config.GetDenominationSetting(key);
+            var currentInInventory = _inventory.GetCount(key);
+            var currentInDeposit = _depositCounts.GetValueOrDefault(key, 0);
+            
+            if (setting.IsRecyclable && (currentInInventory + currentInDeposit + count) > setting.Full)
+            {
+                // 通常庫がいっぱいの場合でも、回収庫に回す前提で受け入れは継続する。
+                // 最終的な振り分けは EndDeposit -> Manager.Deposit で行われる。
+                _logger.ZLogInformation($"Overflow detected for {key}. It will be routed to collection box. Inventory: {currentInInventory}, InDeposit: {currentInDeposit}, Adding: {count}, Full: {setting.Full}");
+            }
 
             _depositAmount += key.Value * count;
             _depositCounts[key] =
