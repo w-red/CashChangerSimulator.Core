@@ -44,7 +44,7 @@ public class ChangeCalculator
             : (IReadOnlyDictionary<DenominationKey, int>)result;
     }
 
-    private IEnumerable<DenominationKey> GetAvailableDenominationKeys(IReadOnlyInventory inventory)
+    private static IEnumerable<DenominationKey> GetAvailableDenominationKeys(IReadOnlyInventory inventory)
     {
         // 実際には IReadOnlyInventory の実装（Inventory クラス）から全金種キーを取得する
         return inventory is Inventory inv ? inv.AllCounts.Select(kv => kv.Key) : [];
