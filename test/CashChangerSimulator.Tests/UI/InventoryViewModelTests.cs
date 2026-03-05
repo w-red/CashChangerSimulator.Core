@@ -14,7 +14,7 @@ namespace CashChangerSimulator.Tests.UI;
 /// <summary>Test class for providing InventoryViewModelTests functionality.</summary>
 public class InventoryViewModelTests
 {
-    private (InventoryViewModel vm, Inventory inv, ConfigurationProvider config) CreateViewModel()
+    private static (InventoryViewModel vm, Inventory inv, ConfigurationProvider config) CreateViewModel()
     {
         var config = new ConfigurationProvider();
         // Setup some initial counts in config

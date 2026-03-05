@@ -15,7 +15,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing DepositSequenceTests functionality.</summary>
 public class DepositSequenceTests
 {
-    private (DepositController Controller, Inventory Inventory) CreateController()
+    private static (DepositController Controller, Inventory Inventory) CreateController()
     {
         var inventory = new Inventory();
         var history = new TransactionHistory();
@@ -99,7 +99,7 @@ public class DepositSequenceTests
     [Fact]
     public void PauseAndRestartDuringDeposit()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
