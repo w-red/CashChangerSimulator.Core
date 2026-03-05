@@ -24,6 +24,7 @@ public class SimulatorServicesTests : IDisposable
     public void Dispose()
     {
         SimulatorServices.Provider = null;
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>プロバイダーが設定されていない場合に TryResolve が null を返すことを検証する。</summary>

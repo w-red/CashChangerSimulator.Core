@@ -40,5 +40,6 @@ public class DeviceEventHistoryObserver : IDisposable
     public void Dispose()
     {
         _device.OnEventQueued -= HandleDeviceEvent;
+        GC.SuppressFinalize(this);
     }
 }

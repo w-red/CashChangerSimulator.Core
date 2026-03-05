@@ -120,5 +120,6 @@ InvalidConfigKey = ""Invalid config key '{0}'""
         {
             Directory.Delete(_testI18nDir, true);
         }
+        GC.SuppressFinalize(this);
     }
 }

@@ -23,6 +23,7 @@ public class TomlStringLocalizerTests : IDisposable
         {
             Directory.Delete(_testI18nDir, true);
         }
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
