@@ -7,11 +7,8 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Managers;
 
-/// <summary>在庫管理と履歴管理を統合し、実務的な入出金操作を提供するマネージャークラス。</summary>
-/// <param name="inventory">在庫管理オブジェクト。</param>
-/// <param name="history">履歴管理オブジェクト。</param>
-/// <param name="calculator">釣銭計算オブジェクト。</param>
 /// <summary>入金・出金・在庫・履歴を調整するマネージャークラス。</summary>
+/// <remarks>在庫管理と履歴管理を統合し、実務的な入出金操作を提供します。</remarks>
 public class CashChangerManager
 {
     private readonly Inventory _inventory;
@@ -39,14 +36,40 @@ public class CashChangerManager
         _configProvider = configProvider ?? new ConfigurationProvider();
     }
 
-    /// <summary>入金を処理する。</summary>
+    /// <summary>入金を処理します。</summary>
+    /// <remarks>金種の設定（リサイクル可否、満杯しきい値）に基づき、通常庫または回収庫に振り分けます。</remarks>
     /// <param name="counts">投入された金種ごとの枚数内訳。</param>
     public virtual void Deposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         decimal total = 0;
         foreach (var (key, count) in counts)
         {
-            _inventory.Add(key, count);
+            var setting = _configProvider.Config.GetDenominationSetting(key);
+
+            if (!setting.IsRecyclable)
+            {
+                // 非リサイクル金種は回収庫へ
+                _inventory.AddCollection(key, count);
+            }
+            else
+            {
+                // オーバーフロー処理
+                var current = _inventory.GetCount(key);
+                var canAccept = Math.Max(0, setting.Full - current);
+
+                if (count > canAccept)
+                {
+                    if (canAccept > 0)
+                    {
+                        _inventory.Add(key, canAccept);
+                    }
+                    _inventory.AddCollection(key, count - canAccept);
+                }
+                else
+                {
+                    _inventory.Add(key, count);
+                }
+            }
             total += key.Value * count;
         }
 
