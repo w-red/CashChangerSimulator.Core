@@ -8,7 +8,6 @@ using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Moq;
-using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 

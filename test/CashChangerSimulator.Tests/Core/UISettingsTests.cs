@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using R3;
 using Shouldly;
-using System.Text.Json;
 using Tomlyn;
 
 namespace CashChangerSimulator.Tests.Core;

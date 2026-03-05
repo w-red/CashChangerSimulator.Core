@@ -1,7 +1,5 @@
 using CashChangerSimulator.Core.Models;
 using Shouldly;
-using System;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Core;
 
