@@ -48,6 +48,8 @@ public class DepositController : IDisposable
     public virtual Observable<Unit> Changed => _changed;
 
     private decimal _depositAmount;
+    private decimal _overflowAmount;
+    private decimal _rejectAmount;
     private readonly Dictionary<DenominationKey, int> _depositCounts = [];
     private readonly List<string> _depositedSerials = [];
     private readonly List<string> _lastDepositedSerials = [];
@@ -59,6 +61,12 @@ public class DepositController : IDisposable
 
     /// <summary>入金合計額。</summary>
     public virtual decimal DepositAmount => _depositAmount;
+
+    /// <summary>今回の入金でオーバーフロー（回収庫行き）となった金額。</summary>
+    public virtual decimal OverflowAmount => _overflowAmount;
+
+    /// <summary>今回の入金でリジェクト（返却）された金額。</summary>
+    public virtual decimal RejectAmount => _rejectAmount;
 
     /// <summary>金種ごとの入金枚数。</summary>
     public virtual IReadOnlyDictionary<DenominationKey, int> DepositCounts => _depositCounts;
@@ -88,6 +96,8 @@ public class DepositController : IDisposable
         _logger.ZLogInformation($"BeginDeposit called. Current Status: {_depositStatus}");
 
         _depositAmount = 0m;
+        _overflowAmount = 0m;
+        _rejectAmount = 0m;
         _depositCounts.Clear();
         _depositedSerials.Clear();
         _depositStatus = CashDepositStatus.Start;
@@ -160,6 +170,8 @@ public class DepositController : IDisposable
         _depositPaused = false;
         _depositFixed = false;
         _depositAmount = 0m;
+        _overflowAmount = 0m;
+        _rejectAmount = 0m;
         _depositCounts.Clear();
         _changed.OnNext(Unit.Default);
     }
@@ -213,11 +225,20 @@ public class DepositController : IDisposable
             var currentInInventory = _inventory.GetCount(key);
             var currentInDeposit = _depositCounts.GetValueOrDefault(key, 0);
             
-            if (setting.IsRecyclable && (currentInInventory + currentInDeposit + count) > setting.Full)
+            if (setting.IsRecyclable)
             {
-                // 通常庫がいっぱいの場合でも、回収庫に回す前提で受け入れは継続する。
-                // 最終的な振り分けは EndDeposit -> Manager.Deposit で行われる。
-                _logger.ZLogInformation($"Overflow detected for {key}. It will be routed to collection box. Inventory: {currentInInventory}, InDeposit: {currentInDeposit}, Adding: {count}, Full: {setting.Full}");
+                var totalAfter = currentInInventory + currentInDeposit + count;
+                if (totalAfter > setting.Full)
+                {
+                    var overflowCount = totalAfter - Math.Max(currentInInventory + currentInDeposit, setting.Full);
+                    if(overflowCount > count) overflowCount = count;
+
+                    if (overflowCount > 0)
+                    {
+                        _overflowAmount += overflowCount * key.Value;
+                        _logger.ZLogInformation($"Overflow detected for {key}. Count: {overflowCount}. Routing to collection box. Inventory: {currentInInventory}, InDeposit: {currentInDeposit}, Adding: {count}, Full: {setting.Full}");
+                    }
+                }
             }
 
             _depositAmount += key.Value * count;
@@ -241,6 +262,14 @@ public class DepositController : IDisposable
         _changed.OnNext(Unit.Default);
     }
 
+    /// <summary>シミュレーションとして入金リジェクト（返却）を発生させます。</summary>
+    public void SimulateReject(decimal amount)
+    {
+        if (_depositStatus != CashDepositStatus.Count) return;
+        _rejectAmount += amount;
+        _logger.ZLogInformation($"Simulated Reject of {amount}. Total Reject: {_rejectAmount}");
+        _changed.OnNext(Unit.Default);
+    }
     /// <inheritdoc/>
     public void Dispose()
     {
