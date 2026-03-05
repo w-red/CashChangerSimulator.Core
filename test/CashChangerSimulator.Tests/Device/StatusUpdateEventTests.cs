@@ -74,7 +74,7 @@ public class StatusUpdateEventTests
     [Fact]
     public void ShouldFireStatusUpdateEventWhenDeviceStatusBecomesEmpty()
     {
-        var (cc, inv, hw, events) = CreateTestCashChanger();
+        var (_, inv, _, events) = CreateTestCashChanger();
 
         // Reduce count to 0 → should trigger Empty status update
         inv.SetCount(Coin100, 0);
@@ -89,7 +89,7 @@ public class StatusUpdateEventTests
     [Fact]
     public void ShouldFireStatusUpdateEventWhenDeviceStatusBecomesNearEmpty()
     {
-        var (cc, inv, hw, events) = CreateTestCashChanger();
+        var (_, inv, _, events) = CreateTestCashChanger();
 
         // Reduce count to NearEmpty threshold
         inv.SetCount(Coin100, 3);
@@ -103,7 +103,7 @@ public class StatusUpdateEventTests
     [Fact]
     public void ShouldFireStatusUpdateEventWhenDeviceStatusRecoversFromEmpty()
     {
-        var (cc, inv, hw, events) = CreateTestCashChanger();
+        var (_, inv, _, events) = CreateTestCashChanger();
 
         // Go to Empty
         inv.SetCount(Coin100, 0);
@@ -123,7 +123,7 @@ public class StatusUpdateEventTests
     [Fact]
     public void ShouldFireStatusUpdateEventWhenFullStatusRecoversFromFull()
     {
-        var (cc, inv, hw, events) = CreateTestCashChanger();
+        var (_, inv, _, events) = CreateTestCashChanger();
 
         // Go to Full
         inv.SetCount(Coin100, 100);
@@ -143,7 +143,7 @@ public class StatusUpdateEventTests
     [Fact]
     public void ShouldFireStatusUpdateEventWithStandardJamCodeWhenJammed()
     {
-        var (cc, inv, hw, events) = CreateTestCashChanger();
+        var (_, _, hw, events) = CreateTestCashChanger();
 
         hw.SetJammed(true);
         Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
@@ -156,7 +156,7 @@ public class StatusUpdateEventTests
     [Fact]
     public void ShouldFireStatusUpdateEventWithOkCodeWhenJamCleared()
     {
-        var (cc, inv, hw, events) = CreateTestCashChanger();
+        var (_, _, hw, events) = CreateTestCashChanger();
 
         hw.SetJammed(true);
         Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
