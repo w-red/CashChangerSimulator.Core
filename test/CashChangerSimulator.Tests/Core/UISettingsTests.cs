@@ -3,6 +3,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using R3;
 using Shouldly;
+using System.Text.Json;
 using Tomlyn;
 
 namespace CashChangerSimulator.Tests.Core;
@@ -10,9 +11,9 @@ namespace CashChangerSimulator.Tests.Core;
 /// <summary>UI設定の保存・読み込みを検証するテストクラス。</summary>
 public class UISettingsTests
 {
-    private static readonly TomlModelOptions ModelOptions = new()
+    private static readonly TomlSerializerOptions ModelOptions = new()
     {
-        ConvertPropertyName = name => name
+        PropertyNamingPolicy = null
     };
 
     /// <summary>UIMode が正しくシリアライズおよびデシリアライズされることを検証する。</summary>
@@ -22,8 +23,8 @@ public class UISettingsTests
         var config = new SimulatorConfiguration();
         config.System.UIMode = UIMode.PosTransaction;
 
-        var toml = Toml.FromModel(config, ModelOptions);
-        var loaded = Toml.ToModel<SimulatorConfiguration>(toml, options: ModelOptions);
+        var toml = TomlSerializer.Serialize(config, ModelOptions);
+        var loaded = TomlSerializer.Deserialize<SimulatorConfiguration>(toml, options: ModelOptions) ?? new SimulatorConfiguration();
 
         loaded.System.UIMode.ShouldBe(UIMode.PosTransaction);
     }
@@ -41,8 +42,8 @@ public class UISettingsTests
             InitialCount = 10
         };
 
-        var toml = Toml.FromModel(config, ModelOptions);
-        var loaded = Toml.ToModel<SimulatorConfiguration>(toml, options: ModelOptions);
+        var toml = TomlSerializer.Serialize(config, ModelOptions);
+        var loaded = TomlSerializer.Deserialize<SimulatorConfiguration>(toml, options: ModelOptions) ?? new SimulatorConfiguration();
 
         var loadedDenom = loaded.Inventory["JPY"].Denominations["B10000"];
         loadedDenom.DisplayName.ShouldBe("10k Yen");
@@ -60,8 +61,8 @@ public class UISettingsTests
             IsRecyclable = false
         };
 
-        var toml = Toml.FromModel(config, ModelOptions);
-        var loaded = Toml.ToModel<SimulatorConfiguration>(toml, options: ModelOptions);
+        var toml = TomlSerializer.Serialize(config, ModelOptions);
+        var loaded = TomlSerializer.Deserialize<SimulatorConfiguration>(toml, options: ModelOptions) ?? new SimulatorConfiguration();
 
         loaded.Inventory["JPY"].Denominations["B2000"].IsRecyclable.ShouldBeFalse();
     }
