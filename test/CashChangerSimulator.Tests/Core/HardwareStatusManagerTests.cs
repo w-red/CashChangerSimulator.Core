@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
 using R3;
 using Shouldly;
 
@@ -28,6 +29,37 @@ public class HardwareStatusManagerTests
         manager.IsJammed.Value.ShouldBeFalse();
     }
 
+    /// <summary>ジャム箇所を設定・取得できることを検証する。</summary>
+    [Fact]
+    public void SetJammedWithLocationShouldStoreCorrectLocation()
+    {
+        // Arrange
+        using var manager = new HardwareStatusManager();
+
+        // Act
+        manager.SetJammed(true, JamLocation.BillCassette1);
+
+        // Assert
+        manager.IsJammed.Value.ShouldBeTrue();
+        manager.JamLocation.Value.ShouldBe(JamLocation.BillCassette1);
+    }
+
+    /// <summary>ジャム解除時にジャム箇所も None になることを検証する。</summary>
+    [Fact]
+    public void SetJammedFalseShouldClearLocation()
+    {
+        // Arrange
+        using var manager = new HardwareStatusManager();
+        manager.SetJammed(true, JamLocation.Inlet);
+
+        // Act
+        manager.SetJammed(false);
+
+        // Assert
+        manager.IsJammed.Value.ShouldBeFalse();
+        manager.JamLocation.Value.ShouldBe(JamLocation.None);
+    }
+
     /// <summary>重なり状態が正しく設定・保持されることを検証する。</summary>
     [Fact]
     public void SetOverlappedShouldUpdateSubject()
@@ -53,17 +85,19 @@ public class HardwareStatusManagerTests
         using var manager = new HardwareStatusManager();
 
         // Act
-        manager.SetJammed(true);
+        manager.SetJammed(true, JamLocation.Transport);
         manager.SetOverlapped(true);
 
         // Assert
         manager.IsJammed.Value.ShouldBeTrue();
         manager.IsOverlapped.Value.ShouldBeTrue();
+        manager.JamLocation.Value.ShouldBe(JamLocation.Transport);
 
         // Act: Clear Jam
         manager.SetJammed(false);
         manager.IsJammed.Value.ShouldBeFalse();
         manager.IsOverlapped.Value.ShouldBeTrue();
+        manager.JamLocation.Value.ShouldBe(JamLocation.None);
     }
 
     /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。</summary>
@@ -78,5 +112,21 @@ public class HardwareStatusManagerTests
 
         // Assert: Dispose 済みを直接確認する公開フラグはないが、例外が起きないことを確認
         Should.NotThrow(() => manager.Dispose());
+    }
+
+    /// <summary>すべてのエラーリセット時にジャム箇所もクリアされることを検証する。</summary>
+    [Fact]
+    public void ResetErrorShouldClearJamLocation()
+    {
+        // Arrange
+        using var manager = new HardwareStatusManager();
+        manager.SetJammed(true, JamLocation.CoinCassette1);
+
+        // Act
+        manager.ResetError();
+
+        // Assert
+        manager.IsJammed.Value.ShouldBeFalse();
+        manager.JamLocation.Value.ShouldBe(JamLocation.None);
     }
 }

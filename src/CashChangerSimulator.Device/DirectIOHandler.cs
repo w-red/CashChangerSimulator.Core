@@ -25,6 +25,7 @@ public class DirectIOHandler
             new SimulateRemovedStrategy(),
             new SimulateInsertedStrategy(),
             new GetVersionStrategy(),
+            new GetJamLocationStrategy(),
             new AdjustCashCountsStrStrategy(),
             new GetDepositedSerialsStrategy()
         };

@@ -1,4 +1,5 @@
 using R3;
+using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Core.Managers;
 
@@ -6,6 +7,7 @@ namespace CashChangerSimulator.Core.Managers;
 public class HardwareStatusManager : IDisposable
 {
     private readonly BindableReactiveProperty<bool> _isJammed = new(false);
+    private readonly BindableReactiveProperty<Models.JamLocation> _jamLocation = new(Models.JamLocation.None);
     private readonly BindableReactiveProperty<bool> _isOverlapped = new(false);
     private readonly BindableReactiveProperty<bool> _isDeviceError = new(false);
     private readonly BindableReactiveProperty<bool> _isConnected = new(false); // Default is disconnected (COLD start baseline)
@@ -14,6 +16,9 @@ public class HardwareStatusManager : IDisposable
 
     /// <summary>ジャムが発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsJammed => _isJammed;
+
+    /// <summary>ジャムが発生している具体的な箇所。</summary>
+    public BindableReactiveProperty<Models.JamLocation> JamLocation => _jamLocation;
 
     /// <summary>紙幣などの重なり（バリデーションエラー）が発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsOverlapped => _isOverlapped;
@@ -30,10 +35,11 @@ public class HardwareStatusManager : IDisposable
     /// <summary>現在発生中のデバイスエラーの ErrorCodeExtended 値。</summary>
     public BindableReactiveProperty<int> CurrentErrorCodeExtended => _currentErrorCodeExtended;
 
-    /// <summary>ジャム状態を切り替えます。</summary>
-    public void SetJammed(bool jammed)
+    /// <summary>ジャム状態を切り替えます。箇所を指定することも可能です。</summary>
+    public void SetJammed(bool jammed, Models.JamLocation location = Models.JamLocation.None)
     {
         _isJammed.Value = jammed;
+        _jamLocation.Value = jammed ? location : Models.JamLocation.None;
     }
 
     /// <summary>重なり状態を切り替えます。</summary>
@@ -62,6 +68,7 @@ public class HardwareStatusManager : IDisposable
     public void ResetError()
     {
         _isJammed.Value = false;
+        _jamLocation.Value = Models.JamLocation.None;
         _isOverlapped.Value = false;
         _isDeviceError.Value = false;
         _currentErrorCode.Value = null;
@@ -72,6 +79,7 @@ public class HardwareStatusManager : IDisposable
     public void Dispose()
     {
         _isJammed.Dispose();
+        _jamLocation.Dispose();
         _isOverlapped.Dispose();
         _isDeviceError.Dispose();
         _currentErrorCode.Dispose();

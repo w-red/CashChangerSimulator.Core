@@ -1,9 +1,12 @@
 using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Strategies;
+using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>DirectIO コマンドの各戦略（Strategy）を検証するテストクラス。</summary>
 public class DirectIOStrategyTest
 {
     private readonly InternalSimulatorCashChanger _device;
@@ -17,8 +20,9 @@ public class DirectIOStrategyTest
         _device.Claim(0);
     }
 
+    /// <summary>SetOverlapStrategy が HardwareStatusManager の重なり状態を正しく更新することを検証する。</summary>
     [Fact]
-    public void SetOverlapStrategy_ShouldUpdateHardwareStatus()
+    public void SetOverlapStrategyShouldUpdateHardwareStatus()
     {
         // Arrange
         var strategy = new SetOverlapStrategy();
@@ -27,45 +31,58 @@ public class DirectIOStrategyTest
         var result = strategy.Execute(1, "test", _device);
 
         // Assert
-        Assert.Equal(1, result.Data);
-        // HardwareStatusManager を通じて状態が変わったかを確認したいが、
-        // InternalSimulatorCashChanger の非公開フィールドなので間接的に確認するか、
-        // DirectIO の実行結果で判断する。
-        // ここでは Strategy 単体の責務を検証する。
+        result.Data.ShouldBe(1);
+        _device._hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
     }
 
+    /// <summary>SetJamStrategy が箇所指定付きでジャム状態を正しく更新することを検証する。</summary>
     [Fact]
-    public void SetJamStrategy_ShouldUpdateHardwareStatus()
+    public void SetJamStrategyShouldUpdateHardwareStatusWithLocation()
     {
         // Arrange
         var strategy = new SetJamStrategy();
 
         // Act
-        var result = strategy.Execute(1, "test", _device);
+        var result = strategy.Execute(1, "BillCassette1", _device);
 
         // Assert
-        Assert.Equal(1, result.Data);
+        result.Data.ShouldBe(1);
+        _device._hardwareStatusManager.IsJammed.Value.ShouldBeTrue();
+        _device._hardwareStatusManager.JamLocation.Value.ShouldBe(JamLocation.BillCassette1);
     }
 
+    /// <summary>GetJamLocation コマンドが現在のジャム箇所を文字列で返却することを検証する。</summary>
     [Fact]
-    public void DirectIO_ShouldUseStrategies()
+    public void GetJamLocationShouldReturnCurrentLocation()
     {
         // Arrange
-        // (Device is already initialized and opened in the constructor)
+        _device._hardwareStatusManager.SetJammed(true, JamLocation.Inlet);
 
-        // Act & Assert
+        // Act
+        var result = _device.DirectIO(DirectIOCommands.GetJamLocation, 0, "");
+
+        // Assert
+        result.Object.ShouldBe("Inlet");
+    }
+
+    /// <summary>DirectIO メソッド経由で各戦略が正しく呼び出されることを検証する。</summary>
+    [Fact]
+    public void DirectIOShouldUseStrategies()
+    {
+        // Arrange & Act & Assert
         // SetOverlap
         var resultOverlap = _device.DirectIO(DirectIOCommands.SetOverlap, 1, "test");
-        Assert.Equal(1, resultOverlap.Data);
-        Assert.True(_device._hardwareStatusManager.IsOverlapped.Value);
+        resultOverlap.Data.ShouldBe(1);
+        _device._hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
 
         // SetJam
-        var resultJam = _device.DirectIO(DirectIOCommands.SetJam, 1, "test");
-        Assert.Equal(1, resultJam.Data);
-        Assert.True(_device._hardwareStatusManager.IsJammed.Value);
+        var resultJam = _device.DirectIO(DirectIOCommands.SetJam, 1, "Transport");
+        resultJam.Data.ShouldBe(1);
+        _device._hardwareStatusManager.IsJammed.Value.ShouldBeTrue();
+        _device._hardwareStatusManager.JamLocation.Value.ShouldBe(JamLocation.Transport);
 
         // GetVersion
         var resultVersion = _device.DirectIO(DirectIOCommands.GetVersion, 0, "");
-        Assert.StartsWith("InternalSimulatorCashChanger v", resultVersion.Object as string);
+        resultVersion.Object.ToString().ShouldStartWith("InternalSimulatorCashChanger v");
     }
 }

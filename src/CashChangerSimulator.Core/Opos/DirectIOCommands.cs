@@ -23,6 +23,9 @@ public static class DirectIOCommands
     /// <summary>シミュレーターのバージョン情報を取得します。</summary>
     public const int GetVersion = 100;
 
+    /// <summary>現在発生中のジャム箇所を取得します。 obj: 文字列で箇所を返却します。</summary>
+    public const int GetJamLocation = 111;
+
     /// <summary>現金を指定の文字列（UPOS形式）で調整します。 obj: "1000:10,500:5" 等の文字列。</summary>
     public const int AdjustCashCountsStr = 101;
 

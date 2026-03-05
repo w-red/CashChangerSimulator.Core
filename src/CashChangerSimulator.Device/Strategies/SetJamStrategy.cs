@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Core.Models;
 using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.Strategies;
@@ -10,7 +11,18 @@ public class SetJamStrategy : IDirectIOCommand
 
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
-        device._hardwareStatusManager.SetJammed(data != 0);
+        var jam = data != 0;
+        var location = JamLocation.None;
+
+        if (jam && obj is string locationStr && !string.IsNullOrEmpty(locationStr))
+        {
+            if (Enum.TryParse<JamLocation>(locationStr, true, out var parsedLocation))
+            {
+                location = parsedLocation;
+            }
+        }
+
+        device._hardwareStatusManager.SetJammed(jam, location);
         return new DirectIOData(data, obj);
     }
 }
