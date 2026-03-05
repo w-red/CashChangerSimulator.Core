@@ -14,27 +14,21 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>Test class for providing AsyncModeReliabilityTests functionality.</summary>
 public class AsyncModeReliabilityTests
 {
-    private class ReliabilityTestChanger : InternalSimulatorCashChanger
+    private class ReliabilityTestChanger(Inventory inv, CashChangerManager manager, DispenseController controller, HardwareStatusManager hw) : InternalSimulatorCashChanger(
+        new ConfigurationProvider(),
+        inv,
+        new TransactionHistory(),
+        manager,
+        new DepositController(inv, hw),
+        controller,
+        new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))),
+        hw)
     {
         public CashDispenseStatus StatusAtEvent { get; private set; }
         public int ResultCodeAtEvent { get; private set; }
         public bool EventCaptured { get; private set; }
 
-        private readonly DispenseController _controller;
-
-        public ReliabilityTestChanger(Inventory inv, CashChangerManager manager, DispenseController controller, HardwareStatusManager hw) 
-            : base(
-                new ConfigurationProvider(), 
-                inv, 
-                new TransactionHistory(), 
-                manager, 
-                new DepositController(inv, hw), 
-                controller, 
-                new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))), 
-                hw)
-        {
-            _controller = controller;
-        }
+        private readonly DispenseController _controller = controller;
 
         protected override void NotifyEvent(EventArgs e)
         {
