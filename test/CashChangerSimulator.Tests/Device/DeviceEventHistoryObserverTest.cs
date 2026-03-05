@@ -13,7 +13,7 @@ public class DeviceEventHistoryObserverTest
 {
     /// <summary>DataEventArgs を伴うデバイスイベントが発生した際、履歴に追加されることを検証します。</summary>
     [Fact]
-    public void HandleDeviceEvent_WhenDataEventArgs_RecordsToHistory()
+    public void HandleDeviceEventWhenDataEventArgsRecordsToHistory()
     {
         // Arrange
         var history = new TransactionHistory();
@@ -37,7 +37,7 @@ public class DeviceEventHistoryObserverTest
 
     /// <summary>DataEventArgs 以外のデバイスイベントが発生した際、履歴に追加「されない」ことを検証します。</summary>
     [Fact]
-    public void HandleDeviceEvent_WhenNotDataEventArgs_DoesNotRecordToHistory()
+    public void HandleDeviceEventWhenNotDataEventArgsDoesNotRecordToHistory()
     {
         // Arrange
         var history = new TransactionHistory();

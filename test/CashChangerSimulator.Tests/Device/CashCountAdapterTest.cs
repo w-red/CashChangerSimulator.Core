@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
+using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -9,54 +10,55 @@ public class CashCountAdapterTest
 {
     /// <summary>CashCount から DenominationKey への変換が正しいことを確認します。</summary>
     [Fact]
-    public void ToDenominationKey_ShouldConvertCorrectly()
+    public void ToDenominationKeyShouldConvertCorrectly()
     {
         var cc = new CashCount(CashCountType.Bill, 1000, 5);
         var key = CashCountAdapter.ToDenominationKey(cc, "JPY", 1m);
 
-        Assert.Equal(1000m, key.Value);
-        Assert.Equal(CurrencyCashType.Bill, key.Type);
-        Assert.Equal("JPY", key.CurrencyCode);
+        key.Value.ShouldBe(1000m);
+        key.Type.ShouldBe(CurrencyCashType.Bill);
+        key.CurrencyCode.ShouldBe("JPY");
     }
 
     /// <summary>Coin タイプの CashCount 変換が正しいことを確認します。</summary>
     [Fact]
-    public void ToDenominationKey_Coin_ShouldConvertCorrectly()
+    public void ToDenominationKeyCoinShouldConvertCorrectly()
     {
         var cc = new CashCount(CashCountType.Coin, 500, 10);
         var key = CashCountAdapter.ToDenominationKey(cc, "JPY", 1m);
 
-        Assert.Equal(500m, key.Value);
-        Assert.Equal(CurrencyCashType.Coin, key.Type);
+        key.Value.ShouldBe(500m);
+        key.Type.ShouldBe(CurrencyCashType.Coin);
+        key.CurrencyCode.ShouldBe("JPY");
     }
 
     /// <summary>通貨係数を適用した変換が正しいことを確認します (USD: factor=100)。</summary>
     [Fact]
-    public void ToDenominationKey_WithCurrencyFactor_ShouldApplyFactor()
+    public void ToDenominationKeyWithCurrencyFactorShouldApplyFactor()
     {
         var cc = new CashCount(CashCountType.Bill, 500, 2); // $5.00 = 500 cents
         var key = CashCountAdapter.ToDenominationKey(cc, "USD", 100m);
 
-        Assert.Equal(5m, key.Value);
-        Assert.Equal(CurrencyCashType.Bill, key.Type);
-        Assert.Equal("USD", key.CurrencyCode);
+        key.Value.ShouldBe(5m);
+        key.Type.ShouldBe(CurrencyCashType.Bill);
+        key.CurrencyCode.ShouldBe("USD");
     }
 
     /// <summary>DenominationKey から CashCount への逆変換が正しいことを確認します。</summary>
     [Fact]
-    public void ToCashCount_ShouldConvertCorrectly()
+    public void ToCashCountShouldConvertCorrectly()
     {
         var key = new DenominationKey(1000m, CurrencyCashType.Bill, "JPY");
         var cc = CashCountAdapter.ToCashCount(key, 5, 1m);
 
-        Assert.Equal(CashCountType.Bill, cc.Type);
-        Assert.Equal(1000, cc.NominalValue);
-        Assert.Equal(5, cc.Count);
+        cc.Type.ShouldBe(CashCountType.Bill);
+        cc.NominalValue.ShouldBe(1000);
+        cc.Count.ShouldBe(5);
     }
 
     /// <summary>CashCount 配列から Dictionary への一括変換が正しいことを確認します。</summary>
     [Fact]
-    public void ToDenominationDict_ShouldConvertArray()
+    public void ToDenominationDictShouldConvertArray()
     {
         var cashCounts = new[]
         {
@@ -66,18 +68,18 @@ public class CashCountAdapterTest
 
         var dict = CashCountAdapter.ToDenominationDict(cashCounts, "JPY", 1m);
 
-        Assert.Equal(2, dict.Count);
-        Assert.Equal(3, dict[new DenominationKey(1000m, CurrencyCashType.Bill, "JPY")]);
-        Assert.Equal(5, dict[new DenominationKey(100m, CurrencyCashType.Coin, "JPY")]);
+        dict.Count.ShouldBe(2);
+        dict[new DenominationKey(1000m, CurrencyCashType.Bill, "JPY")].ShouldBe(3);
+        dict[new DenominationKey(100m, CurrencyCashType.Coin, "JPY")].ShouldBe(5);
     }
 
     /// <summary>負の Count を持つ CashCount で例外がスローされることを確認します。</summary>
     [Fact]
-    public void ToDenominationDict_NegativeCount_ShouldThrow()
+    public void ToDenominationDictNegativeCountShouldThrow()
     {
         var cashCounts = new[] { new CashCount(CashCountType.Bill, 1000, -1) };
 
-        Assert.Throws<PosControlException>(() =>
+        Should.Throw<PosControlException>(() =>
             CashCountAdapter.ToDenominationDict(cashCounts, "JPY", 1m));
     }
 }

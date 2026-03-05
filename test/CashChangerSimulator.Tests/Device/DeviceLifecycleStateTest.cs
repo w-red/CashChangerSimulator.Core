@@ -16,6 +16,7 @@ public class DeviceLifecycleStateTest
     private readonly DeviceLifecycleContext _context;
     private IDeviceState _state;
 
+    /// <summary>DeviceLifecycleStateTest の新しいインスタンスを初期化します。</summary>
     public DeviceLifecycleStateTest()
     {
         _context = new DeviceLifecycleContext(_hardwareStatusManager, _mockLogger.Object, v => _deviceEnabled = v);
@@ -24,7 +25,7 @@ public class DeviceLifecycleStateTest
 
     /// <summary>Closed 状態で Open を呼ぶと Opened 状態に遷移することを確認します。</summary>
     [Fact]
-    public void ClosedState_Open_ShouldTransitionToOpened()
+    public void ClosedStateOpenShouldTransitionToOpened()
     {
         _state = _state.Open(_context);
         _state.ShouldBeOfType<OpenedState>();
@@ -33,21 +34,21 @@ public class DeviceLifecycleStateTest
 
     /// <summary>Closed 状態で Close を呼ぶと例外がスローされることを確認します。</summary>
     [Fact]
-    public void ClosedState_Close_ShouldThrow()
+    public void ClosedStateCloseShouldThrow()
     {
         Should.Throw<PosControlException>(() => _state.Close(_context));
     }
 
     /// <summary>Closed 状態で Claim を呼ぶと例外がスローされることを確認します。</summary>
     [Fact]
-    public void ClosedState_Claim_ShouldThrow()
+    public void ClosedStateClaimShouldThrow()
     {
         Should.Throw<PosControlException>(() => _state.Claim(_context, 1000));
     }
 
     /// <summary>Opened 状態で Claim を呼ぶと Claimed 状態に遷移することを確認します。</summary>
     [Fact]
-    public void OpenedState_Claim_ShouldTransitionToClaimed()
+    public void OpenedStateClaimShouldTransitionToClaimed()
     {
         _state = _state.Open(_context);
         _state = _state.Claim(_context, 1000);
@@ -56,7 +57,7 @@ public class DeviceLifecycleStateTest
 
     /// <summary>Opened 状態で Close を呼ぶと Closed 状態に戻ることを確認します。</summary>
     [Fact]
-    public void OpenedState_Close_ShouldTransitionToClosed()
+    public void OpenedStateCloseShouldTransitionToClosed()
     {
         _state = _state.Open(_context);
         _state = _state.Close(_context);
@@ -66,7 +67,7 @@ public class DeviceLifecycleStateTest
 
     /// <summary>Claimed 状態で Release を呼ぶと Opened 状態に戻ることを確認します。</summary>
     [Fact]
-    public void ClaimedState_Release_ShouldTransitionToOpened()
+    public void ClaimedStateReleaseShouldTransitionToOpened()
     {
         _state = _state.Open(_context);
         _state = _state.Claim(_context, 1000);
@@ -76,7 +77,7 @@ public class DeviceLifecycleStateTest
 
     /// <summary>Claimed 状態で Close を呼ぶと自動的に Release されて Closed に戻ることを確認します。</summary>
     [Fact]
-    public void ClaimedState_Close_ShouldReleaseAndTransitionToClosed()
+    public void ClaimedStateCloseShouldReleaseAndTransitionToClosed()
     {
         _state = _state.Open(_context);
         _state = _state.Claim(_context, 1000);
@@ -86,7 +87,7 @@ public class DeviceLifecycleStateTest
 
     /// <summary>Opened 状態で重複 Open を呼ぶとそのまま Opened を返すことを確認します。</summary>
     [Fact]
-    public void OpenedState_Open_ShouldReturnSameState()
+    public void OpenedStateOpenShouldReturnSameState()
     {
         _state = _state.Open(_context);
         var sameState = _state.Open(_context);

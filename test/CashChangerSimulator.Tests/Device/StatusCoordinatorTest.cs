@@ -8,6 +8,7 @@ using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Moq;
+using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -20,6 +21,7 @@ public class StatusCoordinatorTest
     private readonly DepositController _depositController;
     private readonly DispenseController _dispenseController;
 
+    /// <summary>StatusCoordinatorTest の新しいインスタンスを初期化します。</summary>
     public StatusCoordinatorTest()
     {
         _mockSink = new Mock<ICashChangerStatusSink>();
@@ -37,7 +39,7 @@ public class StatusCoordinatorTest
 
     /// <summary>ジャム状態が変化した際に適切なステータス更新イベントが発生することを確認します。</summary>
     [Fact]
-    public void JamStatus_ShouldFireStatusUpdateEvent()
+    public void JamStatusShouldFireStatusUpdateEvent()
     {
         // Arrange
         var coordinator = new StatusCoordinator(

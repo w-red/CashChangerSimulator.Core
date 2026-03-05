@@ -7,6 +7,7 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using Moq;
+using Shouldly;
 
 namespace CashChangerSimulator.Tests;
 
@@ -35,10 +36,10 @@ public class DispenseControllerTest
         await controller.DispenseChangeAsync(1000, false, (code, ex) => resultCode = code);
 
         // Assert
-        Assert.Equal(CashDispenseStatus.Idle, controller.Status);
-        Assert.False(controller.IsBusy);
-        Assert.Equal(ErrorCode.Success, resultCode);
-        Assert.Equal(9, inventory.GetCount(key));
+        controller.Status.ShouldBe(CashDispenseStatus.Idle);
+        controller.IsBusy.ShouldBeFalse();
+        resultCode.ShouldBe(ErrorCode.Success);
+        inventory.GetCount(key).ShouldBe(9);
     }
 
     /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証します。</summary>
@@ -60,7 +61,7 @@ public class DispenseControllerTest
         await Task.Delay(TestTimingConstants.StartupCheckDelayMs, TestContext.Current.CancellationToken);
 
         // Second call should throw
-        await Assert.ThrowsAsync<PosControlException>(() => controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult));
+        await Should.ThrowAsync<PosControlException>(() => controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult));
     }
 
     /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証します。</summary>

@@ -6,6 +6,7 @@ using CashChangerSimulator.Device;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Moq;
+using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -18,6 +19,7 @@ public class UposDispenseFacadeTest
     private readonly HardwareStatusManager _hardwareStatusManager;
     private readonly UposDispenseFacade _facade;
 
+    /// <summary>UposDispenseFacadeTest の新しいインスタンスを初期化します。</summary>
     public UposDispenseFacadeTest()
     {
         _inventory = new Inventory();
@@ -40,49 +42,49 @@ public class UposDispenseFacadeTest
 
     /// <summary>入金中に出金しようとすると例外がスローされることを確認します。</summary>
     [Fact]
-    public void DispenseByAmount_WhenDepositInProgress_ShouldThrow()
+    public void DispenseByAmountWhenDepositInProgressShouldThrow()
     {
         _depositController.BeginDeposit();
 
-        Assert.Throws<PosControlException>(() =>
+        Should.Throw<PosControlException>(() =>
             _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
     }
 
     /// <summary>ジャム中に出金しようとすると例外がスローされることを確認します。</summary>
     [Fact]
-    public void DispenseByAmount_WhenJammed_ShouldThrow()
+    public void DispenseByAmountWhenJammedShouldThrow()
     {
         _hardwareStatusManager.SetJammed(true);
 
-        Assert.Throws<PosControlException>(() =>
+        Should.Throw<PosControlException>(() =>
             _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
     }
 
     /// <summary>金額0以下で例外がスローされることを確認します。</summary>
     [Fact]
-    public void DispenseByAmount_ZeroAmount_ShouldThrow()
+    public void DispenseByAmountZeroAmountShouldThrow()
     {
-        Assert.Throws<PosControlException>(() =>
+        Should.Throw<PosControlException>(() =>
             _facade.DispenseByAmount(0, "JPY", 1m, false, (_, _, _) => { }));
     }
 
     /// <summary>正常な金額出金が成功することを確認します。</summary>
     [Fact]
-    public void DispenseByAmount_ValidAmount_ShouldSucceed()
+    public void DispenseByAmountValidAmountShouldSucceed()
     {
         ErrorCode? resultCode = null;
         _facade.DispenseByAmount(1000, "JPY", 1m, false, (code, _, _) => resultCode = code);
 
-        Assert.Equal(ErrorCode.Success, resultCode);
+        resultCode.ShouldBe(ErrorCode.Success);
     }
 
     /// <summary>金種指定の出金で在庫不足時に例外がスローされることを確認します。</summary>
     [Fact]
-    public void DispenseByCashCounts_InsufficientInventory_ShouldThrow()
+    public void DispenseByCashCountsInsufficientInventoryShouldThrow()
     {
         var cashCounts = new[] { new CashCount(CashCountType.Bill, 1000, 999) };
 
-        Assert.Throws<PosControlException>(() =>
+        Should.Throw<PosControlException>(() =>
             _facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false, (_, _, _) => { }));
     }
 }

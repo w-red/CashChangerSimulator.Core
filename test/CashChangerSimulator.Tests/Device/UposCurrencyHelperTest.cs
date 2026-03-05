@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
+using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -13,28 +14,28 @@ public class UposCurrencyHelperTest
     [InlineData("GBP", 100)]
     [InlineData("JPY", 1)]
     [InlineData("UNKNOWN", 1)]
-    public void GetCurrencyFactor_ShouldReturnCorrectFactor(string currencyCode, decimal expectedFactor)
+    public void GetCurrencyFactorShouldReturnCorrectFactor(string currencyCode, decimal expectedFactor)
     {
         var factor = UposCurrencyHelper.GetCurrencyFactor(currencyCode);
-        Assert.Equal(expectedFactor, factor);
+        factor.ShouldBe(expectedFactor);
     }
 
     /// <summary>DenominationKey から NominalValue が正しく計算されるかを確認します。</summary>
     [Fact]
-    public void GetNominalValue_ShouldCalculateCorrectly()
+    public void GetNominalValueShouldCalculateCorrectly()
     {
         var keyJpy = new DenominationKey(1000m, CurrencyCashType.Bill, "JPY");
         var valJpy = UposCurrencyHelper.GetNominalValue(keyJpy);
-        Assert.Equal(1000, valJpy);
+        valJpy.ShouldBe(1000);
 
         var keyUsd = new DenominationKey(5m, CurrencyCashType.Bill, "USD");
         var valUsd = UposCurrencyHelper.GetNominalValue(keyUsd);
-        Assert.Equal(500, valUsd); // 5 * 100
+        valUsd.ShouldBe(500); // 5 * 100
     }
 
     /// <summary>在庫から指定した通貨の CashUnits が正しく生成されるかを確認します。</summary>
     [Fact]
-    public void BuildCashUnits_ShouldBuildCorrectly()
+    public void BuildCashUnitsShouldBuildCorrectly()
     {
         var inventory = new Inventory();
         inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 1);
@@ -43,10 +44,10 @@ public class UposCurrencyHelperTest
 
         var cashUnits = UposCurrencyHelper.BuildCashUnits(inventory, "JPY");
 
-        Assert.Single(cashUnits.Coins);
-        Assert.Equal(500, cashUnits.Coins.First());
+        var coin = cashUnits.Coins.ShouldHaveSingleItem();
+        coin.ShouldBe(500);
 
-        Assert.Single(cashUnits.Bills);
-        Assert.Equal(1000, cashUnits.Bills.First());
+        var bill = cashUnits.Bills.ShouldHaveSingleItem();
+        bill.ShouldBe(1000);
     }
 }

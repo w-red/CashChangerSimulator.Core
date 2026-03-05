@@ -16,7 +16,7 @@ public class DepositControllerDelegationTest
 {
     /// <summary>EndDeposit(Store) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。</summary>
     [Fact]
-    public void EndDeposit_Store_ShouldDelegateToCashChangerManagerDeposit()
+    public void EndDepositStoreShouldDelegateToCashChangerManagerDeposit()
     {
         // Arrange
         var inventory = new Inventory();
