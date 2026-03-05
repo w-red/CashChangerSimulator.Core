@@ -15,13 +15,17 @@ public class UposOperationHelper
     }
 
     /// <summary>UPOS ライフサイクルの状態を検証します。</summary>
-    public void VerifyState(bool skip)
+    public void VerifyState(bool skip, bool mustBeClaimed = true)
     {
-        if (skip) return;
-
+        // Even if we skip real execution, the logic state must be correct.
         if (_so.State == ControlState.Closed)
         {
             throw new PosControlException("Device is not open.", ErrorCode.Closed);
+        }
+
+        if (mustBeClaimed && !_so.Claimed)
+        {
+            throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
         }
     }
 

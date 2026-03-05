@@ -32,14 +32,16 @@ public class OverallStatusAggregator : IDisposable
 
     private static CashStatus AggregateDevice(IList<CashStatus> statuses)
     {
-        if (statuses.Any(s => s == CashStatus.Empty)) return CashStatus.Empty;
-        return statuses.Any(s => s == CashStatus.NearEmpty) ? CashStatus.NearEmpty : CashStatus.Normal;
+        return statuses.Any(s => s == CashStatus.Empty)
+            ? CashStatus.Empty
+            : statuses.Any(s => s == CashStatus.NearEmpty) ? CashStatus.NearEmpty : CashStatus.Normal;
     }
 
     private static CashStatus AggregateFull(IList<CashStatus> statuses)
     {
-        if (statuses.Any(s => s == CashStatus.Full)) return CashStatus.Full;
-        return statuses.Any(s => s == CashStatus.NearFull) ? CashStatus.NearFull : CashStatus.Normal;
+        return statuses.Any(s => s == CashStatus.Full)
+            ? CashStatus.Full
+            : statuses.Any(s => s == CashStatus.NearFull) ? CashStatus.NearFull : CashStatus.Normal;
     }
 
     /// <inheritdoc/>

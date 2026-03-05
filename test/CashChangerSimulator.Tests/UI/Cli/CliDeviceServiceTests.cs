@@ -18,9 +18,9 @@ public class CliDeviceServiceTests : CliTestBase
         configProvider.Config.Simulation.HotStart = false;
         var realChanger = new InternalSimulatorCashChanger(configProvider, null, null, null, null, null, null, null)
         {
-            // SkipStateVerification = true // Claim 内部で _isOpen のチェックが行われ、例外になる
+            SkipStateVerification = true
         };
-        // Open していない状態
+        // Open していない状態で Claim を呼び、エラーを発生させる意図
 
         var deviceService = new CliDeviceService(realChanger, _console, _localizer);
 
@@ -39,7 +39,7 @@ public class CliDeviceServiceTests : CliTestBase
         // Arrange
         var realChanger = new InternalSimulatorCashChanger(null, null, null, null, null, null, null, null)
         {
-            // SkipStateVerification = true
+            SkipStateVerification = true
         };
         realChanger.Open();
         // Claim していない状態で Enable しようとする

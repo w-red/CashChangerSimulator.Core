@@ -28,15 +28,15 @@ public class RepayDepositTests
     {
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
+        simulator.Open();
+        simulator.Claim(0);
+        simulator.DeviceEnabled = true;
+
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         
         // Initial inventory check
         var initialCounts = simulator.ReadCashCounts();
         var initialCount = initialCounts.Counts.Where(c => c.NominalValue == 1000).Select(c => c.Count).DefaultIfEmpty(0).FirstOrDefault();
-
-        simulator.Open();
-        simulator.Claim(0);
-        simulator.DeviceEnabled = true;
 
         // Sequence: Begin -> Track -> Fix -> End(Repay)
         simulator.BeginDeposit();

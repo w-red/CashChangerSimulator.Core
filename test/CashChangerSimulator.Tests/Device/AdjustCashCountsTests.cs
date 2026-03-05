@@ -9,7 +9,10 @@ public class AdjustCashCountsTests
 {
     private InternalSimulatorCashChanger CreateSimulator()
     {
-        return new InternalSimulatorCashChanger();
+        var simulator = new InternalSimulatorCashChanger { SkipStateVerification = true };
+        simulator.Open();
+        simulator.Claim(0);
+        return simulator;
     }
 
     /// <summary>Tests the behavior of AdjustCashCountsShouldUpdateInventory to ensure proper functionality.</summary>

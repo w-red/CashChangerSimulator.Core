@@ -28,7 +28,7 @@ public class ScriptCommand
 public class ScriptExecutionContext
 {
     /// <summary>スクリプト変数の辞書。</summary>
-    public Dictionary<string, object> Variables { get; } = new();
+    public Dictionary<string, object> Variables { get; } = [];
 }
 
 /// <summary>スクリプトデータに基づいてシミュレーターの操作を自動実行するサービス。</summary>
@@ -41,6 +41,8 @@ public class ScriptExecutionService(
     private readonly ILogger<ScriptExecutionService> _logger = LogProvider.CreateLogger<ScriptExecutionService>();
     private readonly Dictionary<string, IScriptCommandHandler> _handlers = InitializeHandlers(
         depositController, dispenseController, inventory, hardwareStatusManager);
+
+    private static readonly JsonSerializerOptions jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     private static Dictionary<string, IScriptCommandHandler> InitializeHandlers(
         DepositController depositController,
@@ -67,8 +69,7 @@ public class ScriptExecutionService(
     /// <summary>JSON スクリプトを解析して実行します。</summary>
     public async Task ExecuteScriptAsync(string json, Action<string>? onProgress = null)
     {
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        var commands = JsonSerializer.Deserialize<List<ScriptCommand>>(json, options);
+        var commands = JsonSerializer.Deserialize<List<ScriptCommand>>(json, jsonOptions);
         if (commands == null)
         {
             _logger.ZLogError($"Failed to deserialize script JSON.");
@@ -128,16 +129,16 @@ public class ScriptExecutionService(
             if (element.ValueKind == JsonValueKind.String)
             {
                 var str = element.GetString();
-                if (str != null && str.StartsWith("$"))
+                if (str != null && str.StartsWith('$'))
                 {
-                    var varName = str.Substring(1);
+                    var varName = str[1..];
                     if (context.Variables.TryGetValue(varName, out var varValue))
                     {
-                        if (varValue is JsonElement varElement && varElement.ValueKind == JsonValueKind.Number)
-                        {
-                            return varElement.GetInt32();
-                        }
-                        return Convert.ToInt32(varValue);
+                        return 
+                            varValue is JsonElement varElement
+                            && varElement.ValueKind == JsonValueKind.Number
+                                ? varElement.GetInt32()
+                                : Convert.ToInt32(varValue);
                     }
                 }
                 if (int.TryParse(str, out var parsedInt))

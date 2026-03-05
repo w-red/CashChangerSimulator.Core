@@ -9,7 +9,10 @@ public class DirectIOTests
 {
     private InternalSimulatorCashChanger CreateSimulator()
     {
-        return new InternalSimulatorCashChanger();
+        var simulator = new InternalSimulatorCashChanger { SkipStateVerification = true };
+        simulator.Open();
+        simulator.Claim(0);
+        return simulator;
     }
 
     /// <summary>Tests the behavior of DirectIoCommand10ShouldToggleOverlap to ensure proper functionality.</summary>

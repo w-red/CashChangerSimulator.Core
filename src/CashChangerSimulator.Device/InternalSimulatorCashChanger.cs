@@ -6,7 +6,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
-using System.Reflection;
+using MicroResolver;
 
 namespace CashChangerSimulator.Device;
 
@@ -25,29 +25,13 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
     }
 
     /// <summary>シミュレータUIからの Open 呼び出しを模擬します。</summary>
-    public override void Open()
-    {
-        if (!SkipStateVerification)
-        {
-            base.Open();
-            return;
-        }
-
-        // Simulate hardware connection for tests
-        var field = typeof(SimulatorCashChanger).GetField("_hardwareStatusManager", BindingFlags.Instance | BindingFlags.NonPublic);
-        var hardware = field?.GetValue(this) as HardwareStatusManager;
-        hardware?.SetConnected(true);
-    }
+    public override void Open() => base.Open();
 
     /// <summary>シミュレータUIからの Close 呼び出しを模擬します。</summary>
     public new void Close() => base.Close();
 
     /// <summary>シミュレータUIからの Claim 呼び出しを模擬します。</summary>
-    public override void Claim(int timeout)
-    {
-        if (SkipStateVerification) return;
-        base.Claim(timeout);
-    }
+    public override void Claim(int timeout) => base.Claim(timeout);
 
     /// <summary>シミュレータUIからの Release 呼び出しを模擬します。</summary>
     public new void Release() => base.Release();
@@ -59,6 +43,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
     public Action<EventArgs>? OnEventQueued;
 
     /// <summary>指定された引数で新しいインスタンスを初期化します。</summary>
+    [Inject]
     public InternalSimulatorCashChanger(
         ConfigurationProvider? configProvider = null,
         Inventory? inventory = null,

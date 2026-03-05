@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
@@ -21,7 +22,11 @@ public class DepositControllerDelegationTest
         var inventory = new Inventory();
         var hardwareManager = new HardwareStatusManager();
         hardwareManager.SetConnected(true);
-        var managerMock = new Mock<CashChangerManager>(inventory, new TransactionHistory(), null, null);
+        var managerMock = 
+            new Mock<CashChangerManager>(
+                inventory,
+                new TransactionHistory(),
+                new ChangeCalculator());
 
         var controller = new DepositController(inventory, hardwareManager, managerMock.Object);
 

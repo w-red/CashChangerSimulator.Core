@@ -17,6 +17,7 @@ public class CliCashServiceTests : CliTestBase
             SkipStateVerification = true
         };
         realChanger.Open();
+        realChanger.Claim(0);
         realChanger.DeviceEnabled = true;
         // 注意: BeginDeposit() を呼んでいないため、EndDeposit() は Invalid State (Illegal) となるはず。
 
@@ -41,6 +42,7 @@ public class CliCashServiceTests : CliTestBase
             SkipStateVerification = true
         };
         realChanger.Open();
+        realChanger.Claim(0);
         realChanger.DeviceEnabled = true;
 
         var cashService = new CliCashService(realChanger, _mockInventory.Object, _mockMetadata.Object, _options, _console, _localizer);

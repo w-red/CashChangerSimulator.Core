@@ -42,6 +42,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     private int _asyncResultCodeExtended;
     private bool _deviceEnabled;
     private bool _dataEventEnabled;
+    private bool _isClaimed;
 
     /// <summary>VerifyState チェックをスキップするかどうかを取得または設定します。</summary>
     public virtual bool SkipStateVerification { get; set; }
@@ -53,6 +54,19 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         get => SkipStateVerification ? _deviceEnabled : base.DeviceEnabled;
         set
         {
+            if (value)
+            {
+                if (State == ControlState.Closed)
+                {
+                    throw new PosControlException("Device is not open.", ErrorCode.Closed);
+                }
+
+                if (!Claimed)
+                {
+                    throw new PosControlException("Device must be claimed before enabling.", ErrorCode.Illegal);
+                }
+            }
+
             if (SkipStateVerification)
             {
                 _deviceEnabled = value;
@@ -61,14 +75,6 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
             }
 
             if (value == base.DeviceEnabled) return;
-
-            if (value)
-            {
-                if (State == ControlState.Closed)
-                {
-                    throw new PosControlException("Device is not open.", ErrorCode.Closed);
-                }
-            }
 
             base.DeviceEnabled = value;
             _logger.ZLogInformation($"DeviceEnabled set to {value}.");
@@ -90,7 +96,6 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         }
     }
 
-
     /// <summary>入金データのリアルタイム通知が有効かどうかを取得または設定します。</summary>
     public override bool RealTimeDataEnabled { get; set; }
 
@@ -108,17 +113,8 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     {
         get
         {
-            var baseState = base.State;
-            if (baseState == ControlState.Closed && SkipStateVerification)
-            {
-                return ControlState.Idle;
-            }
-
-            return baseState == ControlState.Closed
-                ? ControlState.Closed
-                : _asyncProcessing
-                    ? ControlState.Busy
-                    : ControlState.Idle;
+            if (!_hardwareStatusManager.IsConnected.Value) return ControlState.Closed;
+            return _asyncProcessing ? ControlState.Busy : ControlState.Idle;
         }
     }
 
@@ -149,17 +145,62 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     // ========== Simulator UI Helpers (Overridden in InternalSimulatorCashChanger) ==========
 
     /// <summary>デバイスをオープンします。外部（シミュレータ）からは継承クラスのメソッドを使用してください。</summary>
-    public override void Open() => base.Open();
+    /// <summary>デバイスをオープンし、通信を開始します。</summary>
+    public override void Open()
+    {
+        if (SkipStateVerification)
+        {
+            _hardwareStatusManager.SetConnected(true);
+            _logger.ZLogInformation($"Device opened (Verification Skipped).");
+            return;
+        }
+        base.Open();
+        _hardwareStatusManager.SetConnected(true);
+    }
 
     /// <summary>デバイスをクローズします。</summary>
-    public override void Close() => base.Close();
+    public override void Close()
+    {
+        if (SkipStateVerification)
+        {
+            _hardwareStatusManager.SetConnected(false);
+            _logger.ZLogInformation($"Device closed (Verification Skipped).");
+            return;
+        }
+        base.Close();
+        _hardwareStatusManager.SetConnected(false);
+    }
 
     /// <summary>デバイスを占有します。</summary>
-    public override void Claim(int timeout) => base.Claim(timeout);
+    public override void Claim(int timeout)
+    {
+        if (SkipStateVerification)
+        {
+            if (State == ControlState.Closed)
+            {
+                throw new PosControlException("Device is not open.", ErrorCode.Closed);
+            }
+            _isClaimed = true;
+            _logger.ZLogInformation($"Device claimed (Verification Skipped).");
+            return;
+        }
+        base.Claim(timeout);
+    }
 
     /// <summary>デバイスを解放します。</summary>
-    public override void Release() => base.Release();
+    public override void Release()
+    {
+        if (SkipStateVerification)
+        {
+            _isClaimed = false;
+            _logger.ZLogInformation($"Device released (Verification Skipped).");
+            return;
+        }
+        base.Release();
+    }
 
+    /// <summary>デバイスが現在占有されているかどうかを取得します。</summary>
+    public override bool Claimed => SkipStateVerification ? _isClaimed : base.Claimed;
 
     /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。DI時は [Inject] 属性のものが優先されます。</summary>
     [Inject]

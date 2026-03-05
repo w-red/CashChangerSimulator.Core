@@ -17,6 +17,8 @@ public class SerialNumberTrackingTests
             SkipStateVerification = true
         };
         changer.Open();
+        changer.Claim(0);
+        changer.Claim(0);
 
         // Retrieve internal controller for direct manipulation in test
         var field = typeof(InternalSimulatorCashChanger)

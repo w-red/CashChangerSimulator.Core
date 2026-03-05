@@ -8,7 +8,7 @@ namespace CashChangerSimulator.Device;
 /// </summary>
 public class DirectIOHandler
 {
-    private readonly Dictionary<int, IDirectIOCommand> _commands = new();
+    private readonly Dictionary<int, IDirectIOCommand> _commands = [];
 
     public DirectIOHandler()
     {
@@ -40,10 +40,6 @@ public class DirectIOHandler
     /// </summary>
     public DirectIOData Handle(int command, int data, object obj, SimulatorCashChanger serviceObject)
     {
-        if (_commands.TryGetValue(command, out var strategy))
-        {
-            return strategy.Execute(data, obj, serviceObject);
-        }
-        return new DirectIOData(data, obj);
+        return _commands.TryGetValue(command, out var strategy) ? strategy.Execute(data, obj, serviceObject) : new DirectIOData(data, obj);
     }
 }

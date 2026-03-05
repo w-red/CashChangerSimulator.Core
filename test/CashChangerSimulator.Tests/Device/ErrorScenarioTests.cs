@@ -59,6 +59,7 @@ public class ErrorScenarioTests
             SkipStateVerification = true
         };
         device.Open();
+        device.Claim(0);
         return (device, hardware);
     }
 

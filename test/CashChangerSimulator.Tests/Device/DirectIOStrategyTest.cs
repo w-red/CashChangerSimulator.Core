@@ -14,6 +14,7 @@ public class DirectIOStrategyTest
         _device = new InternalSimulatorCashChanger();
         _device.SkipStateVerification = true;
         _device.Open();
+        _device.Claim(0);
     }
 
     [Fact]

@@ -156,26 +156,16 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
 
         if (CurrencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
         {
-            if (isJapanese)
-            {
-                return $"{key.Value:N0}円";
-            }
-            else
-            {
-                return $"{key.Value:N0} Yen";
-            }
+            return isJapanese ? $"{key.Value:N0}円" : $"{key.Value:N0} Yen";
         }
         
         if (CurrencyCode.Equals("USD", StringComparison.OrdinalIgnoreCase))
         {
             return key.Type == CurrencyCashType.Bill ? $"${key.Value:N0} Bill" : $"${key.Value} Coin";
         }
-        
-        if (CurrencyCode.Equals("EUR", StringComparison.OrdinalIgnoreCase))
-        {
-            return key.Type == CurrencyCashType.Bill ? $"€{key.Value:N0} Note" : $"€{key.Value} Coin";
-        }
 
-        return $"{key.Value:N0} ({key.Type})";
+        return CurrencyCode.Equals("EUR", StringComparison.OrdinalIgnoreCase)
+            ? key.Type == CurrencyCashType.Bill ? $"€{key.Value:N0} Note" : $"€{key.Value} Coin"
+            : $"{key.Value:N0} ({key.Type})";
     }
 }

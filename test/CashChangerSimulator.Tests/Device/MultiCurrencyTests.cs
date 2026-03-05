@@ -54,6 +54,8 @@ public class MultiCurrencyTests
         {
             SkipStateVerification = true
         };
+        device.Open();
+        device.Claim(0);
         return device;
     }
 

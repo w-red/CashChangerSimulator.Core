@@ -35,7 +35,10 @@ public class UposLifecycleTests
         var depositController = new DepositController(inv, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
-        return new InternalSimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw);
+        return new InternalSimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw)
+        {
+            SkipStateVerification = true
+        };
     }
 
     /// <summary>占有されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。</summary>

@@ -29,6 +29,8 @@ public class ComplianceTests
                 hardwareStatusManager);
         
         changer.SkipStateVerification = true;
+        changer.Open();
+        changer.Claim(0);
         changer.DeviceEnabled = true;
         changer.DataEventEnabled = true;
 
