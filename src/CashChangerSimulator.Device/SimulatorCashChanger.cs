@@ -151,10 +151,16 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     /// <summary>デバイスをオープンし、通信を開始します。</summary>
     public override void Open()
     {
+        if (State != ControlState.Closed)
+        {
+            _logger.LogInformation("Open called but device is already {0}.", State);
+            return;
+        }
+
         if (SkipStateVerification)
         {
             _hardwareStatusManager.SetConnected(true);
-            _logger.ZLogInformation($"Device opened (Verification Skipped).");
+            _logger.LogInformation("Device opened (Verification Skipped).");
             return;
         }
         base.Open();
@@ -164,10 +170,16 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
     /// <summary>デバイスをクローズします。</summary>
     public override void Close()
     {
+        if (State == ControlState.Closed)
+        {
+            _logger.LogInformation("Close called but device is already Closed.");
+            return;
+        }
+
         if (SkipStateVerification)
         {
             _hardwareStatusManager.SetConnected(false);
-            _logger.ZLogInformation($"Device closed (Verification Skipped).");
+            _logger.LogInformation("Device closed (Verification Skipped).");
             return;
         }
         base.Close();
@@ -184,7 +196,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
                 throw new PosControlException("Device is not open.", ErrorCode.Closed);
             }
             _isClaimed = true;
-            _logger.ZLogInformation($"Device claimed (Verification Skipped).");
+            _logger.LogInformation("Device claimed (Verification Skipped).");
             return;
         }
         base.Claim(timeout);
@@ -196,7 +208,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
         if (SkipStateVerification)
         {
             _isClaimed = false;
-            _logger.ZLogInformation($"Device released (Verification Skipped).");
+            _logger.LogInformation("Device released (Verification Skipped).");
             return;
         }
         base.Release();
@@ -289,7 +301,11 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink
             _activeCurrencyCode = _config.Inventory.Keys.FirstOrDefault() ?? "JPY";
             
             // Clear inventory to avoid cross-currency pollution
-            _inventory.Clear();
+            // ONLY if device is open, to avoid interference with startup sequence
+            if (State != ControlState.Closed)
+            {
+                _inventory.Clear();
+            }
             
             _logger.LogInformation("SimulatorCashChanger state updated. Active Currency: {0}", _activeCurrencyCode);
         });
