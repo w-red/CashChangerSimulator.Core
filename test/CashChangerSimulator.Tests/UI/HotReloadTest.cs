@@ -29,7 +29,7 @@ public class HotReloadTest
         var aggregator = new OverallStatusAggregator(monitorsProvider.Monitors);
         var hw = new HardwareStatusManager();
         var depositController = new DepositController(inv, hw);
-        var mockChanger = new Mock<SimulatorCashChanger>(config, inv, history, null, null, null, null, hw);
+        var mockChanger = new Mock<SimulatorCashChanger>(config, inv, history, null!, null!, null!, null!, hw);
         var notifyService = new Mock<INotifyService>().Object;
 
         var vm = new InventoryViewModel(
