@@ -1,5 +1,4 @@
 using Microsoft.PointOfService;
-using Microsoft.PointOfService.BasicServiceObjects;
 using CashChangerSimulator.Core.Opos;
 
 namespace CashChangerSimulator.Device.Coordination;

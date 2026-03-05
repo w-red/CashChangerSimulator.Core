@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Tomlyn;
 using ZLogger;
 
