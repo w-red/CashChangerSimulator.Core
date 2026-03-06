@@ -19,6 +19,7 @@ public class DispenseController : IDisposable
     private readonly CashChangerManager _manager;
     private readonly HardwareStatusManager _hardwareStatusManager;
     private readonly IDeviceSimulator _simulator;
+    private CancellationTokenSource? _dispenseCts;
 
     /// <summary>マネージャーを指定して初期化する。</summary>
     public DispenseController(CashChangerManager manager) : this(manager, null, null) { }
@@ -50,7 +51,7 @@ public class DispenseController : IDisposable
     public virtual bool IsBusy => _status == CashDispenseStatus.Busy;
 
     /// <summary>指定された金額を払い出します（内訳自動計算）。</summary>
-    public async Task DispenseChangeAsync(decimal amount, bool asyncMode, Action<ErrorCode, int> onComplete, string? currencyCode = null)
+    public virtual async Task DispenseChangeAsync(decimal amount, bool asyncMode, Action<ErrorCode, int> onComplete, string? currencyCode = null)
     {
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
 
@@ -66,19 +67,23 @@ public class DispenseController : IDisposable
 
         _status = CashDispenseStatus.Busy;
         _changed.OnNext(Unit.Default);
+        
+        _dispenseCts?.Cancel();
+        _dispenseCts = new CancellationTokenSource();
+        var token = _dispenseCts.Token;
 
         if (asyncMode)
         {
-            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete));
+            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token), token);
         }
         else
         {
-            await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete);
+            await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token);
         }
     }
 
     /// <summary>指定された金種・枚数の現金を払い出します。</summary>
-    public async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode, Action<ErrorCode, int> onComplete)
+    public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode, Action<ErrorCode, int> onComplete)
     {
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
 
@@ -94,33 +99,44 @@ public class DispenseController : IDisposable
 
         _status = CashDispenseStatus.Busy;
         _changed.OnNext(Unit.Default);
+        
+        _dispenseCts?.Cancel();
+        _dispenseCts = new CancellationTokenSource();
+        var token = _dispenseCts.Token;
 
         if (asyncMode)
         {
-            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(counts), onComplete));
+            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(counts), onComplete, token), token);
         }
         else
         {
-            await ExecuteDispense(() => _manager.Dispense(counts), onComplete);
+            await ExecuteDispense(() => _manager.Dispense(counts), onComplete, token);
         }
     }
 
-    private async Task ExecuteDispense(Action action, Action<ErrorCode, int> onComplete)
+    private async Task ExecuteDispense(Action action, Action<ErrorCode, int> onComplete, CancellationToken token)
     {
         try
         {
-            _logger.ZLogInformation($"Dispense operation started.");
-
-            await SimulateHardwareAsync();
+            _logger.LogInformation("Dispense operation started.");
+ 
+            await SimulateHardwareAsync(token);
+ 
+            token.ThrowIfCancellationRequested();
 
             action();
             _status = CashDispenseStatus.Idle;
-            _logger.ZLogInformation($"Dispense operation completed successfully.");
+            _logger.LogInformation("Dispense operation completed successfully.");
             onComplete(ErrorCode.Success, 0);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Dispense operation was canceled.");
+            _status = CashDispenseStatus.Idle;
         }
         catch (PosControlException ex)
         {
-            _logger.ZLogError(ex, $"Dispense operation failed: {ex.ErrorCode}");
+            _logger.LogError(ex, "Dispense operation failed: {ErrorCode}", ex.ErrorCode);
             _status = CashDispenseStatus.Error;
             onComplete(ex.ErrorCode, ex.ErrorCodeExtended);
             throw;
@@ -145,11 +161,22 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>シミュレーターを利用した非同期のハードウェア遅延処理を実行します。</summary>
-    private async Task SimulateHardwareAsync()
+    private async Task SimulateHardwareAsync(CancellationToken token)
     {
         // ビジネスロジックから物理デバイス待機等のシミュレーションを切り離す
-        await _simulator.SimulateDispenseAsync();
+        await _simulator.SimulateDispenseAsync(token);
+    }
+    
+    /// <summary>保留中の出金操作をすべてキャンセルします。</summary>
+    public virtual void ClearOutput()
+    {
+        _dispenseCts?.Cancel();
+        _dispenseCts = null;
+        if (_status == CashDispenseStatus.Busy)
+        {
+            _status = CashDispenseStatus.Idle;
+            _changed.OnNext(Unit.Default);
+        }
     }
 
     /// <summary>エラー状態をクリアし、Idle に戻します。</summary>

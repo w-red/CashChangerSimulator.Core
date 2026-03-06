@@ -3,6 +3,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using ZLogger;
 
 namespace CashChangerSimulator.Core.Managers;
@@ -114,8 +115,36 @@ public class CashChangerManager
         var counts = _calculator.Calculate(_inventory, amount, currencyCode, filter: k =>
         {
             var setting = _configProvider.Config.GetDenominationSetting(k);
-            return setting?.IsRecyclable ?? true;
+            return setting.IsRecyclable;
         });
         Dispense(counts);
+    }
+    /// <summary>リサイクル在庫をすべて回収庫へ移動します。</summary>
+    public virtual void PurgeCash()
+    {
+        var keys = _inventory.AllCounts.Select(kv => kv.Key).ToList();
+        var counts = new Dictionary<DenominationKey, int>();
+        
+        foreach (var key in keys)
+        {
+            var count = _inventory.GetCount(key);
+            if (count > 0)
+            {
+                _inventory.Add(key, -count);
+                _inventory.AddCollection(key, count);
+                counts[key] = count;
+            }
+        }
+
+        if (counts.Count > 0)
+        {
+            _logger.ZLogInformation($"PurgeCash: Moved all recyclable inventory to collection.");
+            _history.Add(new TransactionEntry(
+                DateTimeOffset.Now,
+                TransactionType.Dispense, // Purge is similar to dispense from recycling
+                counts.Sum(kv => kv.Key.Value * kv.Value),
+                counts
+            ));
+        }
     }
 }

@@ -91,7 +91,7 @@ public class DepositController : IDisposable
     // ========== Methods ==========
 
     /// <summary>入金受付を開始します。</summary>
-    public void BeginDeposit()
+    public virtual void BeginDeposit()
     {
         _logger.ZLogInformation($"BeginDeposit called. Current Status: {_depositStatus}");
 
@@ -117,8 +117,8 @@ public class DepositController : IDisposable
         _logger.ZLogInformation($"BeginDeposit finished. New Status: {_depositStatus}");
     }
 
-    /// <summary>投入された金額を確定（固定）します。</summary>
-    public void FixDeposit()
+    /// <summary>投入された現金の計数を確定（固定）します。</summary>
+    public virtual void FixDeposit()
     {
         if (!IsDepositInProgress) throw new PosControlException("Deposit not in progress", ErrorCode.Illegal);
 
@@ -128,8 +128,8 @@ public class DepositController : IDisposable
         _changed.OnNext(Unit.Default);
     }
 
-    /// <summary>入金受付を完了し、必要に応じて在庫を更新します。</summary>
-    public void EndDeposit(CashDepositAction action)
+    /// <summary>入金処理を終了します。</summary>
+    public virtual void EndDeposit(CashDepositAction action)
     {
         if (!_depositFixed)
         {
@@ -176,8 +176,28 @@ public class DepositController : IDisposable
         _changed.OnNext(Unit.Default);
     }
 
-    /// <summary>入金受付の一時停止または再開を制御します。</summary>
-    public void PauseDeposit(CashDepositPause control)
+    /// <summary>投入された現金を返却し、入金セッションを終了します。</summary>
+    public virtual void RepayDeposit()
+    {
+        if (_depositStatus is not (CashDepositStatus.Start or CashDepositStatus.Count))
+        {
+            throw new PosControlException("Deposit session is not active.", ErrorCode.Illegal);
+        }
+
+        _logger.ZLogInformation($"RepayDeposit: Returning accepted cash ({_depositAmount}).");
+        _depositStatus = CashDepositStatus.End;
+        _depositPaused = false;
+        _depositFixed = false;
+        _depositAmount = 0m;
+        _overflowAmount = 0m;
+        _rejectAmount = 0m;
+        _depositCounts.Clear();
+        _depositedSerials.Clear();
+        _changed.OnNext(Unit.Default);
+    }
+
+    /// <summary>入金受付を停止します。</summary>
+    public virtual void PauseDeposit(CashDepositPause control)
     {
         if (_depositStatus is not (CashDepositStatus.Start or CashDepositStatus.Count))
         {

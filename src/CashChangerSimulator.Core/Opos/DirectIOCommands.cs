@@ -30,5 +30,8 @@ public static class DirectIOCommands
     public const int AdjustCashCountsStr = 101;
 
     /// <summary>直前の入金セッションで投入された紙幣のシリアル番号一覧を取得します。</summary>
-    public const int GetDepositedSerials = 1002;
+    public const int GetDepositedSerials = 1001;
+
+    /// <summary>診断ログ（ヘルスチェックレポート）を取得します。</summary>
+    public const int GetDiagnosticLog = 1002;
 }

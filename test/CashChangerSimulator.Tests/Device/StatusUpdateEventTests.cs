@@ -5,6 +5,7 @@ using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -51,7 +52,17 @@ public class StatusUpdateEventTests
         var depositController = new DepositController(inv, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
-        var cc = new InternalSimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw)
+        var deps = new SimulatorDependencies(
+            configProvider,
+            inv,
+            history,
+            manager,
+            depositController,
+            dispenseController,
+            aggregatorProvider,
+            hw);
+
+        var cc = new InternalSimulatorCashChanger(deps)
         {
             SkipStateVerification = true
         };

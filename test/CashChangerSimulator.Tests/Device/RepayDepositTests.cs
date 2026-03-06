@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -10,8 +11,7 @@ public class RepayDepositTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
     {
-        // Using default constructor which resolves via SimulatorServices or creates defaults
-        return new InternalSimulatorCashChanger();
+        return new InternalSimulatorCashChanger(new SimulatorDependencies());
     }
 
     /// <summary>Tests the behavior of CapRepayDepositShouldBeTrue to ensure proper functionality.</summary>
@@ -61,5 +61,37 @@ public class RepayDepositTests
         var finalCounts = simulator.ReadCashCounts();
         var finalCount = finalCounts.Counts.Where(c => c.NominalValue == 1000).Select(c => c.Count).DefaultIfEmpty(0).FirstOrDefault();
         finalCount.ShouldBe(initialCount, "Inventory should not be updated when action is Repay.");
+    }
+
+    /// <summary>Tests the behavior of RepayDepositMethodShouldEndSession to ensure proper functionality.</summary>
+    [Fact]
+    public void RepayDepositMethodShouldEndSession()
+    {
+        var simulator = CreateSimulator();
+        simulator.SkipStateVerification = true;
+        simulator.Open();
+        simulator.Claim(0);
+        simulator.DeviceEnabled = true;
+
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+
+        // Sequence: Begin -> Track -> RepayDeposit
+        simulator.BeginDeposit();
+        
+        var controller = (DepositController)typeof(InternalSimulatorCashChanger)
+            .GetField("_depositController", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(simulator)!;
+
+        controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
+        simulator.DepositAmount.ShouldBe(1000);
+
+        // Call the specific RepayDeposit method
+        simulator.RepayDeposit();
+
+        // Verify state after Repay
+        simulator.DepositAmount.ShouldBe(0);
+        simulator.DepositStatus.ShouldBe(CashDepositStatus.End);
+        
+        simulator.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 }

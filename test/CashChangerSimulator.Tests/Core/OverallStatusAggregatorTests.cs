@@ -100,4 +100,30 @@ public class OverallStatusAggregatorTests
         // Act & Assert
         Should.NotThrow(() => aggregator.Dispose());
     }
+
+    /// <summary>Refresh 呼び出しにより監視対象が更新され、集約結果が再計算されることを検証する。</summary>
+    [Fact]
+    public void RefreshShouldUpdateMonitorsAndRecalculate()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var k1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var k5000 = new DenominationKey(5000, CurrencyCashType.Bill);
+        
+        inventory.SetCount(k1000, 5); // Normal
+        inventory.SetCount(k5000, 0); // Empty
+        
+        var monitor1000 = new CashStatusMonitor(inventory, k1000, 2, 8, 10);
+        var aggregator = new OverallStatusAggregator([monitor1000]);
+        
+        // 初期状態: 1000円しか監視していないので Normal
+        aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);
+        
+        // Act: 5000円のモニターを追加して Refresh
+        var monitor5000 = new CashStatusMonitor(inventory, k5000, 2, 8, 10);
+        aggregator.Refresh([monitor1000, monitor5000]);
+        
+        // Assert: 5000円が Empty なので集約結果も Empty になるはず
+        aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
+    }
 }

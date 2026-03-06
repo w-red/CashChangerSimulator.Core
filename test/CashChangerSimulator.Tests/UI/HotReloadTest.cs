@@ -5,6 +5,7 @@ using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using Moq;
 using Shouldly;
@@ -25,7 +26,15 @@ public class HotReloadTest
         var aggregator = new OverallStatusAggregator(monitorsProvider.Monitors);
         var hw = new HardwareStatusManager();
         var depositController = new DepositController(inv, hw);
-        var mockChanger = new Mock<SimulatorCashChanger>(config, inv, history, null!, null!, null!, null!, hw);
+        var mockChanger = new Mock<SimulatorCashChanger>(new SimulatorDependencies(
+            ConfigProvider: config,
+            Inventory: inv,
+            History: history,
+            Manager: null!,
+            DepositController: null!,
+            DispenseController: null!,
+            AggregatorProvider: null!,
+            HardwareStatusManager: hw));
         var notifyService = new Mock<INotifyService>().Object;
 
         var vm = new InventoryViewModel(

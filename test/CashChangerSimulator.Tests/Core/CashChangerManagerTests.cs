@@ -1,4 +1,5 @@
 
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -125,5 +126,80 @@ public class CashChangerManagerTests
 
         inventory.CalculateTotal().ShouldBe(0m);
         history.Entries.ShouldBeEmpty();
+    }
+
+    /// <summary>非リサイクル金種が入金時に回収庫へ振り分けられることを検証する。</summary>
+    [Fact]
+    public void DepositNonRecyclableShouldGoToCollection()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var configProvider = new ConfigurationProvider();
+        // 2000円札を非リサイクルとして明示的に設定
+        configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
+        
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
+        
+        var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
+        var counts = new Dictionary<DenominationKey, int> { { b2000, 3 } };
+
+        // Act
+        manager.Deposit(counts);
+
+        // Assert
+        inventory.GetCount(b2000).ShouldBe(0); // 通常庫は0
+        inventory.CollectionCounts.ShouldContain(kv => kv.Key == b2000 && kv.Value == 3);
+        inventory.CalculateTotal().ShouldBe(6000m);
+    }
+
+    /// <summary>金額指定の出金時に非リサイクル金種がスキップされることを検証する。</summary>
+    [Fact]
+    public void DispenseByAmountShouldSkipNonRecyclable()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        
+        // 2000円札（非リサイクル）と1000円札（リサイクル）を在庫に入れる
+        inventory.SetCount(b2000, 10);
+        inventory.SetCount(b1000, 10);
+        
+        var configProvider = new ConfigurationProvider();
+        // 2000円札を非リサイクルとして明示的に設定
+        configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
+        
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
+
+        // Act: 2000円を出金
+        manager.Dispense(2000m);
+
+        // Assert: 1000円札2枚が使われ、2000円札は使われないはず
+        inventory.GetCount(b1000).ShouldBe(8);
+        inventory.GetCount(b2000).ShouldBe(10);
+    }
+
+    /// <summary>入金時に満廃しきい値を超えた分が回収庫へ振り分けられることを検証する。</summary>
+    [Fact]
+    public void DepositShouldHandleOverflow()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        
+        // 1000円札の Full しきい値はデフォルトで 100 枚とする
+        // 現状の在庫を 90 枚にする
+        inventory.SetCount(b1000, 90);
+        
+        var configProvider = new ConfigurationProvider();
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
+        var counts = new Dictionary<DenominationKey, int> { { b1000, 20 } };
+
+        // Act: 20枚入金 (計 110枚)
+        manager.Deposit(counts);
+
+        // Assert: 100枚までが通常庫、残り10枚が回収庫
+        inventory.GetCount(b1000).ShouldBe(100);
+        inventory.CollectionCounts.ShouldContain(kv => kv.Key == b1000 && kv.Value == 10);
     }
 }

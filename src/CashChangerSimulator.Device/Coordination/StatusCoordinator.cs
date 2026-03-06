@@ -100,8 +100,18 @@ public class StatusCoordinator(
             }
             else
             {
-                _lastCashChangerStatus = CashChangerStatus.OK;
+                // Re-evaluate from aggregator when jam is cleared
+                var currentAggregatedStatus = statusAggregator.DeviceStatus.CurrentValue;
+                _lastCashChangerStatus = currentAggregatedStatus switch
+                {
+                    CashStatus.Empty => CashChangerStatus.Empty,
+                    CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
+                    _ => CashChangerStatus.OK
+                };
                 sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
+                
+                // If it was still Empty/NearEmpty, fire those too? 
+                // Actually, UPOS Ok event often implies clearing of error state.
             }
         }));
 

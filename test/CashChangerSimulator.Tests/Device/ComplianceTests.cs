@@ -2,6 +2,7 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -17,8 +18,7 @@ public class ComplianceTests
         hardwareStatusManager.SetConnected(true);
         var history = new CashChangerSimulator.Core.Transactions.TransactionHistory();
         var controller = new DepositController(inventory, hardwareStatusManager);
-        var changer =
-            new InternalSimulatorCashChanger(
+        var deps = new SimulatorDependencies(
                 null,
                 inventory,
                 history,
@@ -27,6 +27,8 @@ public class ComplianceTests
                 null,
                 null,
                 hardwareStatusManager);
+        var changer =
+            new InternalSimulatorCashChanger(deps);
 
         changer.SkipStateVerification = true;
         changer.Open();

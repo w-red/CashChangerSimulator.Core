@@ -2,6 +2,7 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -23,7 +24,7 @@ public class ResultCodeVerificationTests
 
     private InternalSimulatorCashChanger CreateChanger()
     {
-        var changer = new InternalSimulatorCashChanger(
+        var deps = new SimulatorDependencies(
             _configProvider,
             _inventory,
             null,
@@ -32,6 +33,7 @@ public class ResultCodeVerificationTests
             null,
             null,
             _hardwareStatusManager);
+        var changer = new InternalSimulatorCashChanger(deps);
         changer.SkipStateVerification = true;
         return changer;
     }

@@ -2,11 +2,13 @@ using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using MicroResolver;
+using CashChangerSimulator.Device.Coordination;
 
 namespace CashChangerSimulator.Device;
 
@@ -15,36 +17,54 @@ namespace CashChangerSimulator.Device;
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Internal Simulator Cash Changer", 1, 14)]
 public class InternalSimulatorCashChanger : SimulatorCashChanger
 {
-    private readonly ILogger<InternalSimulatorCashChanger> _internalLogger;
+    // Nullable に変更：LogProvider が null を返す可能性や、テスト環境での変動に対応
+    private readonly ILogger<InternalSimulatorCashChanger>? _internalLogger;
 
     /// <summary>テスト用：構成を指定せずに初期化します。</summary>
     public InternalSimulatorCashChanger()
-        : base(null, null, null, null, null, null, null, null)
+        : base(new SimulatorDependencies())
     {
         SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
-
-    /// <summary>シミュレータUIからの Open 呼び出しを模擬します。</summary>
-    public override void Open() => base.Open();
-
-    /// <summary>シミュレータUIからの Close 呼び出しを模擬します。</summary>
-    public new void Close() => base.Close();
-
-    /// <summary>シミュレータUIからの Claim 呼び出しを模擬します。</summary>
-    public override void Claim(int timeout) => base.Claim(timeout);
-
-    /// <summary>シミュレータUIからの Release 呼び出しを模擬します。</summary>
-    public new void Release() => base.Release();
-
-    /// <summary>テスト用: VerifyState チェックをスキップ。OPOS ライフサイクルが利用できない単体テスト環境で使用。</summary>
-    public override bool SkipStateVerification { get; set; }
 
     /// <summary>テスト用のイベント通知アクション。UIのアクティビティフィードやテストでの検証に使用されます。</summary>
     public Action<EventArgs>? OnEventQueued;
 
     /// <summary>指定された引数で新しいインスタンスを初期化します。</summary>
     [Inject]
+    public InternalSimulatorCashChanger(SimulatorDependencies deps)
+        : base(deps)
+    {
+        SkipStateVerification = true;
+        _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
+    }
+
+    /// <summary>テスト用：個別の依存関係を指定して初期化します（8個の引数版）。</summary>
+    public InternalSimulatorCashChanger(
+        ConfigurationProvider configProvider,
+        Inventory inventory,
+        TransactionHistory history,
+        CashChangerManager manager,
+        DepositController depositController,
+        DispenseController dispenseController,
+        OverallStatusAggregatorProvider aggregatorProvider,
+        HardwareStatusManager hardwareStatusManager)
+        : base(new SimulatorDependencies(
+            configProvider,
+            inventory,
+            history,
+            manager,
+            depositController,
+            dispenseController,
+            aggregatorProvider,
+            hardwareStatusManager))
+    {
+        SkipStateVerification = true;
+        _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
+    }
+
+    /// <summary>テスト用：最小限の依存関係で初期化します（named parameters対応）。</summary>
     public InternalSimulatorCashChanger(
         ConfigurationProvider? configProvider = null,
         Inventory? inventory = null,
@@ -53,19 +73,27 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
         DepositController? depositController = null,
         DispenseController? dispenseController = null,
         OverallStatusAggregatorProvider? aggregatorProvider = null,
-        HardwareStatusManager? hardwareStatusManager = null)
-        : base(configProvider, inventory, history, manager, depositController, dispenseController, aggregatorProvider, hardwareStatusManager)
+        HardwareStatusManager? hardwareStatusManager = null,
+        DiagnosticController? diagnosticController = null)
+        : base(new SimulatorDependencies(
+            configProvider,
+            inventory,
+            history,
+            manager,
+            depositController,
+            dispenseController,
+            aggregatorProvider,
+            hardwareStatusManager,
+            diagnosticController))
     {
         SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
     /// <summary>イベント通知をオーバーライドし、OnEventQueued フックを実行します。</summary>
-    protected override void NotifyEvent(EventArgs e)
+    protected override void NotifyEvent(System.EventArgs e)
     {
         OnEventQueued?.Invoke(e);
-
-        if (SkipStateVerification) return;
         base.NotifyEvent(e);
     }
 }

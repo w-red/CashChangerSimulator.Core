@@ -4,6 +4,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -35,9 +36,19 @@ public class UposLifecycleTests
         var depositController = new DepositController(inv, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
-        return new InternalSimulatorCashChanger(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw)
+        var deps = new SimulatorDependencies(
+            configProvider,
+            inv,
+            history,
+            manager,
+            depositController,
+            dispenseController,
+            aggregatorProvider,
+            hw);
+
+        return new InternalSimulatorCashChanger(deps)
         {
-            SkipStateVerification = true
+            SkipStateVerification = false
         };
     }
 
@@ -90,6 +101,6 @@ public class UposLifecycleTests
     public void CheckHealthShouldReturnOk()
     {
         var cc = CreateCashChanger();
-        cc.CheckHealth(HealthCheckLevel.Internal).ShouldBe("OK");
+        cc.CheckHealth(HealthCheckLevel.Internal).ShouldContain("OK");
     }
 }

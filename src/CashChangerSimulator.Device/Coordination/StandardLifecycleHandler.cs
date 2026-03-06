@@ -1,0 +1,159 @@
+using CashChangerSimulator.Core.Managers;
+using Microsoft.Extensions.Logging;
+using Microsoft.PointOfService;
+
+namespace CashChangerSimulator.Device.Coordination;
+
+/// <summary>標準的な UPOS ライフサイクル（状態検証あり）を実装するクラス。</summary>
+public class StandardLifecycleHandler : IUposLifecycleHandler
+{
+    private readonly HardwareStatusManager _hardware;
+    private readonly IUposMediator _mediator;
+    private readonly ILogger _logger;
+
+    public StandardLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, ILogger logger)
+    {
+        _hardware = hardware ?? throw new ArgumentNullException(nameof(hardware));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public ControlState State
+    {
+        get
+        {
+            if (!_hardware.IsConnected.Value) return ControlState.Closed;
+            if (_mediator.IsBusy) return ControlState.Busy;
+            return ControlState.Idle;
+        }
+    }
+
+    public bool Claimed => _mediator.Claimed;
+    public bool DeviceEnabled
+    {
+        get => _mediator.DeviceEnabled;
+        set
+        {
+            if (value)
+            {
+                if (State == ControlState.Closed)
+                {
+                    throw new PosControlException("Device is not open.", ErrorCode.Closed);
+                }
+
+                if (!Claimed)
+                {
+                    throw new PosControlException("Device must be claimed before enabling.", ErrorCode.Illegal);
+                }
+            }
+
+            if (value == _mediator.DeviceEnabled) return;
+
+            _mediator.DeviceEnabled = value;
+            _logger.LogInformation("DeviceEnabled set to {0}.", value);
+        }
+    }
+    public bool DataEventEnabled
+    {
+        get => _mediator.DataEventEnabled;
+        set => _mediator.DataEventEnabled = value;
+    }
+
+    public void Open(Action baseOpen)
+    {
+        if (baseOpen == null) throw new ArgumentNullException(nameof(baseOpen));
+        if (_logger == null) throw new InvalidOperationException("_logger is null in StandardLifecycleHandler.Open");
+
+        if (State != ControlState.Closed)
+        {
+            _logger.LogInformation("Open called but device is already {0}.", State);
+            _mediator.SetSuccess();
+            return;
+        }
+
+        try
+        {
+            baseOpen();
+        }
+        catch (Exception ex)
+        {
+            // POS for .NET often throws NRE or PosControlException when registry entries are missing.
+            // We ignore these in the simulator's standard handler to allow testing logic without a full installation.
+            _logger.LogWarning(ex, "base.Open() failed (likely due to missing registry info). Ignoring to allow simulation.");
+        }
+
+        _hardware.SetConnected(true);
+        _mediator.SetSuccess();
+    }
+
+    public void Close(Action baseClose)
+    {
+        if (baseClose == null) throw new ArgumentNullException(nameof(baseClose));
+        if (State == ControlState.Closed)
+        {
+            _logger.LogInformation("Close called but device is already Closed.");
+            _mediator.SetSuccess();
+            return;
+        }
+
+        try
+        {
+            baseClose();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "base.Close() failed. Ignoring.");
+        }
+
+        _hardware.SetConnected(false);
+        _mediator.SetSuccess();
+    }
+
+    public void Claim(int timeout, Action<int> baseClaim)
+    {
+        if (baseClaim == null) throw new ArgumentNullException(nameof(baseClaim));
+
+        if (State == ControlState.Closed)
+        {
+            _logger.LogWarning("Claim called while device is Closed.");
+            throw new PosControlException("Device is closed.", ErrorCode.Closed);
+        }
+
+        try
+        {
+            baseClaim(timeout);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "base.Claim() failed in framework. Ignoring to allow simulation.");
+        }
+
+        _mediator.Claimed = true;
+        _mediator.SetSuccess();
+    }
+
+    public void Release(Action baseRelease)
+    {
+        if (baseRelease == null) throw new ArgumentNullException(nameof(baseRelease));
+
+        if (State == ControlState.Closed)
+        {
+            _logger.LogWarning("Release called while device is Closed.");
+            // Release while closed is often allowed to be a no-op or throw, 
+            // but for parity with Claim, let's treat it as illegal if we want strict verification.
+            // Actually, UPOS says Release should work if Claimed.
+        }
+
+        try
+        {
+            baseRelease();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "base.Release() failed. Ignoring.");
+        }
+
+        _mediator.Claimed = false;
+        _mediator.SetSuccess();
+    }
+}

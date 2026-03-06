@@ -27,7 +27,8 @@ public class DirectIOHandler
             new GetVersionStrategy(),
             new GetJamLocationStrategy(),
             new AdjustCashCountsStrStrategy(),
-            new GetDepositedSerialsStrategy()
+            new GetDepositedSerialsStrategy(),
+            new GetDiagnosticLogStrategy()
         };
 
         foreach (var strategy in strategies)

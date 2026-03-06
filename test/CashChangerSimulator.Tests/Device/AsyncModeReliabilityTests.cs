@@ -29,9 +29,12 @@ public class AsyncModeReliabilityTests
         public bool EventCaptured { get; private set; }
 
         private readonly DispenseController _controller = controller;
-
-        protected override void NotifyEvent(EventArgs e)
+        private readonly List<System.EventArgs> _eventHistory = [];
+ 
+        protected override void NotifyEvent(System.EventArgs e)
         {
+            _eventHistory.Add(e);
+            base.NotifyEvent(e);
             if (e is StatusUpdateEventArgs se && se.Status == 91)
             {
                 // Capture internal state AT THE MOMENT of event notification

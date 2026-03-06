@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -17,7 +18,8 @@ public class DeviceEventHistoryObserverTest
     {
         // Arrange
         var history = new TransactionHistory();
-        var device = new InternalSimulatorCashChanger(history: history);
+        var deps = new SimulatorDependencies(History: history);
+        var device = new InternalSimulatorCashChanger(deps);
 
         // This instantiates the observer, subscribing to the device
         using var observer = new DeviceEventHistoryObserver(device, history);
@@ -41,7 +43,8 @@ public class DeviceEventHistoryObserverTest
     {
         // Arrange
         var history = new TransactionHistory();
-        var device = new InternalSimulatorCashChanger(history: history);
+        var deps = new SimulatorDependencies(History: history);
+        var device = new InternalSimulatorCashChanger(deps);
         using var observer = new DeviceEventHistoryObserver(device, history);
 
         // Act

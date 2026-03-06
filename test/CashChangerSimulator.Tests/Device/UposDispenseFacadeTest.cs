@@ -3,10 +3,13 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
+using Xunit;
+using System;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -17,6 +20,7 @@ public class UposDispenseFacadeTest
     private readonly DepositController _depositController;
     private readonly DispenseController _dispenseController;
     private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly Mock<IUposMediator> _mediatorMock;
     private readonly UposDispenseFacade _facade;
 
     /// <summary>UposDispenseFacadeTest の新しいインスタンスを初期化します。</summary>
@@ -31,12 +35,16 @@ public class UposDispenseFacadeTest
         var manager = new CashChangerManager(_inventory, new TransactionHistory(), new ChangeCalculator());
         _depositController = new DepositController(_inventory, _hardwareStatusManager);
         _dispenseController = new DispenseController(manager, _hardwareStatusManager, null);
+        _mediatorMock = new Mock<IUposMediator>();
+        _mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>(), It.IsAny<bool>()))
+            .Callback<IUposCommand, bool>((cmd, _) => cmd.Execute());
 
         _facade = new UposDispenseFacade(
             _dispenseController,
             _depositController,
             _hardwareStatusManager,
             _inventory,
+            _mediatorMock.Object,
             new Mock<ILogger>().Object);
     }
 
@@ -45,9 +53,9 @@ public class UposDispenseFacadeTest
     public void DispenseByAmountWhenDepositInProgressShouldThrow()
     {
         _depositController.BeginDeposit();
-
+ 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
+            _facade.DispenseByAmount(1000, "JPY", 1m, false, false, (_, _, _) => { }));
     }
 
     /// <summary>ジャム中に出金しようとすると例外がスローされることを確認します。</summary>
@@ -55,9 +63,9 @@ public class UposDispenseFacadeTest
     public void DispenseByAmountWhenJammedShouldThrow()
     {
         _hardwareStatusManager.SetJammed(true);
-
+ 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
+            _facade.DispenseByAmount(1000, "JPY", 1m, false, false, (_, _, _) => { }));
     }
 
     /// <summary>金額0以下で例外がスローされることを確認します。</summary>
@@ -65,7 +73,7 @@ public class UposDispenseFacadeTest
     public void DispenseByAmountZeroAmountShouldThrow()
     {
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(0, "JPY", 1m, false, (_, _, _) => { }));
+            _facade.DispenseByAmount(0, "JPY", 1m, false, false, (_, _, _) => { }));
     }
 
     /// <summary>正常な金額出金が成功することを確認します。</summary>
@@ -73,7 +81,7 @@ public class UposDispenseFacadeTest
     public void DispenseByAmountValidAmountShouldSucceed()
     {
         ErrorCode? resultCode = null;
-        _facade.DispenseByAmount(1000, "JPY", 1m, false, (code, _, _) => resultCode = code);
+        _facade.DispenseByAmount(1000, "JPY", 1m, false, false, (code, _, _) => resultCode = code);
 
         resultCode.ShouldBe(ErrorCode.Success);
     }
@@ -85,6 +93,6 @@ public class UposDispenseFacadeTest
         var cashCounts = new[] { new CashCount(CashCountType.Bill, 1000, 999) };
 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false, (_, _, _) => { }));
+            _facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false, false, (_, _, _) => { }));
     }
 }

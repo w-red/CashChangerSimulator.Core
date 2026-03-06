@@ -4,6 +4,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -50,7 +51,17 @@ public class MultiCurrencyTests
         var depositController = new DepositController(inventory, hardware);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
 
-        var device = new InternalSimulatorCashChanger(configProvider, inventory, history, manager, depositController, dispenseController, aggregatorProvider, hardware)
+        var deps = new SimulatorDependencies(
+            configProvider,
+            inventory,
+            history,
+            manager,
+            depositController,
+            dispenseController,
+            aggregatorProvider,
+            hardware);
+
+        var device = new InternalSimulatorCashChanger(deps)
         {
             SkipStateVerification = true
         };
