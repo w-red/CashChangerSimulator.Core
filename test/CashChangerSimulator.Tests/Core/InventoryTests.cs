@@ -144,4 +144,107 @@ public class InventoryTests
         inventory.GetCount(denomination).ShouldBe(largeCount);
         inventory.CalculateTotal().ShouldBe(1_000_000_000m);
     }
+
+    /// <summary>空の通貨コードを持つキーが、SetCount でも正規化されることを検証する（現状は失敗する想定）。</summary>
+    [Fact]
+    public void InventorySetCountShouldNormalizeEmptyCurrency()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var emptyCurrencyKey = new DenominationKey(1000, CurrencyCashType.Bill, "");
+        var normalizedKey = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+
+        // Act
+        inventory.SetCount(emptyCurrencyKey, 10);
+
+        // Assert
+        // GetCount(normalizedKey) で取得できるべきだが、現状の実装では正規化されないため失敗する
+        inventory.GetCount(normalizedKey).ShouldBe(10);
+    }
+
+    /// <summary>空の通貨コードを持つキーが、AddCollection/AddReject でも正規化されることを検証する（現状は失敗する想定）。</summary>
+    [Fact]
+    public void InventoryAddCollectionAndRejectShouldNormalizeEmptyCurrency()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var emptyCurrencyKey = new DenominationKey(1000, CurrencyCashType.Bill, "");
+        var normalizedKey = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+
+        // Act
+        inventory.AddCollection(emptyCurrencyKey, 1);
+        inventory.AddReject(emptyCurrencyKey, 2);
+
+        // Assert
+        inventory.CollectionCounts.ShouldContain(kv => kv.Key == normalizedKey && kv.Value == 1);
+        inventory.RejectCounts.ShouldContain(kv => kv.Key == normalizedKey && kv.Value == 2);
+    }
+    /// <summary>HasDiscrepancy の状態遷移（Collection/Reject への追加、Clear、強制設定）を検証する。</summary>
+    [Fact]
+    public void InventoryHasDiscrepancyShouldTransitionCorrectly()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var denomination = new DenominationKey(100, CurrencyCashType.Coin);
+ 
+        // 初期状態
+        inventory.HasDiscrepancy.ShouldBeFalse();
+ 
+        // Act: 回収庫へ追加
+        inventory.AddCollection(denomination, 1);
+        inventory.HasDiscrepancy.ShouldBeTrue("Collection exists");
+ 
+        // Act: クリア
+        inventory.Clear();
+        inventory.HasDiscrepancy.ShouldBeFalse("Cleared counts");
+ 
+        // Act: リジェクト庫へ追加
+        inventory.AddReject(denomination, 1);
+        inventory.HasDiscrepancy.ShouldBeTrue("Reject exists");
+ 
+        // Act: 強制設定
+        inventory.Clear();
+        inventory.HasDiscrepancy = true;
+        inventory.HasDiscrepancy.ShouldBeTrue("Forced discrepancy");
+ 
+        inventory.HasDiscrepancy = false;
+        inventory.HasDiscrepancy.ShouldBeFalse("Forced back to false");
+    }
+ 
+    /// <summary>複数通貨が存在する場合、通貨コードによるフィルタリングが正しく機能することを検証する。</summary>
+    [Fact]
+    public void InventoryCalculateTotalShouldFilterByCurrency()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        inventory.Add(new DenominationKey(100, CurrencyCashType.Coin, "JPY"), 10); // 1000
+        inventory.Add(new DenominationKey(1, CurrencyCashType.Coin, "USD"), 5);   // 5
+ 
+        // Act & Assert
+        inventory.CalculateTotal("JPY").ShouldBe(1000m);
+        inventory.CalculateTotal("USD").ShouldBe(5m);
+        inventory.CalculateTotal().ShouldBe(1005m);
+        inventory.CalculateTotal("EUR").ShouldBe(0m);
+    }
+ 
+    /// <summary>LoadFromDictionary に不正な形式が含まれていても、他のデータが正常に読み込めることを検証する。</summary>
+    [Fact]
+    public void InventoryLoadFromDictionaryShouldBeRobustToErrors()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var data = new Dictionary<string, int>
+        {
+            { "JPY:C100", 10 },
+            { "INVALID_KEY_FORMAT", 5 },
+            { "COL:JPY:B1000", 2 }
+        };
+ 
+        // Act
+        inventory.LoadFromDictionary(data);
+ 
+        // Assert
+        inventory.GetCount(new DenominationKey(100, CurrencyCashType.Coin, "JPY")).ShouldBe(10);
+        inventory.CollectionCounts.ShouldContain(kv => kv.Key.Value == 1000 && kv.Value == 2);
+    }
 }

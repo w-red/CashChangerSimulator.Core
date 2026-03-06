@@ -37,11 +37,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数を追加する。</summary>
     public virtual void Add(DenominationKey key, int count)
     {
-        // Normalize key if meaningful currency code is missing
-        if (string.IsNullOrEmpty(key.CurrencyCode))
-        {
-            key = key with { CurrencyCode = DenominationKey.DefaultCurrencyCode };
-        }
+        key = NormalizeKey(key);
         _logger.ZLogDebug($"Inventory.Add called. Key: {key}, Count: {count}");
         if (count == 0)
         {
@@ -64,6 +60,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数を設定する。</summary>
     public virtual void SetCount(DenominationKey key, int count)
     {
+        key = NormalizeKey(key);
         if (count < 0)
         {
             _logger.ZLogWarning($"Inventory.SetCount: Ignoring negative count {count} for {key}");
@@ -76,6 +73,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数を回収庫に追加する。</summary>
     public virtual void AddCollection(DenominationKey key, int count)
     {
+        key = NormalizeKey(key);
         if (count <= 0) return;
         if (_collectionCounts.ContainsKey(key))
         {
@@ -91,6 +89,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数をリジェクト庫に追加する。</summary>
     public virtual void AddReject(DenominationKey key, int count)
     {
+        key = NormalizeKey(key);
         if (count <= 0) return;
         if (_rejectCounts.ContainsKey(key))
         {
@@ -104,7 +103,7 @@ public class Inventory : IReadOnlyInventory
     }
 
     /// <summary>在庫の枚数を取得します。</summary>
-    public int GetCount(DenominationKey key) => _counts.GetValueOrDefault(key);
+    public virtual int GetCount(DenominationKey key) => _counts.GetValueOrDefault(NormalizeKey(key));
 
     /// <summary>在庫をすべてクリアします。</summary>
     public void Clear()
@@ -217,4 +216,9 @@ public class Inventory : IReadOnlyInventory
         }
         return false;
     }
+
+    private static DenominationKey NormalizeKey(DenominationKey key) =>
+        string.IsNullOrEmpty(key.CurrencyCode)
+            ? key with { CurrencyCode = DenominationKey.DefaultCurrencyCode }
+            : key;
 }
