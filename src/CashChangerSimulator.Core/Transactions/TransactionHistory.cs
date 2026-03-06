@@ -12,7 +12,7 @@ public class TransactionHistory : IDisposable
     private readonly Subject<TransactionEntry> _added = new();
 
     /// <summary>全ての取引履歴（読み取り専用）。</summary>
-    public IReadOnlyList<TransactionEntry> Entries => _entries;
+    public virtual IReadOnlyList<TransactionEntry> Entries => _entries;
 
     /// <summary>取引が新しく追加されたときに通知されるストリーム。</summary>
     public virtual Observable<TransactionEntry> Added => _added;

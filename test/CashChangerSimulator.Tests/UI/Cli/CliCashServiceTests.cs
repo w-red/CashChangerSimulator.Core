@@ -1,5 +1,6 @@
 using CashChangerSimulator.Device;
 using CashChangerSimulator.UI.Cli.Services;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -12,7 +13,7 @@ public class CliCashServiceTests : CliTestBase
     [Fact]
     public void EndDepositShouldUpdateResultCodeAndPrintErrorMessageWhenNotInDepositMode()
     {
-        var realChanger = new InternalSimulatorCashChanger(null, null, null, null, null, null, null, null)
+        var realChanger = new InternalSimulatorCashChanger(new SimulatorDependencies())
         {
             SkipStateVerification = true
         };
@@ -37,7 +38,7 @@ public class CliCashServiceTests : CliTestBase
     public void DispenseShouldHandlePosControlExceptionAndCheckExtendedErrorCodeWhenInventoryIsInsufficient()
     {
         // Arrange
-        var realChanger = new InternalSimulatorCashChanger(null, null, null, null, null, null, null, null)
+        var realChanger = new InternalSimulatorCashChanger(new SimulatorDependencies())
         {
             SkipStateVerification = true
         };

@@ -71,4 +71,32 @@ public class CliCommandsTests : CliTestBase
         _commands.Help();
         _console.Output.ShouldContain("Command", Case.Insensitive);
     }
+
+    [Fact]
+    public void ClaimShouldCallChangerClaim()
+    {
+        _commands.Claim(1000);
+        _mockChanger.Verify(x => x.Claim(1000), Times.Once);
+    }
+
+    [Fact]
+    public void EnableShouldCallChangerEnable()
+    {
+        _commands.Enable();
+        _mockChanger.VerifySet(x => x.DeviceEnabled = true, Times.Once);
+    }
+
+    [Fact]
+    public void DepositShouldCallChangerBeginDeposit()
+    {
+        _commands.Deposit(100);
+        _mockChanger.Verify(x => x.BeginDeposit(), Times.Once);
+    }
+
+    [Fact]
+    public void FixDepositShouldCallChangerFixDeposit()
+    {
+        _commands.FixDeposit();
+        _mockChanger.Verify(x => x.FixDeposit(), Times.Once);
+    }
 }

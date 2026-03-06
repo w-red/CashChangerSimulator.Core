@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.UI.Cli.Services;
+using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -16,9 +17,10 @@ public class CliDeviceServiceTests : CliTestBase
         // Arrange
         var configProvider = new ConfigurationProvider();
         configProvider.Config.Simulation.HotStart = false;
-        var realChanger = new InternalSimulatorCashChanger(configProvider, null, null, null, null, null, null, null)
+        var deps = new SimulatorDependencies(configProvider);
+        var realChanger = new InternalSimulatorCashChanger(deps)
         {
-            SkipStateVerification = true
+            SkipStateVerification = false
         };
         // Open していない状態で Claim を呼び、エラーを発生させる意図
 
@@ -37,9 +39,10 @@ public class CliDeviceServiceTests : CliTestBase
     public void EnableShouldHandlePosControlExceptionWhenDeviceIsNotClaimed()
     {
         // Arrange
-        var realChanger = new InternalSimulatorCashChanger(null, null, null, null, null, null, null, null)
+        var deps = new SimulatorDependencies();
+        var realChanger = new InternalSimulatorCashChanger(deps)
         {
-            SkipStateVerification = true
+            SkipStateVerification = false
         };
         realChanger.Open();
         // Claim していない状態で Enable しようとする
