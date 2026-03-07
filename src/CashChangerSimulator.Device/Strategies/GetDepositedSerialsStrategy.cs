@@ -10,7 +10,7 @@ public class GetDepositedSerialsStrategy : IDirectIOCommand
 
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
-        var serials = string.Join(",", device._depositController.LastDepositedSerials);
+        var serials = string.Join(",", device.DepositController.LastDepositedSerials);
         return new DirectIOData(data, serials);
     }
 }

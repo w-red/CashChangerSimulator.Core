@@ -10,7 +10,7 @@ public class SetDiscrepancyStrategy : IDirectIOCommand
 
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
-        device._inventory.HasDiscrepancy = (data != 0);
+        device.Inventory.HasDiscrepancy = (data != 0);
         return new DirectIOData(data, obj);
     }
 }

@@ -14,7 +14,7 @@ public class AdjustCashCountsStrStrategy : IDirectIOCommand
         {
             try
             {
-                var activeKeys = device._inventory.AllCounts.Select(kv => kv.Key).ToList();
+                var activeKeys = device.Inventory.AllCounts.Select(kv => kv.Key).ToList();
                 var factor = UposCurrencyHelper.GetCurrencyFactor(device.CurrencyCode);
                 var counts = CashCountParser.Parse(strVal, activeKeys, factor);
                 device.AdjustCashCounts(counts);

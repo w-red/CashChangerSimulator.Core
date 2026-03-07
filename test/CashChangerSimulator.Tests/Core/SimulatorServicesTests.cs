@@ -80,7 +80,7 @@ public class SimulatorServicesTests : IDisposable
         var cc = new InternalSimulatorCashChanger();
         cc.SkipStateVerification = false;
 
-        // Verify via ReadCashCounts (which uses _inventory internally)
+        // Verify via ReadCashCounts (which uses Inventory internally)
         var ex = Should.Throw<Microsoft.PointOfService.PosControlException>(
             () => cc.ReadCashCounts());
         ex.ErrorCode.ShouldBe(Microsoft.PointOfService.ErrorCode.Closed);

@@ -16,34 +16,34 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>UposDispenseFacade の動作を検証するテストクラス。</summary>
 public class UposDispenseFacadeTest
 {
-    private readonly Inventory _inventory;
-    private readonly DepositController _depositController;
+    private readonly Inventory Inventory;
+    private readonly DepositController DepositController;
     private readonly DispenseController _dispenseController;
-    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly HardwareStatusManager HardwareStatusManager;
     private readonly Mock<IUposMediator> _mediatorMock;
     private readonly UposDispenseFacade _facade;
 
     /// <summary>UposDispenseFacadeTest の新しいインスタンスを初期化します。</summary>
     public UposDispenseFacadeTest()
     {
-        _inventory = new Inventory();
-        _inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 10);
-        _inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 20);
+        Inventory = new Inventory();
+        Inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 10);
+        Inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 20);
 
-        _hardwareStatusManager = new HardwareStatusManager();
-        _hardwareStatusManager.SetConnected(true);
-        var manager = new CashChangerManager(_inventory, new TransactionHistory(), new ChangeCalculator());
-        _depositController = new DepositController(_inventory, _hardwareStatusManager);
-        _dispenseController = new DispenseController(manager, _hardwareStatusManager, null);
+        HardwareStatusManager = new HardwareStatusManager();
+        HardwareStatusManager.SetConnected(true);
+        var manager = new CashChangerManager(Inventory, new TransactionHistory(), new ChangeCalculator());
+        DepositController = new DepositController(Inventory, HardwareStatusManager);
+        _dispenseController = new DispenseController(manager, HardwareStatusManager, null);
         _mediatorMock = new Mock<IUposMediator>();
         _mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
             .Callback<IUposCommand>((cmd) => cmd.Execute());
 
         _facade = new UposDispenseFacade(
             _dispenseController,
-            _depositController,
-            _hardwareStatusManager,
-            _inventory,
+            DepositController,
+            HardwareStatusManager,
+            Inventory,
             _mediatorMock.Object,
             new Mock<ILogger<UposDispenseFacade>>().Object);
     }
@@ -61,7 +61,7 @@ public class UposDispenseFacadeTest
     [Fact]
     public void DispenseByAmountWhenDepositInProgressShouldThrow()
     {
-        _depositController.BeginDeposit();
+        DepositController.BeginDeposit();
         SetupMediatorToThrow();
  
         Should.Throw<PosControlException>(() =>
@@ -72,7 +72,7 @@ public class UposDispenseFacadeTest
     [Fact]
     public void DispenseByAmountWhenJammedShouldThrow()
     {
-        _hardwareStatusManager.SetJammed(true);
+        HardwareStatusManager.SetJammed(true);
         SetupMediatorToThrow();
  
         Should.Throw<PosControlException>(() =>

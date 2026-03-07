@@ -19,7 +19,7 @@ namespace CashChangerSimulator.Tests.Device;
 public class UposCommandTests
 {
     private readonly Mock<IUposMediator> _mediatorMock;
-    private readonly Mock<DepositController> _depositControllerMock;
+    private readonly Mock<DepositController> DepositControllerMock;
 
     public UposCommandTests()
     {
@@ -27,27 +27,27 @@ public class UposCommandTests
         // DepositController needs Inventory and HardwareStatusManager
         var inventory = new CashChangerSimulator.Core.Models.Inventory();
         var hardware = new CashChangerSimulator.Core.Managers.HardwareStatusManager();
-        _depositControllerMock = new Mock<DepositController>(inventory, hardware, null!, null!);
+        DepositControllerMock = new Mock<DepositController>(inventory, hardware, null!, null!);
     }
 
     [Fact]
     public void BeginDepositCommand_Execute_ShouldCallController()
     {
         // Arrange
-        var command = new BeginDepositCommand(_depositControllerMock.Object);
+        var command = new BeginDepositCommand(DepositControllerMock.Object);
 
         // Act
         command.Execute();
 
         // Assert
-        _depositControllerMock.Verify(c => c.BeginDeposit(), Times.Once);
+        DepositControllerMock.Verify(c => c.BeginDeposit(), Times.Once);
     }
 
     [Fact]
     public void BeginDepositCommand_Verify_ShouldCallMediator()
     {
         // Arrange
-        var command = new BeginDepositCommand(_depositControllerMock.Object);
+        var command = new BeginDepositCommand(DepositControllerMock.Object);
 
         // Act
         command.Verify(_mediatorMock.Object);
@@ -59,35 +59,35 @@ public class UposCommandTests
     [Fact]
     public void FixDepositCommand_Execute_ShouldCallController()
     {
-        var command = new FixDepositCommand(_depositControllerMock.Object);
+        var command = new FixDepositCommand(DepositControllerMock.Object);
         command.Execute();
-        _depositControllerMock.Verify(c => c.FixDeposit(), Times.Once);
+        DepositControllerMock.Verify(c => c.FixDeposit(), Times.Once);
     }
 
     [Fact]
     public void EndDepositCommand_Execute_ShouldCallController()
     {
         var action = CashDepositAction.NoChange;
-        var command = new EndDepositCommand(_depositControllerMock.Object, action);
+        var command = new EndDepositCommand(DepositControllerMock.Object, action);
         command.Execute();
-        _depositControllerMock.Verify(c => c.EndDeposit(action), Times.Once);
+        DepositControllerMock.Verify(c => c.EndDeposit(action), Times.Once);
     }
 
     [Fact]
     public void PauseDepositCommand_Execute_ShouldCallController()
     {
         var control = CashDepositPause.Pause;
-        var command = new PauseDepositCommand(_depositControllerMock.Object, control);
+        var command = new PauseDepositCommand(DepositControllerMock.Object, control);
         command.Execute();
-        _depositControllerMock.Verify(c => c.PauseDeposit(control), Times.Once);
+        DepositControllerMock.Verify(c => c.PauseDeposit(control), Times.Once);
     }
 
     [Fact]
     public void RepayDepositCommand_Execute_ShouldCallController()
     {
-        var command = new RepayDepositCommand(_depositControllerMock.Object);
+        var command = new RepayDepositCommand(DepositControllerMock.Object);
         command.Execute();
-        _depositControllerMock.Verify(c => c.RepayDeposit(), Times.Once);
+        DepositControllerMock.Verify(c => c.RepayDeposit(), Times.Once);
     }
 
     [Fact]

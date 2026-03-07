@@ -39,9 +39,9 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     private readonly DirectIOHandler _directIOHandler = new();
     private string _checkHealthText = "OK";
 
-    internal Inventory _inventory => _ctx.Inventory;
-    internal HardwareStatusManager _hardwareStatusManager => _ctx.HardwareStatusManager;
-    internal DepositController _depositController => _ctx.DepositController;
+    internal Inventory Inventory => _ctx.Inventory;
+    internal HardwareStatusManager HardwareStatusManager => _ctx.HardwareStatusManager;
+    internal DepositController DepositController => _ctx.DepositController;
     internal SimulatorContext Context => _ctx;
 
     /// <summary>シミュレータの依存関係を注入して初期化します。</summary>
@@ -49,49 +49,14 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public SimulatorCashChanger(SimulatorDependencies deps)
     {
         _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
-        _eventNotifier = deps.EventNotifier ?? new UposEventNotifier(this);
-        var hardwareStatusManager = deps.HardwareStatusManager ?? new HardwareStatusManager();
-        var mediator = deps.Mediator as UposMediator ?? new UposMediator(this);
-        var lifecycleManager = new LifecycleManager(hardwareStatusManager, mediator, _logger);
-        
-        var configProvider = deps.ConfigProvider ?? new ConfigurationProvider();
-        var inventory = deps.Inventory ?? new Inventory();
-        var history = deps.History ?? new TransactionHistory();
-        var manager = deps.Manager ?? new CashChangerManager(inventory, history, new ChangeCalculator());
-
-        var depositController = deps.DepositController ?? new DepositController(inventory, hardwareStatusManager, manager, configProvider);
-        var dispenseController = deps.DispenseController ?? new DispenseController(manager, hardwareStatusManager, new HardwareSimulator(configProvider));
-
-        var aggregator = deps.AggregatorProvider?.Aggregator ?? new OverallStatusAggregator(
-            inventory.AllCounts
-            .Select(kv => (kv.Key, Settings: configProvider.Config.GetDenominationSetting(kv.Key)))
-            .Select(x => new CashStatusMonitor(inventory, x.Key, x.Settings.NearEmpty, x.Settings.NearFull, x.Settings.Full))
-            .ToList());
-
-        // Context を先に作成（StatusCoordinator 抜き）
-        _ctx = new SimulatorContext
-        {
-            Inventory = inventory,
-            History = history,
-            Manager = manager,
-            StatusAggregator = aggregator,
-            HardwareStatusManager = hardwareStatusManager,
-            DepositController = depositController,
-            DispenseController = dispenseController,
-            DiagnosticController = deps.DiagnosticController ?? new DiagnosticController(inventory, hardwareStatusManager),
-            Mediator = mediator,
-            LifecycleManager = lifecycleManager,
-            StatusCoordinator = null! // 後で入れる
-        };
-
-        // StatusCoordinator は this.DeviceStatus を参照するため、_ctx が代入された後に作成する
-        _ctx.StatusCoordinator = new StatusCoordinator(this, aggregator, hardwareStatusManager, depositController, dispenseController);
-        _ctx.StatusCoordinator.Start();
+        _ctx = SimulatorContext.Create(deps, this, _logger);
+        _eventNotifier = _ctx.EventNotifier;
 
         // ライフサイクルハンドラーを初期化（null参照防止）
         _ctx.LifecycleManager.UpdateHandler(_ctx.Mediator.SkipStateVerification);
 
-        _configManager = deps.ConfigurationManager ?? new UposConfigurationManager(configProvider, inventory, this);
+        var configProvider = deps.ConfigProvider ?? new ConfigurationProvider();
+        _configManager = deps.ConfigurationManager ?? new UposConfigurationManager(configProvider, Inventory, this);
         _configManager.Initialize();
 
         _dispenseFacade = new UposDispenseFacade(_ctx.DispenseController, _ctx.DepositController, _ctx.HardwareStatusManager, _ctx.Inventory, _ctx.Mediator, _logger);
@@ -207,5 +172,5 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         base.Dispose(disposing);
     }
     /// <inheritdoc/>
-    public Observable<Unit> DepositChanged => _depositController.Changed;
+    public Observable<Unit> DepositChanged => DepositController.Changed;
 }

@@ -121,7 +121,7 @@ namespace CashChangerSimulator.Device.Coordination;
     /// <summary>コマンドを実行し、結果を反映します。</summary>
     public void Execute(IUposCommand command)
     {
-        if (command == null) throw new ArgumentNullException(nameof(command));
+        ArgumentNullException.ThrowIfNull(command);
 
         try
         {

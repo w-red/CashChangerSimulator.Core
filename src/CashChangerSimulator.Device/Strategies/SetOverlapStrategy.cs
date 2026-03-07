@@ -10,7 +10,7 @@ public class SetOverlapStrategy : IDirectIOCommand
 
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
-        device._hardwareStatusManager.SetOverlapped(data != 0);
+        device.HardwareStatusManager.SetOverlapped(data != 0);
         return new DirectIOData(data, obj);
     }
 }

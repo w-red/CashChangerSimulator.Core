@@ -17,8 +17,8 @@ namespace CashChangerSimulator.Tests.Device;
 public class FacadeTests
 {
     private readonly Mock<IUposMediator> _mediatorMock;
-    private readonly Mock<DepositController> _depositControllerMock;
-    private readonly Mock<Inventory> _inventoryMock;
+    private readonly Mock<DepositController> DepositControllerMock;
+    private readonly Mock<Inventory> InventoryMock;
     private readonly Mock<CashChangerManager> _managerMock;
     private readonly Mock<DiagnosticController> _diagnosticControllerMock;
 
@@ -30,12 +30,12 @@ public class FacadeTests
         var hardwareStatusManager = new HardwareStatusManager();
         
         // Mocking classes with dependencies, providing real objects for required parameters
-        _depositControllerMock = new Mock<DepositController>(
+        DepositControllerMock = new Mock<DepositController>(
             inventory, 
             hardwareStatusManager, 
             _managerMock?.Object ?? new Mock<CashChangerManager>(inventory, new Mock<TransactionHistory>().Object, new ChangeCalculator(), new ConfigurationProvider()).Object,
             new ConfigurationProvider());
-        _inventoryMock = new Mock<Inventory>();
+        InventoryMock = new Mock<Inventory>();
         _managerMock = new Mock<CashChangerManager>(
             inventory, 
             new Mock<TransactionHistory>().Object, 
@@ -48,7 +48,7 @@ public class FacadeTests
     public void DepositFacade_BeginDeposit_ShouldExecuteCommand()
     {
         // Arrange
-        var facade = new DepositFacade(_depositControllerMock.Object, _mediatorMock.Object);
+        var facade = new DepositFacade(DepositControllerMock.Object, _mediatorMock.Object);
 
         // Act
         facade.BeginDeposit();
@@ -61,7 +61,7 @@ public class FacadeTests
     public void InventoryFacade_ReadCashCounts_ShouldExecuteCommand()
     {
         // Arrange
-        var facade = new InventoryFacade(_inventoryMock.Object, _managerMock.Object, _mediatorMock.Object);
+        var facade = new InventoryFacade(InventoryMock.Object, _managerMock.Object, _mediatorMock.Object);
 
         // Act
         facade.ReadCashCounts("JPY", 1.0m);

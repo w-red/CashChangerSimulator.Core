@@ -10,7 +10,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>DeviceLifecycleManager（State パターン）の遷移を検証するテストクラス。</summary>
 public class DeviceLifecycleStateTest
 {
-    private readonly HardwareStatusManager _hardwareStatusManager = new();
+    private readonly HardwareStatusManager HardwareStatusManager = new();
     private readonly Mock<ILogger> _mockLogger = new();
     private bool _deviceEnabled;
     private readonly DeviceLifecycleContext _context;
@@ -19,7 +19,7 @@ public class DeviceLifecycleStateTest
     /// <summary>DeviceLifecycleStateTest の新しいインスタンスを初期化します。</summary>
     public DeviceLifecycleStateTest()
     {
-        _context = new DeviceLifecycleContext(_hardwareStatusManager, _mockLogger.Object, v => _deviceEnabled = v);
+        _context = new DeviceLifecycleContext(HardwareStatusManager, _mockLogger.Object, v => _deviceEnabled = v);
         _state = new ClosedState();
     }
 
@@ -29,7 +29,7 @@ public class DeviceLifecycleStateTest
     {
         _state = _state.Open(_context);
         _state.ShouldBeOfType<OpenedState>();
-        _hardwareStatusManager.IsConnected.Value.ShouldBeTrue();
+        HardwareStatusManager.IsConnected.Value.ShouldBeTrue();
     }
 
     /// <summary>Closed 状態で Close を呼ぶと例外がスローされることを確認します。</summary>
@@ -62,7 +62,7 @@ public class DeviceLifecycleStateTest
         _state = _state.Open(_context);
         _state = _state.Close(_context);
         _state.ShouldBeOfType<ClosedState>();
-        _hardwareStatusManager.IsConnected.Value.ShouldBeFalse();
+        HardwareStatusManager.IsConnected.Value.ShouldBeFalse();
     }
 
     /// <summary>Claimed 状態で Release を呼ぶと Opened 状態に戻ることを確認します。</summary>

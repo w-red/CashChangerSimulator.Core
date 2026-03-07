@@ -14,14 +14,14 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>SimulatorCashChanger の各メソッド実行後に ResultCode が正しく更新されるかを検証するテスト。</summary>
 public class ResultCodeVerificationTests
 {
-    private readonly Inventory _inventory;
-    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly Inventory Inventory;
+    private readonly HardwareStatusManager HardwareStatusManager;
     private readonly ConfigurationProvider _configProvider;
 
     public ResultCodeVerificationTests()
     {
-        _inventory = new Inventory();
-        _hardwareStatusManager = new HardwareStatusManager();
+        Inventory = new Inventory();
+        HardwareStatusManager = new HardwareStatusManager();
         _configProvider = new ConfigurationProvider();
     }
 
@@ -29,13 +29,13 @@ public class ResultCodeVerificationTests
     {
         var deps = new SimulatorDependencies(
             _configProvider,
-            _inventory,
+            Inventory,
             null,
             null,
-            new DepositController(_inventory, _hardwareStatusManager),
+            new DepositController(Inventory, HardwareStatusManager),
             null,
             null,
-            _hardwareStatusManager);
+            HardwareStatusManager);
         var changer = new InternalSimulatorCashChanger(deps);
         changer.SkipStateVerification = true;
         return changer;

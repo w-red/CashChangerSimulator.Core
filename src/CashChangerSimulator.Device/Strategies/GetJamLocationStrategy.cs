@@ -10,7 +10,7 @@ public class GetJamLocationStrategy : IDirectIOCommand
 
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
-        var location = device._hardwareStatusManager.JamLocation.Value.ToString();
+        var location = device.HardwareStatusManager.JamLocation.Value.ToString();
         return new DirectIOData(data, location);
     }
 }

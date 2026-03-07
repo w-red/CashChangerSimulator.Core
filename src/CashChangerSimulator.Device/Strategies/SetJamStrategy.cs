@@ -22,7 +22,7 @@ public class SetJamStrategy : IDirectIOCommand
             }
         }
 
-        device._hardwareStatusManager.SetJammed(jam, location);
+        device.HardwareStatusManager.SetJammed(jam, location);
         return new DirectIOData(data, obj);
     }
 }

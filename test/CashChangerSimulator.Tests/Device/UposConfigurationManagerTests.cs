@@ -12,17 +12,17 @@ namespace CashChangerSimulator.Tests.Device;
 public class UposConfigurationManagerTests
 {
     private readonly ConfigurationProvider _configProvider;
-    private readonly Inventory _inventory;
+    private readonly Inventory Inventory;
     private readonly Mock<IDeviceStateProvider> _stateProviderMock;
     private readonly UposConfigurationManager _manager;
 
     public UposConfigurationManagerTests()
     {
         _configProvider = new ConfigurationProvider();
-        _inventory = new Inventory();
+        Inventory = new Inventory();
         _stateProviderMock = new Mock<IDeviceStateProvider>();
         _stateProviderMock.Setup(s => s.State).Returns(ControlState.Closed);
-        _manager = new UposConfigurationManager(_configProvider, _inventory, _stateProviderMock.Object);
+        _manager = new UposConfigurationManager(_configProvider, Inventory, _stateProviderMock.Object);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class UposConfigurationManagerTests
     public void CurrencyCashListShouldReturnDenominations()
     {
         _configProvider.Config.Inventory["JPY"].Denominations["C100"] = new DenominationSettings { InitialCount = 10 };
-        _inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin, "JPY"), 10);
+        Inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin, "JPY"), 10);
         _manager.Initialize();
         _manager.CurrencyCode = "JPY";
         _manager.CurrencyCashList.Coins.ShouldContain(100);

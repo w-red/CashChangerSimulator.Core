@@ -21,7 +21,7 @@ public class SerialNumberTrackingTests
         changer.Claim(0);
         changer.Claim(0);
 
-        var controller = changer._depositController;
+        var controller = changer.DepositController;
 
         return (changer, controller);
     }

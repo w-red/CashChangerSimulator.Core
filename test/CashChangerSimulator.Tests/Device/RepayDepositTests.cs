@@ -44,7 +44,7 @@ public class RepayDepositTests
 
         // Simulate bill insertion (Directly via controller for test simplicity, 
         // normally triggered by hardware/UI)
-        var controller = simulator._depositController;
+        var controller = simulator.DepositController;
 
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
         simulator.DepositAmount.ShouldBe(1000);
@@ -77,7 +77,7 @@ public class RepayDepositTests
         // Sequence: Begin -> Track -> RepayDeposit
         simulator.BeginDeposit();
         
-        var controller = simulator._depositController;
+        var controller = simulator.DepositController;
 
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
         simulator.DepositAmount.ShouldBe(1000);

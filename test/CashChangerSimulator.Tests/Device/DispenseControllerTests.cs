@@ -16,7 +16,7 @@ namespace CashChangerSimulator.Tests.Device;
 
 public class DispenseControllerTests
 {
-    private readonly Inventory _inventory;
+    private readonly Inventory Inventory;
     private readonly HardwareStatusManager _hw;
     private readonly Mock<CashChangerManager> _mockManager;
     private readonly Mock<IDeviceSimulator> _mockSimulator;
@@ -24,9 +24,9 @@ public class DispenseControllerTests
 
     public DispenseControllerTests()
     {
-        _inventory = new Inventory();
+        Inventory = new Inventory();
         _hw = new HardwareStatusManager();
-        _mockManager = new Mock<CashChangerManager>(_inventory, new TransactionHistory(), new ChangeCalculator());
+        _mockManager = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), new ChangeCalculator());
         _mockSimulator = new Mock<IDeviceSimulator>();
         _controller = new DispenseController(_mockManager.Object, _hw, _mockSimulator.Object);
         

@@ -16,16 +16,16 @@ namespace CashChangerSimulator.Tests.Device;
 public class StatusCoordinatorTest
 {
     private readonly Mock<ICashChangerStatusSink> _mockSink;
-    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly HardwareStatusManager HardwareStatusManager;
     private readonly OverallStatusAggregator _statusAggregator;
-    private readonly DepositController _depositController;
+    private readonly DepositController DepositController;
     private readonly DispenseController _dispenseController;
 
     /// <summary>StatusCoordinatorTest の新しいインスタンスを初期化します。</summary>
     public StatusCoordinatorTest()
     {
         _mockSink = new Mock<ICashChangerStatusSink>();
-        _hardwareStatusManager = new HardwareStatusManager();
+        HardwareStatusManager = new HardwareStatusManager();
         _statusAggregator = new OverallStatusAggregator(new List<CashStatusMonitor>());
 
         var inventory = new Inventory();
@@ -33,7 +33,7 @@ public class StatusCoordinatorTest
         var calculator = new ChangeCalculator();
         var manager = new CashChangerManager(inventory, history, calculator);
 
-        _depositController = new DepositController(inventory);
+        DepositController = new DepositController(inventory);
         _dispenseController = new DispenseController(manager);
     }
 
@@ -45,19 +45,19 @@ public class StatusCoordinatorTest
         var coordinator = new StatusCoordinator(
             _mockSink.Object,
             _statusAggregator,
-            _hardwareStatusManager,
-            _depositController,
+            HardwareStatusManager,
+            DepositController,
             _dispenseController);
         coordinator.Start();
 
         // Act
-        _hardwareStatusManager.SetJammed(true);
+        HardwareStatusManager.SetJammed(true);
 
         // Assert
         _mockSink.Verify(s => s.FireEvent(It.Is<StatusUpdateEventArgs>(e => e.Status == (int)UposCashChangerStatusUpdateCode.Jam)), Times.Once);
 
         // Act - Reset Jam
-        _hardwareStatusManager.SetJammed(false);
+        HardwareStatusManager.SetJammed(false);
 
         // Assert - Ok fires at initial subscription + on reset, so at least twice
         _mockSink.Verify(s => s.FireEvent(It.Is<StatusUpdateEventArgs>(e => e.Status == (int)UposCashChangerStatusUpdateCode.Ok)), Times.AtLeast(2));

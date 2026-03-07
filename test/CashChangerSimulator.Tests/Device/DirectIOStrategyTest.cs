@@ -33,7 +33,7 @@ public class DirectIOStrategyTest
 
         // Assert
         result.Data.ShouldBe(1);
-        _device._hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
+        _device.HardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
     }
 
     /// <summary>SetJamStrategy が箇所指定付きでジャム状態を正しく更新することを検証する。</summary>
@@ -48,8 +48,8 @@ public class DirectIOStrategyTest
 
         // Assert
         result.Data.ShouldBe(1);
-        _device._hardwareStatusManager.IsJammed.Value.ShouldBeTrue();
-        _device._hardwareStatusManager.JamLocation.Value.ShouldBe(JamLocation.BillCassette1);
+        _device.HardwareStatusManager.IsJammed.Value.ShouldBeTrue();
+        _device.HardwareStatusManager.JamLocation.Value.ShouldBe(JamLocation.BillCassette1);
     }
 
     /// <summary>GetJamLocation コマンドが現在のジャム箇所を文字列で返却することを検証する。</summary>
@@ -57,7 +57,7 @@ public class DirectIOStrategyTest
     public void GetJamLocationShouldReturnCurrentLocation()
     {
         // Arrange
-        _device._hardwareStatusManager.SetJammed(true, JamLocation.Inlet);
+        _device.HardwareStatusManager.SetJammed(true, JamLocation.Inlet);
 
         // Act
         var result = _device.DirectIO(DirectIOCommands.GetJamLocation, 0, "");
@@ -74,13 +74,13 @@ public class DirectIOStrategyTest
         // SetOverlap
         var resultOverlap = _device.DirectIO(DirectIOCommands.SetOverlap, 1, "test");
         resultOverlap.Data.ShouldBe(1);
-        _device._hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
+        _device.HardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
 
         // SetJam
         var resultJam = _device.DirectIO(DirectIOCommands.SetJam, 1, "Transport");
         resultJam.Data.ShouldBe(1);
-        _device._hardwareStatusManager.IsJammed.Value.ShouldBeTrue();
-        _device._hardwareStatusManager.JamLocation.Value.ShouldBe(JamLocation.Transport);
+        _device.HardwareStatusManager.IsJammed.Value.ShouldBeTrue();
+        _device.HardwareStatusManager.JamLocation.Value.ShouldBe(JamLocation.Transport);
 
         // GetVersion
         var resultVersion = _device.DirectIO(DirectIOCommands.GetVersion, 0, "");
