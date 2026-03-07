@@ -20,6 +20,14 @@ public class DispenseCashCommand : IUposCommand
     private readonly bool _async;
     private readonly Action<ErrorCode, int> _onComplete;
 
+    /// <summary>金種指定出金コマンドのインスタンスを初期化します。</summary>
+    /// <param name="controller">出金制御を司るコントローラー。</param>
+    /// <param name="inventory">在庫情報を管理するインベントリ。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態を管理するマネージャー。</param>
+    /// <param name="depositController">入金状態を確認するためのコントローラー。</param>
+    /// <param name="counts">出金する金種と枚数のセット。</param>
+    /// <param name="async">非同期実行するかどうか。</param>
+    /// <param name="onComplete">完了時に実行されるコールバック。</param>
     public DispenseCashCommand(
         DispenseController controller, 
         Inventory inventory, 
@@ -38,6 +46,7 @@ public class DispenseCashCommand : IUposCommand
         _onComplete = onComplete;
     }
 
+    /// <summary>金種指定出金操作を実行します。</summary>
     public void Execute()
     {
         var task = _controller.DispenseCashAsync(_counts, _async, _onComplete);
@@ -47,6 +56,8 @@ public class DispenseCashCommand : IUposCommand
         }
     }
 
+    /// <summary>コマンド実行前の状態および事前条件（在庫やハードウェア状態）を検証します。</summary>
+    /// <param name="mediator">検証に使用するメディエーター。</param>
     public void Verify(IUposMediator mediator)
     {
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);

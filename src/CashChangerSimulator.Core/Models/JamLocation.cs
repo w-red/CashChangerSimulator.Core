@@ -1,8 +1,6 @@
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>
-/// 現金詰まり（ジャム）が発生した具体的な箇所を示す列挙型。
-/// </summary>
+/// <summary>現金詰まり（ジャム）が発生した具体的な箇所を示す列挙型。</summary>
 public enum JamLocation
 {
     /// <summary>無し。</summary>

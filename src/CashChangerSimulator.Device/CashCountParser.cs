@@ -3,15 +3,14 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device;
 
-/// <summary>
-/// UPOSの文字列形式（例: "100,500:5;1000:10"）を解析し、
-/// IEnumerable&lt;CashCount&gt; に変換する機能を提供するパーサクラス。
-/// </summary>
+/// <summary>UPOSの文字列形式を解析し、CashCount のリストに変換するパーサクラス。</summary>
+/// <remarks>
+/// 例: "100,500:5;1000:10" のような形式を解析します。
+/// セミコロン区切りで硬貨(Coins)と紙幣(Bills)を識別します。
+/// </remarks>
 public static class CashCountParser
 {
-    /// <summary>
-    /// 文字列をパースし、現在の Inventory 定義と照らし合わせて CashCount リストを生成します。
-    /// </summary>
+    /// <summary>文字列をパースし、現在の Inventory 定義と照らし合わせて CashCount リストを生成します。</summary>
     /// <param name="input">UPOS形式の文字列 (例: "50,100:10;1000:5")</param>
     /// <param name="activeKeys">現在インベントリに登録されている有効な金種キーのリスト</param>
     /// <param name="currencyFactor">通貨の係数（USDなら100, JPYなら1）</param>
