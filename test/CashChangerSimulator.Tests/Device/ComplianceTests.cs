@@ -77,7 +77,7 @@ public class ComplianceTests
         eventCount.ShouldBe(0); // Not fired yet
 
         changer.FixDeposit();
-        eventCount.ShouldBe(2); // Fired on Fix (both internal and simulated)
+        eventCount.ShouldBe(1); // Fired on Fix (buffered data notification)
     }
 
     /// <summary>Tests the behavior of RealTimeDataEnabledTrueShouldFireDataEventOnTrack to ensure proper functionality.</summary>

@@ -162,9 +162,10 @@ public class UposCommandTests
     {
         var manager = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), new ChangeCalculator());
         var hw = new HardwareStatusManager();
+        var deposit = new Mock<DepositController>(new Inventory(), hw, null!, null!);
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
-        var command = new DispenseChangeCommand(controllerMock.Object, 1000m, false, (e, ex) => { });
+        var command = new DispenseChangeCommand(controllerMock.Object, hw, deposit.Object, 1000m, false, (e, ex) => { });
         
         command.Execute();
         
@@ -175,11 +176,13 @@ public class UposCommandTests
     public void DispenseCashCommand_Execute_ShouldCallController()
     {
         var manager = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), new ChangeCalculator());
+        var inv = new Inventory();
         var hw = new HardwareStatusManager();
+        var deposit = new Mock<DepositController>(inv, hw, null!, null!);
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
         var counts = new Dictionary<DenominationKey, int>();
-        var command = new DispenseCashCommand(controllerMock.Object, counts, false, (e, ex) => { });
+        var command = new DispenseCashCommand(controllerMock.Object, inv, hw, deposit.Object, counts, false, (e, ex) => { });
         
         command.Execute();
         

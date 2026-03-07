@@ -33,8 +33,8 @@ public class FacadeTests
         _depositControllerMock = new Mock<DepositController>(
             inventory, 
             hardwareStatusManager, 
-            new ConfigurationProvider(), 
-            new Mock<Microsoft.Extensions.Logging.ILogger<DepositController>>().Object);
+            _managerMock?.Object ?? new Mock<CashChangerManager>(inventory, new Mock<TransactionHistory>().Object, new ChangeCalculator(), new ConfigurationProvider()).Object,
+            new ConfigurationProvider());
         _inventoryMock = new Mock<Inventory>();
         _managerMock = new Mock<CashChangerManager>(
             inventory, 

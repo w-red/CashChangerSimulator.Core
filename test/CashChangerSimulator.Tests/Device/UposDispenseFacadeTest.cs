@@ -45,7 +45,16 @@ public class UposDispenseFacadeTest
             _hardwareStatusManager,
             _inventory,
             _mediatorMock.Object,
-            new Mock<ILogger>().Object);
+            new Mock<ILogger<UposDispenseFacade>>().Object);
+    }
+
+    private void SetupMediatorToThrow()
+    {
+        _mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
+            .Callback<IUposCommand>(cmd => {
+                cmd.Verify(_mediatorMock.Object);
+                cmd.Execute();
+            });
     }
 
     /// <summary>入金中に出金しようとすると例外がスローされることを確認します。</summary>
@@ -53,6 +62,7 @@ public class UposDispenseFacadeTest
     public void DispenseByAmountWhenDepositInProgressShouldThrow()
     {
         _depositController.BeginDeposit();
+        SetupMediatorToThrow();
  
         Should.Throw<PosControlException>(() =>
             _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
@@ -63,6 +73,7 @@ public class UposDispenseFacadeTest
     public void DispenseByAmountWhenJammedShouldThrow()
     {
         _hardwareStatusManager.SetJammed(true);
+        SetupMediatorToThrow();
  
         Should.Throw<PosControlException>(() =>
             _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
@@ -91,7 +102,8 @@ public class UposDispenseFacadeTest
     public void DispenseByCashCountsInsufficientInventoryShouldThrow()
     {
         var cashCounts = new[] { new CashCount(CashCountType.Bill, 1000, 999) };
-
+        SetupMediatorToThrow();
+ 
         Should.Throw<PosControlException>(() =>
             _facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false, (_, _, _) => { }));
     }
