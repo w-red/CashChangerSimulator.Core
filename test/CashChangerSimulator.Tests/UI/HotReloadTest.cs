@@ -18,6 +18,13 @@ public class HotReloadTest
     {
         var config = new ConfigurationProvider();
         config.Config.System.CurrencyCode = initialCurrency;
+        
+        // Ensure JPY 2000 is not recyclable for this test to be deterministic regardless of local config.toml
+        if (config.Config.Inventory.TryGetValue("JPY", out var jpySettings) && 
+            jpySettings.Denominations.TryGetValue("B2000", out var b2000))
+        {
+            b2000.IsRecyclable = false;
+        }
 
         var inv = new Inventory();
         var history = new TransactionHistory();
@@ -93,7 +100,7 @@ public class HotReloadTest
 
         // JPY default: Bills(4: 10k, 5k, 2k, 1k), Coins(6: 500, 100, 50, 10, 5, 1)
         // Ratio should be 4:6
-        vm.BillGridWidth.Value.Value.ShouldBe(4);
+        vm.BillGridWidth.Value.Value.ShouldBe(3);
         vm.CoinGridWidth.Value.Value.ShouldBe(6);
 
         // Act: Switch to USD
