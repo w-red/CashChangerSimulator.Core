@@ -40,10 +40,10 @@ public class FacadeTests
         var facade = new DepositFacade(_depositControllerMock.Object, _mediatorMock.Object);
 
         // Act
-        facade.BeginDeposit(skipStateVerification: true);
+        facade.BeginDeposit();
 
         // Assert
-        _mediatorMock.Verify(m => m.Execute(It.IsAny<BeginDepositCommand>(), true), Times.Once);
+        _mediatorMock.Verify(m => m.Execute(It.IsAny<BeginDepositCommand>()), Times.Once);
     }
 
     [Fact]
@@ -53,10 +53,10 @@ public class FacadeTests
         var facade = new InventoryFacade(_inventoryMock.Object, _managerMock.Object, _mediatorMock.Object);
 
         // Act
-        facade.ReadCashCounts("JPY", 1.0m, skipStateVerification: false);
+        facade.ReadCashCounts("JPY", 1.0m);
 
         // Assert
-        _mediatorMock.Verify(m => m.Execute(It.IsAny<ReadCashCountsCommand>(), false), Times.Once);
+        _mediatorMock.Verify(m => m.Execute(It.IsAny<ReadCashCountsCommand>()), Times.Once);
     }
 
     [Fact]
@@ -66,9 +66,9 @@ public class FacadeTests
         var facade = new DiagnosticsFacade(_diagnosticControllerMock.Object, _mediatorMock.Object);
 
         // Act
-        facade.CheckHealth(HealthCheckLevel.Internal, skipStateVerification: true);
+        facade.CheckHealth(HealthCheckLevel.Internal);
 
         // Assert
-        _mediatorMock.Verify(m => m.Execute(It.IsAny<CheckHealthCommand>(), true), Times.Once);
+        _mediatorMock.Verify(m => m.Execute(It.IsAny<CheckHealthCommand>()), Times.Once);
     }
 }
