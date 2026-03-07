@@ -13,6 +13,8 @@ public static class ConfigurationLoader
     private static readonly string DefaultConfigPath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "config.toml");
 
+    public static string GetDefaultConfigPath() => DefaultConfigPath;
+
     /// <summary>在庫状態の保存先ファイルパス。</summary>
     private static readonly string InventoryStatePath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "inventory.toml");

@@ -1,4 +1,6 @@
 using R3;
+using System;
+using System.IO;
 
 namespace CashChangerSimulator.Core.Configuration;
 
@@ -7,9 +9,11 @@ namespace CashChangerSimulator.Core.Configuration;
 /// 設定ファイル（config.toml）から読み込まれた `SimulatorConfiguration` を保持し、提供します。
 /// 実行時の設定再読み込み（ホットリロード等）を管理し、変更通知を `Reloaded` ストリームで行います。
 /// </remarks>
-public class ConfigurationProvider
+public class ConfigurationProvider : IDisposable
 {
     private readonly Subject<Unit> _reloaded = new();
+    private FileSystemWatcher? _watcher;
+    private DateTime _lastRead = DateTime.MinValue;
     
     /// <summary>設定が再読み込みされたときに通知されるストリーム。</summary>
     public Observable<Unit> Reloaded => _reloaded;
@@ -24,12 +28,15 @@ public class ConfigurationProvider
     {
         _configPath = null;
         Config = ConfigurationLoader.Load();
+        SetupWatcher(ConfigurationLoader.GetDefaultConfigPath());
     }
 
     /// <summary>指定されたパスの設定ファイルを読み込むプロバイダーを作成します。</summary>
     public static ConfigurationProvider CreateWithFilePath(string configPath)
     {
-        return new ConfigurationProvider { _configPath = configPath, Config = ConfigurationLoader.Load(configPath) };
+        var provider = new ConfigurationProvider { _configPath = configPath, Config = ConfigurationLoader.Load(configPath) };
+        provider.SetupWatcher(configPath);
+        return provider;
     }
 
     /// <summary>設定ファイルを再読み込みして保持するインスタンスを更新します。</summary>
@@ -44,5 +51,44 @@ public class ConfigurationProvider
     {
         Config = config;
         _reloaded.OnNext(Unit.Default);
+    }
+
+    private void SetupWatcher(string path)
+    {
+        _watcher?.Dispose();
+        
+        var fullPath = Path.GetFullPath(path);
+        var directory = Path.GetDirectoryName(fullPath);
+        var fileName = Path.GetFileName(fullPath);
+
+        if (directory == null || !Directory.Exists(directory)) return;
+
+        _watcher = new FileSystemWatcher(directory, fileName)
+        {
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size
+        };
+
+        _watcher.Changed += OnFileChanged;
+        _watcher.Renamed += OnFileChanged;
+        _watcher.EnableRaisingEvents = true;
+    }
+
+    private void OnFileChanged(object sender, FileSystemEventArgs e)
+    {
+        // Simple debounce to avoid multiple reloads for a single save
+        if (DateTime.Now - _lastRead < TimeSpan.FromMilliseconds(500)) return;
+        _lastRead = DateTime.Now;
+
+        // Give the file a moment to be released by the writer
+        System.Threading.Thread.Sleep(100);
+        Reload();
+    }
+
+    public void Dispose()
+    {
+        _watcher?.Dispose();
+        _reloaded.OnCompleted();
+        _reloaded.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
