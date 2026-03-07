@@ -74,15 +74,17 @@ public class Inventory : IReadOnlyInventory
     public virtual void AddCollection(DenominationKey key, int count)
     {
         key = NormalizeKey(key);
-        if (count <= 0) return;
-        if (_collectionCounts.ContainsKey(key))
+        if (count == 0) return;
+
+        var current = _collectionCounts.GetValueOrDefault(key, 0);
+        var next = current + count;
+        if (next < 0)
         {
-            _collectionCounts[key] += count;
+            _logger.ZLogWarning($"Inventory.AddCollection: Resulting count for {key} is negative ({next}). Setting to 0.");
+            next = 0;
         }
-        else
-        {
-            _collectionCounts[key] = count;
-        }
+
+        _collectionCounts[key] = next;
         _changed.OnNext(key);
     }
 
@@ -90,15 +92,17 @@ public class Inventory : IReadOnlyInventory
     public virtual void AddReject(DenominationKey key, int count)
     {
         key = NormalizeKey(key);
-        if (count <= 0) return;
-        if (_rejectCounts.ContainsKey(key))
+        if (count == 0) return;
+
+        var current = _rejectCounts.GetValueOrDefault(key, 0);
+        var next = current + count;
+        if (next < 0)
         {
-            _rejectCounts[key] += count;
+            _logger.ZLogWarning($"Inventory.AddReject: Resulting count for {key} is negative ({next}). Setting to 0.");
+            next = 0;
         }
-        else
-        {
-            _rejectCounts[key] = count;
-        }
+
+        _rejectCounts[key] = next;
         _changed.OnNext(key);
     }
 

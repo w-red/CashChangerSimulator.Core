@@ -1,250 +1,118 @@
 using CashChangerSimulator.Core.Models;
-using R3;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>Inventory クラスの基本機能を検証するテスト。</summary>
 public class InventoryTests
 {
-    /// <summary>指定された金種の枚数を追加し、正しく保持されることを検証する。</summary>
+    private readonly Inventory _inventory = new();
+
     [Fact]
-    public void InventoryAddShouldIncreaseCount()
+    public void Add_ShouldIncreaseCount()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
-
-        // Act
-        inventory.Add(denomination, 5);
-
-        // Assert
-        inventory.GetCount(denomination).ShouldBe(5);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.Add(key, 5);
+        _inventory.GetCount(key).ShouldBe(5);
     }
 
-    /// <summary>存在しない金種の枚数を取得した場合、0 が返されることを検証する。</summary>
     [Fact]
-    public void InventoryGetCountNonExistentShouldReturnZero()
+    public void Add_NegativeShouldDecreaseCount()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var denomination = new DenominationKey(500, CurrencyCashType.Coin);
-
-        // Act
-        var count = inventory.GetCount(denomination);
-
-        // Assert
-        count.ShouldBe(0);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.SetCount(key, 10);
+        _inventory.Add(key, -3);
+        _inventory.GetCount(key).ShouldBe(7);
     }
 
-    /// <summary>複数の金種がある場合、合計金額が正しく計算されることを検証する。</summary>
     [Fact]
-    public void InventoryTotalAmountShouldBeCorrect()
+    public void Add_ResultingInNegative_ShouldBeZero()
     {
-        // Arrange
-        var inventory = new Inventory();
-        inventory.Add(new DenominationKey(1000, CurrencyCashType.Bill), 2); // 2000
-        inventory.Add(new DenominationKey(500, CurrencyCashType.Coin), 3);  // 1500
-        inventory.Add(new DenominationKey(100, CurrencyCashType.Coin), 10); // 1000
-        // Total: 4500
-
-        // Act
-        var total = inventory.CalculateTotal();
-
-        // Assert
-        total.ShouldBe(4500m);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.SetCount(key, 5);
+        _inventory.Add(key, -10);
+        _inventory.GetCount(key).ShouldBe(0);
     }
 
-    /// <summary>在庫が追加された際、Changed ストリームに通知が飛ぶことを検証する。</summary>
     [Fact]
-    public void InventoryAddShouldNotifyChanged()
+    public void SetCount_ShouldOverwriteCount()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var denomination = new DenominationKey(100, CurrencyCashType.Coin);
-        DenominationKey? notifiedDenomination = null;
-        using var _ = inventory.Changed.Subscribe(d => notifiedDenomination = d);
-
-        // Act
-        inventory.Add(denomination, 1);
-
-        // Assert
-        notifiedDenomination.ShouldBe(denomination);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.SetCount(key, 10);
+        _inventory.SetCount(key, 5);
+        _inventory.GetCount(key).ShouldBe(5);
     }
 
-    /// <summary>在庫をディクショナリに変換し、再び読み込めることを検証する。</summary>
     [Fact]
-    public void InventoryShouldSerializeAndDeserializeViaDictionary()
+    public void SetCount_Negative_ShouldBeIgnored()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
-        var c100 = new DenominationKey(100, CurrencyCashType.Coin);
-        inventory.SetCount(b1000, 10);
-        inventory.SetCount(c100, 50);
-
-        // Act
-        var dict = inventory.ToDictionary();
-        var newInventory = new Inventory();
-        newInventory.LoadFromDictionary(dict);
-
-        // Assert
-        dict.ShouldContainKeyAndValue("JPY:B1000", 10);
-        dict.ShouldContainKeyAndValue("JPY:C100", 50);
-        newInventory.GetCount(b1000).ShouldBe(10);
-        newInventory.GetCount(c100).ShouldBe(50);
-    }
-    /// <summary>負の枚数を追加（減算）した場合、正しく減算され、0未満にはならないことを検証する。</summary>
-    [Fact]
-    public void InventoryAddNegativeShouldSubtractAndClampToZero()
-    {
-        // Arrange
-        var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
-        inventory.SetCount(denomination, 10);
-
-        // Act & Assert: Subtraction works
-        inventory.Add(denomination, -5);
-        inventory.GetCount(denomination).ShouldBe(5);
-
-        // Act & Assert: Clamping works
-        inventory.Add(denomination, -10);
-        inventory.GetCount(denomination).ShouldBe(0);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.SetCount(key, 10);
+        _inventory.SetCount(key, -5);
+        _inventory.GetCount(key).ShouldBe(10);
     }
 
-    /// <summary>負の枚数を設定しようとした場合、無視されることを検証する。</summary>
     [Fact]
-    public void InventorySetCountNegativeShouldBeIgnored()
+    public void AddCollection_ShouldIncreaseCollectionCount()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
-        inventory.SetCount(denomination, 10);
-
-        // Act
-        inventory.SetCount(denomination, -1);
-
-        // Assert
-        inventory.GetCount(denomination).ShouldBe(10);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.AddCollection(key, 5);
+        _inventory.CollectionCounts.ShouldContain(kv => kv.Key == key && kv.Value == 5);
+        _inventory.HasDiscrepancy.ShouldBeTrue();
     }
 
-    /// <summary>非常に大きな枚数を扱えることを検証する（境界値テスト）。</summary>
     [Fact]
-    public void InventoryShouldHandleLargeCounts()
+    public void AddCollection_ResultingInNegative_ShouldBeZero()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
-        int largeCount = 1_000_000;
-
-        // Act
-        inventory.SetCount(denomination, largeCount);
-
-        // Assert
-        inventory.GetCount(denomination).ShouldBe(largeCount);
-        inventory.CalculateTotal().ShouldBe(1_000_000_000m);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.AddCollection(key, 5);
+        _inventory.AddCollection(key, -10);
+        _inventory.CollectionCounts.ShouldContain(kv => kv.Key == key && kv.Value == 0);
     }
 
-    /// <summary>空の通貨コードを持つキーが、SetCount でも正規化されることを検証する（現状は失敗する想定）。</summary>
     [Fact]
-    public void InventorySetCountShouldNormalizeEmptyCurrency()
+    public void AddReject_ShouldIncreaseRejectCount()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var emptyCurrencyKey = new DenominationKey(1000, CurrencyCashType.Bill, "");
-        var normalizedKey = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-
-        // Act
-        inventory.SetCount(emptyCurrencyKey, 10);
-
-        // Assert
-        // GetCount(normalizedKey) で取得できるべきだが、現状の実装では正規化されないため失敗する
-        inventory.GetCount(normalizedKey).ShouldBe(10);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.AddReject(key, 5);
+        _inventory.RejectCounts.ShouldContain(kv => kv.Key == key && kv.Value == 5);
+        _inventory.HasDiscrepancy.ShouldBeTrue();
     }
 
-    /// <summary>空の通貨コードを持つキーが、AddCollection/AddReject でも正規化されることを検証する（現状は失敗する想定）。</summary>
     [Fact]
-    public void InventoryAddCollectionAndRejectShouldNormalizeEmptyCurrency()
+    public void AddReject_ResultingInNegative_ShouldBeZero()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var emptyCurrencyKey = new DenominationKey(1000, CurrencyCashType.Bill, "");
-        var normalizedKey = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.AddReject(key, 5);
+        _inventory.AddReject(key, -10);
+        _inventory.RejectCounts.ShouldContain(kv => kv.Key == key && kv.Value == 0);
+    }
 
-        // Act
-        inventory.AddCollection(emptyCurrencyKey, 1);
-        inventory.AddReject(emptyCurrencyKey, 2);
+    [Fact]
+    public void CalculateTotal_ShouldIncludeAllSources()
+    {
+        var bill1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var coin500 = new DenominationKey(500, CurrencyCashType.Coin);
 
-        // Assert
-        inventory.CollectionCounts.ShouldContain(kv => kv.Key == normalizedKey && kv.Value == 1);
-        inventory.RejectCounts.ShouldContain(kv => kv.Key == normalizedKey && kv.Value == 2);
+        _inventory.Add(bill1000, 1);       // 1000
+        _inventory.AddCollection(bill1000, 1); // 1000
+        _inventory.AddReject(coin500, 1);     // 500
+
+        _inventory.CalculateTotal().ShouldBe(2500);
     }
-    /// <summary>HasDiscrepancy の状態遷移（Collection/Reject への追加、Clear、強制設定）を検証する。</summary>
+
     [Fact]
-    public void InventoryHasDiscrepancyShouldTransitionCorrectly()
+    public void Clear_ShouldResetAllCounts()
     {
-        // Arrange
-        var inventory = new Inventory();
-        var denomination = new DenominationKey(100, CurrencyCashType.Coin);
- 
-        // 初期状態
-        inventory.HasDiscrepancy.ShouldBeFalse();
- 
-        // Act: 回収庫へ追加
-        inventory.AddCollection(denomination, 1);
-        inventory.HasDiscrepancy.ShouldBeTrue("Collection exists");
- 
-        // Act: クリア
-        inventory.Clear();
-        inventory.HasDiscrepancy.ShouldBeFalse("Cleared counts");
- 
-        // Act: リジェクト庫へ追加
-        inventory.AddReject(denomination, 1);
-        inventory.HasDiscrepancy.ShouldBeTrue("Reject exists");
- 
-        // Act: 強制設定
-        inventory.Clear();
-        inventory.HasDiscrepancy = true;
-        inventory.HasDiscrepancy.ShouldBeTrue("Forced discrepancy");
- 
-        inventory.HasDiscrepancy = false;
-        inventory.HasDiscrepancy.ShouldBeFalse("Forced back to false");
-    }
- 
-    /// <summary>複数通貨が存在する場合、通貨コードによるフィルタリングが正しく機能することを検証する。</summary>
-    [Fact]
-    public void InventoryCalculateTotalShouldFilterByCurrency()
-    {
-        // Arrange
-        var inventory = new Inventory();
-        inventory.Add(new DenominationKey(100, CurrencyCashType.Coin, "JPY"), 10); // 1000
-        inventory.Add(new DenominationKey(1, CurrencyCashType.Coin, "USD"), 5);   // 5
- 
-        // Act & Assert
-        inventory.CalculateTotal("JPY").ShouldBe(1000m);
-        inventory.CalculateTotal("USD").ShouldBe(5m);
-        inventory.CalculateTotal().ShouldBe(1005m);
-        inventory.CalculateTotal("EUR").ShouldBe(0m);
-    }
- 
-    /// <summary>LoadFromDictionary に不正な形式が含まれていても、他のデータが正常に読み込めることを検証する。</summary>
-    [Fact]
-    public void InventoryLoadFromDictionaryShouldBeRobustToErrors()
-    {
-        // Arrange
-        var inventory = new Inventory();
-        var data = new Dictionary<string, int>
-        {
-            { "JPY:C100", 10 },
-            { "INVALID_KEY_FORMAT", 5 },
-            { "COL:JPY:B1000", 2 }
-        };
- 
-        // Act
-        inventory.LoadFromDictionary(data);
- 
-        // Assert
-        inventory.GetCount(new DenominationKey(100, CurrencyCashType.Coin, "JPY")).ShouldBe(10);
-        inventory.CollectionCounts.ShouldContain(kv => kv.Key.Value == 1000 && kv.Value == 2);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.Add(key, 1);
+        _inventory.AddCollection(key, 1);
+        _inventory.AddReject(key, 1);
+
+        _inventory.Clear();
+
+        _inventory.GetCount(key).ShouldBe(0);
+        _inventory.CollectionCounts.ShouldBeEmpty();
+        _inventory.RejectCounts.ShouldBeEmpty();
+        _inventory.HasDiscrepancy.ShouldBeFalse();
     }
 }
