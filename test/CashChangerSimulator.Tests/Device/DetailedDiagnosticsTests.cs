@@ -68,6 +68,7 @@ public class DetailedDiagnosticsTests
         
         var result = simulator.DirectIO(1002, 0, "");
         
-        result.Object!.ToString().ShouldContain("Internal Health Check");
+        result.Object.ShouldNotBeNull();
+        result.Object.ToString()!.ShouldContain("Internal Health Check");
     }
 }

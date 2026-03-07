@@ -2,8 +2,10 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -169,5 +171,61 @@ public class DepositSequenceTests
 
         controller.EndDeposit(CashDepositAction.NoChange);
         controller.IsDepositInProgress.ShouldBeFalse();
+    }
+
+    // =====================================================
+    // オーバーフロー・バリデーション検証
+    // =====================================================
+
+    /// <summary>在庫が満杯(Full)の状態で入金した際、オーバーフローとしてカウントされることを検証する。</summary>
+    [Fact]
+    public void TrackDepositShouldOverflow_WhenInventoryIsFull()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var hw = new HardwareStatusManager();
+        hw.SetConnected(true);
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        
+        var config = new SimulatorConfiguration();
+        config.Inventory[b1000.CurrencyCode] = new InventorySettings
+        {
+            Denominations = new Dictionary<string, DenominationSettings>
+            {
+                { b1000.ToDenominationString(), new DenominationSettings { Full = 5, IsRecyclable = true } }
+            }
+        };
+        var configProvider = new ConfigurationProvider();
+        configProvider.Update(config);
+
+        var controller = new DepositController(inventory, hw, null, configProvider);
+        inventory.SetCount(b1000, 5); // Already Full
+
+        controller.BeginDeposit();
+
+        // Act
+        controller.TrackDeposit(b1000);
+
+        // Assert
+        controller.DepositAmount.ShouldBe(1000);
+        controller.OverflowAmount.ShouldBe(1000); // 満杯なのでオーバーフローに回る
+        controller.DepositCounts[b1000].ShouldBe(1);
+    }
+
+    /// <summary>デバイスがジャム(Jam)状態の時に入金を試みた際、例外がスローされることを検証する。</summary>
+    [Fact]
+    public void TrackDepositShouldThrow_WhenDeviceIsJammed()
+    {
+        // Arrange
+        var (controller, _) = CreateController();
+        var hwField = typeof(DepositController).GetField("_hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var hw = (HardwareStatusManager)hwField.GetValue(controller)!;
+        
+        controller.BeginDeposit();
+        hw.SetJammed(true);
+
+        // Act & Assert
+        var ex = Should.Throw<PosControlException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)));
+        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 }

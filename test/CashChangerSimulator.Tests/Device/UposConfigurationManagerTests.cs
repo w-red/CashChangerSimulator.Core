@@ -22,7 +22,7 @@ public class UposConfigurationManagerTests
         _inventory = new Inventory();
         _stateProviderMock = new Mock<IDeviceStateProvider>();
         _stateProviderMock.Setup(s => s.State).Returns(ControlState.Closed);
-        _manager = new UposConfigurationManager(_configProvider, _inventory, _stateProviderMock.Object, NullLogger<UposConfigurationManager>.Instance);
+        _manager = new UposConfigurationManager(_configProvider, _inventory, _stateProviderMock.Object);
     }
 
     [Fact]
