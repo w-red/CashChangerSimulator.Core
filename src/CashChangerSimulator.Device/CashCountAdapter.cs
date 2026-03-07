@@ -38,4 +38,34 @@ public static class CashCountAdapter
         }
         return dict;
     }
+
+    /// <summary>
+    /// 文字列形式の金種・枚数リスト ("denom:count,denom:count") を CashCount 配列に変換します。
+    /// </summary>
+    public static IEnumerable<CashCount> ParseCashCounts(string countsStr, string currencyCode, decimal factor, IEnumerable<DenominationKey> availableKeys)
+    {
+        if (string.IsNullOrWhiteSpace(countsStr)) return [];
+
+        var result = new List<CashCount>();
+        var pairs = countsStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var pair in pairs)
+        {
+            var parts = pair.Split(':', StringSplitOptions.TrimEntries);
+            if (parts.Length != 2) continue;
+
+            if (decimal.TryParse(parts[0], out var denomVal) && int.TryParse(parts[1], out var count))
+            {
+                var val = denomVal / factor;
+                // Find matching denomination to determine if it's a Bill or Coin
+                var match = availableKeys.FirstOrDefault(k => k.Value == val && k.CurrencyCode == currencyCode);
+                
+                var type = match?.Type == CurrencyCashType.Bill ? CashCountType.Bill : CashCountType.Coin;
+                var nominalValue = (int)Math.Round(val * factor);
+                
+                result.Add(new CashCount(type, nominalValue, count));
+            }
+        }
+        return result;
+    }
 }
