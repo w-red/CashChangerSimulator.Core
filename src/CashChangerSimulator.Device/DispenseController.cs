@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
-using MicroResolver;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
@@ -25,7 +24,6 @@ public class DispenseController : IDisposable
     public DispenseController(CashChangerManager manager) : this(manager, null, null) { }
 
     /// <summary>全依存関係を指定して初期化する。</summary>
-    [Inject]
     public DispenseController(
         CashChangerManager manager,
         HardwareStatusManager? hardwareStatusManager,

@@ -2,6 +2,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
+using CashChangerSimulator.Core;
 using System.Text;
 using System.Linq;
 
@@ -11,19 +12,17 @@ namespace CashChangerSimulator.Device;
 public class DiagnosticController
 {
     private readonly Inventory _inventory;
-    private readonly CashChangerSimulator.Core.Managers.HardwareStatusManager _hardwareStatusManager;
-    private readonly ILogger<DiagnosticController> _logger;
+    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly ILogger<DiagnosticController> _logger = LogProvider.CreateLogger<DiagnosticController>();
 
     // 統計情報（UPOS標準）
     private long _successfulDepletionCount;
     private long _failedDepletionCount;
-    private long _serviceCount;
 
-    public DiagnosticController(Inventory inventory, CashChangerSimulator.Core.Managers.HardwareStatusManager hardwareStatusManager, ILogger<DiagnosticController> logger)
+    public DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)
     {
         _inventory = inventory;
         _hardwareStatusManager = hardwareStatusManager;
-        _logger = logger;
     }
 
     /// <summary>健康状態の報告書を作成します。</summary>
@@ -71,4 +70,7 @@ public class DiagnosticController
 
     /// <summary>入金成功回数をカウントアップします。</summary>
     public virtual void IncrementSuccessfulDepletion() => _successfulDepletionCount++;
+
+    /// <summary>入金失敗回数をカウントアップします。</summary>
+    public virtual void IncrementFailedDepletion() => _failedDepletionCount++;
 }

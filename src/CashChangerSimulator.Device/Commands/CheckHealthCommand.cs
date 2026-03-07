@@ -13,6 +13,7 @@ public class CheckHealthCommand : IUposCommand
     {
         _controller = controller;
         _level = level;
+        Result = string.Empty;
     }
 
     public string Result { get; private set; }

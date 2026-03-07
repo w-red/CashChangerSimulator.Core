@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using MicroResolver;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
@@ -24,7 +23,6 @@ public class DepositController : IDisposable
     public DepositController(Inventory inventory) : this(inventory, null, null, null) { }
 
     /// <summary>在庫とステータスマネージャーを指定して初期化する。</summary>
-    [Inject]
     public DepositController(
         Inventory inventory,
         HardwareStatusManager? hardwareStatusManager = null,

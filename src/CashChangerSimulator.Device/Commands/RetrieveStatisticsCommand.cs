@@ -12,6 +12,7 @@ public class RetrieveStatisticsCommand : IUposCommand
     {
         _controller = controller;
         _statistics = statistics;
+        Result = string.Empty;
     }
 
     public string Result { get; private set; }

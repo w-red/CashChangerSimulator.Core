@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Services;
-using MicroResolver;
 
 namespace CashChangerSimulator.Device;
 
@@ -10,7 +9,6 @@ public class HardwareSimulator : IDeviceSimulator
     private readonly ConfigurationProvider? _configProvider;
 
     /// <summary>デフォルト設定でシミュレーターを初期化する。</summary>
-    [Inject]
     public HardwareSimulator() : this(null) { }
 
     /// <summary>設定プロバイダーを指定してシミュレーターを初期化する。</summary>

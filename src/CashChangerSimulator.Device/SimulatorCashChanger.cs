@@ -12,7 +12,6 @@ using CashChangerSimulator.Device.Facades;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
-using MicroResolver;
 using R3;
 
 namespace CashChangerSimulator.Device;
@@ -58,7 +57,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
         }
     }
 
-    private IUposLifecycleHandler _lifecycleHandler;
+    private IUposLifecycleHandler _lifecycleHandler = null!;
     private readonly UposMediator _mediator;
 
     private void UpdateLifecycleHandler()
@@ -132,7 +131,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
 
     /// <summary>外部からイベントを強制的に発生させます。</summary>
     public void FireEvent(EventArgs e) =>
-        _eventNotifier.FireEvent(e);
+        NotifyEvent(e);
 
     /// <summary>非同期処理中フラグを設定します。</summary>
     public void SetAsyncProcessing(bool isBusy) =>
@@ -162,8 +161,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
     /// <summary>デバイスが現在占有されているかどうかを取得します。</summary>
     public override bool Claimed => _lifecycleHandler?.Claimed ?? false;
 
-    /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。DI時は [Inject] 属性のものが優先されます。</summary>
-    [Inject]
+    /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。</summary>
     public SimulatorCashChanger(SimulatorDependencies deps)
     {
         var actualConfigProvider = deps.ConfigProvider ?? new ConfigurationProvider();
@@ -182,10 +180,10 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
 
         _depositController = deps.DepositController ?? new DepositController(_inventory, _hardwareStatusManager, _manager, actualConfigProvider);
         _dispenseController = deps.DispenseController ?? new DispenseController(_manager, _hardwareStatusManager, new HardwareSimulator(actualConfigProvider));
-        _diagnosticController = deps.DiagnosticController ?? new DiagnosticController(_inventory, _hardwareStatusManager, LogProvider.CreateLogger<DiagnosticController>());
+        _diagnosticController = deps.DiagnosticController ?? new DiagnosticController(_inventory, _hardwareStatusManager);
 
         // Configuration and Event Notifier
-        _configManager = deps.ConfigurationManager ?? new UposConfigurationManager(actualConfigProvider, _inventory, this, LogProvider.CreateLogger<UposConfigurationManager>());
+        _configManager = deps.ConfigurationManager ?? new UposConfigurationManager(actualConfigProvider, _inventory, this);
         _configManager.Initialize();
         _eventNotifier = deps.EventNotifier ?? new UposEventNotifier(this);
 

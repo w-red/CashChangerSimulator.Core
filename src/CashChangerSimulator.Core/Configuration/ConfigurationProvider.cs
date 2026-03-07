@@ -1,4 +1,3 @@
-using MicroResolver;
 using R3;
 
 namespace CashChangerSimulator.Core.Configuration;
@@ -16,7 +15,6 @@ public class ConfigurationProvider
     private string? _configPath;
 
     /// <summary>デフォルト設定ファイルを読み込む。</summary>
-    [Inject]
     public ConfigurationProvider()
     {
         _configPath = null;

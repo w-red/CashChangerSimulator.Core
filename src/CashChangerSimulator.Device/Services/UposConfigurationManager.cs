@@ -4,6 +4,7 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
+using CashChangerSimulator.Core;
 using R3;
 
 namespace CashChangerSimulator.Device.Services;
@@ -14,20 +15,18 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
     private readonly ConfigurationProvider _configProvider;
     private readonly Inventory _inventory;
     private readonly IDeviceStateProvider _stateProvider;
-    private readonly ILogger<UposConfigurationManager> _logger;
+    private readonly ILogger<UposConfigurationManager> _logger = LogProvider.CreateLogger<UposConfigurationManager>();
     private string _activeCurrencyCode = "JPY";
     private readonly IDisposable _subscription;
 
     public UposConfigurationManager(
         ConfigurationProvider configProvider,
         Inventory inventory,
-        IDeviceStateProvider stateProvider,
-        ILogger<UposConfigurationManager> logger)
+        IDeviceStateProvider stateProvider)
     {
         _configProvider = configProvider;
         _inventory = inventory;
         _stateProvider = stateProvider;
-        _logger = logger;
 
         _subscription = _configProvider.Reloaded.Subscribe(_ => OnConfigurationReloaded());
     }

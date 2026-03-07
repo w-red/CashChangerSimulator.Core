@@ -7,7 +7,6 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
-using MicroResolver;
 using CashChangerSimulator.Device.Coordination;
 
 namespace CashChangerSimulator.Device;
@@ -32,7 +31,6 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
     public Action<EventArgs>? OnEventQueued;
 
     /// <summary>指定された引数で新しいインスタンスを初期化します。</summary>
-    [Inject]
     public InternalSimulatorCashChanger(SimulatorDependencies deps)
         : base(deps)
     {

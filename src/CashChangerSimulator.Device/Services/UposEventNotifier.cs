@@ -1,4 +1,6 @@
 using Microsoft.PointOfService;
+using Microsoft.Extensions.Logging;
+using CashChangerSimulator.Core;
 
 namespace CashChangerSimulator.Device.Services;
 
@@ -6,6 +8,7 @@ namespace CashChangerSimulator.Device.Services;
 public class UposEventNotifier : IUposEventNotifier
 {
     private readonly IUposEventSink _sink;
+    private readonly ILogger<UposEventNotifier> _logger = LogProvider.CreateLogger<UposEventNotifier>();
 
     public UposEventNotifier(IUposEventSink sink)
     {
@@ -14,8 +17,6 @@ public class UposEventNotifier : IUposEventNotifier
 
     public void NotifyEvent(System.EventArgs e)
     {
-        if (_sink.SkipStateVerification) return;
-
         // DataEvent の制約を確認
         if (e is DataEventArgs)
         {
@@ -25,6 +26,7 @@ public class UposEventNotifier : IUposEventNotifier
             }
         }
 
+        if (_sink.SkipStateVerification) return;
         _sink.QueueEvent(e);
     }
 
