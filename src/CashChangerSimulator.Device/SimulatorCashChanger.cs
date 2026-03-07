@@ -10,6 +10,8 @@ using CashChangerSimulator.Device.Coordination;
 using CashChangerSimulator.Device.Services;
 using CashChangerSimulator.Device.Facades;
 using CashChangerSimulator.Device.Models;
+using R3;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
@@ -130,7 +132,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     // Core Operations
     public override void BeginDeposit() => _depositFacade.BeginDeposit();
     public override void EndDeposit(CashDepositAction action) => _depositFacade.EndDeposit(action);
-    public override void FixDeposit() { _depositFacade.FixDeposit(); if (DataEventEnabled && CapDepositDataEvent) NotifyEvent(new DataEventArgs(0)); }
+    public override void FixDeposit() => _depositFacade.FixDeposit();
     public override void PauseDeposit(CashDepositPause control) => _depositFacade.PauseDeposit(control);
     public virtual void RepayDeposit() => _depositFacade.RepayDeposit();
     public override void DispenseChange(int amount) => _dispenseFacade.DispenseByAmount(amount, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, _ctx.Mediator.HandleDispenseResult);
@@ -204,4 +206,6 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         }
         base.Dispose(disposing);
     }
+    /// <inheritdoc/>
+    public Observable<Unit> DepositChanged => _depositController.Changed;
 }

@@ -1,5 +1,6 @@
 using Microsoft.PointOfService;
 using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Device.Services;
 
 namespace CashChangerSimulator.Device.Coordination;
 
@@ -29,6 +30,8 @@ namespace CashChangerSimulator.Device.Coordination;
     public int AsyncResultCode { get; set; }
     public int AsyncResultCodeExtended { get; set; }
     public bool SkipStateVerification { get; set; }
+
+    public IUposEventSink EventSink => _so;
 
     /// <summary>UPOS ライフサイクルの状態を検証します。</summary>
     public void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false)

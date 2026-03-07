@@ -1,4 +1,5 @@
 using Microsoft.PointOfService;
+using CashChangerSimulator.Device.Services;
 
 namespace CashChangerSimulator.Device.Coordination;
 
@@ -40,6 +41,9 @@ public interface IUposMediator
 
     /// <summary>非同期操作の拡張完了コード。</summary>
     int AsyncResultCodeExtended { get; set; }
+
+    /// <summary>イベント通知の送り先となるシンク。</summary>
+    IUposEventSink EventSink { get; }
     
     // 他のコンポーネントからの通知
     /// <summary>払い出し操作の結果を処理します。</summary>

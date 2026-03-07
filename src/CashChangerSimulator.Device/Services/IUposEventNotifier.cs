@@ -1,4 +1,5 @@
 using System;
+using R3;
 using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.Services;
@@ -50,6 +51,9 @@ public interface IUposEventSink
 
     /// <summary>データイベントをキューに追加します。</summary>
     void QueueDataEvent(DataEventArgs e);
+
+    /// <summary>入金状態の変更を通知するストリームを取得します。</summary>
+    Observable<Unit> DepositChanged { get; }
 
     /// <summary>ステータス更新イベントをキューに追加します。</summary>
     void QueueStatusUpdateEvent(StatusUpdateEventArgs e);

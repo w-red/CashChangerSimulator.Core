@@ -50,11 +50,11 @@ public class UposDispenseFacade
         if (amount <= 0)
             throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
  
-        ValidatePreConditions();
- 
         var decimalAmount = amount / factor;
         var command = new DispenseChangeCommand(
             _dispenseController,
+            _hardwareStatusManager,
+            _depositController,
             decimalAmount,
             asyncMode,
             (code, codeEx) => onResult(code, codeEx, asyncMode));
@@ -69,31 +69,17 @@ public class UposDispenseFacade
         bool asyncMode,
         Action<ErrorCode, int, bool> onResult)
     {
-        ValidatePreConditions();
-
         var dict = CashCountAdapter.ToDenominationDict(cashCounts, currencyCode, factor);
-
-        // Validate inventory
-        foreach (var (key, count) in dict)
-        {
-            if (!_inventory.AllCounts.Any(kv => kv.Key == key))
-                throw new PosControlException(
-                    $"Denomination {key} is not registered for the current currency ({currencyCode}).",
-                    ErrorCode.Illegal);
-
-            if (_inventory.GetCount(key) < count)
-                throw new PosControlException(
-                    $"Insufficient inventory for {key}. Required: {count}, Available: {_inventory.GetCount(key)}",
-                    ErrorCode.Extended,
-                    (int)UposCashChangerErrorCodeExtended.OverDispense);
-        }
 
         var command = new DispenseCashCommand(
             _dispenseController,
+            _inventory,
+            _hardwareStatusManager,
+            _depositController,
             dict,
             asyncMode,
             (code, codeEx) => onResult(code, codeEx, asyncMode));
- 
+
         _mediator.Execute(command);
     }
 
@@ -106,15 +92,5 @@ public class UposDispenseFacade
 
     private void ValidatePreConditions()
     {
-        if (_depositController.IsDepositInProgress)
-            throw new PosControlException(
-                "Cash cannot be dispensed because cash acceptance is in progress.",
-                ErrorCode.Illegal);
-
-        if (_hardwareStatusManager.IsJammed.Value)
-            throw new PosControlException(
-                "Device is jammed. Cannot dispense.",
-                ErrorCode.Extended,
-                (int)UposCashChangerErrorCodeExtended.Jam);
     }
 }
