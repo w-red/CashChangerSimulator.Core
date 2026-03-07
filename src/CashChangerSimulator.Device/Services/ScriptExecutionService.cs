@@ -8,29 +8,6 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Services;
 
-/// <summary>スクリプトコマンドのデータモデル。</summary>
-public class ScriptCommand
-{
-    public string Op { get; set; } = "";
-    public string? Currency { get; set; }
-    public object Value { get; set; } = 0;
-    public int Count { get; set; }
-    public string? Type { get; set; }
-    public string? Action { get; set; }
-    public string? Variable { get; set; }
-    public List<ScriptCommand>? Commands { get; set; }
-    public string? Error { get; set; }
-    public string? Target { get; set; }
-    public object? Denom { get; set; }
-}
-
-/// <summary>スクリプト実行中の変数コンテキスト。</summary>
-public class ScriptExecutionContext
-{
-    /// <summary>スクリプト変数の辞書。</summary>
-    public Dictionary<string, object> Variables { get; } = [];
-}
-
 /// <summary>スクリプトデータに基づいてシミュレーターの操作を自動実行するサービス。</summary>
 public class ScriptExecutionService(
     DepositController depositController,
