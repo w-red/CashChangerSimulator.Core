@@ -23,7 +23,7 @@ public class CheckHealthCommand : IUposCommand
         Result = _controller.GetHealthReport(_level);
     }
 
-    public void Verify(IUposMediator mediator, bool skipStateVerification)
+    public void Verify(IUposMediator mediator)
     {
         // CheckHealth doesn't require open/claim/enable
     }

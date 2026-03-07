@@ -19,8 +19,8 @@ public class UpdateStatisticsCommand : IUposCommand
         // Simulator doesn't support external update, but follows UPOS protocol
     }
 
-    public void Verify(IUposMediator mediator, bool skipStateVerification)
+    public void Verify(IUposMediator mediator)
     {
-        mediator.VerifyState(skipStateVerification, mustBeClaimed: true, mustBeEnabled: true);
+        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true);
     }
 }

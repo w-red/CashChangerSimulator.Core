@@ -26,10 +26,10 @@ public class InventoryFacade
     /// <remarks>
     /// 指定された通貨コードの全金種の在庫を返します。
     /// </remarks>
-    public CashCounts ReadCashCounts(string currencyCode, decimal currencyFactor, bool skipStateVerification)
+    public CashCounts ReadCashCounts(string currencyCode, decimal currencyFactor)
     {
         var command = new ReadCashCountsCommand(_inventory, currencyCode, currencyFactor);
-        _mediator.Execute(command, skipStateVerification);
+        _mediator.Execute(command);
         return command.Result;
     }
     
@@ -39,8 +39,7 @@ public class InventoryFacade
         IEnumerable<CashCount> cashCounts,
         string currencyCode,
         decimal currencyFactor,
-        HardwareStatusManager hardwareStatusManager,
-        bool skipStateVerification)
+        HardwareStatusManager hardwareStatusManager)
     {
         var command = new AdjustCashCountsCommand(
             _inventory,
@@ -49,7 +48,7 @@ public class InventoryFacade
             currencyFactor,
             hardwareStatusManager);
     
-        _mediator.Execute(command, skipStateVerification);
+        _mediator.Execute(command);
     }
 
     /// <summary>現在の現金在庫数を文字列形式で調整します。</summary>
@@ -57,8 +56,7 @@ public class InventoryFacade
         string cashCounts,
         string currencyCode,
         decimal currencyFactor,
-        HardwareStatusManager hardwareStatusManager,
-        bool skipStateVerification)
+        HardwareStatusManager hardwareStatusManager)
     {
         if (cashCounts == "discrepancy")
         {
@@ -67,14 +65,18 @@ public class InventoryFacade
         }
 
         var parsedCounts = CashCountAdapter.ParseCashCounts(cashCounts, currencyCode, currencyFactor, AllDenominationKeys);
-        AdjustCashCounts(parsedCounts, currencyCode, currencyFactor, hardwareStatusManager, skipStateVerification);
+        AdjustCashCounts(parsedCounts, currencyCode, currencyFactor, hardwareStatusManager);
     }
     
     /// <summary>リサイクル在庫をすべて回収庫へ移動します。</summary>
-    public void PurgeCash(bool skipStateVerification)
+    public void PurgeCash()
     {
-        _mediator.Execute(new PurgeCashCommand(_manager), skipStateVerification);
+        _mediator.Execute(new PurgeCashCommand(_manager));
     }
+    
+    /// <summary>指定された通貨の現在庫リストを UPOS 形式で構築します。</summary>
+    public CashUnits GetCashList(string currencyCode) =>
+        UposCurrencyHelper.BuildCashUnits(_inventory, currencyCode);
 
     // ========== Properties ==========
 

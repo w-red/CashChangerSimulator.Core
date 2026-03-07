@@ -20,10 +20,10 @@ public class DiagnosticsFacade
 
     /// <summary>デバイスの健康状態を確認します。</summary>
     /// <returns>ヘルスチェック結果を示す文字列。</returns>
-    public string CheckHealth(HealthCheckLevel level, bool skipStateVerification)
+    public string CheckHealth(HealthCheckLevel level)
     {
         var command = new CheckHealthCommand(_diagnosticController, level);
-        _mediator.Execute(command, skipStateVerification);
+        _mediator.Execute(command);
         return command.Result;
     }
  
@@ -31,23 +31,23 @@ public class DiagnosticsFacade
     /// <remarks>
     /// 指定された統計情報カテゴリを XML 形式で取得します。
     /// </remarks>
-    public string RetrieveStatistics(string[] statistics, bool skipStateVerification)
+    public string RetrieveStatistics(string[] statistics)
     {
         var command = new RetrieveStatisticsCommand(_diagnosticController, statistics);
-        _mediator.Execute(command, skipStateVerification);
+        _mediator.Execute(command);
         return command.Result;
     }
  
     /// <summary>統計情報を更新します。</summary>
-    public void UpdateStatistics(Statistic[] statistics, bool skipStateVerification)
+    public void UpdateStatistics(Statistic[] statistics)
     {
-        _mediator.Execute(new UpdateStatisticsCommand(statistics), skipStateVerification);
+        _mediator.Execute(new UpdateStatisticsCommand(statistics));
     }
  
     /// <summary>統計情報をリセットします。</summary>
-    public void ResetStatistics(string[] statistics, bool skipStateVerification)
+    public void ResetStatistics(string[] statistics)
     {
-        _mediator.Execute(new ResetStatisticsCommand(statistics), skipStateVerification);
+        _mediator.Execute(new ResetStatisticsCommand(statistics));
     }
 
     /// <summary>成功した出金操作の数を増加させます。</summary>

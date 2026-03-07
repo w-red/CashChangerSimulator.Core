@@ -22,8 +22,8 @@ public class RetrieveStatisticsCommand : IUposCommand
         Result = _controller.RetrieveStatistics(_statistics);
     }
 
-    public void Verify(IUposMediator mediator, bool skipStateVerification)
+    public void Verify(IUposMediator mediator)
     {
-        mediator.VerifyState(skipStateVerification, mustBeClaimed: true, mustBeEnabled: true);
+        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true);
     }
 }

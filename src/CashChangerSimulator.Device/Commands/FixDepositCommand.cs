@@ -14,8 +14,8 @@ public class FixDepositCommand : IUposCommand
 
     public void Execute() => _controller.FixDeposit();
 
-    public void Verify(IUposMediator mediator, bool skipStateVerification)
+    public void Verify(IUposMediator mediator)
     {
-        mediator.VerifyState(skipStateVerification, mustBeClaimed: true, mustBeEnabled: false);
+        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

@@ -50,10 +50,10 @@ public class UposCommandTests
         var command = new BeginDepositCommand(_depositControllerMock.Object);
 
         // Act
-        command.Verify(_mediatorMock.Object, false);
+        command.Verify(_mediatorMock.Object);
 
         // Assert
-        _mediatorMock.Verify(m => m.VerifyState(false, true, false), Times.Once);
+        _mediatorMock.Verify(m => m.VerifyState(true, false, false), Times.Once);
     }
 
     [Fact]

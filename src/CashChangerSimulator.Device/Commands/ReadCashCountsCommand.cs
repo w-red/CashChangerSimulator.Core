@@ -36,8 +36,8 @@ public class ReadCashCountsCommand : IUposCommand
         Result = new CashCounts([.. list], _inventory.HasDiscrepancy);
     }
 
-    public void Verify(IUposMediator mediator, bool skipStateVerification)
+    public void Verify(IUposMediator mediator)
     {
-        mediator.VerifyState(skipStateVerification, mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
+        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
     }
 }

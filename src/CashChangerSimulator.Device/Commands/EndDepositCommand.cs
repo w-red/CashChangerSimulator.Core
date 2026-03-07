@@ -17,8 +17,8 @@ public class EndDepositCommand : IUposCommand
 
     public void Execute() => _controller.EndDeposit(_action);
 
-    public void Verify(IUposMediator mediator, bool skipStateVerification)
+    public void Verify(IUposMediator mediator)
     {
-        mediator.VerifyState(skipStateVerification, mustBeClaimed: true, mustBeEnabled: false);
+        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

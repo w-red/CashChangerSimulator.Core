@@ -17,8 +17,8 @@ public class PauseDepositCommand : IUposCommand
 
     public void Execute() => _controller.PauseDeposit(_control);
 
-    public void Verify(IUposMediator mediator, bool skipStateVerification)
+    public void Verify(IUposMediator mediator)
     {
-        mediator.VerifyState(skipStateVerification, mustBeClaimed: true, mustBeEnabled: false);
+        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

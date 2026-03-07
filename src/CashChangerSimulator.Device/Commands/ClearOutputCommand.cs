@@ -14,10 +14,10 @@ public class ClearOutputCommand : IUposCommand
 
     public void Execute() => _controller.ClearOutput();
 
-    public void Verify(IUposMediator mediator, bool skipStateVerification)
+    public void Verify(IUposMediator mediator)
     {
         // ClearOutput can usually be called even if disabled or not claimed? 
         // UPOS: Should be called if claimed.
-        mediator.VerifyState(skipStateVerification, mustBeClaimed: true, mustBeEnabled: false);
+        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

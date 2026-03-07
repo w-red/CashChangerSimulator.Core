@@ -40,7 +40,6 @@ public class UposDispenseFacade
         string currencyCode,
         decimal factor,
         bool asyncMode,
-        bool skipStateVerification,
         Action<ErrorCode, int, bool> onResult)
     {
         if (amount <= 0)
@@ -55,7 +54,7 @@ public class UposDispenseFacade
             asyncMode,
             (code, codeEx) => onResult(code, codeEx, asyncMode));
  
-        _mediator.Execute(command, skipStateVerification);
+        _mediator.Execute(command);
     }
  
     public void DispenseByCashCounts(
@@ -63,7 +62,6 @@ public class UposDispenseFacade
         string currencyCode,
         decimal factor,
         bool asyncMode,
-        bool skipStateVerification,
         Action<ErrorCode, int, bool> onResult)
     {
         ValidatePreConditions();
@@ -91,13 +89,13 @@ public class UposDispenseFacade
             asyncMode,
             (code, codeEx) => onResult(code, codeEx, asyncMode));
  
-        _mediator.Execute(command, skipStateVerification);
+        _mediator.Execute(command);
     }
 
     /// <summary>保留中の出金操作をすべてキャンセルします。</summary>
-    public void ClearOutput(bool skipStateVerification)
+    public void ClearOutput()
     {
-        _mediator.Execute(new ClearOutputCommand(_dispenseController), skipStateVerification);
+        _mediator.Execute(new ClearOutputCommand(_dispenseController));
         _mediator.IsBusy = false;
     }
 
