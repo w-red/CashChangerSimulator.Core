@@ -5,6 +5,10 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.Coordination;
 
 /// <summary>UPOS ライフサイクルの管理とハンドラの切り替えを担当するマネージャークラス。</summary>
+/// <remarks>
+/// デバイスの Open, Claim, Enable 等の状態遷移を管理します。
+/// 状態検証のスキップ設定に応じて、標準のバリデーションを行うハンドラと、検証をバイパスするハンドラを動的に切り替えます。
+/// </remarks>
 public class LifecycleManager : IUposLifecycleHandler
 {
     private readonly HardwareStatusManager _hardwareStatusManager;
@@ -12,6 +16,8 @@ public class LifecycleManager : IUposLifecycleHandler
     private readonly ILogger _logger;
     private IUposLifecycleHandler _handler = null!;
 
+    /// <summary>必要な依存関係を注入してマネージャーを初期化します。</summary>
+    /// <remarks>状態管理、バリデーション、およびロギングのためのコンポーネントを受け取ります。</remarks>
     public LifecycleManager(HardwareStatusManager hardwareStatusManager, IUposMediator mediator, ILogger logger)
     {
         _hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));

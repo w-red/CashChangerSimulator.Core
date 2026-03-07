@@ -3,6 +3,10 @@ using R3;
 namespace CashChangerSimulator.Core.Managers;
 
 /// <summary>釣銭機のハードウェア的な障害状態（ジャムなど）を管理するクラス。</summary>
+/// <remarks>
+/// デバイスの物理的な状態（接続、ジャム、エラーコード）を保持します。
+/// 各状態は `BindableReactiveProperty` で提供され、UI やロジック層からの監視が可能です。
+/// </remarks>
 public class HardwareStatusManager : IDisposable
 {
     private readonly BindableReactiveProperty<bool> _isJammed = new(false);

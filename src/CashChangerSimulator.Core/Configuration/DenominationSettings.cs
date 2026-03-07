@@ -1,6 +1,10 @@
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>金種ごとの詳細設定を保持するクラス。</summary>
+/// <summary>金種ごとの詳細設定を保持するデータモデル。</summary>
+/// <remarks>
+/// 表示名、初期枚数、各種センサー（NearEmpty/Full）のしきい値、
+/// および釣銭（リサイクル）として使用可能かどうかのフラグを保持します。
+/// </remarks>
 public class DenominationSettings
 {
     /// <summary>英語の表示名。</summary>

@@ -2,7 +2,11 @@ using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>釣銭機シミュレーターの設定を保持するクラス。</summary>
+/// <summary>釣銭機シミュレーターの全設定を統括するルートモデル。</summary>
+/// <remarks>
+/// TOML 設定ファイルからデシリアライズされる全設定（システム、在庫、金種、しきい値、ログ等）を保持します。
+/// デバイスの動作条件やシミュレーションの振る舞いを決定づける設定値へのアクセスを提供します。
+/// </remarks>
 public class SimulatorConfiguration
 {
     /// <summary>全般的なシステム設定。</summary>

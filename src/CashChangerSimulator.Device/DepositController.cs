@@ -11,29 +11,22 @@ using CashChangerSimulator.Core.Configuration;
 namespace CashChangerSimulator.Device;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー。</summary>
-/// <remarks>入金プロセスの開始、確定、一時停止、および在庫への反映を制御します。</remarks>
-public class DepositController : IDisposable
+/// <remarks>
+/// 入金プロセスの開始（<see cref="BeginDeposit"/>）、計数（<see cref="TrackBulkDeposit"/>）、一時停止（<see cref="PauseDeposit"/>）、
+/// および在庫への反映（<see cref="EndDeposit"/>/<see cref="FixDeposit"/>）の一連の流れを制御します。
+/// </remarks>
+/// <param name="inventory">入金額を最終的に反映させる <see cref="Inventory"/> モデル。</param>
+/// <param name="hardwareStatusManager">デバイスの状態を管理する <see cref="HardwareStatusManager"/>。未指定時は新規作成されます。</param>
+/// <param name="manager">在庫操作を統括する <see cref="CashChangerManager"/>。</param>
+/// <param name="configProvider">金種設定などを提供する <see cref="ConfigurationProvider"/>。未指定時は新規作成されます。</param>
+public class DepositController(
+    Inventory inventory,
+    HardwareStatusManager? hardwareStatusManager = null,
+    CashChangerManager? manager = null,
+    ConfigurationProvider? configProvider = null) : IDisposable
 {
-    private readonly Inventory _inventory;
-    private readonly HardwareStatusManager _hardwareStatusManager;
-    private readonly CashChangerManager? _manager;
-    private readonly ConfigurationProvider _configProvider;
-
-    /// <summary>在庫を指定して初期化する。</summary>
-    public DepositController(Inventory inventory) : this(inventory, null, null, null) { }
-
-    /// <summary>在庫とステータスマネージャーを指定して初期化する。</summary>
-    public DepositController(
-        Inventory inventory,
-        HardwareStatusManager? hardwareStatusManager = null,
-        CashChangerManager? manager = null,
-        ConfigurationProvider? configProvider = null)
-    {
-        _inventory = inventory;
-        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-        _manager = manager;
-        _configProvider = configProvider ?? new ConfigurationProvider();
-    }
+    private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+    private readonly ConfigurationProvider _configProvider = configProvider ?? new ConfigurationProvider();
     
     /// <summary>リアルタイムデータの通知能力を外部から受け取ります。</summary>
     public bool RealTimeDataEnabled { get; set; }
@@ -144,16 +137,16 @@ public class DepositController : IDisposable
         else
         {
             // Store (Change/NoChange): Commit deposit to inventory via Manager
-            if (_manager != null)
+            if (manager != null)
             {
-                _manager.Deposit(new Dictionary<DenominationKey, int>(_depositCounts));
+                manager.Deposit(new Dictionary<DenominationKey, int>(_depositCounts));
             }
             else
             {
                 // Fallback for tests lacking manager injection
                 foreach (var kv in _depositCounts)
                 {
-                    _inventory.Add(kv.Key, kv.Value);
+                    inventory.Add(kv.Key, kv.Value);
                 }
             }
         }
@@ -240,7 +233,7 @@ public class DepositController : IDisposable
 
             // オーバーフロー・リサイクル可否のチェック
             var setting = _configProvider.Config.GetDenominationSetting(key);
-            var currentInInventory = _inventory.GetCount(key);
+            var currentInInventory = inventory.GetCount(key);
             var currentInDeposit = _depositCounts.GetValueOrDefault(key, 0);
             
             if (setting.IsRecyclable)

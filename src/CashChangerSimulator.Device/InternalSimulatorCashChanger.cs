@@ -23,7 +23,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
     public InternalSimulatorCashChanger()
         : base(new SimulatorDependencies())
     {
-        SkipStateVerification = true;
+        Context.Mediator.SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
@@ -34,7 +34,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
     public InternalSimulatorCashChanger(SimulatorDependencies deps)
         : base(deps)
     {
-        SkipStateVerification = true;
+        Context.Mediator.SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
@@ -58,7 +58,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
             aggregatorProvider,
             hardwareStatusManager))
     {
-        SkipStateVerification = true;
+        Context.Mediator.SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
@@ -84,7 +84,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger
             hardwareStatusManager,
             diagnosticController))
     {
-        SkipStateVerification = true;
+        Context.Mediator.SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 

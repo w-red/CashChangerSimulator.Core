@@ -4,7 +4,12 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>金種ごとの在庫枚数を管理するクラス。</summary>
+/// <summary>金種ごとの在庫枚数を管理する実体クラス。</summary>
+/// <remarks>
+/// 通常庫（リサイクル用）、回収庫（オーバーフロー用）、およびリジェクト庫（汚損・不明用）の
+/// 3つの論理的なバケットで現金の枚数を管理します。
+/// 在庫の変化は <see cref="Changed"/> ストリームを通じてリアクティブに通知されます。
+/// </remarks>
 public class Inventory : IReadOnlyInventory
 {
     private readonly ILogger<Inventory> _logger = LogProvider.CreateLogger<Inventory>();
@@ -22,7 +27,7 @@ public class Inventory : IReadOnlyInventory
     /// <remarks>通常、回収庫またはリジェクト庫に現金がある場合に不一致と見なされます。手動での設定も可能です。</remarks>
     public virtual bool HasDiscrepancy
     {
-        get => _isForcedDiscrepancy || _collectionCounts.Any(kv => kv.Value > 0) || _rejectCounts.Any(kv => kv.Value > 0);
+        get => _isForcedDiscrepancy || _collectionCounts.Values.Any(v => v > 0) || _rejectCounts.Values.Any(v => v > 0);
         set => _isForcedDiscrepancy = value;
     }
 
@@ -34,7 +39,11 @@ public class Inventory : IReadOnlyInventory
 
     /// <summary>リジェクト庫（汚損等）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts => _rejectCounts;
-    /// <summary>指定された金種の枚数を追加する。</summary>
+    /// <summary>指定された金種の枚数を追加します。</summary>
+    /// <remarks>
+    /// 金種キーを正規化し、指定された枚数を通常庫に加算します。
+    /// 正負両方の値を許容しますが、最終的な在庫数が負にならないよう内部で正規化されます。
+    /// </remarks>
     public virtual void Add(DenominationKey key, int count)
     {
         key = NormalizeKey(key);
@@ -57,7 +66,11 @@ public class Inventory : IReadOnlyInventory
         _logger.ZLogDebug($"Inventory.Add finished. New Total: {CalculateTotal()}");
     }
 
-    /// <summary>指定された金種の枚数を設定する。</summary>
+    /// <summary>指定された金種の枚数を上書き設定します。</summary>
+    /// <remarks>
+    /// 既存の値を破棄し、指定された枚数で通常庫を更新します。
+    /// 不の枚数が指定された場合は 0 として扱われます。
+    /// </remarks>
     public virtual void SetCount(DenominationKey key, int count)
     {
         key = NormalizeKey(key);

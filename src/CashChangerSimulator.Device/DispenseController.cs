@@ -13,26 +13,21 @@ using ZLogger;
 namespace CashChangerSimulator.Device;
 
 /// <summary>出金（払出）シーケンスを管理するコントローラー。</summary>
-public class DispenseController : IDisposable
+/// <remarks>
+/// 金額指定または金種指定による現金の払い出し処理を制御します。
+/// <see cref="IDeviceSimulator"/> と連携し、非同期実行やキャンセルのロジックを提供します。
+/// </remarks>
+/// <param name="manager">在庫操作を統括する <see cref="CashChangerManager"/>。</param>
+/// <param name="hardwareStatusManager">デバイスの状態を管理する <see cref="HardwareStatusManager"/>。未指定時は新規作成されます。</param>
+/// <param name="simulator">ハードウェア動作を模擬する <see cref="IDeviceSimulator"/>。未指定時は <see cref="HardwareSimulator"/> が使用されます。</param>
+public class DispenseController(
+    CashChangerManager manager,
+    HardwareStatusManager? hardwareStatusManager = null,
+    IDeviceSimulator? simulator = null) : IDisposable
 {
-    private readonly CashChangerManager _manager;
-    private readonly HardwareStatusManager _hardwareStatusManager;
-    private readonly IDeviceSimulator _simulator;
+    private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+    private readonly IDeviceSimulator _simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
     private CancellationTokenSource? _dispenseCts;
-
-    /// <summary>マネージャーを指定して初期化する。</summary>
-    public DispenseController(CashChangerManager manager) : this(manager, null, null) { }
-
-    /// <summary>全依存関係を指定して初期化する。</summary>
-    public DispenseController(
-        CashChangerManager manager,
-        HardwareStatusManager? hardwareStatusManager,
-        IDeviceSimulator? simulator)
-    {
-        _manager = manager;
-        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-        _simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
-    }
     private readonly ILogger<DispenseController> _logger = Core.LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> _changed = new();
     private readonly CompositeDisposable _disposables = [];
@@ -72,11 +67,11 @@ public class DispenseController : IDisposable
 
         if (asyncMode)
         {
-            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token), token);
+            _ = Task.Run(() => ExecuteDispense(() => manager.Dispense(amount, currencyCode), onComplete, token), token);
         }
         else
         {
-            await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token);
+            await ExecuteDispense(() => manager.Dispense(amount, currencyCode), onComplete, token);
         }
     }
 
@@ -104,11 +99,11 @@ public class DispenseController : IDisposable
 
         if (asyncMode)
         {
-            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(counts), onComplete, token), token);
+            _ = Task.Run(() => ExecuteDispense(() => manager.Dispense(counts), onComplete, token), token);
         }
         else
         {
-            await ExecuteDispense(() => _manager.Dispense(counts), onComplete, token);
+            await ExecuteDispense(() => manager.Dispense(counts), onComplete, token);
         }
     }
 

@@ -6,30 +6,23 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.Facades;
 
-/// <summary>UPOS の在庫管理操作を統合的に処理する Facade。</summary>
-/// <remarks>在庫読み取り・調整・回収などのすべての操作を集約します。</remarks>
-public class InventoryFacade
+/// <summary>現金在庫の照会、調整（全回収）等の操作を統合的に処理する <see cref="InventoryFacade"/>。</summary>
+/// <param name="inventory">在庫データを管理する <see cref="Inventory"/>。</param>
+/// <param name="manager">デバイス全体の操作を管理する <see cref="CashChangerManager"/>。</param>
+/// <param name="mediator">コマンド実行を仲介する <see cref="IUposMediator"/>。</param>
+/// <remarks>
+/// 各金種ごとの枚数取得、合計金額の計算、および在庫調整（全回収など）を行う機能を集約します。
+/// </remarks>
+public class InventoryFacade(Inventory inventory, CashChangerManager manager, IUposMediator mediator)
 {
-    private readonly Inventory _inventory;
-    private readonly CashChangerManager _manager;
-    private readonly IUposMediator _mediator;
-
-    /// <summary>新しいインスタンスを初期化します。</summary>
-    public InventoryFacade(Inventory inventory, CashChangerManager manager, IUposMediator mediator)
-    {
-        _inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        _manager = manager ?? throw new ArgumentNullException(nameof(manager));
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-    }
-
     /// <summary>現在の現金在庫数を読み取ります。</summary>
     /// <remarks>
     /// 指定された通貨コードの全金種の在庫を返します。
     /// </remarks>
     public CashCounts ReadCashCounts(string currencyCode, decimal currencyFactor)
     {
-        var command = new ReadCashCountsCommand(_inventory, currencyCode, currencyFactor);
-        _mediator.Execute(command);
+        var command = new ReadCashCountsCommand(inventory, currencyCode, currencyFactor);
+        mediator.Execute(command);
         return command.Result;
     }
     
@@ -42,13 +35,13 @@ public class InventoryFacade
         HardwareStatusManager hardwareStatusManager)
     {
         var command = new AdjustCashCountsCommand(
-            _inventory,
+            inventory,
             cashCounts,
             currencyCode,
             currencyFactor,
             hardwareStatusManager);
     
-        _mediator.Execute(command);
+        mediator.Execute(command);
     }
 
     /// <summary>現在の現金在庫数を文字列形式で調整します。</summary>
@@ -60,7 +53,7 @@ public class InventoryFacade
     {
         if (cashCounts == "discrepancy")
         {
-            _inventory.HasDiscrepancy = true;
+            inventory.HasDiscrepancy = true;
             return;
         }
 
@@ -71,18 +64,18 @@ public class InventoryFacade
     /// <summary>リサイクル在庫をすべて回収庫へ移動します。</summary>
     public void PurgeCash()
     {
-        _mediator.Execute(new PurgeCashCommand(_manager));
+        mediator.Execute(new PurgeCashCommand(manager));
     }
     
     /// <summary>指定された通貨の現在庫リストを UPOS 形式で構築します。</summary>
     public CashUnits GetCashList(string currencyCode) =>
-        UposCurrencyHelper.BuildCashUnits(_inventory, currencyCode);
+        UposCurrencyHelper.BuildCashUnits(inventory, currencyCode);
 
     // ========== Properties ==========
 
     /// <summary>現在の在庫に不一致があるかどうかを取得します。</summary>
-    public bool HasDiscrepancy => _inventory.HasDiscrepancy;
+    public bool HasDiscrepancy => inventory.HasDiscrepancy;
 
     /// <summary>アクティブな通貨のすべての現金単位のキーを取得します。</summary>
-    public IEnumerable<DenominationKey> AllDenominationKeys => _inventory.AllCounts.Select(kv => kv.Key);
+    public IEnumerable<DenominationKey> AllDenominationKeys => inventory.AllCounts.Select(kv => kv.Key);
 }

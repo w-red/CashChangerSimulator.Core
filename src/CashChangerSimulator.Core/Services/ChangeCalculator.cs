@@ -4,6 +4,10 @@ using CashChangerSimulator.Core.Models;
 namespace CashChangerSimulator.Core.Services;
 
 /// <summary>お釣りの金種組み合わせを計算するクラス。</summary>
+/// <remarks>
+/// 指定された在庫情報と金額から、最適な払い出し内訳（Greedy アルゴリズム）を算出します。
+/// 在庫不足や端数の不一致が発生した場合には例外（InsufficientCashException）をスローします。
+/// </remarks>
 public class ChangeCalculator
 {
     /// <summary>指定された在庫から、支払額に応じた金種の組み合わせを算出します。</summary>

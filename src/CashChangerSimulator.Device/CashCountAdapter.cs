@@ -4,6 +4,10 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device;
 
 /// <summary>UPOS CashCount と内部 DenominationKey 間の変換を担うアダプター。</summary>
+/// <remarks>
+/// UPOS 標準のデータ構造（CashCount）と、シミュレータ内部で管理する金種キー（DenominationKey）の相互変換を提供します。
+/// 通貨コードや通貨換算係数（factor）を考慮して、正確な金額計算を行います。
+/// </remarks>
 public static class CashCountAdapter
 {
     /// <summary>CashCount を DenominationKey に変換します。</summary>

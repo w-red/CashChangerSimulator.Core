@@ -1,10 +1,11 @@
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>金種を一意に識別するための複合キー（通貨コード、額面、硬貨/紙幣の種別）。</summary>
-/// <param name="Value">額面。</param>
-/// <param name="Type">硬貨/紙幣の種別。</param>
-/// <param name="CurrencyCode">通貨コード。</param>
+/// <summary>金種を一意に識別するための複合キー。</summary>
+/// <remarks>
+/// 通貨コード（JPY等）、額面（1000等）、および硬貨/紙幣の種別を組み合わせたイミュータブルなキー。
+/// 在庫管理や金額計算の最小単位として、ディクショナリのキー等に使用されます。
+/// </remarks>
 public record DenominationKey(
     decimal Value,
     CurrencyCashType Type,

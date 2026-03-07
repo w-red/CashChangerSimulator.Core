@@ -8,8 +8,12 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Managers;
 
-/// <summary>入金・出金・在庫・履歴を調整するマネージャークラス。</summary>
-/// <remarks>在庫管理と履歴管理を統合し、実務的な入出金操作を提供します。</remarks>
+/// <summary>入金・出金・在庫・履歴を統括するマネージャークラス。</summary>
+/// <remarks>
+/// 在庫データ（Inventory）と履歴（TransactionHistory）を操作し、
+/// 設定に基づいた入金の振り分けや、アルゴリズムによる出金の内訳計算（ChangeCalculator）を統合します。
+/// シミュレータのドメインロジックの中核を担います。
+/// </remarks>
 public class CashChangerManager
 {
     private readonly Inventory _inventory;
@@ -26,9 +30,8 @@ public class CashChangerManager
     {
     }
 
-    /// <summary>
-    /// コンストラクタ。
-    /// </summary>
+    /// <summary>必要な依存コンポーネントを注入してマネージャーを初期化します。</summary>
+    /// <remarks>指定されない場合はデフォルトの設定プロバイダーが使用されます。</remarks>
     public CashChangerManager(Inventory inventory, TransactionHistory history, ChangeCalculator calculator, ConfigurationProvider? configProvider)
     {
         _inventory = inventory;

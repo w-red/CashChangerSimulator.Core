@@ -3,11 +3,17 @@ using CashChangerSimulator.Core.Opos;
 
 namespace CashChangerSimulator.Device.Coordination;
 
-/// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。Mediator パターンを実装します。</summary>
-public class UposMediator : IUposMediator
+/// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。</summary>
+/// <remarks>
+/// Mediator パターンを実装し、各種 Facade や Command からの要求を処理します。
+/// 状態検証（VerifyState）や実行結果の通知（SetSuccess/SetFailure）を一極集中で管理します。
+/// </remarks>
+ public class UposMediator : IUposMediator
 {
     private readonly SimulatorCashChanger _so;
 
+    /// <summary>サービスオブジェクトへの参照を保持して Mediator を初期化します。</summary>
+    /// <remarks>シミュレータ本体の状態取得やイベント発火を行うために使用されます。</remarks>
     public UposMediator(SimulatorCashChanger so)
     {
         _so = so ?? throw new ArgumentNullException(nameof(so));
@@ -105,7 +111,7 @@ public class UposMediator : IUposMediator
             AsyncResultCode = (int)code;
             AsyncResultCodeExtended = codeEx;
             IsBusy = false;
-            _so.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
+            _so.FireEventInternal(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
         }
     }
 

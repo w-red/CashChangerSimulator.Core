@@ -8,22 +8,17 @@ using System.Linq;
 
 namespace CashChangerSimulator.Device;
 
-/// <summary>デバイスの診断機能（健康診断、統計情報）を管理するコントローラー。</summary>
-public class DiagnosticController
+/// <summary>デバイスの診断機能（ヘルスチェック、統計情報）を管理するコントローラー。</summary>
+/// <param name="inventory">現金在庫データを管理する <see cref="Inventory"/> モデル。</param>
+/// <param name="hardwareStatusManager">デバイスの接続やジャム状態を管理する <see cref="HardwareStatusManager"/>。</param>
+/// <remarks>
+/// UPOS 標準の <see cref="CashChangerBasic.CheckHealth"/> メソッドに対するレポート生成（<see cref="GetHealthReport"/>）や、
+/// 各種操作回数などの統計情報の累積・XML出力（<see cref="RetrieveStatistics"/>）を担当します。
+/// </remarks>
+public class DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)
 {
-    private readonly Inventory _inventory;
-    private readonly HardwareStatusManager _hardwareStatusManager;
-    private readonly ILogger<DiagnosticController> _logger = LogProvider.CreateLogger<DiagnosticController>();
-
-    // 統計情報（UPOS標準）
-    private long _successfulDepletionCount;
-    private long _failedDepletionCount;
-
-    public DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)
-    {
-        _inventory = inventory;
-        _hardwareStatusManager = hardwareStatusManager;
-    }
+    private int _successfulDepletionCount;
+    private int _failedDepletionCount;
 
     /// <summary>健康状態の報告書を作成します。</summary>
     public virtual string GetHealthReport(HealthCheckLevel level)
@@ -35,12 +30,12 @@ public class DiagnosticController
         {
             case HealthCheckLevel.Internal:
                 sb.AppendLine("Inventory: OK");
-                sb.AppendLine($"Total Denominations: {_inventory.AllCounts.Count()}");
+                sb.AppendLine($"Total Denominations: {inventory.AllCounts.Count()}");
                 sb.AppendLine("Status: OK");
                 break;
             case HealthCheckLevel.External:
-                sb.AppendLine($"Hardware: {(_hardwareStatusManager.IsConnected.Value ? "Connected" : "Disconnected")}");
-                sb.AppendLine($"Jam Status: {(_hardwareStatusManager.IsJammed.Value ? "Jammed" : "Normal")}");
+                sb.AppendLine($"Hardware: {(hardwareStatusManager.IsConnected.Value ? "Connected" : "Disconnected")}");
+                sb.AppendLine($"Jam Status: {(hardwareStatusManager.IsJammed.Value ? "Jammed" : "Normal")}");
                 break;
             case HealthCheckLevel.Interactive:
                 sb.AppendLine("Interactive check initiated. Please verify LED patterns.");
