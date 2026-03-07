@@ -51,6 +51,24 @@ public class InventoryFacade
     
         _mediator.Execute(command, skipStateVerification);
     }
+
+    /// <summary>現在の現金在庫数を文字列形式で調整します。</summary>
+    public void AdjustCashCounts(
+        string cashCounts,
+        string currencyCode,
+        decimal currencyFactor,
+        HardwareStatusManager hardwareStatusManager,
+        bool skipStateVerification)
+    {
+        if (cashCounts == "discrepancy")
+        {
+            _inventory.HasDiscrepancy = true;
+            return;
+        }
+
+        var parsedCounts = CashCountAdapter.ParseCashCounts(cashCounts, currencyCode, currencyFactor, AllDenominationKeys);
+        AdjustCashCounts(parsedCounts, currencyCode, currencyFactor, hardwareStatusManager, skipStateVerification);
+    }
     
     /// <summary>リサイクル在庫をすべて回収庫へ移動します。</summary>
     public void PurgeCash(bool skipStateVerification)

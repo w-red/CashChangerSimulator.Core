@@ -1,10 +1,7 @@
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Device.Commands;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
-
-using CashChangerSimulator.Device.Commands;
 
 namespace CashChangerSimulator.Device.Facades;
 

@@ -92,8 +92,8 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
     /// <summary>入金データのリアルタイム通知が有効かどうかを取得または設定します。</summary>
     public override bool RealTimeDataEnabled
     {
-        get => _depositController.RealTimeDataEnabled;
-        set => _depositController.RealTimeDataEnabled = value;
+        get => _depositFacade.RealTimeDataEnabled;
+        set => _depositFacade.RealTimeDataEnabled = value;
     }
 
     /// <summary>デバイスがリアルタイムデータの通知能力を持っているかどうか。</summary>
@@ -279,12 +279,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
 
     /// <summary>保留中の出金操作をすべてキャンセルします。</summary>
     public virtual void ClearOutput()
-    {
-        _mediator.VerifyState(SkipStateVerification);
-        _mediator.IsBusy = false;
-        _dispenseController.ClearOutput();
-        _mediator.SetSuccess();
-    }
+        => _dispenseFacade.ClearOutput(SkipStateVerification);
 
     private void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync) =>
         _mediator.HandleDispenseResult(code, codeEx, wasAsync);
@@ -358,16 +353,16 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
     public override CashUnits ExitCashList => UposCurrencyHelper.BuildCashUnits(_inventory, _configManager.CurrencyCode);
 
     /// <summary>現在投入されている現金の合計金額を取得します。</summary>
-    public override int DepositAmount => (int)Math.Round(_depositController.DepositAmount * UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode));
+    public override int DepositAmount => (int)Math.Round(_depositFacade.DepositAmount * UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode));
     /// <summary>現在投入されている現金の金種別枚数を取得します。</summary>
     public override CashCount[] DepositCounts
     {
-        get => [.. _depositController.DepositCounts
+        get => [.. _depositFacade.DepositCounts
             .Where(kv => kv.Key.CurrencyCode == _configManager.CurrencyCode)
             .Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode)))];
     }
     /// <summary>現在の入金処理の状態を取得します。</summary>
-    public override CashDepositStatus DepositStatus => _depositController.DepositStatus;
+    public override CashDepositStatus DepositStatus => _depositFacade.DepositStatus;
 
     /// <summary>現在の排出口インデックスを取得または設定します。</summary>
     public override int CurrentExit { get => 1; set { } }

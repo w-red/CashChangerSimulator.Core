@@ -58,7 +58,6 @@ public class UposDispenseFacade
         _mediator.Execute(command, skipStateVerification);
     }
  
-    /// <summary>金種指定の出金を実行します。</summary>
     public void DispenseByCashCounts(
         CashCount[] cashCounts,
         string currencyCode,
@@ -93,6 +92,13 @@ public class UposDispenseFacade
             (code, codeEx) => onResult(code, codeEx, asyncMode));
  
         _mediator.Execute(command, skipStateVerification);
+    }
+
+    /// <summary>保留中の出金操作をすべてキャンセルします。</summary>
+    public void ClearOutput(bool skipStateVerification)
+    {
+        _mediator.Execute(new ClearOutputCommand(_dispenseController), skipStateVerification);
+        _mediator.IsBusy = false;
     }
 
     private void ValidatePreConditions()
