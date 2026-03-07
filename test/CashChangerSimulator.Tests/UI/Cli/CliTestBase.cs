@@ -33,45 +33,46 @@ public abstract class CliTestBase : IDisposable
     {
         _testI18nDir = Path.Combine(Path.GetTempPath(), "CliCommandsI18nTests_" + Guid.NewGuid());
         Directory.CreateDirectory(_testI18nDir);
-        File.WriteAllText(Path.Combine(_testI18nDir, "en.toml"), @"
-DeviceOpened = 'Device opened successfully.'
-DeviceClosed = 'Device closed successfully.'
-DeviceClaimed = 'Device claimed successfully.'
-DeviceReleased = 'Device released successfully.'
-DeviceEnabled = 'Device enabled successfully.'
-DeviceDisabled = 'Device disabled successfully.'
-DeviceNotClaimed = 'Device must be claimed before enabling.'
-StatusHeader = 'Device Status'
-StateLabel = 'State'
-EnabledLabel = 'Enabled'
-InventoryHeader = 'Inventory'
-DenominationLabel = 'Denomination'
-CountLabel = 'Count'
-AmountLabel = 'Amount'
-TotalCaption = 'Total'
-AvailableCommands = 'Available commands'
-CommandLabel = 'Command'
-DescriptionLabel = 'Description'
-TransactionHistoryHeader = 'Recent Transactions (up to {0})'
-TimestampLabel = 'Timestamp'
-TypeLabel = 'Type'
-CurrencyLabel = 'Currency'
-CashCountsUpdated = 'Cash counts updated'
-DepositStarted = 'Depositing {0} (Async: {1})...'
-DepositCompleted = 'Deposit completed.'
-DepositAsyncWarning = 'Deposit started in async mode'
-DepositFixed = 'Deposit fixed.'
-EndDepositCompleted = 'EndDeposit completed.'
-DispensedSuccess = 'Dispensed {0} successfully.'
-HelpDescription = 'Show this help'
-ExitDescription = 'Exit'
-ErrorFormat = ""[red][[{0}: {1} ({2})]] {3}[/]""
-HintFormat = ""[yellow]Hint: {0}[/]""
-ErrorHint_Closed = ""Please open the device first.""
-ConfigHeader = 'Configuration'
-ConfigSaved = 'Config saved.'
-ConfigUpdated = ""Updated configuration '{0}' to '{1}'""
-InvalidConfigKey = ""Invalid config key '{0}'""
+        File.WriteAllText(Path.Combine(_testI18nDir, "cli.en.toml"), @"
+[messages]
+device_opened = 'Device opened successfully.'
+device_closed = 'Device closed successfully.'
+device_claimed = 'Device claimed successfully.'
+device_released = 'Device released successfully.'
+device_enabled = 'Device enabled successfully.'
+device_disabled = 'Device disabled successfully.'
+device_not_claimed = 'Device must be claimed before enabling.'
+status_header = 'Device Status'
+state_label = 'State'
+enabled_label = 'Enabled'
+inventory_header = 'Inventory'
+denomination_label = 'Denomination'
+count_label = 'Count'
+amount_label = 'Amount'
+total_caption = 'Total'
+available_commands = 'Available commands'
+command_label = 'Command'
+description_label = 'Description'
+transaction_history_header = 'Recent Transactions (up to {0})'
+timestamp_label = 'Timestamp'
+type_label = 'Type'
+currency_label = 'Currency'
+cash_counts_updated = 'Cash counts updated'
+deposit_started = 'Depositing {0} (Async: {1})...'
+deposit_completed = 'Deposit completed.'
+deposit_async_warning = 'Deposit started in async mode'
+deposit_fixed = 'Deposit fixed.'
+end_deposit_completed = 'EndDeposit completed.'
+dispensed_success = 'Dispensed {0} successfully.'
+help_description = 'Show this help'
+exit_description = 'Exit'
+error_format = ""[[{0}: {1} ({2})]] {3}""
+hint_format = ""[[Hint: {0}]]""
+error_hint_closed = ""Please open the device first.""
+config_header = 'Configuration'
+config_saved = 'Config saved.'
+config_updated = ""Updated configuration '{0}' to '{1}'""
+invalid_config_key = ""Invalid config key '{0}'""
 ");
         File.WriteAllText(Path.Combine(_testI18nDir, "ja.toml"), "DeviceOpened = 'デバイスオープン'");
 

@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -9,7 +10,8 @@ public class DirectIOTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
     {
-        var simulator = new InternalSimulatorCashChanger { SkipStateVerification = true };
+        var simulator = new InternalSimulatorCashChanger();
+        simulator.SkipStateVerification = true;
         simulator.Open();
         simulator.Claim(0);
         return simulator;
@@ -26,9 +28,7 @@ public class DirectIOTests
         var result = simulator.DirectIO(10, 1, null!);
         result.Data.ShouldBe(1);
 
-        var hardwareStatusManager = (HardwareStatusManager)typeof(InternalSimulatorCashChanger)
-            .GetField("_hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .GetValue(simulator)!;
+        var hardwareStatusManager = simulator._hardwareStatusManager;
 
         hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue("DirectIO 10 with data=1 should set Overlap to true.");
 
@@ -43,9 +43,7 @@ public class DirectIOTests
     {
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
-        var hardwareStatusManager = (HardwareStatusManager)typeof(InternalSimulatorCashChanger)
-            .GetField("_hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .GetValue(simulator)!;
+        var hardwareStatusManager = simulator._hardwareStatusManager;
 
         // Force Jam ON
         simulator.DirectIO(11, 1, null!);

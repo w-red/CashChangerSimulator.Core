@@ -3,12 +3,17 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>Test class for providing ComplianceTests functionality.</summary>
+/// <summary>OPOS/UPOS 規格への準拠性とシミュレータ固有の拡張機能を検証するテストクラス。</summary>
+/// <remarks>
+/// リアルタイムデータ通知、ディレクトIOによる状態操作、不整合フラグのレポートなど、
+/// デバイスの標準的な振る舞いとカスタムコマンドの正確性を網羅的に検証します。
+/// </remarks>
 public class ComplianceTests
 {
     private static (InternalSimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history, DeviceEventHistoryObserver observer) CreateChanger()

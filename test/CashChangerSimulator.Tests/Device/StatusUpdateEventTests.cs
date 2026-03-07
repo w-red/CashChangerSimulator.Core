@@ -6,6 +6,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -64,8 +65,10 @@ public class StatusUpdateEventTests
 
         var cc = new InternalSimulatorCashChanger(deps)
         {
-            SkipStateVerification = true
+            // SkipStateVerification = true
         };
+        cc.SkipStateVerification = true;
+        // cc.Open(); -- StatusUpdateTests handles Open manually if needed or via CreateTestCashChanger
 
         var events = new List<int>();
         cc.OnEventQueued += e =>

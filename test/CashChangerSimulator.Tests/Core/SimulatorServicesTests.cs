@@ -5,6 +5,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
 using Moq;
 using Shouldly;
 
@@ -76,10 +77,8 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.Provider = provider;
 
         // InternalSimulatorCashChanger default constructor should pick up from SimulatorServices
-        var cc = new InternalSimulatorCashChanger
-        {
-            SkipStateVerification = false
-        };
+        var cc = new InternalSimulatorCashChanger();
+        cc.SkipStateVerification = false;
 
         // Verify via ReadCashCounts (which uses _inventory internally)
         var ex = Should.Throw<Microsoft.PointOfService.PosControlException>(

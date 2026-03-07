@@ -7,6 +7,9 @@ using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 using Xunit;
+using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -29,7 +32,11 @@ public class UposComplianceTests
         _mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
             .Callback<IUposCommand>((cmd) => cmd.Execute());
 
-        _managerMock = new Mock<CashChangerManager>(_inventory, null, null, null);
+        _managerMock = new Mock<CashChangerManager>(
+            _inventory, 
+            new Mock<TransactionHistory>().Object, 
+            new ChangeCalculator(), 
+            new ConfigurationProvider());
         _hardwareStatusManager = new HardwareStatusManager();
         _facade = new InventoryFacade(_inventory, _managerMock.Object, _mediatorMock.Object);
     }

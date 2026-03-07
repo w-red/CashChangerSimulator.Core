@@ -13,8 +13,8 @@ public class TomlStringLocalizerTests : IDisposable
         _testI18nDir = Path.Combine(Path.GetTempPath(), "CashChangerI18nTests_" + Guid.NewGuid());
         Directory.CreateDirectory(_testI18nDir);
 
-        File.WriteAllText(Path.Combine(_testI18nDir, "ja.toml"), "DeviceOpened = \"デバイスが正常にオープンされました。\"\nFailedToOpen = \"失敗: {0}\"");
-        File.WriteAllText(Path.Combine(_testI18nDir, "en.toml"), "DeviceOpened = \"Device opened successfully.\"\nFailedToOpen = \"Failed: {0}\"");
+        File.WriteAllText(Path.Combine(_testI18nDir, "cli.ja.toml"), "[messages]\ndevice_opened = \"デバイスが正常にオープンされました。\"\nfailed_to_open = \"失敗: {0}\"");
+        File.WriteAllText(Path.Combine(_testI18nDir, "cli.en.toml"), "[messages]\ndevice_opened = \"Device opened successfully.\"\nfailed_to_open = \"Failed: {0}\"");
     }
 
     public void Dispose()
@@ -34,7 +34,7 @@ public class TomlStringLocalizerTests : IDisposable
         var localizer = new TomlStringLocalizer(_testI18nDir);
 
         // Act
-        var result = localizer["DeviceOpened"].Value;
+        var result = localizer["messages.device_opened"].Value;
 
         // Assert
         result.ShouldBe("デバイスが正常にオープンされました。");
@@ -48,7 +48,7 @@ public class TomlStringLocalizerTests : IDisposable
         var localizer = new TomlStringLocalizer(_testI18nDir);
 
         // Act
-        var result = localizer["DeviceOpened"].Value;
+        var result = localizer["messages.device_opened"].Value;
 
         // Assert
         result.ShouldBe("Device opened successfully.");
@@ -62,7 +62,7 @@ public class TomlStringLocalizerTests : IDisposable
         var localizer = new TomlStringLocalizer(_testI18nDir);
 
         // Act
-        var result = localizer["FailedToOpen", "ErrorCode123"].Value;
+        var result = localizer["messages.failed_to_open", "ErrorCode123"].Value;
 
         // Assert
         result.ShouldBe("失敗: ErrorCode123");

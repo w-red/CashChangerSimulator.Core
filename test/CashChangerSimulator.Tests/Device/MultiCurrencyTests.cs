@@ -5,6 +5,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -63,8 +64,9 @@ public class MultiCurrencyTests
 
         var device = new InternalSimulatorCashChanger(deps)
         {
-            SkipStateVerification = true
+            // SkipStateVerification = true
         };
+        device.SkipStateVerification = true;
         device.Open();
         device.Claim(0);
         return device;

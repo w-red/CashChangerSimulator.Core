@@ -4,6 +4,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Moq;
@@ -70,8 +71,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
             AsyncMode = true,
-            SkipStateVerification = false
         };
+        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);
@@ -113,8 +114,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
             AsyncMode = true,
-            SkipStateVerification = false
         };
+        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);
@@ -146,8 +147,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
             AsyncMode = true,
-            SkipStateVerification = false
         };
+        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);
@@ -197,8 +198,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager, mockSimulator.Object)
         {
             AsyncMode = true,
-            SkipStateVerification = false
         };
+        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);

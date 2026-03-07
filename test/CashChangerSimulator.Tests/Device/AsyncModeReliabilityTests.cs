@@ -5,13 +5,18 @@ using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>Test class for providing AsyncModeReliabilityTests functionality.</summary>
+/// <summary>非同期モードにおけるデバイス動作の信頼性と状態の整合性を検証するテストクラス。</summary>
+/// <remarks>
+/// 非同期払い出し操作において、完了イベントが通知された瞬間の内部状態（Status, ResultCode）が
+/// 規約通りであることをタイムクリティカルな条件下で検証します。
+/// </remarks>
 public class AsyncModeReliabilityTests
 {
     private class ReliabilityTestChanger(Inventory inv, CashChangerManager manager, DispenseController controller, HardwareStatusManager hw) : InternalSimulatorCashChanger(
@@ -59,8 +64,9 @@ public class AsyncModeReliabilityTests
         var changer = new ReliabilityTestChanger(inventory, manager, controller, hardware)
         {
             AsyncMode = true,
-            SkipStateVerification = true
+            // SkipStateVerification = true
         };
+        changer.SkipStateVerification = true;
 
         // Act
         changer.Open();

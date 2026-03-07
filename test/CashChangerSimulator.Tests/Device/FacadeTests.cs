@@ -8,6 +8,9 @@ using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 using Xunit;
+using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -27,9 +30,17 @@ public class FacadeTests
         var hardwareStatusManager = new HardwareStatusManager();
         
         // Mocking classes with dependencies, providing real objects for required parameters
-        _depositControllerMock = new Mock<DepositController>(inventory, hardwareStatusManager, null, null);
+        _depositControllerMock = new Mock<DepositController>(
+            inventory, 
+            hardwareStatusManager, 
+            new ConfigurationProvider(), 
+            new Mock<Microsoft.Extensions.Logging.ILogger<DepositController>>().Object);
         _inventoryMock = new Mock<Inventory>();
-        _managerMock = new Mock<CashChangerManager>(inventory, null, null, null);
+        _managerMock = new Mock<CashChangerManager>(
+            inventory, 
+            new Mock<TransactionHistory>().Object, 
+            new ChangeCalculator(), 
+            new ConfigurationProvider());
         _diagnosticControllerMock = new Mock<DiagnosticController>(inventory, hardwareStatusManager);
     }
 

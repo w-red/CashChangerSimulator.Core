@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -14,20 +15,13 @@ public class SerialNumberTrackingTests
         var changer = new InternalSimulatorCashChanger
         {
             // SkipStateVerification allows calling BeginDeposit etc without full OPOS lifecycle
-            SkipStateVerification = true
         };
+        changer.SkipStateVerification = true;
         changer.Open();
         changer.Claim(0);
         changer.Claim(0);
 
-        // Retrieve internal controller for direct manipulation in test
-        var field = typeof(InternalSimulatorCashChanger)
-            .GetField(
-                "_depositController",
-                System.Reflection.BindingFlags.NonPublic
-                | System.Reflection.BindingFlags.Instance);
-        var controller =
-            (DepositController)field!.GetValue(changer)!;
+        var controller = changer._depositController;
 
         return (changer, controller);
     }

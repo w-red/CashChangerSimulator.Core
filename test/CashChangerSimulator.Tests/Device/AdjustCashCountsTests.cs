@@ -1,4 +1,6 @@
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -9,7 +11,8 @@ public class AdjustCashCountsTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
     {
-        var simulator = new InternalSimulatorCashChanger { SkipStateVerification = true };
+        var simulator = new InternalSimulatorCashChanger();
+        simulator.SkipStateVerification = true;
         simulator.Open();
         simulator.Claim(0);
         return simulator;

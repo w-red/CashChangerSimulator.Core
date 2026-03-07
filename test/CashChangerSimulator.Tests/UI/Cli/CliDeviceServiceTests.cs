@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
 using CashChangerSimulator.UI.Cli.Services;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
@@ -20,8 +21,9 @@ public class CliDeviceServiceTests : CliTestBase
         var deps = new SimulatorDependencies(configProvider);
         var realChanger = new InternalSimulatorCashChanger(deps)
         {
-            SkipStateVerification = false
+            // SkipStateVerification = false
         };
+        realChanger.SkipStateVerification = false;
         // Open していない状態で Claim を呼び、エラーを発生させる意図
 
         var deviceService = new CliDeviceService(realChanger, _console, _localizer);
@@ -42,8 +44,8 @@ public class CliDeviceServiceTests : CliTestBase
         var deps = new SimulatorDependencies();
         var realChanger = new InternalSimulatorCashChanger(deps)
         {
-            SkipStateVerification = false
         };
+        realChanger.SkipStateVerification = false;
         realChanger.Open();
         // Claim していない状態で Enable しようとする
 

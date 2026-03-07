@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -43,9 +44,7 @@ public class RepayDepositTests
 
         // Simulate bill insertion (Directly via controller for test simplicity, 
         // normally triggered by hardware/UI)
-        var controller = (DepositController)typeof(InternalSimulatorCashChanger)
-            .GetField("_depositController", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .GetValue(simulator)!;
+        var controller = simulator._depositController;
 
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
         simulator.DepositAmount.ShouldBe(1000);
@@ -78,9 +77,7 @@ public class RepayDepositTests
         // Sequence: Begin -> Track -> RepayDeposit
         simulator.BeginDeposit();
         
-        var controller = (DepositController)typeof(InternalSimulatorCashChanger)
-            .GetField("_depositController", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .GetValue(simulator)!;
+        var controller = simulator._depositController;
 
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
         simulator.DepositAmount.ShouldBe(1000);

@@ -1,4 +1,5 @@
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
 using CashChangerSimulator.UI.Cli.Services;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
@@ -15,8 +16,8 @@ public class CliCashServiceTests : CliTestBase
     {
         var realChanger = new InternalSimulatorCashChanger(new SimulatorDependencies())
         {
-            SkipStateVerification = true
         };
+        realChanger.SkipStateVerification = true;
         realChanger.Open();
         realChanger.Claim(0);
         realChanger.DeviceEnabled = true;
@@ -40,8 +41,8 @@ public class CliCashServiceTests : CliTestBase
         // Arrange
         var realChanger = new InternalSimulatorCashChanger(new SimulatorDependencies())
         {
-            SkipStateVerification = true
         };
+        realChanger.SkipStateVerification = true;
         realChanger.Open();
         realChanger.Claim(0);
         realChanger.DeviceEnabled = true;

@@ -1,53 +1,47 @@
-using System;
-using CashChangerSimulator.Device.Services;
 using Microsoft.PointOfService;
+using CashChangerSimulator.Device.Services;
 using Moq;
 using Shouldly;
-using Xunit;
+using System;
 
 namespace CashChangerSimulator.Tests.Device;
 
 public class UposEventNotifierTests
 {
-    private readonly Mock<IUposEventSink> _sinkMock;
+    private readonly Mock<IUposEventSink> _mockSink;
     private readonly UposEventNotifier _notifier;
 
     public UposEventNotifierTests()
     {
-        _sinkMock = new Mock<IUposEventSink>();
-        _notifier = new UposEventNotifier(_sinkMock.Object);
+        _mockSink = new Mock<IUposEventSink>();
+        _notifier = new UposEventNotifier(_mockSink.Object);
     }
 
     [Fact]
-    public void NotifyEventShouldQueueEventWhenNotSkipping()
+    public void QueueEvent_ShouldCallQueueDataEvent_WhenEventArgsIsDataEventArgs()
     {
-        _sinkMock.Setup(s => s.SkipStateVerification).Returns(false);
-        var e = new StatusUpdateEventArgs(1);
+        // Arrange
+        var args = new DataEventArgs(12345);
+        _mockSink.Setup(s => s.CapDepositDataEvent).Returns(true);
+        _mockSink.Setup(s => s.DataEventEnabled).Returns(true);
 
-        _notifier.NotifyEvent(e);
+        // Act
+        _notifier.QueueEvent(args);
 
-        _sinkMock.Verify(s => s.QueueEvent(e), Times.Once);
+        // Assert
+        _mockSink.Verify(s => s.QueueDataEvent(args), Times.Once);
     }
 
     [Fact]
-    public void NotifyEventShouldSkipWhenSkipStateVerificationIsTrue()
+    public void QueueEvent_ShouldCallQueueStatusUpdateEvent_WhenEventArgsIsStatusUpdateEventArgs()
     {
-        _sinkMock.Setup(s => s.SkipStateVerification).Returns(true);
-        var e = new StatusUpdateEventArgs(1);
+        // Arrange
+        var args = new StatusUpdateEventArgs(1);
 
-        _notifier.NotifyEvent(e);
+        // Act
+        _notifier.QueueEvent(args);
 
-        _sinkMock.Verify(s => s.QueueEvent(It.IsAny<EventArgs>()), Times.Never);
-    }
-
-    [Fact]
-    public void FireEventShouldCallNotifyEvent()
-    {
-        _sinkMock.Setup(s => s.SkipStateVerification).Returns(false);
-        var e = new StatusUpdateEventArgs(1);
-
-        _notifier.FireEvent(e);
-
-        _sinkMock.Verify(s => s.QueueEvent(e), Times.Once);
+        // Assert
+        _mockSink.Verify(s => s.QueueStatusUpdateEvent(args), Times.Once);
     }
 }

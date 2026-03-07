@@ -5,6 +5,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -46,10 +47,9 @@ public class UposLifecycleTests
             aggregatorProvider,
             hw);
 
-        return new InternalSimulatorCashChanger(deps)
-        {
-            SkipStateVerification = false
-        };
+        var changer = new InternalSimulatorCashChanger(deps);
+        changer.SkipStateVerification = false;
+        return changer;
     }
 
     /// <summary>占有されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。</summary>

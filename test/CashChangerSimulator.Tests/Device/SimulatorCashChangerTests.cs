@@ -1,5 +1,7 @@
-using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.PointOfService;
 using Shouldly;
 using Xunit;
