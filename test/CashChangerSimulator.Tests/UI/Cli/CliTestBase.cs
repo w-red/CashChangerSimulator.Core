@@ -10,6 +10,7 @@ using Microsoft.Extensions.Localization;
 using CashChangerSimulator.Core.Services;
 using Moq;
 using R3;
+using CashChangerSimulator.Device.Coordination;
 using Spectre.Console.Testing;
 using System.Globalization;
 
@@ -92,7 +93,7 @@ InvalidConfigKey = ""Invalid config key '{0}'""
         var depositController = new DepositController(_mockInventory.Object, hardware);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
 
-        _mockChanger = new Mock<InternalSimulatorCashChanger>(
+        _mockChanger = new Mock<InternalSimulatorCashChanger>(new SimulatorDependencies(
             configProvider,
             _mockInventory.Object,
             _mockHistory.Object,
@@ -100,7 +101,7 @@ InvalidConfigKey = ""Invalid config key '{0}'""
             depositController,
             dispenseController,
             aggregatorProvider,
-            hardware);
+            hardware));
 
         _console = new TestConsole();
         _options = new CliSessionOptions();
