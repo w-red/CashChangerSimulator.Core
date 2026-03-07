@@ -13,5 +13,5 @@ public interface IUposCommand
     /// <summary>コマンドの実行可能性を検証します。</summary>
     /// <param name="mediator">検証に使用するメディエーター。</param>
     /// <param name="skipStateVerification">状態検証をスキップするかどうか。</param>
-    void Verify(IUposMediator mediator, bool skipStateVerification);
+    void Verify(IUposMediator mediator);
 }

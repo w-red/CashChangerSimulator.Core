@@ -22,11 +22,12 @@ public class UposMediator : IUposMediator
     public bool IsBusy { get; set; }
     public int AsyncResultCode { get; set; }
     public int AsyncResultCodeExtended { get; set; }
+    public bool SkipStateVerification { get; set; }
 
     /// <summary>UPOS ライフサイクルの状態を検証します。</summary>
-    public void VerifyState(bool skip, bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false)
+    public void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false)
     {
-        if (skip) return;
+        if (SkipStateVerification) return;
 
         if (_so == null) throw new InvalidOperationException("_so is null in UposMediator.VerifyState");
 
@@ -109,13 +110,13 @@ public class UposMediator : IUposMediator
     }
 
     /// <summary>コマンドを実行し、結果を反映します。</summary>
-    public void Execute(IUposCommand command, bool skipStateVerification)
+    public void Execute(IUposCommand command)
     {
         if (command == null) throw new ArgumentNullException(nameof(command));
 
         try
         {
-            command.Verify(this, skipStateVerification);
+            command.Verify(this);
             command.Execute();
             SetSuccess();
         }
