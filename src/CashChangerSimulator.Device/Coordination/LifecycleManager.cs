@@ -1,0 +1,41 @@
+using CashChangerSimulator.Core.Managers;
+using Microsoft.Extensions.Logging;
+using Microsoft.PointOfService;
+
+namespace CashChangerSimulator.Device.Coordination;
+
+/// <summary>UPOS ライフサイクルの管理とハンドラの切り替えを担当するマネージャークラス。</summary>
+public class LifecycleManager : IUposLifecycleHandler
+{
+    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly IUposMediator _mediator;
+    private readonly ILogger _logger;
+    private IUposLifecycleHandler _handler = null!;
+
+    public LifecycleManager(HardwareStatusManager hardwareStatusManager, IUposMediator mediator, ILogger logger)
+    {
+        _hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>検証スキップ設定に基づいて適切なハンドラを初期化します。</summary>
+    public void UpdateHandler(bool skipStateVerification)
+    {
+        _handler = skipStateVerification
+            ? new SkipVerificationLifecycleHandler(_hardwareStatusManager, _mediator, _logger)
+            : new StandardLifecycleHandler(_hardwareStatusManager, _mediator, _logger);
+        
+        _logger.LogInformation("LifecycleHandler switched. SkipStateVerification: {0}, HandlerType: {1}", skipStateVerification, _handler.GetType().Name);
+    }
+
+    public ControlState State => _handler?.State ?? ControlState.Closed;
+    public bool Claimed => _handler?.Claimed ?? false;
+    public bool DeviceEnabled { get => _handler.DeviceEnabled; set => _handler.DeviceEnabled = value; }
+    public bool DataEventEnabled { get => _handler.DataEventEnabled; set => _handler.DataEventEnabled = value; }
+
+    public void Open(Action baseOpen) => _handler.Open(baseOpen);
+    public void Close(Action baseClose) => _handler.Close(baseClose);
+    public void Claim(int timeout, Action<int> baseClaim) => _handler.Claim(timeout, baseClaim);
+    public void Release(Action baseRelease) => _handler.Release(baseRelease);
+}

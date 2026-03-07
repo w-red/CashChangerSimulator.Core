@@ -44,49 +44,40 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
 
     private string _checkHealthText = "OK";
 
-    private bool _skipStateVerification;
     /// <summary>VerifyState チェックをスキップするかどうかを取得または設定します。</summary>
     public virtual bool SkipStateVerification
     {
-        get => _skipStateVerification;
+        get => _mediator.SkipStateVerification;
         set
         {
-            if (_skipStateVerification == value) return;
-            _skipStateVerification = value;
+            if (_mediator.SkipStateVerification == value) return;
+            _mediator.SkipStateVerification = value;
             UpdateLifecycleHandler();
         }
     }
 
-    private IUposLifecycleHandler _lifecycleHandler = null!;
+    private readonly LifecycleManager _lifecycleManager;
     private readonly UposMediator _mediator;
 
     private void UpdateLifecycleHandler()
     {
-        if (_hardwareStatusManager == null) throw new InvalidOperationException("_hardwareStatusManager is null during UpdateLifecycleHandler");
-        if (_mediator == null) throw new InvalidOperationException("_mediator is null during UpdateLifecycleHandler");
-        if (_logger == null) throw new InvalidOperationException("_logger is null during UpdateLifecycleHandler");
-
-        _lifecycleHandler = _skipStateVerification
-            ? new SkipVerificationLifecycleHandler(_hardwareStatusManager, _mediator, _logger)
-            : new StandardLifecycleHandler(_hardwareStatusManager, _mediator, _logger);
-        
-        if (_lifecycleHandler == null) throw new InvalidOperationException("Failed to create _lifecycleHandler");
-
-        _logger.LogInformation("LifecycleHandler updated. SkipStateVerification: {0}, HandlerType: {1}", _skipStateVerification, _lifecycleHandler.GetType().Name);
+        // プロキシ生成時や初期化の非常に早い段階で呼ばれた場合に例外を防ぐためにnullチェックのみ行う
+        if (_hardwareStatusManager == null || _mediator == null || _logger == null) return;
+        _lifecycleManager.UpdateHandler(_mediator.SkipStateVerification);
     }
 
     /// <summary>デバイスの有効状態を取得または設定します。</summary>
     public override bool DeviceEnabled
     {
-        get => _lifecycleHandler.DeviceEnabled;
-        set => _lifecycleHandler.DeviceEnabled = value;
+        get => _lifecycleManager.DeviceEnabled;
+        set => _lifecycleManager.DeviceEnabled = value;
     }
 
     /// <summary>データイベントの通知が有効かどうかを取得または設定します。</summary>
     public override bool DataEventEnabled
     {
-        get => _lifecycleHandler.DataEventEnabled;
-        set => _lifecycleHandler.DataEventEnabled = value;
+        get => _lifecycleManager.DataEventEnabled;
+        set => _lifecycleManager.DataEventEnabled = value;
     }
 
     /// <summary>入金データのリアルタイム通知が有効かどうかを取得または設定します。</summary>
@@ -114,7 +105,7 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
     }
 
     /// <summary>現在のデバイスの状態を取得します。</summary>
-    public override ControlState State => _lifecycleHandler?.State ?? ControlState.Closed;
+    public override ControlState State => _lifecycleManager?.State ?? ControlState.Closed;
 
     void IUposEventSink.NotifyEvent(EventArgs e) => NotifyEvent(e);
 
@@ -137,42 +128,46 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
     public void SetAsyncProcessing(bool isBusy) =>
         _mediator.IsBusy = isBusy;
 
-    // ========== Simulator UI Helpers (Overridden in InternalSimulatorCashChanger) ==========
+    // ========== Simulator Lifecycle Delegation ==========
 
     /// <summary>デバイスをオープンします。</summary>
     public override void Open()
     {
-        if (_lifecycleHandler == null) UpdateLifecycleHandler();
+        if (_lifecycleManager == null) UpdateLifecycleHandler();
+        if (_lifecycleManager == null) throw new InvalidOperationException("Critical error: _lifecycleManager is null in Open()");
 
-        if (_lifecycleHandler == null) throw new InvalidOperationException("Critical error: _lifecycleHandler is null in Open()");
-
-        _lifecycleHandler.Open(base.Open);
+        _lifecycleManager.Open(base.Open);
     }
 
     /// <summary>デバイスをクローズします。</summary>
-    public override void Close() => _lifecycleHandler.Close(base.Close);
+    public override void Close() => _lifecycleManager.Close(base.Close);
 
     /// <summary>デバイスを占有します。</summary>
-    public override void Claim(int timeout) => _lifecycleHandler.Claim(timeout, base.Claim);
+    public override void Claim(int timeout) => _lifecycleManager.Claim(timeout, base.Claim);
 
     /// <summary>デバイスを解放します。</summary>
-    public override void Release() => _lifecycleHandler.Release(base.Release);
+    public override void Release() => _lifecycleManager.Release(base.Release);
 
     /// <summary>デバイスが現在占有されているかどうかを取得します。</summary>
-    public override bool Claimed => _lifecycleHandler?.Claimed ?? false;
+    public override bool Claimed => _lifecycleManager?.Claimed ?? false;
 
     /// <summary>SimulatorCashChanger の新しいインスタンスを初期化します。</summary>
     public SimulatorCashChanger(SimulatorDependencies deps)
     {
+        _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
+        _logger.LogInformation("SimulatorCashChanger initializing...");
+
+        _hardwareStatusManager = deps.HardwareStatusManager ?? new HardwareStatusManager();
+        
+        // Mediator と LifecycleManager は他のコンポーネントが依存する可能性があるため早期に初期化
+        _mediator = deps.Mediator as UposMediator ?? new UposMediator(this);
+        _lifecycleManager = new LifecycleManager(_hardwareStatusManager, _mediator, _logger);
+        UpdateLifecycleHandler();
+
         var actualConfigProvider = deps.ConfigProvider ?? new ConfigurationProvider();
         _config = actualConfigProvider.Config;
 
         DevicePath = "SimulatorCashChanger";
-
-        _hardwareStatusManager = deps.HardwareStatusManager ?? new HardwareStatusManager();
-
-        _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
-        _logger.LogInformation("SimulatorCashChanger initialized.");
 
         _inventory = deps.Inventory ?? new Inventory();
         _history = deps.History ?? new TransactionHistory();
@@ -213,10 +208,6 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
             _depositController,
             _dispenseController);
         
-        // Initialize Mediator and Lifecycle Handler
-        _mediator = deps.Mediator as UposMediator ?? new UposMediator(this);
-        UpdateLifecycleHandler();
-
         _statusCoordinator.Start();
 
         // Dispense Facade initialization
@@ -229,13 +220,14 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
         // Inventory Facade initialization
         _inventoryFacade = new InventoryFacade(_inventory, _manager, _mediator);
         _diagnosticsFacade = new DiagnosticsFacade(_diagnosticController, _mediator);
+        _logger.LogInformation("SimulatorCashChanger initialized.");
     }
 
 
     /// <summary>デバイスの健康状態を確認します。</summary>
     public override string CheckHealth(HealthCheckLevel level)
     {
-        var report = _diagnosticsFacade.CheckHealth(level, SkipStateVerification);
+        var report = _diagnosticsFacade.CheckHealth(level);
         _checkHealthText = report;
         return report;
     }
@@ -245,16 +237,16 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
 
     /// <summary>現金投入処理を開始します。</summary>
     public override void BeginDeposit()
-        => _depositFacade.BeginDeposit(SkipStateVerification);
+        => _depositFacade.BeginDeposit();
 
     /// <summary>現金投入処理を終了します。</summary>
     public override void EndDeposit(CashDepositAction action)
-        => _depositFacade.EndDeposit(action, SkipStateVerification);
+        => _depositFacade.EndDeposit(action);
 
     /// <summary>投入された現金の計数を確定します。</summary>
     public override void FixDeposit()
     {
-        _depositFacade.FixDeposit(SkipStateVerification);
+        _depositFacade.FixDeposit();
         if (DataEventEnabled && CapDepositDataEvent)
         {
             NotifyEvent(new DataEventArgs(0));
@@ -263,23 +255,23 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
 
     /// <summary>現金投入処理を一時停止または再開します。</summary>
     public override void PauseDeposit(CashDepositPause control)
-        => _depositFacade.PauseDeposit(control, SkipStateVerification);
+        => _depositFacade.PauseDeposit(control);
 
     /// <summary>入金セッション中に投入された現金を返却します。</summary>
     public virtual void RepayDeposit()
-        => _depositFacade.RepayDeposit(SkipStateVerification);
+        => _depositFacade.RepayDeposit();
 
     /// <summary>指定された金額の釣銭を払い出します。</summary>
     public override void DispenseChange(int amount)
-        => _dispenseFacade.DispenseByAmount(amount, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, SkipStateVerification, (code, codeEx, wasAsync) => HandleDispenseResult(code, codeEx, wasAsync));
+        => _dispenseFacade.DispenseByAmount(amount, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, (code, codeEx, wasAsync) => HandleDispenseResult(code, codeEx, wasAsync));
 
     /// <summary>指定された金種と枚数の現金を払い出します。</summary>
     public override void DispenseCash(CashCount[] cashCounts)
-        => _dispenseFacade.DispenseByCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, SkipStateVerification, (code, codeEx, wasAsync) => HandleDispenseResult(code, codeEx, wasAsync));
+        => _dispenseFacade.DispenseByCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, (code, codeEx, wasAsync) => HandleDispenseResult(code, codeEx, wasAsync));
 
     /// <summary>保留中の出金操作をすべてキャンセルします。</summary>
     public virtual void ClearOutput()
-        => _dispenseFacade.ClearOutput(SkipStateVerification);
+        => _dispenseFacade.ClearOutput();
 
     private void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync) =>
         _mediator.HandleDispenseResult(code, codeEx, wasAsync);
@@ -287,20 +279,20 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
     /// <summary>現在の現金在庫数を手動で調整します。</summary>
     /// <remarks>指定された金種の枚数で現在の在庫を上書きします。</remarks>
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts)
-        => _inventoryFacade.AdjustCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), _hardwareStatusManager, SkipStateVerification);
+        => _inventoryFacade.AdjustCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), _hardwareStatusManager);
  
     /// <summary>現在の現金在庫数を読み取ります。</summary>
     public override CashCounts ReadCashCounts()
-        => _inventoryFacade.ReadCashCounts(_configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), SkipStateVerification);
+        => _inventoryFacade.ReadCashCounts(_configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode));
  
     /// <summary>リサイクル在庫をすべて回収庫へ移動します。</summary>
     public virtual void PurgeCash()
-        => _inventoryFacade.PurgeCash(SkipStateVerification);
+        => _inventoryFacade.PurgeCash();
 
     /// <summary>ベンダー固有のコマンドをデバイスに送信します。</summary>
     public override DirectIOData DirectIO(int command, int data, object obj)
     {
-        _mediator.VerifyState(SkipStateVerification, mustBeClaimed: true, mustBeEnabled: true);
+        _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true);
         var result = _directIOHandler.Handle(command, data, obj, this);
         _mediator.SetSuccess();
         return result;
@@ -308,15 +300,15 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
 
     /// <summary>統計情報を取得します。</summary>
     public override string RetrieveStatistics(string[] statistics)
-        => _diagnosticsFacade.RetrieveStatistics(statistics, SkipStateVerification);
- 
+        => _diagnosticsFacade.RetrieveStatistics(statistics);
+  
     /// <summary>統計情報を更新します。</summary>
     public override void UpdateStatistics(Statistic[] statistics)
-        => _diagnosticsFacade.UpdateStatistics(statistics, SkipStateVerification);
- 
+        => _diagnosticsFacade.UpdateStatistics(statistics);
+  
     /// <summary>統計情報をリセットします。</summary>
     public override void ResetStatistics(string[] statistics)
-        => _diagnosticsFacade.ResetStatistics(statistics, SkipStateVerification);
+        => _diagnosticsFacade.ResetStatistics(statistics);
 
     // ========== UPOS Property Overrides (Merged from Properties.cs) ==========
 
@@ -346,21 +338,16 @@ public class SimulatorCashChanger : CashChangerBasic, ICashChangerStatusSink, IU
     public override string[] DepositCodeList => _configManager.DepositCodeList;
 
     /// <summary>アクティブな通貨の現在の現金一覧を取得します。</summary>
-    public override CashUnits CurrencyCashList => UposCurrencyHelper.BuildCashUnits(_inventory, _configManager.CurrencyCode);
+    public override CashUnits CurrencyCashList => _inventoryFacade.GetCashList(_configManager.CurrencyCode);
     /// <summary>入金可能な現金の一覧を取得します。</summary>
-    public override CashUnits DepositCashList => CapDeposit ? UposCurrencyHelper.BuildCashUnits(_inventory, _configManager.CurrencyCode) : new CashUnits();
+    public override CashUnits DepositCashList => CapDeposit ? _inventoryFacade.GetCashList(_configManager.CurrencyCode) : new CashUnits();
     /// <summary>払出可能な現金の一覧を取得します。</summary>
-    public override CashUnits ExitCashList => UposCurrencyHelper.BuildCashUnits(_inventory, _configManager.CurrencyCode);
+    public override CashUnits ExitCashList => _inventoryFacade.GetCashList(_configManager.CurrencyCode);
 
     /// <summary>現在投入されている現金の合計金額を取得します。</summary>
-    public override int DepositAmount => (int)Math.Round(_depositFacade.DepositAmount * UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode));
+    public override int DepositAmount => _depositFacade.GetUposDepositAmount(UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode));
     /// <summary>現在投入されている現金の金種別枚数を取得します。</summary>
-    public override CashCount[] DepositCounts
-    {
-        get => [.. _depositFacade.DepositCounts
-            .Where(kv => kv.Key.CurrencyCode == _configManager.CurrencyCode)
-            .Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode)))];
-    }
+    public override CashCount[] DepositCounts => _depositFacade.GetUposDepositCounts(_configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode));
     /// <summary>現在の入金処理の状態を取得します。</summary>
     public override CashDepositStatus DepositStatus => _depositFacade.DepositStatus;
 
