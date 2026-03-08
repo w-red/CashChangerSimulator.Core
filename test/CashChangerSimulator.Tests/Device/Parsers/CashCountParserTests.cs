@@ -131,4 +131,43 @@ public class CashCountParserTests
         CashCountParser.Parse(string.Empty, _jpyKeys, 1).ShouldBeEmpty();
         CashCountParser.Parse("   ", _usdKeys, 100).ShouldBeEmpty();
     }
+
+    [Fact]
+    public void ParseHandlesExtraSpacesAndEmptySections()
+    {
+        // Leading/trailing spaces, multiple spaces, empty sections
+        var input = "  500:10 ,  100:20  ;  10000:2  ";
+        var result = CashCountParser.Parse(input, _jpyKeys, 1).ToList();
+        result.Count.ShouldBe(3);
+
+        var input2 = "; 10000:5"; // Only Bill section
+        var result2 = CashCountParser.Parse(input2, _jpyKeys, 1).ToList();
+        result2.Count.ShouldBe(1);
+        result2[0].NominalValue.ShouldBe(10000);
+        result2[0].Type.ShouldBe(CashCountType.Bill);
+
+        var input3 = "500:5 ; "; // Only Coin section
+        var result3 = CashCountParser.Parse(input3, _jpyKeys, 1).ToList();
+        result3.Count.ShouldBe(1);
+        result3[0].NominalValue.ShouldBe(500);
+        result3[0].Type.ShouldBe(CashCountType.Coin);
+    }
+
+    [Fact]
+    public void ParseAllowsZeroCount()
+    {
+        var input = "500:0;1000:0";
+        var result = CashCountParser.Parse(input, _jpyKeys, 1).ToList();
+        result.Count.ShouldBe(2);
+        result.All(c => c.Count == 0).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void ParseThrowsOnInvalidPartFormat()
+    {
+        // Missing value or count
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse("100:", _jpyKeys, 1));
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse(":5", _jpyKeys, 1));
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse("100:5:10", _jpyKeys, 1));
+    }
 }

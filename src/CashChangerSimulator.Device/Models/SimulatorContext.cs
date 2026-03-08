@@ -11,11 +11,10 @@ using Microsoft.Extensions.Logging;
 
 namespace CashChangerSimulator.Device.Models;
 
-/// <summary>
-/// SimulatorCashChanger の内部コンポーネントを一括管理するコンテキストオブジェクト。
-/// </summary>
-public class SimulatorContext
+/// <summary>SimulatorCashChanger の内部コンポーネントを一括管理するコンテキストオブジェクト。</summary>
+public sealed class SimulatorContext : IDisposable
 {
+    private bool _isDisposed;
     public required Inventory Inventory { get; init; }
     public required TransactionHistory History { get; init; }
     public required CashChangerManager Manager { get; init; }
@@ -69,8 +68,22 @@ public class SimulatorContext
         };
 
         ctx.StatusCoordinator = new StatusCoordinator(so, aggregator, hardwareStatusManager, depositController, dispenseController);
-        ctx.StatusCoordinator.Start();
 
         return ctx;
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (_isDisposed) return;
+
+        StatusCoordinator?.Dispose();
+        DepositController?.Dispose();
+        DispenseController?.Dispose();
+        StatusAggregator?.Dispose();
+        HardwareStatusManager?.Dispose();
+
+        _isDisposed = true;
+        GC.SuppressFinalize(this);
     }
 }

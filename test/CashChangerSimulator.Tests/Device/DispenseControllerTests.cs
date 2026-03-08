@@ -192,7 +192,7 @@ public class DispenseControllerTests
         _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new Exception("Fail"));
 
-        Should.ThrowAsync<Exception>(() => _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
+        Should.ThrowAsync<PosControlException>(() => _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
 
         // Act
@@ -200,5 +200,39 @@ public class DispenseControllerTests
 
         // Assert
         _controller.Status.ShouldBe(CashDispenseStatus.Idle);
+    }
+
+    [Fact]
+    public async Task ExecuteDispense_ShouldHandlePosControlException()
+    {
+        // Arrange
+        _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
+            .Throws(new PosControlException("Explicit error", ErrorCode.Illegal, 123));
+
+        ErrorCode capturedError = ErrorCode.Success;
+        int capturedExtended = 0;
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<PosControlException>(() => 
+            _controller.DispenseChangeAsync(100, false, (e, ext) => 
+            {
+                capturedError = e;
+                capturedExtended = ext;
+            }));
+        
+        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
+        ex.ErrorCodeExtended.ShouldBe(123);
+        capturedError.ShouldBe(ErrorCode.Illegal);
+        capturedExtended.ShouldBe(123);
+        _controller.Status.ShouldBe(CashDispenseStatus.Error);
+    }
+
+    [Fact]
+    public void Dispose_ShouldNotThrow()
+    {
+        var controller = new DispenseController(_mockManager.Object, _hw, _mockSimulator.Object);
+        controller.Dispose();
+        // Second dispose should also not throw
+        controller.Dispose();
     }
 }
