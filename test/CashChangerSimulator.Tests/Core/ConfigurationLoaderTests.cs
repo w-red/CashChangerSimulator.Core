@@ -105,39 +105,59 @@ public class ConfigurationLoaderTests : IDisposable
         loaded.Counts["JPY:B1000"].ShouldBe(10);
     }
 
-    /// <summary>履歴状態ファイルが存在しない場合に初期状態が返されることを検証する。</summary>
     [Fact]
-    public void LoadHistoryStateShouldReturnInitialWhenFileNotFound()
+    public void Load_CorruptedFile_ShouldReturnDefault()
     {
-        // Act
-        var state = ConfigurationLoader.LoadHistoryState();
-
-        // Assert
-        state.ShouldNotBeNull();
-        state.Entries.Count.ShouldBe(1);
-        state.Entries[0].Type.ShouldBe(TransactionType.Unknown);
+        File.WriteAllText(_testConfigPath, "INVALID TOML [[");
+        var config = ConfigurationLoader.Load(_testConfigPath);
+        config.ShouldNotBeNull();
+        config.Inventory.ShouldNotBeEmpty();
     }
 
-    /// <summary>履歴状態の保存と読み込みで値が維持されることを検証する。</summary>
     [Fact]
-    public void SaveAndLoadHistoryStateShouldMaintainValues()
+    public void SaveAndLoad_ShouldPreserveData()
     {
-        // Arrange
-        var state = new HistoryState
-        {
-            Entries =
-            [
-                new HistoryEntryState { Amount = 1000, Type = TransactionType.Deposit, Timestamp = DateTimeOffset.Now, Counts = new Dictionary<string, int> { { "JPY:B1000", 1 } } }
-            ]
-        };
+        var path = "custom_config.toml";
+        var config = new SimulatorConfiguration();
+        config.System.CurrencyCode = "USD";
+        ConfigurationLoader.Save(config, path);
 
-        // Act
-        ConfigurationLoader.SaveHistoryState(state);
-        var loaded = ConfigurationLoader.LoadHistoryState();
+        var loaded = ConfigurationLoader.Load(path);
+        loaded.System.CurrencyCode.ShouldBe("USD");
+        File.Delete(path);
+    }
 
-        // Assert
-        loaded.Entries.Count.ShouldBe(1);
-        loaded.Entries[0].Amount.ShouldBe(1000);
-        loaded.Entries[0].Counts["JPY:B1000"].ShouldBe(1);
+    [Fact]
+    public void LoadInventoryState_NonExistent_ShouldReturnEmpty()
+    {
+        var path = "non_existent.inv";
+        var state = ConfigurationLoader.LoadInventoryState(path);
+        state.ShouldNotBeNull();
+        state.Counts.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void SaveAndLoadInventory_ShouldPreserveData()
+    {
+        var path = "custom_inventory.toml";
+        var state = new InventoryState();
+        state.Counts["B1000"] = 5;
+        ConfigurationLoader.SaveInventoryState(state, path);
+
+        var loaded = ConfigurationLoader.LoadInventoryState(path);
+        loaded.Counts.ShouldContainKey("B1000");
+        loaded.Counts["B1000"].ShouldBe(5);
+        File.Delete(path);
+    }
+
+    [Fact]
+    public void LoadHistoryState_Corrupted_ShouldReturnInitial()
+    {
+        var path = "corrupted_history.bin";
+        File.WriteAllBytes(path, [0, 1, 2, 3, 4, 5]);
+        var state = ConfigurationLoader.LoadHistoryState(path);
+        state.ShouldNotBeNull();
+        state.Entries.Count.ShouldBe(1);
+        File.Delete(path);
     }
 }

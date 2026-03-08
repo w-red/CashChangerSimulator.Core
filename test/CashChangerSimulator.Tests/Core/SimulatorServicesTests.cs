@@ -47,6 +47,23 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeSameAs(inventory);
     }
 
+    [Fact]
+    public void TryResolve_ProviderThrows_ShouldReturnNull()
+    {
+        var mock = new Mock<ISimulatorServiceProvider>();
+        mock.Setup(m => m.Resolve<Inventory>()).Throws<InvalidOperationException>();
+        SimulatorServices.Provider = mock.Object;
+
+        SimulatorServices.TryResolve<Inventory>().ShouldBeNull();
+    }
+
+    [Fact]
+    public void Resolve_NotRegistered_ShouldThrow()
+    {
+        SimulatorServices.Provider = null;
+        Should.Throw<InvalidOperationException>(() => SimulatorServices.Resolve<Inventory>());
+    }
+
     /// <summary>InternalSimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証する。</summary>
     [Fact]
     public void SimulatorCashChangerShouldUseProviderInstancesWhenAvailable()
