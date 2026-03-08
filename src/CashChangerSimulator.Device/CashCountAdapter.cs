@@ -72,4 +72,12 @@ public static class CashCountAdapter
         }
         return result;
     }
+
+    /// <summary>
+    /// CashCount 配列を文字列形式 ("denom:count,denom:count") に変換します。
+    /// </summary>
+    public static string FormatCashCounts(IEnumerable<CashCount> cashCounts)
+    {
+        return string.Join(",", cashCounts.Select(cc => $"{cc.NominalValue}:{cc.Count}"));
+    }
 }

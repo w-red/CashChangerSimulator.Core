@@ -172,4 +172,37 @@ public class ComplianceTests
         // Assert
         inventory.GetCount(jpy1000).ShouldBe(15);
     }
+
+    /// <summary>Tests the behavior of AdjustCashCountsStrShouldUpdateInventory to ensure proper functionality.</summary>
+    [Fact]
+    public void AdjustCashCountsStrShouldUpdateInventory()
+    {
+        // Arrange
+        var (changer, _, inventory, _, _) = CreateChanger();
+        var jpy1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+        inventory.SetCount(jpy1000, 0);
+
+        // Act
+        changer.AdjustCashCounts("1000:20");
+
+        // Assert
+        inventory.GetCount(jpy1000).ShouldBe(20);
+    }
+
+    /// <summary>Tests the behavior of ReadCashCountsWithDiscrepancyShouldReturnProperFlags to ensure proper functionality.</summary>
+    [Fact]
+    public void ReadCashCountsWithDiscrepancyShouldReturnProperFlags()
+    {
+        // Arrange
+        var (changer, _, inventory, _, _) = CreateChanger();
+        inventory.HasDiscrepancy = true;
+        string counts = "";
+        bool discrepancy = false;
+
+        // Act
+        changer.ReadCashCounts(ref counts, ref discrepancy);
+
+        // Assert
+        discrepancy.ShouldBeTrue();
+    }
 }

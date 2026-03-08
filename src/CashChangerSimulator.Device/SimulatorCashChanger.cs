@@ -106,6 +106,17 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public virtual void ClearOutput() => _dispenseFacade.ClearOutput();
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts) => _inventoryFacade.AdjustCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), _ctx.HardwareStatusManager);
     public override CashCounts ReadCashCounts() => _inventoryFacade.ReadCashCounts(_configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode));
+
+    /// <summary>現在の現金在庫数を文字列形式で調整します（UPOS 準拠用ヘルパー）。</summary>
+    public void AdjustCashCounts(string cashCounts) => _inventoryFacade.AdjustCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), _ctx.HardwareStatusManager);
+
+    /// <summary>現在の現金在庫数を読み取り、文字列および不一致フラグとして返します（UPOS 準拠用ヘルパー）。</summary>
+    public void ReadCashCounts(ref string cashCounts, ref bool discrepancy)
+    {
+        var result = ReadCashCounts();
+        cashCounts = CashCountAdapter.FormatCashCounts(result.Counts);
+        discrepancy = result.Discrepancy;
+    }
     public virtual void PurgeCash() => _inventoryFacade.PurgeCash();
 
     // Diagnostics & Stats
