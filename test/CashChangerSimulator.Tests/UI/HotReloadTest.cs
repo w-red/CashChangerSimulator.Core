@@ -101,7 +101,7 @@ public class HotReloadTest
 
         // JPY default: Bills(4: 10k, 5k, 2k, 1k), Coins(6: 500, 100, 50, 10, 5, 1)
         // Ratio should be 4:6
-        vm.BillGridWidth.Value.Value.ShouldBe(3);
+        vm.BillGridWidth.Value.Value.ShouldBe(4);
         vm.CoinGridWidth.Value.Value.ShouldBe(6);
 
         // Act: Switch to USD
