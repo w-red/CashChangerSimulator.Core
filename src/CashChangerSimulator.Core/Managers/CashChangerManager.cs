@@ -50,6 +50,12 @@ public class CashChangerManager
         {
             var setting = _configProvider.Config.GetDenominationSetting(key);
 
+            if (!setting.IsDepositable)
+            {
+                _logger.ZLogWarning($"Denomination {key} is not depositable. Skipping.");
+                continue;
+            }
+
             if (!setting.IsRecyclable)
             {
                 // 非リサイクル金種は回収庫へ

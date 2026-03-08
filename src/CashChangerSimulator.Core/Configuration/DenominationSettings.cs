@@ -27,4 +27,7 @@ public class DenominationSettings
 
     /// <summary>この金種を釣銭（リサイクル）として使用するかどうか。false の場合、出金時の計算対象から除外されます。</summary>
     public bool IsRecyclable { get; set; } = true;
+
+    /// <summary>この金種を入金可能にするかどうか。false の場合、入金処理時にこの金種は受け付けられません。</summary>
+    public bool IsDepositable { get; set; } = true;
 }
