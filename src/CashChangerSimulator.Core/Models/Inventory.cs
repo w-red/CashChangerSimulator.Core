@@ -122,6 +122,15 @@ public class Inventory : IReadOnlyInventory
     /// <summary>在庫の枚数を取得します。</summary>
     public virtual int GetCount(DenominationKey key) => _counts.GetValueOrDefault(NormalizeKey(key));
 
+    /// <summary>全庫（還流・回収・リジェクト）の合計枚数を取得します。</summary>
+    public virtual int GetTotalCount(DenominationKey key)
+    {
+        key = NormalizeKey(key);
+        return _counts.GetValueOrDefault(key, 0) +
+               _collectionCounts.GetValueOrDefault(key, 0) +
+               _rejectCounts.GetValueOrDefault(key, 0);
+    }
+
     /// <summary>在庫をすべてクリアします。</summary>
     public void Clear()
     {

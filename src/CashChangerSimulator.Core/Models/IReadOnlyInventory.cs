@@ -7,6 +7,8 @@ public interface IReadOnlyInventory
 {
     /// <summary>指定された金種の現在の枚数を取得する。</summary>
     int GetCount(DenominationKey key);
+    /// <summary>指定された金種の全庫（還流・回収・リジェクト）の合計枚数を取得する。</summary>
+    int GetTotalCount(DenominationKey key);
     /// <summary>現在の在庫の合計金額を計算する。</summary>
     decimal CalculateTotal(string? currencyCode = null);
     /// <summary>在庫が変更されたときに通知されるイベントストリーム。</summary>
