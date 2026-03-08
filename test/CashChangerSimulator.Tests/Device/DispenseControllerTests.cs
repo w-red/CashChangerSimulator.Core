@@ -109,11 +109,86 @@ public class DispenseControllerTests
     }
 
     [Fact]
+    public async Task DispenseChangeAsync_ShouldThrowBusy_WhenAlreadyProcessing()
+    {
+        // Arrange
+        // We need a way to keep it busy. We can use a Task that waits.
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .Returns(async (CancellationToken t) => await Task.Delay(1000, t));
+
+        _ = _controller.DispenseChangeAsync(100, true, (e, ex) => { });
+        await Task.Delay(50); // Give it a bit of time to start
+
+        // Act & Assert
+        _controller.IsBusy.ShouldBeTrue();
+        await Should.ThrowAsync<PosControlException>(() => 
+            _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
+    }
+
+    [Fact]
+    public async Task DispenseChangeAsync_ShouldThrowFailure_WhenOverlapped()
+    {
+        // Arrange
+        _hw.SetOverlapped(true);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<PosControlException>(() => 
+            _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
+        ex.ErrorCode.ShouldBe(ErrorCode.Failure);
+    }
+
+    [Fact]
+    public async Task ClearOutput_ShouldCancelActiveDispense()
+    {
+        // Arrange
+        bool wasCanceled = false;
+        var tcs = new TaskCompletionSource<bool>();
+
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .Returns(async (CancellationToken t) => 
+            {
+                tcs.SetResult(true); // Signal that we have entered the mock
+                try { await Task.Delay(5000, t); }
+                catch (OperationCanceledException) { wasCanceled = true; throw; }
+            });
+
+        _ = _controller.DispenseChangeAsync(100, true, (e, ex) => { });
+        
+        // Wait until we are inside the simulator method
+        await tcs.Task;
+        
+        // Act
+        _controller.ClearOutput();
+        
+        // Wait a bit for the task to react to cancellation
+        await Task.Delay(100);
+
+        // Assert
+        _controller.IsBusy.ShouldBeFalse();
+        wasCanceled.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ExecuteDispense_ShouldHandleUnexpectedException()
+    {
+        // Arrange
+        _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
+            .Throws(new InvalidOperationException("Unexpected"));
+
+        ErrorCode capturedError = ErrorCode.Success;
+
+        // Act & Assert
+        await Should.ThrowAsync<PosControlException>(() => 
+            _controller.DispenseChangeAsync(100, false, (e, ext) => capturedError = e));
+        
+        capturedError.ShouldBe(ErrorCode.Failure);
+        _controller.Status.ShouldBe(CashDispenseStatus.Error);
+    }
+
+    [Fact]
     public void ClearError_ShouldResetStatusFromErrorToIdle()
     {
         // Arrange
-        // (Simulate an error state by triggering an exception in a test-like manner or reflection)
-        // For simplicity, let's use the actual failure path
         _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new Exception("Fail"));
 

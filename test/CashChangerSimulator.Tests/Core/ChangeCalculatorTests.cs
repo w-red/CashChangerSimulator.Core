@@ -29,11 +29,8 @@ public class ChangeCalculatorTests
         inv.Add(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 10);
         inv.Add(new DenominationKey(500, CurrencyCashType.Coin, "JPY"), 10);
 
-        // Filter: Only bills
-        var result = _calculator.Calculate(inv, 1500, filter: k => k.Type == CurrencyCashType.Bill);
-        result.Count.ShouldBe(1);
-        result.First().Value.ShouldBe(1); // 1000 x 1 (500 coin is skipped)
-        // Note: remaining would be 500, so it should throw if we requested 1500 but only had bills
+        // Filter: Only bills. 1500 cannot be paid fully with only 1000 bills.
+        Should.Throw<InsufficientCashException>(() => _calculator.Calculate(inv, 1500, filter: k => k.Type == CurrencyCashType.Bill));
     }
 
     [Fact]

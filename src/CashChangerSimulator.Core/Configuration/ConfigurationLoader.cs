@@ -80,7 +80,7 @@ public static class ConfigurationLoader
 
         try
         {
-            var tomlText = File.ReadAllText(InventoryStatePath);
+            var tomlText = File.ReadAllText(filePath);
             var state = TomlSerializer.Deserialize<InventoryState>(tomlText, options: ModelOptions) ?? new InventoryState();
             state.EnsureInitialized();
             return state;

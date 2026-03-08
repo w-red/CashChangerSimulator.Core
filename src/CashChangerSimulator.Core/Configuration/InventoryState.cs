@@ -1,3 +1,4 @@
+
 namespace CashChangerSimulator.Core.Configuration;
 
 /// <summary>在庫の現在の枚数を保持するクラス（永続化用）。</summary>

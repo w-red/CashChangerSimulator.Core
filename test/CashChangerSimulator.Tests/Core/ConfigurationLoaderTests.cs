@@ -1,3 +1,4 @@
+using Tomlyn;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Transactions;
 using Shouldly;
@@ -141,12 +142,12 @@ public class ConfigurationLoaderTests : IDisposable
     {
         var path = "custom_inventory.toml";
         var state = new InventoryState();
-        state.Counts["B1000"] = 5;
+        state.Counts["JPY:B1000"] = 5;
         ConfigurationLoader.SaveInventoryState(state, path);
 
         var loaded = ConfigurationLoader.LoadInventoryState(path);
-        loaded.Counts.ShouldContainKey("B1000");
-        loaded.Counts["B1000"].ShouldBe(5);
+        loaded.Counts.ShouldContainKey("JPY:B1000");
+        loaded.Counts["JPY:B1000"].ShouldBe(5);
         File.Delete(path);
     }
 

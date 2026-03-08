@@ -94,6 +94,38 @@ public class CashCountParserTests
     }
 
     [Fact]
+    public void ParseThrowsOnMissingColon()
+    {
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse("1000", _jpyKeys, 1));
+    }
+
+    [Fact]
+    public void ParseThrowsOnInvalidNominalValue()
+    {
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse("ABC:10", _jpyKeys, 1));
+    }
+
+    [Fact]
+    public void ParseThrowsOnInvalidCountValue()
+    {
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse("1000:XYZ", _jpyKeys, 1));
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse("1000:-5", _jpyKeys, 1));
+    }
+
+    [Fact]
+    public void ParseThrowsOnUnsupportedDenomination()
+    {
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse("123:10", _jpyKeys, 1));
+    }
+
+    [Fact]
+    public void ParseThrowsOnDenominationInWrongSection()
+    {
+        // 10000 is a Bill in _jpyKeys, but we put it in Coin section (index 0)
+        Should.Throw<ArgumentException>(() => CashCountParser.Parse("10000:1 ; 500:1", _jpyKeys, 1));
+    }
+
+    [Fact]
     public void ParseReturnsEmptyOnEmptyInput()
     {
         CashCountParser.Parse(string.Empty, _jpyKeys, 1).ShouldBeEmpty();
