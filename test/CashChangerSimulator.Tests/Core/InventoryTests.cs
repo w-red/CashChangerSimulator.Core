@@ -101,18 +101,86 @@ public class InventoryTests
     }
 
     [Fact]
-    public void Clear_ShouldResetAllCounts()
+    public void Add_Zero_ShouldDoNothing()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        Inventory.Add(key, 1);
-        Inventory.AddCollection(key, 1);
-        Inventory.AddReject(key, 1);
-
-        Inventory.Clear();
-
+        Inventory.Add(key, 0);
         Inventory.GetCount(key).ShouldBe(0);
+    }
+
+    [Fact]
+    public void AddCollection_Zero_ShouldDoNothing()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        Inventory.AddCollection(key, 0);
         Inventory.CollectionCounts.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void AddReject_Zero_ShouldDoNothing()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        Inventory.AddReject(key, 0);
         Inventory.RejectCounts.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void NormalizeKey_ShouldSetDefaultCurrencyIfEmpty()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill, "");
+        Inventory.Add(key, 1);
+        Inventory.GetCount(key).ShouldBe(1);
+        Inventory.AllCounts.First().Key.CurrencyCode.ShouldBe(DenominationKey.DefaultCurrencyCode);
+    }
+
+    [Fact]
+    public void CalculateTotal_WithCurrencyCode_ShouldOnlyIncludeMatches()
+    {
+        var jpy1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+        var usd1 = new DenominationKey(1, CurrencyCashType.Bill, "USD");
+
+        Inventory.Add(jpy1000, 1);
+        Inventory.Add(usd1, 1);
+
+        Inventory.CalculateTotal("JPY").ShouldBe(1000);
+        Inventory.CalculateTotal("USD").ShouldBe(1);
+        Inventory.CalculateTotal().ShouldBe(1001);
+    }
+
+    [Fact]
+    public void Dictionary_Serialization_ShouldWork()
+    {
+        var pay = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+        Inventory.Add(pay, 1);
+        Inventory.AddCollection(pay, 2);
+        Inventory.AddReject(pay, 3);
+
+        var dict = Inventory.ToDictionary();
+        dict.Count.ShouldBe(3);
+        dict["JPY:B1000"].ShouldBe(1);
+        dict["COL:JPY:B1000"].ShouldBe(2);
+        dict["REJ:JPY:B1000"].ShouldBe(3);
+
+        var newInventory = new Inventory();
+        newInventory.LoadFromDictionary(dict);
+        newInventory.GetCount(pay).ShouldBe(1);
+        newInventory.CollectionCounts.First(kv => kv.Key == pay).Value.ShouldBe(2);
+        newInventory.RejectCounts.First(kv => kv.Key == pay).Value.ShouldBe(3);
+    }
+
+    [Fact]
+    public void LoadFromDictionary_InvalidKey_ShouldIgnore()
+    {
+        var dict = new Dictionary<string, int> { { "INVALID", 10 } };
+        Inventory.LoadFromDictionary(dict); // Should not throw
+        Inventory.CalculateTotal().ShouldBe(0);
+    }
+
+    [Fact]
+    public void SetDiscrepancy_ShouldWork()
+    {
         Inventory.HasDiscrepancy.ShouldBeFalse();
+        Inventory.HasDiscrepancy = true;
+        Inventory.HasDiscrepancy.ShouldBeTrue();
     }
 }
