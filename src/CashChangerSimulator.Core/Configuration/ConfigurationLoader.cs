@@ -19,6 +19,8 @@ public static class ConfigurationLoader
     private static readonly string InventoryStatePath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "inventory.toml");
 
+    public static string GetDefaultInventoryStatePath() => InventoryStatePath;
+
     /// <summary>PascalCase プロパティ名をそのまま TOML キーとして使用するオプション。</summary>
     private static readonly TomlSerializerOptions ModelOptions = new()
     {
@@ -68,9 +70,10 @@ public static class ConfigurationLoader
     }
 
     /// <summary>在庫状態を読み込む。</summary>
-    public static InventoryState LoadInventoryState()
+    public static InventoryState LoadInventoryState(string? path = null)
     {
-        if (!File.Exists(InventoryStatePath))
+        var filePath = path ?? InventoryStatePath;
+        if (!File.Exists(filePath))
         {
             return new InventoryState();
         }
@@ -84,31 +87,35 @@ public static class ConfigurationLoader
         }
         catch (Exception ex)
         {
-            Logger.ZLogError(ex, $"Failed to load inventory state from {InventoryStatePath}. Returning empty state.");
+            Logger.ZLogError(ex, $"Failed to load inventory state from {filePath}. Returning empty state.");
             // Return empty instead of crashing; allows starting with zero inventory
             return new InventoryState();
         }
     }
 
     /// <summary>在庫状態を保存する。</summary>
-    public static void SaveInventoryState(InventoryState state)
+    public static void SaveInventoryState(InventoryState state, string? path = null)
     {
+        var filePath = path ?? InventoryStatePath;
         var tomlText = TomlSerializer.Serialize(state, ModelOptions);
-        File.WriteAllText(InventoryStatePath, tomlText);
+        File.WriteAllText(filePath, tomlText);
     }
 
     /// <summary>取引履歴の保存先ファイルパス（バイナリ形式）。</summary>
     private static readonly string HistoryStatePath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "history.bin");
 
+    public static string GetDefaultHistoryStatePath() => HistoryStatePath;
+
     /// <summary>取引履歴を読み込む。</summary>
-    public static HistoryState LoadHistoryState()
+    public static HistoryState LoadHistoryState(string? path = null)
     {
-        if (!File.Exists(HistoryStatePath))
+        var filePath = path ?? HistoryStatePath;
+        if (!File.Exists(filePath))
         {
             return CreateInitialHistoryState();
         }
-
+    
         try
         {
             var bin = File.ReadAllBytes(HistoryStatePath);
@@ -123,26 +130,27 @@ public static class ConfigurationLoader
         {
             Logger.ZLogError(
                 ex,
-                $"Failed to load history state from {HistoryStatePath}. Returning initial state.");
+                $"Failed to load history state from {filePath}. Returning initial state.");
             // Return initial state if file is corrupted or missing
             return CreateInitialHistoryState();
         }
     }
 
     /// <summary>取引履歴を保存する。</summary>
-    public static void SaveHistoryState(HistoryState state)
+    public static void SaveHistoryState(HistoryState state, string? path = null)
     {
+        var filePath = path ?? HistoryStatePath;
         try
         {
             var bin = MemoryPack
                 .MemoryPackSerializer
                 .Serialize(state);
             File
-                .WriteAllBytes(HistoryStatePath, bin);
+                .WriteAllBytes(filePath, bin);
         }
         catch (Exception ex)
         {
-            Logger.ZLogError(ex, $"Failed to save history state to {HistoryStatePath}.");
+            Logger.ZLogError(ex, $"Failed to save history state to {filePath}.");
             // Swallowing because saving failed history should not interrupt other operations
         }
     }

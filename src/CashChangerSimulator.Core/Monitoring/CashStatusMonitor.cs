@@ -11,6 +11,14 @@ public class CashStatusMonitor : IDisposable
     private int _nearEmptyThreshold;
     private int _nearFullThreshold;
     private int _fullThreshold;
+
+    /// <summary>ニアエンプティしきい値。</summary>
+    public int NearEmptyThreshold => _nearEmptyThreshold;
+    /// <summary>ニアフルしきい値。</summary>
+    public int NearFullThreshold => _nearFullThreshold;
+    /// <summary>フルしきい値。</summary>
+    public int FullThreshold => _fullThreshold;
+
     private readonly ReactiveProperty<CashStatus> _status = new(CashStatus.Unknown);
     private readonly IDisposable _subscription;
 
