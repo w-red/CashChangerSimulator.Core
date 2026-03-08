@@ -21,7 +21,7 @@ public class SimulatorConfiguration
             {
                 ["B10000"] = new() { InitialCount = 10, DisplayName = "10,000 Yen Bill", DisplayNameJP = "一万円札" },
                 ["B5000"] = new() { InitialCount = 10, DisplayName = "5,000 Yen Bill", DisplayNameJP = "五千円札" },
-                ["B2000"] = new() { InitialCount = 0, NearEmpty = -1, IsRecyclable = false, DisplayName = "2,000 Yen Bill", DisplayNameJP = "二千円札" },
+                ["B2000"] = new() { InitialCount = 0, NearEmpty = -1, IsRecyclable = false, IsDepositable = true, DisplayName = "2,000 Yen Bill", DisplayNameJP = "二千円札" },
                 ["B1000"] = new() { InitialCount = 50, DisplayName = "1,000 Yen Bill", DisplayNameJP = "千円札" },
                 ["C500"] = new() { InitialCount = 50, DisplayName = "500 Yen Coin", DisplayNameJP = "五百円玉" },
                 ["C100"] = new() { InitialCount = 100, DisplayName = "100 Yen Coin", DisplayNameJP = "百円玉" },
