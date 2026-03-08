@@ -2,6 +2,7 @@ using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using CashChangerSimulator.Core.Opos;
+using Moq;
 using Shouldly;
 using Xunit;
 
@@ -111,13 +112,48 @@ public class UposMediatorTests
     }
 
     [Fact]
-    public void Execute_ShouldHandleException()
+    public void HandleDispenseResult_ShouldNotFireEvent_WhenSync()
+    {
+        bool eventFired = false;
+        _so.OnEventQueued = (e) => eventFired = true;
+
+        _mediator.HandleDispenseResult(ErrorCode.Success, 0, false);
+
+        _mediator.ResultCode.ShouldBe((int)ErrorCode.Success);
+        _mediator.IsBusy.ShouldBeFalse();
+        eventFired.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void SetSuccessAndFailure_ShouldUpdateProperties()
+    {
+        _mediator.SetSuccess();
+        _mediator.ResultCode.ShouldBe((int)ErrorCode.Success);
+
+        _mediator.SetFailure(ErrorCode.Illegal, 456);
+        _mediator.ResultCode.ShouldBe((int)ErrorCode.Illegal);
+        _mediator.ResultCodeExtended.ShouldBe(456);
+    }
+
+    [Fact]
+    public void Execute_ShouldHandlePosControlException()
     {
         var mock = new Moq.Mock<IUposCommand>();
-        mock.Setup(c => c.Execute()).Throws(new System.Exception("Kaboom"));
+        mock.Setup(c => c.Verify(It.IsAny<IUposMediator>()));
+        mock.Setup(c => c.Execute()).Throws(new PosControlException("Pos error", ErrorCode.Illegal, 789));
 
-        Should.Throw<System.Exception>(() => _mediator.Execute(mock.Object));
+        var ex = Should.Throw<PosControlException>(() => _mediator.Execute(mock.Object));
         
-        _mediator.ResultCode.ShouldBe((int)ErrorCode.Failure);
+        _mediator.ResultCode.ShouldBe((int)ErrorCode.Illegal);
+        _mediator.ResultCodeExtended.ShouldBe(789);
+        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
+    }
+
+    [Fact]
+    public void Execute_ShouldSucceed()
+    {
+        var mock = new Moq.Mock<IUposCommand>();
+        _mediator.Execute(mock.Object);
+        _mediator.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 }

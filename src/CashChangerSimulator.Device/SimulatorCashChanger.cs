@@ -51,6 +51,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
         _ctx = SimulatorContext.Create(deps, this, _logger);
         _eventNotifier = _ctx.EventNotifier;
+        _ctx.StatusCoordinator.Start();
 
         // ライフサイクルハンドラーを初期化（null参照防止）
         _ctx.LifecycleManager.UpdateHandler(_ctx.Mediator.SkipStateVerification);
@@ -128,6 +129,20 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override bool AsyncMode { get; set; }
     public override int AsyncResultCode => _ctx.Mediator.AsyncResultCode;
     public override int AsyncResultCodeExtended => _ctx.Mediator.AsyncResultCodeExtended;
+
+    /// <summary>状態検証（Open, Claim 等のシーケンスチェック）をスキップするかどうかを取得または設定します。</summary>
+    /// <remarks>シミュレータとしての利便性を優先する場合に true に設定します。</remarks>
+    public bool SkipStateVerification
+    {
+        get => _ctx.Mediator.SkipStateVerification;
+        set
+        {
+            if (_ctx.Mediator.SkipStateVerification == value) return;
+            _ctx.Mediator.SkipStateVerification = value;
+            _ctx.LifecycleManager.UpdateHandler(value);
+        }
+    }
+
     public override string CurrencyCode { get => _configManager.CurrencyCode; set => _configManager.CurrencyCode = value; }
     public override string[] CurrencyCodeList => _configManager.CurrencyCodeList;
     public override string[] DepositCodeList => _configManager.DepositCodeList;
@@ -148,10 +163,10 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     void IUposEventSink.QueueEvent(EventArgs e) => _eventNotifier.QueueEvent(e);
     void IUposEventSink.QueueDataEvent(DataEventArgs e) => QueueEvent(e);
     void IUposEventSink.QueueStatusUpdateEvent(StatusUpdateEventArgs e) => QueueEvent(e);
-    protected virtual void NotifyEvent(EventArgs e) => _eventNotifier.NotifyEvent(e);
+    protected virtual void NotifyEvent(EventArgs e) => _eventNotifier?.NotifyEvent(e);
     bool IUposEventSink.DataEventEnabled => DataEventEnabled;
     bool IUposEventSink.CapDepositDataEvent => CapDepositDataEvent;
-    bool IUposEventSink.SkipStateVerification => _ctx.Mediator.SkipStateVerification;
+    bool IUposEventSink.SkipStateVerification => SkipStateVerification;
     bool IUposEventSink.RealTimeDataEnabled => RealTimeDataEnabled;
 
     // Infrastructure
@@ -163,13 +178,33 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     internal void FireEventInternal(EventArgs e) => NotifyEvent(e);
 
     // IDisposable
+    private bool _disposedValue;
+
     protected override void Dispose(bool disposing)
     {
+        if (_disposedValue) return;
+
         if (disposing)
         {
-            _ctx.StatusCoordinator?.Dispose();
+            _ctx?.Dispose();
         }
-        base.Dispose(disposing);
+
+        try
+        {
+            // SDK の内部状態で既に Closed になっている場合に base.Dispose を呼ぶと例外が発生することがあるため、
+            // 安全のために保護します。根本的な回避のため、状態チェックも併用します。
+            if (State != ControlState.Closed)
+            {
+                base.Dispose(disposing);
+            }
+        }
+        catch (Exception ex)
+        {
+            // 終了処理中の例外はログ記録に留め、アプリケーションの終了を妨げないようにします。
+            System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] Dispose Error: {ex}");
+        }
+
+        _disposedValue = true;
     }
     /// <inheritdoc/>
     public Observable<Unit> DepositChanged => DepositController.Changed;

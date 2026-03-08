@@ -62,10 +62,18 @@ public class SimulatorCashChangerTests
 
         // Assert
         changer.CapDeposit.ShouldBeTrue();
+        changer.CapDepositDataEvent.ShouldBeTrue();
         changer.CapPauseDeposit.ShouldBeTrue();
         changer.CapRepayDeposit.ShouldBeTrue();
+        changer.CapPurgeCash.ShouldBeTrue();
         changer.CapDiscrepancy.ShouldBeTrue();
         changer.CapFullSensor.ShouldBeTrue();
+        changer.CapNearFullSensor.ShouldBeTrue();
+        changer.CapNearEmptySensor.ShouldBeTrue();
+        changer.CapEmptySensor.ShouldBeTrue();
+        changer.CapStatisticsReporting.ShouldBeTrue();
+        changer.CapUpdateStatistics.ShouldBeTrue();
+        changer.CapRealTimeData.ShouldBeTrue();
     }
 
     [Fact]
@@ -115,6 +123,68 @@ public class SimulatorCashChangerTests
 
         // Assert
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);
+    }
+
+    [Fact]
+    public void Diagnostics_ShouldDelegateToFacade()
+    {
+        // Arrange
+        var changer = new InternalSimulatorCashChanger();
+        changer.Open();
+        changer.Claim(0);
+        changer.DeviceEnabled = true;
+
+        // Act & Assert: CheckHealth
+        var health = changer.CheckHealth(HealthCheckLevel.Internal);
+        health.ShouldContain("Internal Health Check Report");
+        health.ShouldContain("Status: OK");
+        changer.CheckHealthText.ShouldBe(health);
+
+        // Act & Assert: Statistics
+        var stats = changer.RetrieveStatistics(["*"]);
+        stats.ShouldNotBeNull();
+        
+        changer.UpdateStatistics([new Statistic("Test", 1)]); // Should not throw
+        changer.ResetStatistics(["*"]); // Should not throw
+    }
+
+    [Fact]
+    public void StatusProperties_ShouldReflectState()
+    {
+        var changer = new InternalSimulatorCashChanger();
+        
+        // When closed
+        changer.DeviceStatus.ShouldBe(CashChangerStatus.OK);
+        changer.FullStatus.ShouldBe(CashChangerFullStatus.OK);
+
+        changer.Open();
+        changer.Claim(0);
+        changer.DeviceEnabled = true;
+
+        // Initial idle state
+        changer.DeviceStatus.ShouldBe(CashChangerStatus.OK);
+        changer.FullStatus.ShouldBe(CashChangerFullStatus.OK);
+    }
+
+    [Fact]
+    public void CoreOperations_ShouldNotThrowWhenEnabled()
+    {
+        var changer = new InternalSimulatorCashChanger();
+        changer.Open();
+        changer.Claim(0);
+        changer.DeviceEnabled = true;
+
+        // These should delegate and not throw in simple cases
+        changer.PurgeCash();
+        changer.ClearOutput();
+        
+        // Deposit related must be inside a session
+        changer.BeginDeposit();
+        changer.FixDeposit();
+        changer.EndDeposit(CashDepositAction.NoChange);
+
+        changer.BeginDeposit();
+        changer.RepayDeposit();
     }
 
     [Fact]
