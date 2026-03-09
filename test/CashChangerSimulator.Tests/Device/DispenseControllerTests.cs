@@ -117,7 +117,7 @@ public class DispenseControllerTests
             .Returns(async (CancellationToken t) => await Task.Delay(1000, t));
 
         _ = _controller.DispenseChangeAsync(100, true, (e, ex) => { });
-        await Task.Delay(50); // Give it a bit of time to start
+        await Task.Delay(50, TestContext.Current.CancellationToken); // Give it a bit of time to start
 
         // Act & Assert
         _controller.IsBusy.ShouldBeTrue();
@@ -161,7 +161,7 @@ public class DispenseControllerTests
         _controller.ClearOutput();
         
         // Wait a bit for the task to react to cancellation
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Assert
         _controller.IsBusy.ShouldBeFalse();
