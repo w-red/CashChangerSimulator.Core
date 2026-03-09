@@ -1,4 +1,6 @@
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 
@@ -9,12 +11,14 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
 {
     private readonly HardwareStatusManager _hardware;
     private readonly IUposMediator _mediator;
+    private readonly TransactionHistory _history;
     private readonly ILogger _logger;
 
-    public StandardLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, ILogger logger)
+    public StandardLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, TransactionHistory history, ILogger logger)
     {
         _hardware = hardware ?? throw new ArgumentNullException(nameof(hardware));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _history = history ?? throw new ArgumentNullException(nameof(history));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -83,6 +87,7 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         }
 
         _hardware.SetConnected(true);
+        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
         _mediator.SetSuccess();
     }
 
@@ -106,6 +111,7 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         }
 
         _hardware.SetConnected(false);
+        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
         _mediator.SetSuccess();
     }
 
@@ -129,6 +135,7 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         }
 
         _mediator.Claimed = true;
+        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Claim, 0, new Dictionary<DenominationKey, int>()));
         _mediator.SetSuccess();
     }
 
@@ -154,6 +161,7 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         }
 
         _mediator.Claimed = false;
+        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
         _mediator.SetSuccess();
     }
 }

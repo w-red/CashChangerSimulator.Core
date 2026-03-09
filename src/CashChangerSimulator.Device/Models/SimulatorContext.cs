@@ -33,11 +33,12 @@ public sealed class SimulatorContext : IDisposable
     {
         var hardwareStatusManager = deps.HardwareStatusManager ?? new HardwareStatusManager();
         var mediator = deps.Mediator as UposMediator ?? new UposMediator(so);
-        var lifecycleManager = new LifecycleManager(hardwareStatusManager, mediator, logger);
 
         var configProvider = deps.ConfigProvider ?? new ConfigurationProvider();
         var inventory = deps.Inventory ?? new Inventory();
         var history = deps.History ?? new TransactionHistory();
+
+        var lifecycleManager = new LifecycleManager(hardwareStatusManager, mediator, history, logger);
         var manager = deps.Manager ?? new CashChangerManager(inventory, history, new ChangeCalculator(), configProvider);
 
         var depositController = deps.DepositController ?? new DepositController(inventory, hardwareStatusManager, manager, configProvider);

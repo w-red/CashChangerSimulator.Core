@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 
@@ -13,15 +14,17 @@ public class LifecycleManager : IUposLifecycleHandler
 {
     private readonly HardwareStatusManager _hardwareStatusManager;
     private readonly IUposMediator _mediator;
+    private readonly TransactionHistory _history;
     private readonly ILogger _logger;
     private IUposLifecycleHandler _handler = null!;
 
     /// <summary>必要な依存関係を注入してマネージャーを初期化します。</summary>
     /// <remarks>状態管理、バリデーション、およびロギングのためのコンポーネントを受け取ります。</remarks>
-    public LifecycleManager(HardwareStatusManager hardwareStatusManager, IUposMediator mediator, ILogger logger)
+    public LifecycleManager(HardwareStatusManager hardwareStatusManager, IUposMediator mediator, TransactionHistory history, ILogger logger)
     {
         _hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _history = history ?? throw new ArgumentNullException(nameof(history));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -29,8 +32,8 @@ public class LifecycleManager : IUposLifecycleHandler
     public void UpdateHandler(bool skipStateVerification)
     {
         _handler = skipStateVerification
-            ? new SkipVerificationLifecycleHandler(_hardwareStatusManager, _mediator, _logger)
-            : new StandardLifecycleHandler(_hardwareStatusManager, _mediator, _logger);
+            ? new SkipVerificationLifecycleHandler(_hardwareStatusManager, _mediator, _history, _logger)
+            : new StandardLifecycleHandler(_hardwareStatusManager, _mediator, _history, _logger);
         
         _logger.LogInformation("LifecycleHandler switched. SkipStateVerification: {0}, HandlerType: {1}", skipStateVerification, _handler.GetType().Name);
     }

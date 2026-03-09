@@ -1,14 +1,17 @@
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.Coordination;
 
 /// <summary>検証をスキップするシミュレータ用の UPOS ライフサイクルを実装するクラス。</summary>
-public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, ILogger logger) : IUposLifecycleHandler
+public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, TransactionHistory history, ILogger logger) : IUposLifecycleHandler
 {
     private readonly HardwareStatusManager _hardware = hardware ?? throw new ArgumentNullException(nameof(hardware));
     private readonly IUposMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+    private readonly TransactionHistory _history = history ?? throw new ArgumentNullException(nameof(history));
     private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public ControlState State
@@ -41,6 +44,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
         if (baseOpen == null) throw new ArgumentNullException(nameof(baseOpen));
         // Skip baseOpen()
         _hardware.SetConnected(true);
+        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
         _logger.LogInformation("Device opened (Verification Skipped).");
         _mediator.SetSuccess();
     }
@@ -50,6 +54,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
     {
         if (baseClose == null) throw new ArgumentNullException(nameof(baseClose));
         _hardware.SetConnected(false);
+        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
         _logger.LogInformation("Device closed (Verification Skipped).");
         _mediator.SetSuccess();
     }
@@ -65,6 +70,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
         }
 
         _mediator.Claimed = true;
+        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Claim, 0, new Dictionary<DenominationKey, int>()));
         _logger.LogInformation("Device claimed (Verification Skipped).");
         _mediator.SetSuccess();
     }
@@ -81,6 +87,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
         }
 
         _mediator.Claimed = false;
+        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
         _logger.LogInformation("Device released (Verification Skipped).");
         _mediator.SetSuccess();
     }

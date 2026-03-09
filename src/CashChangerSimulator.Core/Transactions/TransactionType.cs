@@ -16,5 +16,13 @@ public enum TransactionType
     /// <summary>在庫調整（棚卸し等による直接修正）。</summary>
     Adjustment,
     /// <summary>UPOS の DataEvent 等、ログ通知用のイベント。</summary>
-    DataEvent
+    DataEvent,
+    /// <summary>デバイスのオープン。</summary>
+    Open,
+    /// <summary>デバイスのクローズ。</summary>
+    Close,
+    /// <summary>デバイスの占有（権限取得）。</summary>
+    Claim,
+    /// <summary>デバイスの占有解除。</summary>
+    Release
 }
