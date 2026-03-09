@@ -34,15 +34,7 @@ public class TransactionHistory : IDisposable
     {
         return new HistoryState
         {
-            Entries = [.. _entries.Select(e => new HistoryEntryState
-            {
-                Timestamp = e.Timestamp,
-                Type = e.Type,
-                Amount = e.Amount,
-                Counts = e.Counts.ToDictionary(
-                    kv => $"{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}",
-                    kv => kv.Value)
-            })]
+            Entries = [.. _entries]
         };
     }
 
@@ -52,18 +44,9 @@ public class TransactionHistory : IDisposable
         _entries.Clear();
         if (state.Entries == null) return;
 
-        foreach (var s in state.Entries.Take(MaxEntries))
+        foreach (var entry in state.Entries.Take(MaxEntries))
         {
-            var counts = new Dictionary<DenominationKey, int>();
-            foreach (var kv in s.Counts)
-            {
-                var parts = kv.Key.Split(DenominationKey.KeySeparator);
-                if (parts.Length == 2 && DenominationKey.TryParse(parts[1], parts[0], out var key) && key != null)
-                {
-                    counts[key] = kv.Value;
-                }
-            }
-            _entries.Add(new TransactionEntry(s.Timestamp, s.Type, s.Amount, counts));
+            _entries.Add(entry);
         }
     }
 
