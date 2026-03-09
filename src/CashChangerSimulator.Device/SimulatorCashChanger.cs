@@ -70,7 +70,11 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     }
 
     // Lifecycle
-    public override void Open() => _ctx.LifecycleManager.Open(base.Open);
+    public override void Open()
+    {
+        _ctx.LifecycleManager.UpdateHandler(SkipStateVerification);
+        _ctx.LifecycleManager.Open(base.Open);
+    }
     public override void Close() => _ctx.LifecycleManager.Close(base.Close);
     public override void Claim(int timeout) => _ctx.LifecycleManager.Claim(timeout, base.Claim);
     public override void Release() => _ctx.LifecycleManager.Release(base.Release);

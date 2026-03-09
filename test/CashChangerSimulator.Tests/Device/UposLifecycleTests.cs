@@ -9,23 +9,31 @@ using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CashChangerSimulator.Tests.Device;
+
+public class CustomLogger<T> : ILogger<T>
+{
+    public List<string> Logs { get; } = new();
+    public IDisposable BeginScope<TState>(TState state) => null;
+    public bool IsEnabled(LogLevel logLevel) => true;
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+    {
+        Logs.Add(formatter(state, exception));
+    }
+}
 
 /// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。</summary>
 public class UposLifecycleTests
 {
-    private static InternalSimulatorCashChanger CreateCashChanger()
+    private static (InternalSimulatorCashChanger cc, CustomLogger<SimulatorCashChanger> logger) CreateCashChangerWithLogger()
     {
         var configProvider = new ConfigurationProvider();
-        configProvider.Config.Simulation.HotStart = false; // ColdStart is now the baseline
-        configProvider.Config.Inventory["JPY"] = new InventorySettings
-        {
-            Denominations = new()
-            {
-                ["C100"] = new() { InitialCount = 50 }
-            }
-        };
+        configProvider.Config.Simulation.HotStart = false;
+        configProvider.Config.Inventory["JPY"] = new InventorySettings { Denominations = new() { ["C100"] = new() { InitialCount = 50 } } };
 
         var inv = new Inventory();
         var hw = new HardwareStatusManager();
@@ -37,20 +45,18 @@ public class UposLifecycleTests
         var depositController = new DepositController(inv, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
-        var deps = new SimulatorDependencies(
-            configProvider,
-            inv,
-            history,
-            manager,
-            depositController,
-            dispenseController,
-            aggregatorProvider,
-            hw);
-
+        var deps = new SimulatorDependencies(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw);
+        
+        var logger = new CustomLogger<SimulatorCashChanger>();
+        // Note: SimulatorCashChanger uses LogProvider internally, but custom DI would be needed to inject this logger properly.
+        // For this test, we might need to rely on the fact that LifecycleManager and Handlers use the logger passed to them.
+        
         var changer = new InternalSimulatorCashChanger(deps);
         changer.SkipStateVerification = false;
-        return changer;
+        return (changer, logger);
     }
+
+    private static InternalSimulatorCashChanger CreateCashChanger() => CreateCashChangerWithLogger().cc;
 
     /// <summary>占有されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。</summary>
     [Fact]
@@ -102,5 +108,40 @@ public class UposLifecycleTests
     {
         var cc = CreateCashChanger();
         cc.CheckHealth(HealthCheckLevel.Internal).ShouldContain("OK");
+    }
+
+    /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する（NRE回避の確認）。</summary>
+    [Fact]
+    public void SkipStateVerificationShouldBypassFramework()
+    {
+        var cc = CreateCashChanger();
+        cc.SkipStateVerification = true;
+        
+        // Open() が UpdateHandler を呼び出すことを検証
+        cc.Open();
+        
+        // SkipVerificationLifecycleHandler が使用されていれば、
+        // base.Claim() を呼ばずに成功するはず
+        cc.Claim(1000);
+        
+        cc.Claimed.ShouldBeTrue();
+    }
+
+    /// <summary>プロパティ変更時にハンドラーが即座に切り替わることを検証する。</summary>
+    [Fact]
+    public void HandlerShouldSwitchWhenPropertyChanges()
+    {
+        var cc = CreateCashChanger();
+        cc.Open();
+        
+        // Skip に切り替え
+        cc.SkipStateVerification = true;
+        cc.Claim(1000);
+        cc.Claimed.ShouldBeTrue();
+
+        // Standard に戻す
+        cc.SkipStateVerification = false;
+        // この時点で Claim すると実際には base.Claim が呼ばれるが、StandardLifecycleHandler が例外をキャッチする
+        cc.Claim(1000);
     }
 }
