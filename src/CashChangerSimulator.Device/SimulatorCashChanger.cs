@@ -200,22 +200,26 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     {
         if (_disposedValue) return;
 
+        // [FIX] Set this flag IMMEDIATELY to prevent recursive calls during disposal/SDK-internal Close.
+        _disposedValue = true;
+
         if (disposing)
         {
-            _ctx?.Dispose();
+            try { _ctx?.Dispose(); } catch { /* Ignore cleanup errors */ }
         }
 
         try
         {
             // SDK の内部状態で既に Closed になっている場合に base.Dispose を呼ぶと例外が発生することがあるため、
-            // 安全のために保護します。根本的な回避のため、状態チェックも併用します。
+            // 安全のために保護します。
             if (State != ControlState.Closed)
             {
                 // [FIX] Explicitly reset RealTimeDataEnabled to stop internal event listeners 
                 // before disposal to prevent NullReferenceException in POS SDK.
+                // We wrap this and base.Dispose together as they are both interacting with the potentially unstable SDK state.
                 if (CapRealTimeData)
                 {
-                    RealTimeDataEnabled = false;
+                    try { RealTimeDataEnabled = false; } catch { }
                 }
 
                 base.Dispose(disposing);
@@ -223,11 +227,9 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         }
         catch (Exception ex)
         {
-            // 終了処理中の例外はログ記録に留め、アプリケーションの終了を妨げないようにします。
-            System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] Dispose Error: {ex}");
+            // 終了処理中の例外はデバッグ出力に留め、アプリケーションの終了を妨げないようにします。
+            System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] Dispose SDK Error: {ex}");
         }
-
-        _disposedValue = true;
     }
     /// <inheritdoc/>
     public Observable<Unit> DepositChanged => DepositController.Changed;
