@@ -107,67 +107,8 @@ public static class ConfigurationLoader
 
     public static string GetDefaultHistoryStatePath() => HistoryStatePath;
 
-    /// <summary>取引履歴を読み込む。</summary>
-    public static HistoryState LoadHistoryState(string? path = null)
+    private static HistoryState CreateEmptyHistoryState()
     {
-        var filePath = path ?? HistoryStatePath;
-        if (!File.Exists(filePath))
-        {
-            return CreateInitialHistoryState();
-        }
-    
-        try
-        {
-            var bin = File.ReadAllBytes(HistoryStatePath);
-            var state = MemoryPack
-                .MemoryPackSerializer
-                .Deserialize<HistoryState>(bin)
-                ?? CreateInitialHistoryState();
-            state.Entries ??= [];
-            return state;
-        }
-        catch (Exception ex)
-        {
-            Logger.ZLogError(
-                ex,
-                $"Failed to load history state from {filePath}. Returning initial state.");
-            // Return initial state if file is corrupted or missing
-            return CreateInitialHistoryState();
-        }
-    }
-
-    /// <summary>取引履歴を保存する。</summary>
-    public static void SaveHistoryState(HistoryState state, string? path = null)
-    {
-        var filePath = path ?? HistoryStatePath;
-        try
-        {
-            var bin = MemoryPack
-                .MemoryPackSerializer
-                .Serialize(state);
-            File
-                .WriteAllBytes(filePath, bin);
-        }
-        catch (Exception ex)
-        {
-            Logger.ZLogError(ex, $"Failed to save history state to {filePath}.");
-            // Swallowing because saving failed history should not interrupt other operations
-        }
-    }
-
-    private static HistoryState CreateInitialHistoryState()
-    {
-        return new HistoryState
-        {
-            Entries = [
-                new HistoryEntryState
-                {
-                    Timestamp = DateTimeOffset.Now,
-                    Type = TransactionType.Unknown,
-                    Amount = 0,
-                    Counts = []
-                }
-            ]
-        };
+        return new HistoryState { Entries = [] };
     }
 }
