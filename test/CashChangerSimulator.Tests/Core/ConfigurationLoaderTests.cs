@@ -10,7 +10,6 @@ public class ConfigurationLoaderTests : IDisposable
 {
     private readonly string _testConfigPath = "test_config.toml";
     private readonly string _testInventoryPath = "inventory.toml"; // Fixed path in loader
-    private readonly string _testHistoryPath = "history.bin";     // Fixed path in loader
 
     /// <summary>ConfigurationLoaderTests の新しいインスタンスを初期化します。</summary>
     public ConfigurationLoaderTests()
@@ -29,7 +28,6 @@ public class ConfigurationLoaderTests : IDisposable
     {
         if (File.Exists(_testConfigPath)) File.Delete(_testConfigPath);
         if (File.Exists(_testInventoryPath)) File.Delete(_testInventoryPath);
-        if (File.Exists(_testHistoryPath)) File.Delete(_testHistoryPath);
     }
 
     /// <summary>設定ファイルが存在しない場合にデフォルト値が返されることを検証する。</summary>
@@ -148,17 +146,6 @@ public class ConfigurationLoaderTests : IDisposable
         var loaded = ConfigurationLoader.LoadInventoryState(path);
         loaded.Counts.ShouldContainKey("JPY:B1000");
         loaded.Counts["JPY:B1000"].ShouldBe(5);
-        File.Delete(path);
-    }
-
-    [Fact]
-    public void LoadHistoryState_Corrupted_ShouldReturnInitial()
-    {
-        var path = "corrupted_history.bin";
-        File.WriteAllBytes(path, [0, 1, 2, 3, 4, 5]);
-        var state = ConfigurationLoader.LoadHistoryState(path);
-        state.ShouldNotBeNull();
-        state.Entries.Count.ShouldBe(1);
         File.Delete(path);
     }
 }

@@ -60,7 +60,7 @@ public class TransactionHistoryTests
 
         var state = history.ToState();
         state.Entries.Count.ShouldBe(1);
-        state.Entries[0].Counts.ContainsKey("JPY:B1000").ShouldBeTrue();
+        state.Entries[0].Counts.ContainsKey(key).ShouldBeTrue();
 
         var history2 = new TransactionHistory();
         history2.FromState(state);
@@ -82,42 +82,16 @@ public class TransactionHistoryTests
         history.Entries.ShouldBeEmpty();
     }
 
-    /// <summary>FromState で不正な形式のキーがあればスキップすることを検証する。</summary>
-    [Fact]
-    public void FromStateWithMalformedKeyShouldSkipInvalidEntries()
-    {
-        var history = new TransactionHistory();
-        var state = new HistoryState
-        {
-            Entries =
-            [
-                new HistoryEntryState
-                {
-                    Amount = 1000,
-                    Type = TransactionType.Deposit,
-                    Timestamp = DateTimeOffset.Now,
-                    Counts = new Dictionary<string, int> { { "INVALID_KEY", 1 } }
-                }
-            ]
-        };
-
-        // Act
-        history.FromState(state);
-
-        // Assert
-        history.Entries.Count.ShouldBe(1);
-        history.Entries[0].Counts.ShouldBeEmpty(); // INVALID_KEY skipped
-    }
 
     /// <summary>FromState で 1000件 を超えるデータがある場合、制限されることを検証する。</summary>
     [Fact]
     public void FromStateWithTooManyEntriesShouldEnforceLimit()
     {
         var history = new TransactionHistory();
-        var entries = new List<HistoryEntryState>();
+        var entries = new List<TransactionEntry>();
         for (int i = 0; i < 1100; i++)
         {
-            entries.Add(new HistoryEntryState { Amount = i, Type = TransactionType.Adjustment, Timestamp = DateTimeOffset.Now, Counts = [] });
+            entries.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Adjustment, i, new Dictionary<DenominationKey, int>()));
         }
         var state = new HistoryState { Entries = entries };
 
