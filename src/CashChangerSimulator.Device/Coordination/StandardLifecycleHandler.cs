@@ -125,13 +125,21 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
+        if (Claimed)
+        {
+            _logger.LogInformation("Claim called but device is already claimed.");
+            _mediator.SetSuccess();
+            return;
+        }
+
         try
         {
             baseClaim(timeout);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "base.Claim() failed in framework. Ignoring to allow simulation.");
+            // POS for .NET often throws NRE if internal state is not perfect.
+            _logger.LogWarning(ex, "base.Claim({0}) failed. Ignoring to allow simulation.", timeout);
         }
 
         _mediator.Claimed = true;
@@ -146,9 +154,14 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         if (State == ControlState.Closed)
         {
             _logger.LogWarning("Release called while device is Closed.");
-            // Release while closed is often allowed to be a no-op or throw, 
-            // but for parity with Claim, let's treat it as illegal if we want strict verification.
-            // Actually, UPOS says Release should work if Claimed.
+            throw new PosControlException("Device is closed.", ErrorCode.Closed);
+        }
+
+        if (!Claimed)
+        {
+            _logger.LogInformation("Release called but device is not claimed.");
+            _mediator.SetSuccess();
+            return;
         }
 
         try
