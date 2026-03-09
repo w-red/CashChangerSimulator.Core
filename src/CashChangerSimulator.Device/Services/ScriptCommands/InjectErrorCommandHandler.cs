@@ -6,6 +6,7 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Services.ScriptCommands;
 
 /// <summary>inject-error コマンド: ハードウェアエラーを注入します。</summary>
+/// <param name="hardwareStatusManager">ハードウェア状態管理インスタンス。</param>
 public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManager) : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
