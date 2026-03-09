@@ -7,35 +7,27 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.Coordination;
 
 /// <summary>標準的な UPOS ライフサイクル（状態検証あり）を実装するクラス。</summary>
-public class StandardLifecycleHandler : IUposLifecycleHandler
+public class StandardLifecycleHandler(
+    HardwareStatusManager hardware,
+    IUposMediator mediator,
+    TransactionHistory history,
+    ILogger logger) : IUposLifecycleHandler
 {
-    private readonly HardwareStatusManager _hardware;
-    private readonly IUposMediator _mediator;
-    private readonly TransactionHistory _history;
-    private readonly ILogger _logger;
-
-    public StandardLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, TransactionHistory history, ILogger logger)
-    {
-        _hardware = hardware ?? throw new ArgumentNullException(nameof(hardware));
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        _history = history ?? throw new ArgumentNullException(nameof(history));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
     public ControlState State
     {
         get
         {
-            if (!_hardware.IsConnected.Value) return ControlState.Closed;
-            if (_mediator.IsBusy) return ControlState.Busy;
+            if (!hardware.IsConnected.Value) return ControlState.Closed;
+            if (mediator.IsBusy) return ControlState.Busy;
             return ControlState.Idle;
         }
     }
 
-    public bool Claimed => _mediator.Claimed;
+    public bool Claimed => mediator.Claimed;
+
     public bool DeviceEnabled
     {
-        get => _mediator.DeviceEnabled;
+        get => mediator.DeviceEnabled;
         set
         {
             if (value)
@@ -51,27 +43,27 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
                 }
             }
 
-            if (value == _mediator.DeviceEnabled) return;
+            if (value == mediator.DeviceEnabled) return;
 
-            _mediator.DeviceEnabled = value;
-            _logger.LogInformation("DeviceEnabled set to {0}.", value);
+            mediator.DeviceEnabled = value;
+            logger.LogInformation("DeviceEnabled set to {0}.", value);
         }
     }
+
     public bool DataEventEnabled
     {
-        get => _mediator.DataEventEnabled;
-        set => _mediator.DataEventEnabled = value;
+        get => mediator.DataEventEnabled;
+        set => mediator.DataEventEnabled = value;
     }
 
     public void Open(Action baseOpen)
     {
-        if (baseOpen == null) throw new ArgumentNullException(nameof(baseOpen));
-        if (_logger == null) throw new InvalidOperationException("_logger is null in StandardLifecycleHandler.Open");
+        ArgumentNullException.ThrowIfNull(baseOpen);
 
         if (State != ControlState.Closed)
         {
-            _logger.LogInformation("Open called but device is already {0}.", State);
-            _mediator.SetSuccess();
+            logger.LogInformation("Open called but device is already {0}.", State);
+            mediator.SetSuccess();
             return;
         }
 
@@ -83,21 +75,22 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         {
             // POS for .NET often throws NRE or PosControlException when registry entries are missing.
             // We ignore these in the simulator's standard handler to allow testing logic without a full installation.
-            _logger.LogWarning(ex, "base.Open() failed (likely due to missing registry info). Ignoring to allow simulation.");
+            logger.LogWarning(ex, "base.Open() failed (likely due to missing registry info). Ignoring to allow simulation.");
         }
 
-        _hardware.SetConnected(true);
-        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
-        _mediator.SetSuccess();
+        hardware.SetConnected(true);
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
+        mediator.SetSuccess();
     }
 
     public void Close(Action baseClose)
     {
-        if (baseClose == null) throw new ArgumentNullException(nameof(baseClose));
+        ArgumentNullException.ThrowIfNull(baseClose);
+
         if (State == ControlState.Closed)
         {
-            _logger.LogInformation("Close called but device is already Closed.");
-            _mediator.SetSuccess();
+            logger.LogInformation("Close called but device is already Closed.");
+            mediator.SetSuccess();
             return;
         }
 
@@ -107,28 +100,28 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "base.Close() failed. Ignoring.");
+            logger.LogWarning(ex, "base.Close() failed. Ignoring.");
         }
 
-        _hardware.SetConnected(false);
-        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
-        _mediator.SetSuccess();
+        hardware.SetConnected(false);
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
+        mediator.SetSuccess();
     }
 
     public void Claim(int timeout, Action<int> baseClaim)
     {
-        if (baseClaim == null) throw new ArgumentNullException(nameof(baseClaim));
+        ArgumentNullException.ThrowIfNull(baseClaim);
 
         if (State == ControlState.Closed)
         {
-            _logger.LogWarning("Claim called while device is Closed.");
+            logger.LogWarning("Claim called while device is Closed.");
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
         if (Claimed)
         {
-            _logger.LogInformation("Claim called but device is already claimed.");
-            _mediator.SetSuccess();
+            logger.LogInformation("Claim called but device is already claimed.");
+            mediator.SetSuccess();
             return;
         }
 
@@ -139,28 +132,28 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         catch (Exception ex)
         {
             // POS for .NET often throws NRE if internal state is not perfect.
-            _logger.LogWarning(ex, "base.Claim({0}) failed. Ignoring to allow simulation.", timeout);
+            logger.LogWarning(ex, "base.Claim({0}) failed. Ignoring to allow simulation.", timeout);
         }
 
-        _mediator.Claimed = true;
-        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Claim, 0, new Dictionary<DenominationKey, int>()));
-        _mediator.SetSuccess();
+        mediator.Claimed = true;
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Claim, 0, new Dictionary<DenominationKey, int>()));
+        mediator.SetSuccess();
     }
 
     public void Release(Action baseRelease)
     {
-        if (baseRelease == null) throw new ArgumentNullException(nameof(baseRelease));
+        ArgumentNullException.ThrowIfNull(baseRelease);
 
         if (State == ControlState.Closed)
         {
-            _logger.LogWarning("Release called while device is Closed.");
+            logger.LogWarning("Release called while device is Closed.");
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
         if (!Claimed)
         {
-            _logger.LogInformation("Release called but device is not claimed.");
-            _mediator.SetSuccess();
+            logger.LogInformation("Release called but device is not claimed.");
+            mediator.SetSuccess();
             return;
         }
 
@@ -170,11 +163,11 @@ public class StandardLifecycleHandler : IUposLifecycleHandler
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "base.Release() failed. Ignoring.");
+            logger.LogWarning(ex, "base.Release() failed. Ignoring.");
         }
 
-        _mediator.Claimed = false;
-        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
-        _mediator.SetSuccess();
+        mediator.Claimed = false;
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
+        mediator.SetSuccess();
     }
 }

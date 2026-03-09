@@ -9,86 +9,72 @@ namespace CashChangerSimulator.Device.Coordination;
 /// <summary>検証をスキップするシミュレータ用の UPOS ライフサイクルを実装するクラス。</summary>
 public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, TransactionHistory history, ILogger logger) : IUposLifecycleHandler
 {
-    private readonly HardwareStatusManager _hardware = hardware ?? throw new ArgumentNullException(nameof(hardware));
-    private readonly IUposMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-    private readonly TransactionHistory _history = history ?? throw new ArgumentNullException(nameof(history));
-    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    public ControlState State => !hardware.IsConnected.Value ? ControlState.Closed : mediator.IsBusy ? ControlState.Busy : ControlState.Idle;
 
-    public ControlState State
-    {
-        get
-        {
-            return !_hardware.IsConnected.Value
-                ? ControlState.Closed
-                : _mediator.IsBusy
-                    ? ControlState.Busy
-                    : ControlState.Idle;
-        }
-    }
+    public bool Claimed => mediator.Claimed;
 
-    public bool Claimed => _mediator.Claimed;
     public bool DeviceEnabled
     {
-        get => _mediator.DeviceEnabled;
-        set => _mediator.DeviceEnabled = value;
+        get => mediator.DeviceEnabled;
+        set => mediator.DeviceEnabled = value;
     }
+
     public bool DataEventEnabled
     {
-        get => _mediator.DataEventEnabled;
-        set => _mediator.DataEventEnabled = value;
+        get => mediator.DataEventEnabled;
+        set => mediator.DataEventEnabled = value;
     }
 
     /// <inheritdoc/>
     public void Open(Action baseOpen)
     {
-        if (baseOpen == null) throw new ArgumentNullException(nameof(baseOpen));
+        ArgumentNullException.ThrowIfNull(baseOpen);
         // Skip baseOpen()
-        _hardware.SetConnected(true);
-        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
-        _logger.LogInformation("Device opened (Verification Skipped).");
-        _mediator.SetSuccess();
+        hardware.SetConnected(true);
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
+        logger.LogInformation("Device opened (Verification Skipped).");
+        mediator.SetSuccess();
     }
 
     /// <inheritdoc/>
     public void Close(Action baseClose)
     {
-        if (baseClose == null) throw new ArgumentNullException(nameof(baseClose));
-        _hardware.SetConnected(false);
-        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
-        _logger.LogInformation("Device closed (Verification Skipped).");
-        _mediator.SetSuccess();
+        ArgumentNullException.ThrowIfNull(baseClose);
+        hardware.SetConnected(false);
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
+        logger.LogInformation("Device closed (Verification Skipped).");
+        mediator.SetSuccess();
     }
 
     /// <inheritdoc/>
     public void Claim(int timeout, Action<int> baseClaim)
     {
-        if (baseClaim == null) throw new ArgumentNullException(nameof(baseClaim));
+        ArgumentNullException.ThrowIfNull(baseClaim);
         
         if (State == ControlState.Closed)
         {
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
-        _mediator.Claimed = true;
-        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Claim, 0, new Dictionary<DenominationKey, int>()));
-        _logger.LogInformation("Device claimed (Verification Skipped).");
-        _mediator.SetSuccess();
+        mediator.Claimed = true;
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Claim, 0, new Dictionary<DenominationKey, int>()));
+        logger.LogInformation("Device claimed (Verification Skipped).");
+        mediator.SetSuccess();
     }
 
     /// <inheritdoc/>
     public void Release(Action baseRelease)
     {
-        if (baseRelease == null) throw new ArgumentNullException(nameof(baseRelease));
+        ArgumentNullException.ThrowIfNull(baseRelease);
 
         if (State == ControlState.Closed)
         {
-            // Usually no-op or throw. For parity:
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
-        _mediator.Claimed = false;
-        _history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
-        _logger.LogInformation("Device released (Verification Skipped).");
-        _mediator.SetSuccess();
+        mediator.Claimed = false;
+        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
+        logger.LogInformation("Device released (Verification Skipped).");
+        mediator.SetSuccess();
     }
 }
