@@ -1,3 +1,4 @@
+using MemoryPack;
 
 namespace CashChangerSimulator.Core.Models;
 
@@ -6,7 +7,8 @@ namespace CashChangerSimulator.Core.Models;
 /// 通貨コード（JPY等）、額面（1000等）、および硬貨/紙幣の種別を組み合わせたイミュータブルなキー。
 /// 在庫管理や金額計算の最小単位として、ディクショナリのキー等に使用されます。
 /// </remarks>
-public record DenominationKey(
+[MemoryPackable]
+public partial record DenominationKey(
     decimal Value,
     CurrencyCashType Type,
     string CurrencyCode = DenominationKey.DefaultCurrencyCode)

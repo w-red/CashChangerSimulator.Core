@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core.Models;
+using MemoryPack;
 
 namespace CashChangerSimulator.Core.Transactions;
 
@@ -7,7 +8,8 @@ namespace CashChangerSimulator.Core.Transactions;
 /// <param name="Type">取引種別。</param>
 /// <param name="Amount">合計金額の変動量。</param>
 /// <param name="Counts">金種ごとの枚数変動（DenominationKey, 枚数）。</param>
-public record TransactionEntry(
+[MemoryPackable]
+public partial record TransactionEntry(
     DateTimeOffset Timestamp,
     TransactionType Type,
     decimal Amount,
