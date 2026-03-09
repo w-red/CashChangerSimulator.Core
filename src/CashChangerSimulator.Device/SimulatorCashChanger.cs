@@ -41,6 +41,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     internal Inventory Inventory => _ctx.Inventory;
     internal HardwareStatusManager HardwareStatusManager => _ctx.HardwareStatusManager;
+    public HardwareStatusManager HardwareStatus => HardwareStatusManager;
     internal DepositController DepositController => _ctx.DepositController;
     internal SimulatorContext Context => _ctx;
 
@@ -210,6 +211,13 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
             // 安全のために保護します。根本的な回避のため、状態チェックも併用します。
             if (State != ControlState.Closed)
             {
+                // [FIX] Explicitly reset RealTimeDataEnabled to stop internal event listeners 
+                // before disposal to prevent NullReferenceException in POS SDK.
+                if (CapRealTimeData)
+                {
+                    RealTimeDataEnabled = false;
+                }
+
                 base.Dispose(disposing);
             }
         }

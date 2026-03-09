@@ -134,4 +134,57 @@ public class AdvancedScriptingTests
         var key500 = new DenominationKey(500, CurrencyCashType.Coin, "JPY");
         inv.GetCount(key500).ShouldBe(2);
     }
+
+    [Fact]
+    public async Task ExecuteScriptAsyncInjectErrorJamLocationShouldUpdateHardware()
+    {
+        // Arrange
+        var inv = new Inventory();
+        var hardware = new HardwareStatusManager();
+        hardware.SetConnected(true);
+        var controller = new DepositController(inv, hardware);
+        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
+
+        // 特定の箇所でのジャムを注入
+        var json = @"
+        [
+            { ""Op"": ""Inject-Error"", ""Error"": ""Jam"", ""Location"": ""Inlet"" }
+        ]";
+
+        // Act
+        await service.ExecuteScriptAsync(json);
+
+        // Assert
+        hardware.IsJammed.Value.ShouldBeTrue();
+        hardware.JamLocation.Value.ShouldBe(JamLocation.Inlet);
+    }
+
+    [Fact]
+    public async Task ExecuteScriptAsyncInjectErrorDeviceShouldUpdateHardware()
+    {
+        // Arrange
+        var inv = new Inventory();
+        var hardware = new HardwareStatusManager();
+        hardware.SetConnected(true);
+        var controller = new DepositController(inv, hardware);
+        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
+
+        // 汎用デバイスエラーを注入
+        var json = @"
+        [
+            { ""Op"": ""Inject-Error"", ""Error"": ""Device"", ""ErrorCode"": 111, ""ErrorCodeExtended"": 222 }
+        ]";
+
+        // Act
+        await service.ExecuteScriptAsync(json);
+
+        // Assert
+        hardware.IsDeviceError.Value.ShouldBeTrue();
+        hardware.CurrentErrorCode.Value.ShouldBe(111);
+        hardware.CurrentErrorCodeExtended.Value.ShouldBe(222);
+    }
 }

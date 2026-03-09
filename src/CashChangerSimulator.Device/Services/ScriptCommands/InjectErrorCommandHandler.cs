@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
@@ -18,12 +19,23 @@ public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManag
         switch (errorType)
         {
             case "jam":
-                hardwareStatusManager.SetJammed(true);
+                var location = JamLocation.None;
+                if (!string.IsNullOrEmpty(cmd.Location))
+                {
+                    Enum.TryParse<JamLocation>(cmd.Location, true, out location);
+                }
+                hardwareStatusManager.SetJammed(true, location);
                 break;
             case "overlap":
                 hardwareStatusManager.SetOverlapped(true);
                 break;
+            case "device":
+                hardwareStatusManager.SetDeviceError(cmd.ErrorCode ?? 0, cmd.ErrorCodeExtended ?? 0);
+                break;
             case "none":
+            case "reset":
+                hardwareStatusManager.ResetError();
+                break;
             default:
                 hardwareStatusManager.SetJammed(false);
                 hardwareStatusManager.SetOverlapped(false);

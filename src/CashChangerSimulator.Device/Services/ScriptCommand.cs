@@ -37,4 +37,13 @@ public class ScriptCommand
 
     /// <summary>額面を取得または設定します。</summary>
     public object? Denom { get; set; }
+
+    /// <summary>エラー箇所を取得または設定します。</summary>
+    public string? Location { get; set; }
+
+    /// <summary>ErrorCode を取得または設定します。</summary>
+    public int? ErrorCode { get; set; }
+
+    /// <summary>ErrorCodeExtended を取得または設定します。</summary>
+    public int? ErrorCodeExtended { get; set; }
 }
