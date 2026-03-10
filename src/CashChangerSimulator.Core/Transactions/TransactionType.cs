@@ -24,5 +24,7 @@ public enum TransactionType
     /// <summary>デバイスの占有（権限取得）。</summary>
     Claim,
     /// <summary>デバイスの占有解除。</summary>
-    Release
+    Release,
+    /// <summary>エラーイベント。</summary>
+    Error
 }

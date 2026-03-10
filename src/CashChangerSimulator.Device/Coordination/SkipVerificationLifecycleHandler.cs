@@ -41,6 +41,10 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
     public void Close(Action baseClose)
     {
         ArgumentNullException.ThrowIfNull(baseClose);
+        if (Claimed)
+        {
+            history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
+        }
         hardware.SetConnected(false);
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
         logger.ZLogInformation($"Device closed (Verification Skipped).");

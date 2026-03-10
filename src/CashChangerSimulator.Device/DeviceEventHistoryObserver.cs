@@ -34,6 +34,15 @@ public class DeviceEventHistoryObserver : IDisposable
                 new Dictionary<DenominationKey, int>()
             ));
         }
+        else if (e is ErrorEventArgs)
+        {
+            _history.Add(new TransactionEntry(
+                DateTimeOffset.Now,
+                TransactionType.Error,
+                0,
+                new Dictionary<DenominationKey, int>()
+            ));
+        }
     }
 
     /// <summary>イベントの購読を解除します。</summary>

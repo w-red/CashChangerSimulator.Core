@@ -104,6 +104,12 @@ public class StandardLifecycleHandler(
             logger.LogWarning(ex, "base.Close() failed. Ignoring.");
         }
 
+        if (Claimed)
+        {
+            logger.ZLogInformation($"Close called while device is Claimed. Adding implicit Release log.");
+            history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
+        }
+
         hardware.SetConnected(false);
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
         mediator.SetSuccess();
