@@ -21,6 +21,7 @@ public class TransactionHistory : IDisposable
     /// <param name="entry">追加する履歴エントリ。</param>
     public virtual void Add(TransactionEntry entry)
     {
+        ArgumentNullException.ThrowIfNull(entry);
         _entries.Insert(0, entry); // 最新を先頭に
         if (_entries.Count > MaxEntries)
         {
@@ -41,6 +42,7 @@ public class TransactionHistory : IDisposable
     /// <summary>永続化用の状態オブジェクトから履歴を復元します。</summary>
     public void FromState(HistoryState state)
     {
+        ArgumentNullException.ThrowIfNull(state);
         _entries.Clear();
         if (state.Entries == null) return;
 

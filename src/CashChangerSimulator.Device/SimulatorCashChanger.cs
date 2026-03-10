@@ -49,6 +49,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <remarks>各種マネージャーやコントローラーが未指定の場合は、デフォルトの実装を生成して使用します。</remarks>
     public SimulatorCashChanger(SimulatorDependencies deps)
     {
+        ArgumentNullException.ThrowIfNull(deps);
         _logger = LogProvider.CreateLogger<SimulatorCashChanger>();
         _ctx = SimulatorContext.Create(deps, this, _logger);
         _eventNotifier = _ctx.EventNotifier;
@@ -109,7 +110,11 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override void DispenseChange(int amount) => _dispenseFacade.DispenseByAmount(amount, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, _ctx.Mediator.HandleDispenseResult);
     public override void DispenseCash(CashCount[] cashCounts) => _dispenseFacade.DispenseByCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, _ctx.Mediator.HandleDispenseResult);
     public virtual void ClearOutput() => _dispenseFacade.ClearOutput();
-    public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts) => _inventoryFacade.AdjustCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), _ctx.HardwareStatusManager);
+    public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts)
+    {
+        ArgumentNullException.ThrowIfNull(cashCounts);
+        _inventoryFacade.AdjustCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), _ctx.HardwareStatusManager);
+    }
     public override CashCounts ReadCashCounts() => _inventoryFacade.ReadCashCounts(_configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode));
 
     /// <summary>現在の現金在庫数を文字列形式で調整します（UPOS 準拠用ヘルパー）。</summary>
@@ -127,9 +132,21 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     // Diagnostics & Stats
     public override string CheckHealth(HealthCheckLevel level) => _checkHealthText = _diagnosticsFacade.CheckHealth(level);
     public override string CheckHealthText => _checkHealthText;
-    public override string RetrieveStatistics(string[] statistics) => _diagnosticsFacade.RetrieveStatistics(statistics);
-    public override void UpdateStatistics(Statistic[] statistics) => _diagnosticsFacade.UpdateStatistics(statistics);
-    public override void ResetStatistics(string[] statistics) => _diagnosticsFacade.ResetStatistics(statistics);
+    public override string RetrieveStatistics(string[] statistics)
+    {
+        ArgumentNullException.ThrowIfNull(statistics);
+        return _diagnosticsFacade.RetrieveStatistics(statistics);
+    }
+    public override void UpdateStatistics(Statistic[] statistics)
+    {
+        ArgumentNullException.ThrowIfNull(statistics);
+        _diagnosticsFacade.UpdateStatistics(statistics);
+    }
+    public override void ResetStatistics(string[] statistics)
+    {
+        ArgumentNullException.ThrowIfNull(statistics);
+        _diagnosticsFacade.ResetStatistics(statistics);
+    }
     
     // ICashChangerStatusSink Implementation
     void ICashChangerStatusSink.FireEvent(EventArgs e) => NotifyEvent(e);
@@ -172,7 +189,13 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override int DeviceExits => _capFacade.DeviceExits;
 
     // DirectIO
-    public override DirectIOData DirectIO(int command, int data, object obj) { _ctx.Mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true); var result = _directIOHandler.Handle(command, data, obj, this); _ctx.Mediator.SetSuccess(); return result; }
+    public override DirectIOData DirectIO(int command, int data, object obj)
+    {
+        _ctx.Mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true);
+        var result = _directIOHandler.Handle(command, data, obj, this);
+        _ctx.Mediator.SetSuccess();
+        return result;
+    }
 
     // Event Sink Implementation
     void IUposEventSink.NotifyEvent(EventArgs e) => _eventNotifier.NotifyEvent(e);

@@ -30,6 +30,9 @@ public static class CashCountAdapter
     public static Dictionary<DenominationKey, int> ToDenominationDict(
         IEnumerable<CashCount> cashCounts, string currencyCode, decimal factor)
     {
+        ArgumentNullException.ThrowIfNull(cashCounts);
+        ArgumentNullException.ThrowIfNull(currencyCode);
+
         var dict = new Dictionary<DenominationKey, int>();
         foreach (var cc in cashCounts)
         {
@@ -48,6 +51,8 @@ public static class CashCountAdapter
     /// </summary>
     public static IEnumerable<CashCount> ParseCashCounts(string countsStr, string currencyCode, decimal factor, IEnumerable<DenominationKey> availableKeys)
     {
+        ArgumentNullException.ThrowIfNull(currencyCode);
+        ArgumentNullException.ThrowIfNull(availableKeys);
         if (string.IsNullOrWhiteSpace(countsStr)) return [];
 
         var result = new List<CashCount>();
@@ -78,6 +83,7 @@ public static class CashCountAdapter
     /// </summary>
     public static string FormatCashCounts(IEnumerable<CashCount> cashCounts)
     {
+        ArgumentNullException.ThrowIfNull(cashCounts);
         return string.Join(",", cashCounts.Select(cc => $"{cc.NominalValue}:{cc.Count}"));
     }
 }

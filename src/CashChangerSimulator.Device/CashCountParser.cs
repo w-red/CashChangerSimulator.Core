@@ -18,6 +18,7 @@ public static class CashCountParser
     /// <exception cref="ArgumentException">フォーマットが不正な場合、または曖昧な値の場合にスローされます。</exception>
     public static IEnumerable<CashCount> Parse(string input, IEnumerable<DenominationKey> activeKeys, decimal currencyFactor)
     {
+        ArgumentNullException.ThrowIfNull(activeKeys);
         if (string.IsNullOrWhiteSpace(input))
         {
             return [];

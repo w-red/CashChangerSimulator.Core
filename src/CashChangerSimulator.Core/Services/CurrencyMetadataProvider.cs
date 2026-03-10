@@ -94,6 +94,7 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
     /// <summary>設定プロバイダーを指定してメタデータプロバイダーを初期化する。</summary>
     public CurrencyMetadataProvider(ConfigurationProvider configProvider)
     {
+        ArgumentNullException.ThrowIfNull(configProvider);
         _currencyCode = new BindableReactiveProperty<string>(string.IsNullOrWhiteSpace(configProvider.Config.System.CurrencyCode) ? "JPY" : configProvider.Config.System.CurrencyCode);
         _cultureCode = new BindableReactiveProperty<string>(configProvider.Config.System.CultureCode ?? "en-US");
         _symbolPrefix = new BindableReactiveProperty<string>("");
@@ -152,11 +153,17 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
     }
 
     /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。</summary>
-    public string GetDenominationName(DenominationKey key) => GetDenominationName(key, _cultureCode.Value);
+    public string GetDenominationName(DenominationKey key)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        return GetDenominationName(key, _cultureCode.Value);
+    }
 
     /// <summary>指定された金種とカルチャの表示名を取得する。</summary>
     public string GetDenominationName(DenominationKey key, string cultureCode)
     {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(cultureCode);
         var isJapanese = cultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
 
         if (CurrencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))

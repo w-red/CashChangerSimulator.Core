@@ -46,6 +46,7 @@ public class Inventory : IReadOnlyInventory
     /// </remarks>
     public virtual void Add(DenominationKey key, int count)
     {
+        ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
         _logger.ZLogDebug($"Inventory.Add called. Key: {key}, Count: {count}");
         if (count == 0)
@@ -73,6 +74,7 @@ public class Inventory : IReadOnlyInventory
     /// </remarks>
     public virtual void SetCount(DenominationKey key, int count)
     {
+        ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
         if (count < 0)
         {
@@ -86,6 +88,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数を回収庫に追加する。</summary>
     public virtual void AddCollection(DenominationKey key, int count)
     {
+        ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
         if (count == 0) return;
 
@@ -104,6 +107,7 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数をリジェクト庫に追加する。</summary>
     public virtual void AddReject(DenominationKey key, int count)
     {
+        ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
         if (count == 0) return;
 
@@ -120,11 +124,16 @@ public class Inventory : IReadOnlyInventory
     }
 
     /// <summary>在庫の枚数を取得します。</summary>
-    public virtual int GetCount(DenominationKey key) => _counts.GetValueOrDefault(NormalizeKey(key));
+    public virtual int GetCount(DenominationKey key)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        return _counts.GetValueOrDefault(NormalizeKey(key));
+    }
 
     /// <summary>全庫（還流・回収・リジェクト）の合計枚数を取得します。</summary>
     public virtual int GetTotalCount(DenominationKey key)
     {
+        ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
         return _counts.GetValueOrDefault(key, 0) +
                _collectionCounts.GetValueOrDefault(key, 0) +

@@ -17,6 +17,14 @@ namespace CashChangerSimulator.Device;
 /// </remarks>
 public class DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)
 {
+    private static T EnsureNotNull<T>(T value) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return value;
+    }
+
+    private readonly Inventory _inventory = EnsureNotNull(inventory);
+    private readonly HardwareStatusManager _hardwareStatusManager = EnsureNotNull(hardwareStatusManager);
     private int _successfulDepletionCount;
     private int _failedDepletionCount;
 
@@ -30,12 +38,12 @@ public class DiagnosticController(Inventory inventory, HardwareStatusManager har
         {
             case HealthCheckLevel.Internal:
                 sb.AppendLine("Inventory: OK");
-                sb.AppendLine($"Total Denominations: {inventory.AllCounts.Count()}");
+                sb.AppendLine($"Total Denominations: {_inventory.AllCounts.Count()}");
                 sb.AppendLine("Status: OK");
                 break;
             case HealthCheckLevel.External:
-                sb.AppendLine($"Hardware: {(hardwareStatusManager.IsConnected.Value ? "Connected" : "Disconnected")}");
-                sb.AppendLine($"Jam Status: {(hardwareStatusManager.IsJammed.Value ? "Jammed" : "Normal")}");
+                sb.AppendLine($"Hardware: {(_hardwareStatusManager.IsConnected.Value ? "Connected" : "Disconnected")}");
+                sb.AppendLine($"Jam Status: {(_hardwareStatusManager.IsJammed.Value ? "Jammed" : "Normal")}");
                 break;
             case HealthCheckLevel.Interactive:
                 sb.AppendLine("Interactive check initiated. Please verify LED patterns.");
@@ -48,6 +56,8 @@ public class DiagnosticController(Inventory inventory, HardwareStatusManager har
     /// <summary>統計情報を取得します。</summary>
     public virtual string RetrieveStatistics(string[] statistics)
     {
+        ArgumentNullException.ThrowIfNull(statistics);
+
         // シンプルな XML 形式での返却（UPOS標準に準拠）
         var sb = new StringBuilder();
         sb.AppendLine("<CommonStatistics>");

@@ -31,6 +31,9 @@ public class CashStatusMonitor : IDisposable
     /// <summary>在庫、金種キー、各種しきい値を指定してインスタンスを初期化する。</summary>
     public CashStatusMonitor(IReadOnlyInventory inventory, DenominationKey key, int nearEmptyThreshold, int nearFullThreshold, int fullThreshold)
     {
+        ArgumentNullException.ThrowIfNull(inventory);
+        ArgumentNullException.ThrowIfNull(key);
+
         _inventory = inventory;
         _key = key;
         _nearEmptyThreshold = nearEmptyThreshold;

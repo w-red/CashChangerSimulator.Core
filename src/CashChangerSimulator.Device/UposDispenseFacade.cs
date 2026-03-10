@@ -31,6 +31,13 @@ public class UposDispenseFacade
         IUposMediator mediator,
         ILogger logger)
     {
+        ArgumentNullException.ThrowIfNull(dispenseController);
+        ArgumentNullException.ThrowIfNull(depositController);
+        ArgumentNullException.ThrowIfNull(hardwareStatusManager);
+        ArgumentNullException.ThrowIfNull(inventory);
+        ArgumentNullException.ThrowIfNull(mediator);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _dispenseController = dispenseController;
         _depositController = depositController;
         _hardwareStatusManager = hardwareStatusManager;
@@ -47,6 +54,7 @@ public class UposDispenseFacade
         bool asyncMode,
         Action<ErrorCode, int, bool> onResult)
     {
+        ArgumentNullException.ThrowIfNull(onResult);
         if (amount <= 0)
             throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
  
@@ -69,6 +77,8 @@ public class UposDispenseFacade
         bool asyncMode,
         Action<ErrorCode, int, bool> onResult)
     {
+        ArgumentNullException.ThrowIfNull(cashCounts);
+        ArgumentNullException.ThrowIfNull(onResult);
         var dict = CashCountAdapter.ToDenominationDict(cashCounts, currencyCode, factor);
 
         var command = new DispenseCashCommand(

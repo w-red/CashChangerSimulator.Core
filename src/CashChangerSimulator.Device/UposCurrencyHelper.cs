@@ -9,6 +9,7 @@ public static class UposCurrencyHelper
     /// <summary>指定された通貨コードに対する係数 (セント等への変換率) を取得します。</summary>
     public static decimal GetCurrencyFactor(string currencyCode)
     {
+        ArgumentNullException.ThrowIfNull(currencyCode);
         return currencyCode switch
         {
             "USD" or "EUR" or "GBP" or "CAD" or "AUD" => 100m,
@@ -19,6 +20,7 @@ public static class UposCurrencyHelper
     /// <summary>DenominationKey から NominalValue (整数化された額面) を取得します。</summary>
     public static int GetNominalValue(DenominationKey key)
     {
+        ArgumentNullException.ThrowIfNull(key);
         return (int)Math.Round(
             key.Value * GetCurrencyFactor(key.CurrencyCode));
     }
@@ -26,11 +28,14 @@ public static class UposCurrencyHelper
     /// <summary>在庫情報からアクティブな通貨コードに対する CashUnits (硬貨と紙幣の額面一覧) を生成します。</summary>
     public static CashUnits BuildCashUnits(Inventory inventory, string activeCurrencyCode)
     {
+        ArgumentNullException.ThrowIfNull(inventory);
+        ArgumentNullException.ThrowIfNull(activeCurrencyCode);
+
         var activeUnits =
             inventory
             .AllCounts
             .Where(
-                kv =>　kv.Key.CurrencyCode == activeCurrencyCode)
+                kv => kv.Key.CurrencyCode == activeCurrencyCode)
             .OrderBy(kv => kv.Key.Value)
             .ToList();
 

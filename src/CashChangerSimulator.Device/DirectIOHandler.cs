@@ -42,6 +42,7 @@ public class DirectIOHandler
     /// </summary>
     public DirectIOData Handle(int command, int data, object obj, SimulatorCashChanger serviceObject)
     {
+        ArgumentNullException.ThrowIfNull(serviceObject);
         return _commands.TryGetValue(command, out var strategy) ? strategy.Execute(data, obj, serviceObject) : new DirectIOData(data, obj);
     }
 }

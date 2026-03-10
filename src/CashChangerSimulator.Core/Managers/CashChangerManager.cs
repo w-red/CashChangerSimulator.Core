@@ -34,6 +34,10 @@ public class CashChangerManager
     /// <remarks>指定されない場合はデフォルトの設定プロバイダーが使用されます。</remarks>
     public CashChangerManager(Inventory inventory, TransactionHistory history, ChangeCalculator calculator, ConfigurationProvider? configProvider)
     {
+        ArgumentNullException.ThrowIfNull(inventory);
+        ArgumentNullException.ThrowIfNull(history);
+        ArgumentNullException.ThrowIfNull(calculator);
+
         _inventory = inventory;
         _history = history;
         _calculator = calculator;
@@ -45,6 +49,7 @@ public class CashChangerManager
     /// <param name="counts">投入された金種ごとの枚数内訳。</param>
     public virtual void Deposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
+        ArgumentNullException.ThrowIfNull(counts);
         decimal total = 0;
         foreach (var (key, count) in counts)
         {

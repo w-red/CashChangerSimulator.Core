@@ -23,6 +23,10 @@ public class MonitorsProvider
     /// <summary>在庫と設定を元に、全金種のモニターを初期化する。</summary>
     public MonitorsProvider(Inventory inventory, ConfigurationProvider configProvider, ICurrencyMetadataProvider metadataProvider)
     {
+        ArgumentNullException.ThrowIfNull(inventory);
+        ArgumentNullException.ThrowIfNull(configProvider);
+        ArgumentNullException.ThrowIfNull(metadataProvider);
+
         _inventory = inventory;
         _configProvider = configProvider;
         _metadataProvider = metadataProvider;
@@ -69,6 +73,7 @@ public class MonitorsProvider
     /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する（ホットリロード用）。</summary>
     public void UpdateThresholdsFromConfig(SimulatorConfiguration config)
     {
+        ArgumentNullException.ThrowIfNull(config);
         var activeCurrency = config.System.CurrencyCode ?? "JPY";
         foreach (var monitor in Monitors)
         {
