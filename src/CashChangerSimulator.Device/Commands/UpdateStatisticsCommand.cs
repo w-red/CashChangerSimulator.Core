@@ -1,6 +1,5 @@
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
-using Microsoft.PointOfService.BasicServiceObjects;
 
 namespace CashChangerSimulator.Device.Commands;
 

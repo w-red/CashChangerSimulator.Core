@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.PointOfService;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Lifecycle;

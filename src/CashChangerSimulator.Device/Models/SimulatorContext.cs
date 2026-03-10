@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Coordination;
-using CashChangerSimulator.Device.Facades;
 using CashChangerSimulator.Device.Services;
 using Microsoft.Extensions.Logging;
 

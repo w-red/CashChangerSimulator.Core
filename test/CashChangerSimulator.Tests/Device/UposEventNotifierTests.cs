@@ -1,8 +1,6 @@
 using Microsoft.PointOfService;
 using CashChangerSimulator.Device.Services;
 using Moq;
-using Shouldly;
-using System;
 
 namespace CashChangerSimulator.Tests.Device;
 

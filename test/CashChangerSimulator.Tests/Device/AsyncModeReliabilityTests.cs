@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;

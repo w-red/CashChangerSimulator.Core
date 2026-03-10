@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;

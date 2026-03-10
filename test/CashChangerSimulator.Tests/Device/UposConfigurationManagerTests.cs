@@ -1,11 +1,9 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

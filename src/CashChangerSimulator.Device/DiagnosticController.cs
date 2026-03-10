@@ -1,10 +1,7 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
-using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
-using CashChangerSimulator.Core;
 using System.Text;
-using System.Linq;
 
 namespace CashChangerSimulator.Device;
 

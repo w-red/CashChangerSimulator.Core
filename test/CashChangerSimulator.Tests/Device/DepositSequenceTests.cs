@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
-using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;

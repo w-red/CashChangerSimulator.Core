@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using Shouldly;
 

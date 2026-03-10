@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace CashChangerSimulator.Device.Services;
 
 /// <summary>スクリプト実行中の変数コンテキスト。</summary>

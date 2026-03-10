@@ -8,8 +8,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
-using Xunit;
-using System;
 
 namespace CashChangerSimulator.Tests.Device;
 

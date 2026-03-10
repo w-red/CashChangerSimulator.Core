@@ -1,7 +1,3 @@
-using System;
-using R3;
-using Microsoft.PointOfService;
-
 namespace CashChangerSimulator.Device.Services;
 
 /// <summary>UPOS デバイスからのイベント通知を管理・抽象化するインターフェース。</summary>

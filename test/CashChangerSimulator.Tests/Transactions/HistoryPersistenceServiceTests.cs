@@ -2,7 +2,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Configuration;
 using Shouldly;
-using System.IO;
 
 namespace CashChangerSimulator.Tests.Transactions;
 

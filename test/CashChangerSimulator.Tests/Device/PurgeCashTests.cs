@@ -1,10 +1,8 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
-using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

@@ -1,4 +1,3 @@
-using Microsoft.PointOfService;
 using ZLogger;
 using Microsoft.Extensions.Logging;
 

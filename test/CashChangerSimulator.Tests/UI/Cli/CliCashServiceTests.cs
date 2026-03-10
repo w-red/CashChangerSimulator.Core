@@ -1,5 +1,4 @@
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Testing;
 using CashChangerSimulator.UI.Cli.Services;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;

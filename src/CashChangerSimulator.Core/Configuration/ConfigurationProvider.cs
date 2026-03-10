@@ -1,6 +1,4 @@
 using R3;
-using System;
-using System.IO;
 
 namespace CashChangerSimulator.Core.Configuration;
 

@@ -6,8 +6,6 @@ using CashChangerSimulator.Device.Facades;
 using CashChangerSimulator.Device.Commands;
 using Microsoft.PointOfService;
 using Moq;
-using Shouldly;
-using Xunit;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Configuration;

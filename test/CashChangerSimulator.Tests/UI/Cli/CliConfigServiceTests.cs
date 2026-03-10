@@ -1,8 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.UI.Cli.Services;
-using Moq;
 using Shouldly;
-using Spectre.Console;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 

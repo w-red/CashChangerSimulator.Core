@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace CashChangerSimulator.Device.Services;
 
 /// <summary>スクリプトコマンドのデータモデル。</summary>

@@ -1,6 +1,4 @@
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Testing;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;

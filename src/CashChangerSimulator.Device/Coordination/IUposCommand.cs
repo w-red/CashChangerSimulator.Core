@@ -1,5 +1,3 @@
-using System;
-
 namespace CashChangerSimulator.Device.Coordination;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using System;
-
 namespace CashChangerSimulator.Device.Testing;
 
 /// <summary>SimulatorCashChanger のテスト用拡張を提供します。</summary>

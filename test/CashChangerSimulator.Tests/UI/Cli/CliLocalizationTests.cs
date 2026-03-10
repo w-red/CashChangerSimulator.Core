@@ -1,8 +1,6 @@
 using System.Globalization;
 using CashChangerSimulator.UI.Cli.Localization;
-using Microsoft.Extensions.Localization;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Ui.Cli;
 

@@ -4,7 +4,6 @@ using Microsoft.PointOfService;
 using CashChangerSimulator.Core.Opos;
 using Moq;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 

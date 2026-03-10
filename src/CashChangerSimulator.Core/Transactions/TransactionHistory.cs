@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Models;
 using R3;
 
 namespace CashChangerSimulator.Core.Transactions;

@@ -1,6 +1,4 @@
-using Tomlyn;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Transactions;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;

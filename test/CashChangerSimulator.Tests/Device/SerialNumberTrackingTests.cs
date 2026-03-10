@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Testing;
 using Microsoft.PointOfService;
 using Shouldly;
 

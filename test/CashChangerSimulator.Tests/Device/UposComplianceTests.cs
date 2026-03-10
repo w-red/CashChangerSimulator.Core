@@ -1,12 +1,9 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
 using CashChangerSimulator.Device.Facades;
-using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
-using Xunit;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Configuration;

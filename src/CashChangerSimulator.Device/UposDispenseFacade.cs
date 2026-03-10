@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.Commands;
 using CashChangerSimulator.Device.Coordination;
 using Microsoft.Extensions.Logging;
