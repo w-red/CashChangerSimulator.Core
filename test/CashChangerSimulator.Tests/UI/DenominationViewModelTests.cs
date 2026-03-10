@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.UI;
 
