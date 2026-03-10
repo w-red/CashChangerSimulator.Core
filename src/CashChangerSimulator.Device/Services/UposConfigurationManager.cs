@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using CashChangerSimulator.Core;
 using R3;
+using ZLogger;
 
 namespace CashChangerSimulator.Device.Services;
 
@@ -56,9 +57,21 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         _activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
     }
 
+    public void Reload()
+    {
+        _configProvider.Reload();
+        _logger.ZLogInformation($"Configuration reloaded in UposConfigurationManager.");
+        UpdateSimulatorState();
+    }
+
     private void OnConfigurationReloaded()
     {
-        _logger.LogInformation("Configuration reloaded in UposConfigurationManager.");
+        _logger.ZLogInformation($"Configuration reloaded in UposConfigurationManager.");
+        UpdateSimulatorState();
+    }
+
+    private void UpdateSimulatorState()
+    {
         // Re-detect active currency if current one is gone
         if (!CurrencyCodeList.Contains(_activeCurrencyCode))
         {
@@ -72,7 +85,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
             _inventory.Clear();
         }
         
-        _logger.LogInformation("Simulator state updated. Active Currency: {0}", _activeCurrencyCode);
+        _logger.ZLogInformation($"Simulator state updated. Active Currency: {_activeCurrencyCode}");
     }
 
     public void Dispose()

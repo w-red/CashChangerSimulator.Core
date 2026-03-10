@@ -3,6 +3,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
+using ZLogger;
 
 namespace CashChangerSimulator.Device.Coordination;
 
@@ -46,7 +47,7 @@ public class StandardLifecycleHandler(
             if (value == mediator.DeviceEnabled) return;
 
             mediator.DeviceEnabled = value;
-            logger.LogInformation("DeviceEnabled set to {0}.", value);
+            logger.ZLogInformation($"DeviceEnabled set to {value}.");
         }
     }
 
@@ -62,7 +63,7 @@ public class StandardLifecycleHandler(
 
         if (State != ControlState.Closed)
         {
-            logger.LogInformation("Open called but device is already {0}.", State);
+            logger.ZLogInformation($"Open called but device is already {State}.");
             mediator.SetSuccess();
             return;
         }
@@ -89,7 +90,7 @@ public class StandardLifecycleHandler(
 
         if (State == ControlState.Closed)
         {
-            logger.LogInformation("Close called but device is already Closed.");
+            logger.ZLogInformation($"Close called but device is already Closed.");
             mediator.SetSuccess();
             return;
         }

@@ -1,4 +1,6 @@
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Device.Models;
+using ZLogger;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
@@ -35,7 +37,7 @@ public class LifecycleManager : IUposLifecycleHandler
             ? new SkipVerificationLifecycleHandler(_hardwareStatusManager, _mediator, _history, _logger)
             : new StandardLifecycleHandler(_hardwareStatusManager, _mediator, _history, _logger);
         
-        _logger.LogInformation("LifecycleHandler switched. SkipStateVerification: {0}, HandlerType: {1}", skipStateVerification, _handler.GetType().Name);
+        _logger.ZLogInformation($"LifecycleHandler switched. SkipStateVerification: {skipStateVerification}, HandlerType: {_handler.GetType().Name}");
     }
 
     public ControlState State => _handler?.State ?? ControlState.Closed;

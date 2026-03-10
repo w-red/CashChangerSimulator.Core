@@ -2,6 +2,7 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
+using ZLogger;
 using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.Coordination;
@@ -32,7 +33,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
         // Skip baseOpen()
         hardware.SetConnected(true);
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
-        logger.LogInformation("Device opened (Verification Skipped).");
+        logger.ZLogInformation($"Device opened (Verification Skipped).");
         mediator.SetSuccess();
     }
 
@@ -42,7 +43,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
         ArgumentNullException.ThrowIfNull(baseClose);
         hardware.SetConnected(false);
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
-        logger.LogInformation("Device closed (Verification Skipped).");
+        logger.ZLogInformation($"Device closed (Verification Skipped).");
         mediator.SetSuccess();
     }
 
@@ -58,7 +59,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
 
         mediator.Claimed = true;
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Claim, 0, new Dictionary<DenominationKey, int>()));
-        logger.LogInformation("Device claimed (Verification Skipped).");
+        logger.ZLogInformation($"Device claimed (Verification Skipped).");
         mediator.SetSuccess();
     }
 
@@ -74,7 +75,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
 
         mediator.Claimed = false;
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
-        logger.LogInformation("Device released (Verification Skipped).");
+        logger.ZLogInformation($"Device released (Verification Skipped).");
         mediator.SetSuccess();
     }
 }

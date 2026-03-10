@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
+using CashChangerSimulator.Core.Services;
+using ZLogger;
 
 namespace CashChangerSimulator.Device.Lifecycle;
 
@@ -10,7 +12,7 @@ public class ClosedState : IDeviceState
     public IDeviceState Open(DeviceLifecycleContext context)
     {
         context.HardwareStatusManager.SetConnected(true);
-        context.Logger.LogInformation("OPOS Open called via simulator.");
+        context.Logger.ZLogInformation($"OPOS Open called via simulator.");
         return new OpenedState();
     }
 

@@ -1,3 +1,5 @@
+using Microsoft.PointOfService;
+using ZLogger;
 using Microsoft.Extensions.Logging;
 
 namespace CashChangerSimulator.Device.Lifecycle;
@@ -18,7 +20,7 @@ public class ClaimedState : IDeviceState
         // Auto-release before closing
         context.SetDeviceEnabled(false);
         context.HardwareStatusManager.SetConnected(false);
-        context.Logger.LogInformation("OPOS Close called via simulator (auto-released).");
+        context.Logger.ZLogInformation($"OPOS Close called via simulator (auto-released).");
         return new ClosedState();
     }
 
@@ -33,7 +35,7 @@ public class ClaimedState : IDeviceState
     public IDeviceState Release(DeviceLifecycleContext context)
     {
         context.SetDeviceEnabled(false);
-        context.Logger.LogInformation("OPOS Release called via simulator.");
+        context.Logger.ZLogInformation($"OPOS Release called via simulator.");
         return new OpenedState();
     }
 }

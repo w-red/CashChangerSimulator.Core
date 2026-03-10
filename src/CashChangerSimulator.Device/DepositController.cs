@@ -25,6 +25,13 @@ public class DepositController(
     CashChangerManager? manager = null,
     ConfigurationProvider? configProvider = null) : IDisposable
 {
+    private static T EnsureNotNull<T>(T value) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return value;
+    }
+
+    private readonly Inventory _inventory = EnsureNotNull(inventory);
     private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
     private readonly ConfigurationProvider _configProvider = configProvider ?? new ConfigurationProvider();
     
@@ -146,7 +153,7 @@ public class DepositController(
                 // Fallback for tests lacking manager injection
                 foreach (var kv in _depositCounts)
                 {
-                    inventory.Add(kv.Key, kv.Value);
+                    _inventory.Add(kv.Key, kv.Value);
                 }
             }
         }
@@ -210,11 +217,15 @@ public class DepositController(
 
     /// <summary>入金中に金種が追加されたときに呼ばれるトラッキングメソッド。</summary>
     public void TrackDeposit(DenominationKey key)
-        => TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, 1 } });
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, 1 } });
+    }
 
     /// <summary>入金中に複数の金種を一括で追加します。</summary>
     public void TrackBulkDeposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
+        ArgumentNullException.ThrowIfNull(counts);
         if (_depositStatus != CashDepositStatus.Count) return;
         if (_depositPaused) return;
 
