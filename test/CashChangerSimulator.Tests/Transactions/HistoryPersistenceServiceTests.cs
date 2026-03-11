@@ -76,4 +76,26 @@ public class HistoryPersistenceServiceTests : IDisposable
         _service.Dispose();
         if (File.Exists(_testPath)) File.Delete(_testPath);
     }
+
+    [Fact]
+    public void TransactionEntry_CanBeMemoryPackDeserialized()
+    {
+        // Arrange
+        var dict = new Dictionary<DenominationKey, int>
+        {
+            { new DenominationKey(1000, CurrencyCashType.Bill), 2 }
+        };
+        var original = new TransactionEntry(DateTimeOffset.Now, TransactionType.Deposit, 2000, dict);
+
+        // Act
+        var bin = MemoryPack.MemoryPackSerializer.Serialize(original);
+        var restored = MemoryPack.MemoryPackSerializer.Deserialize<TransactionEntry>(bin);
+
+        // Assert
+        restored.ShouldNotBeNull();
+        restored.Amount.ShouldBe(2000);
+        restored.Type.ShouldBe(TransactionType.Deposit);
+        restored.Timestamp.ShouldBe(original.Timestamp);
+        restored.Counts.Count.ShouldBe(1);
+    }
 }
