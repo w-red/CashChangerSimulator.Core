@@ -5,6 +5,7 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
+using R3;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -226,5 +227,30 @@ public class DepositSequenceTests
         // Act & Assert
         var ex = Should.Throw<PosControlException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
+    }
+
+    /// <summary>入金中にリジェクトイベント（SimulateReject）が発生した際、リジェクト金額が加算され、Changedイベントが発火することを検証する。</summary>
+    [Fact]
+    public void SimulateRejectShouldIncreaseRejectAmountWhenInProgress()
+    {
+        var (controller, _) = CreateController();
+        bool changedEventFired = false;
+        controller.Changed.Subscribe(_ => changedEventFired = true);
+
+        // Assert Before Start
+        controller.SimulateReject(1000); // Should be ignored since not in Count status
+        controller.RejectAmount.ShouldBe(0m);
+        changedEventFired.ShouldBeFalse();
+
+        // Arrange & Act (Start Deposit)
+        controller.BeginDeposit();
+        changedEventFired = false; // Reset changed event flag after BeginDeposit
+
+        // Act (Simulate Reject)
+        controller.SimulateReject(1000);
+
+        // Assert
+        controller.RejectAmount.ShouldBe(1000m);
+        changedEventFired.ShouldBeTrue();
     }
 }

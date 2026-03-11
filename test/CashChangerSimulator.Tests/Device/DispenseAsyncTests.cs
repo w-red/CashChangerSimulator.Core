@@ -8,6 +8,7 @@ using CashChangerSimulator.Device.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
+using CashChangerSimulator.Core.Opos;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -228,5 +229,51 @@ public class DispenseAsyncTests
         {
             changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91).ShouldBeFalse("Cancelled operation should not fire AsyncFinished.");
         }
+    }
+
+    /// <summary>非同期稼動時にエラーが発生した場合、AsyncResultCodeExtendedが更新されることを検証する。</summary>
+    [Fact]
+    public async Task AsyncDispenseFailureShouldSetAsyncResultCodeExtended()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
+        var manager = new MockCashChangerManager(inventory);
+        
+        var mockSimulator = new Mock<IDeviceSimulator>();
+        mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new PosControlException("Hardware simulated error", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam));
+
+        var changer = new TestSimulatorCashChanger(inventory, manager, mockSimulator.Object)
+        {
+            AsyncMode = true,
+        };
+        changer.SkipStateVerification = false;
+
+        changer.Open();
+        changer.Claim(1000);
+        changer.DeviceEnabled = true;
+
+        // Act
+        changer.DispenseChange(100);
+        manager.DispenseFinishSignal.Set();
+
+        // Assert: Wait for completion in QueuedEvents
+        int timeout = 0;
+        bool eventFired = false;
+        while (!eventFired && timeout < 50)
+        {
+            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2);
+            lock (changer.QueuedEvents)
+            {
+                eventFired = changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
+            }
+            timeout++;
+        }
+
+        eventFired.ShouldBeTrue();
+
+        // Check exact extended code
+        changer.AsyncResultCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.Jam);
     }
 }
