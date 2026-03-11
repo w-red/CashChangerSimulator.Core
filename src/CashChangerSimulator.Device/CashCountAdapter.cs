@@ -55,27 +55,22 @@ public static class CashCountAdapter
         ArgumentNullException.ThrowIfNull(availableKeys);
         if (string.IsNullOrWhiteSpace(countsStr)) return [];
 
-        var result = new List<CashCount>();
-        var pairs = countsStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        foreach (var pair in pairs)
-        {
-            var parts = pair.Split(':', StringSplitOptions.TrimEntries);
-            if (parts.Length != 2) continue;
-
-            if (decimal.TryParse(parts[0], out var denomVal) && int.TryParse(parts[1], out var count))
+        return countsStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(pair => pair.Split(':', StringSplitOptions.TrimEntries))
+            .Where(parts => parts.Length == 2 && decimal.TryParse(parts[0], out _) && int.TryParse(parts[1], out _))
+            .Select(parts =>
             {
+                var denomVal = decimal.Parse(parts[0]);
+                var count = int.Parse(parts[1]);
                 var val = denomVal / factor;
+
                 // Find matching denomination to determine if it's a Bill or Coin
                 var match = availableKeys.FirstOrDefault(k => k.Value == val && k.CurrencyCode == currencyCode);
-                
                 var type = match?.Type == CurrencyCashType.Bill ? CashCountType.Bill : CashCountType.Coin;
                 var nominalValue = (int)Math.Round(val * factor);
-                
-                result.Add(new CashCount(type, nominalValue, count));
-            }
-        }
-        return result;
+
+                return new CashCount(type, nominalValue, count);
+            }).ToList();
     }
 
     /// <summary>
