@@ -98,8 +98,4 @@ public class UposDispenseFacade
         _mediator.Execute(new ClearOutputCommand(_dispenseController));
         _mediator.IsBusy = false;
     }
-
-    private void ValidatePreConditions()
-    {
-    }
 }
