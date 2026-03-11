@@ -4,6 +4,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Services;
+using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using Moq;
 using Shouldly;
@@ -26,12 +27,27 @@ public class AdvancedSimulationViewModelTests
         var metadataProvider = new CurrencyMetadataProvider(configProvider);
         var scriptService = new ScriptExecutionService(controller, dispenseController, inv, hardware);
         
+        var monitorsProvider = new MonitorsProvider(inv, configProvider, metadataProvider);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
+
         var cashChanger = new InternalSimulatorCashChanger(new SimulatorDependencies(
             configProvider, inv, new TransactionHistory(), manager, controller, dispenseController, 
-            new OverallStatusAggregatorProvider(new MonitorsProvider(inv, configProvider, metadataProvider)), 
+            aggregatorProvider, 
             hardware));
+        
+        var facade = new DeviceFacade(
+            inv, 
+            manager, 
+            controller, 
+            dispenseController, 
+            hardware, 
+            cashChanger, 
+            new TransactionHistory(), 
+            aggregatorProvider, 
+            monitorsProvider, 
+            new Mock<INotifyService>().Object);
 
-        return new AdvancedSimulationViewModel(cashChanger, scriptService, controller, metadataProvider);
+        return new AdvancedSimulationViewModel(facade, scriptService, metadataProvider);
     }
 
     [Fact]

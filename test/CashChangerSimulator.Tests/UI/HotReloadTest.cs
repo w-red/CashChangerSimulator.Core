@@ -6,9 +6,13 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
 using Moq;
+using R3;
 using Shouldly;
+using Xunit;
+using System.Linq;
 
 namespace CashChangerSimulator.Tests.UI;
 
@@ -30,30 +34,31 @@ public class HotReloadTest
         var history = new TransactionHistory();
         var metadataProvider = new CurrencyMetadataProvider(config);
         var monitorsProvider = new MonitorsProvider(inv, config, metadataProvider);
-        var aggregator = new OverallStatusAggregator(monitorsProvider.Monitors);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var hw = new HardwareStatusManager();
+        var manager = new CashChangerManager(inv, history, new ChangeCalculator());
         var depositController = new DepositController(inv, hw);
+        var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
         var mockChanger = new Mock<SimulatorCashChanger>(new SimulatorDependencies(
-            ConfigProvider: config,
-            Inventory: inv,
-            History: history,
-            Manager: null!,
-            DepositController: null!,
-            DispenseController: null!,
-            AggregatorProvider: null!,
-            HardwareStatusManager: hw));
+            config, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw));
         var notifyService = new Mock<INotifyService>().Object;
 
-        var vm = new InventoryViewModel(
+        var facade = new DeviceFacade(
             inv,
-            history,
-            aggregator,
-            config,
-            monitorsProvider,
-            metadataProvider,
-            hw,
+            manager,
             depositController,
+            dispenseController,
+            hw,
             mockChanger.Object,
+            history,
+            aggregatorProvider,
+            monitorsProvider,
+            notifyService);
+
+        var vm = new InventoryViewModel(
+            facade,
+            config,
+            metadataProvider,
             notifyService);
 
         return (vm, config, monitorsProvider);

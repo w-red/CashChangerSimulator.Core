@@ -1,11 +1,13 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
+using Moq;
 using R3;
 using Shouldly;
 
@@ -34,18 +36,35 @@ public class InventoryViewModelTests
         inv.SetCount(key1000, 5);
 
         var history = new TransactionHistory();
-        _ = new CashChangerManager(inv, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inv, history, new ChangeCalculator());
         var metadataProvider = new CurrencyMetadataProvider(config);
         var monitorsProvider = new MonitorsProvider(inv, config, metadataProvider);
-        var aggregator = new OverallStatusAggregator(monitorsProvider.Monitors);
+        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var hw = new HardwareStatusManager();
+        var sideSimulator = new Mock<IDeviceSimulator>();
+        var dispenseController = new DispenseController(manager, hw, sideSimulator.Object);
         var depositController = new DepositController(inv, hw);
-        var mockChanger = new Moq.Mock<InternalSimulatorCashChanger>();
+        var mockChanger = new Mock<InternalSimulatorCashChanger>(new SimulatorDependencies(
+            config, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw));
+        
         mockChanger.Setup(x => x.Open()).Callback(() => 
             history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>())));
 
-        var notifyService = new Moq.Mock<INotifyService>().Object;
-        var vm = new InventoryViewModel(inv, history, aggregator, config, monitorsProvider, metadataProvider, hw, depositController, mockChanger.Object, notifyService);
+        var notifyService = new Mock<INotifyService>().Object;
+        
+        var facade = new DeviceFacade(
+            inv,
+            manager,
+            depositController,
+            dispenseController,
+            hw,
+            mockChanger.Object,
+            history,
+            aggregatorProvider,
+            monitorsProvider,
+            notifyService);
+
+        var vm = new InventoryViewModel(facade, config, metadataProvider, notifyService);
         return (vm, inv, config, history);
     }
 

@@ -3,8 +3,12 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
+using Moq;
+using R3;
 using Shouldly;
+using Xunit;
 
 namespace CashChangerSimulator.Tests.UI;
 
@@ -21,7 +25,11 @@ public class DenominationViewModelTests
         var monitor = new CashStatusMonitor(inv, key, 5, 100, 200);
         var depositController = new DepositController(inv);
         
-        var vm = new DenominationViewModel(inv, key, metadataProvider, depositController, monitor, configProvider);
+        var facadeMock = new Mock<IDeviceFacade>();
+        facadeMock.Setup(f => f.Inventory).Returns(inv);
+        facadeMock.Setup(f => f.Deposit).Returns(depositController);
+        
+        var vm = new DenominationViewModel(facadeMock.Object, key, metadataProvider, monitor, configProvider);
 
         // Act & Assert: Recyclable (Normal)
         inv.Add(key, 5);
