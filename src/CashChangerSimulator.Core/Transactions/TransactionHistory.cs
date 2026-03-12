@@ -6,9 +6,16 @@ namespace CashChangerSimulator.Core.Transactions;
 /// <summary>取引履歴を管理するクラス。</summary>
 public class TransactionHistory : IDisposable
 {
-    private const int MaxEntries = 1000;
+    private readonly int _maxEntries;
     private readonly List<TransactionEntry> _entries = [];
     private readonly Subject<TransactionEntry> _added = new();
+
+    public TransactionHistory(SimulatorConfiguration config)
+    {
+        _maxEntries = config.History.MaxEntries;
+    }
+
+    public TransactionHistory() : this(new SimulatorConfiguration()) { }
 
     /// <summary>全ての取引履歴（読み取り専用）。</summary>
     public virtual IReadOnlyList<TransactionEntry> Entries => _entries;
@@ -22,7 +29,7 @@ public class TransactionHistory : IDisposable
     {
         ArgumentNullException.ThrowIfNull(entry);
         _entries.Insert(0, entry); // 最新を先頭に
-        if (_entries.Count > MaxEntries)
+        if (_entries.Count > _maxEntries)
         {
             _entries.RemoveAt(_entries.Count - 1);
         }
@@ -45,7 +52,7 @@ public class TransactionHistory : IDisposable
         _entries.Clear();
         if (state.Entries == null) return;
 
-        foreach (var entry in state.Entries.Take(MaxEntries))
+        foreach (var entry in state.Entries.Take(_maxEntries))
         {
             _entries.Add(entry);
         }

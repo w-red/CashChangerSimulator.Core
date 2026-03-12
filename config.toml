@@ -2,6 +2,7 @@
 CurrencyCode = "JPY"
 CultureCode = "en-US"
 UIMode = "Standard"
+BaseTheme = "Dark"
 
 [Inventory.JPY.Denominations.B10000]
 DisplayName = "10,000 Yen Bill"
@@ -192,3 +193,6 @@ LogFileName = "app.log"
 [Simulation]
 DispenseDelayMs = 500
 HotStart = false
+
+[History]
+MaxEntries = 1000

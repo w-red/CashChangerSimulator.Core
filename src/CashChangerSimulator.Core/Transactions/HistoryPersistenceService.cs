@@ -36,7 +36,7 @@ public class HistoryPersistenceService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load history from {Path}", _filePath);
+            _logger.LogError(ex, "Failed to load history from {Path}. The file might be corrupted or inaccessible.", _filePath);
             return new HistoryState { Entries = [] };
         }
     }
@@ -51,7 +51,8 @@ public class HistoryPersistenceService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save history to {Path}", _filePath);
+            _logger.LogError(ex, "Failed to save history to {Path}. Possible reasons: disk full, permission denied, or file in use.", _filePath);
+            // NOTE: In a production environment, we might want to implement a retry policy or save to a backup location.
         }
     }
 

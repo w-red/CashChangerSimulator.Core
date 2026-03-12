@@ -60,6 +60,9 @@ public class SimulatorConfiguration
     /// <summary>シミュレーション設定。</summary>
     public SimulationSettings Simulation { get; set; } = new();
 
+    /// <summary>履歴設定。</summary>
+    public HistorySettings History { get; set; } = new();
+
     /// <summary>指定された金種の個別設定を取得する。存在しない場合はデフォルト値を返す。</summary>
     public DenominationSettings GetDenominationSetting(DenominationKey key)
     {
