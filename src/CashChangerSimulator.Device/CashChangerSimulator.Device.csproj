@@ -28,10 +28,10 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.PointOfService">
-      <HintPath>libs\Microsoft.PointOfService.dll</HintPath>
+      <HintPath>..\..\libs\POSforNET\Microsoft.PointOfService.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.PointOfService.ControlBase">
-      <HintPath>libs\Microsoft.PointOfService.ControlBase.dll</HintPath>
+      <HintPath>..\..\libs\POSforNET\Microsoft.PointOfService.ControlBase.dll</HintPath>
     </Reference>
   </ItemGroup>
 
