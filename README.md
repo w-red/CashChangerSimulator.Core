@@ -2,6 +2,15 @@
 
 A WPF-based cash changer simulator that emulates UnifiedPOS (UPOS) standard operations. Designed to support testing and debugging of POS applications.
 
+## 🚀 Live Demo / Simulator URL
+
+The Virtual Cash Changer API is now available on Google Cloud Run for testing without local setup:
+
+- **Base URL**: [https://cash-changer-api-904915502524.asia-northeast1.run.app](https://cash-changer-api-904915502524.asia-northeast1.run.app)
+- **Interactive Documentation (Scalar)**: [View API Reference](https://cash-changer-api-904915502524.asia-northeast1.run.app/scalar/v1)
+
+---
+
 ## Key Features
 
 - **UPOS Compliant Behavior**: Emulates `DispenseChange`, `DispenseCash`, and the full deposit cycle (`BeginDeposit` to `EndDeposit`).
