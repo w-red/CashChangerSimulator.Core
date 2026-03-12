@@ -11,4 +11,7 @@ public class SystemSettings
 
     /// <summary>UIの動作モード（Standard, POS）。</summary>
     public UIMode UIMode { get; set; } = UIMode.Standard;
+
+    /// <summary>ベーステーマ（"Dark", "Light"）。</summary>
+    public string BaseTheme { get; set; } = "Dark";
 }
