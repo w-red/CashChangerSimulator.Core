@@ -1,3 +1,4 @@
+using System.Threading;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,10 @@ public class VirtualMockDevice : ICashChangerDevice
     public bool IsConnected => _statusManager.IsConnected.Value;
     public bool Claimed { get; private set; }
     public bool DeviceEnabled { get; private set; }
+
+    private const string MutexName = @"Global\CashChangerSimulatorDeviceMutex";
+    private readonly Mutex _deviceMutex = new(false, MutexName);
+    private bool _hasMutex;
 
     public VirtualMockDevice(
         CashChangerManager manager,
@@ -48,12 +53,36 @@ public class VirtualMockDevice : ICashChangerDevice
     public void Claim(int timeout)
     {
         if (!IsConnected) throw new InvalidOperationException("Device not opened.");
-        Claimed = true;
-        _logger.ZLogInformation($"VirtualMockDevice Claimed.");
+        
+        try
+        {
+            // Mutex によるプロセス間/インスタンス間排他
+            _hasMutex = _deviceMutex.WaitOne(timeout);
+            if (!_hasMutex)
+            {
+                throw new Exception("The device is already claimed by another process or instance.");
+            }
+            
+            Claimed = true;
+            _logger.ZLogInformation($"VirtualMockDevice Claimed.");
+        }
+        catch (AbandonedMutexException)
+        {
+            // 前のプロセスがクラッシュなどで Mutex を解放せずに終了した場合
+            _hasMutex = true;
+            Claimed = true;
+            _logger.ZLogWarning($"VirtualMockDevice Claimed (AbandonedMutex rescued).");
+        }
     }
 
     public void Release()
     {
+        if (_hasMutex)
+        {
+            _deviceMutex.ReleaseMutex();
+            _hasMutex = false;
+        }
+        
         Claimed = false;
         _logger.ZLogInformation($"VirtualMockDevice Released.");
     }
@@ -90,6 +119,9 @@ public class VirtualMockDevice : ICashChangerDevice
 
     public void Dispose()
     {
+        Release();
+        _deviceMutex.Dispose();
         _logger.ZLogInformation($"VirtualMockDevice Disposed.");
+        GC.SuppressFinalize(this);
     }
 }
