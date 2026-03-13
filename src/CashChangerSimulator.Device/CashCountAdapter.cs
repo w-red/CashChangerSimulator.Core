@@ -33,17 +33,9 @@ public static class CashCountAdapter
         ArgumentNullException.ThrowIfNull(cashCounts);
         ArgumentNullException.ThrowIfNull(currencyCode);
 
-        var dict = new Dictionary<DenominationKey, int>();
-        foreach (var cc in cashCounts)
-        {
-            if (cc.Count < 0)
-            {
-                throw new PosControlException("Count cannot be negative.", ErrorCode.Illegal);
-            }
-            var key = ToDenominationKey(cc, currencyCode, factor);
-            dict[key] = cc.Count;
-        }
-        return dict;
+        return cashCounts.ToDictionary(
+            cc => cc.Count < 0 ? throw new PosControlException("Count cannot be negative.", ErrorCode.Illegal) : ToDenominationKey(cc, currencyCode, factor),
+            cc => cc.Count);
     }
 
     /// <summary>
@@ -66,11 +58,9 @@ public static class CashCountAdapter
 
                 // Find matching denomination to determine if it's a Bill or Coin
                 var match = availableKeys.FirstOrDefault(k => k.Value == val && k.CurrencyCode == currencyCode);
-                var type = match?.Type == CurrencyCashType.Bill ? CashCountType.Bill : CashCountType.Coin;
-                var nominalValue = (int)Math.Round(val * factor);
-
-                return new CashCount(type, nominalValue, count);
-            }).ToList();
+                return ToCashCount(match ?? new DenominationKey(val, CurrencyCashType.Coin, currencyCode), count, factor);
+            })
+            .ToList();
     }
 
     /// <summary>

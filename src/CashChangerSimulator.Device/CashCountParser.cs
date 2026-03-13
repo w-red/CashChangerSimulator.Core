@@ -23,55 +23,35 @@ public static class CashCountParser
 
         var sections = input.Split(';');
         if (sections.Length > 2)
-        {
             throw new ArgumentException("Invalid cash count format: Too many semicolon sections. Expected at most 'Coins;Bills'.");
-        }
 
-        return sections.SelectMany((section, index) => 
-            ParseSection(section, index, sections.Length, activeKeys, currencyFactor)).ToList();
+        return sections.SelectMany((section, index) =>
+        {
+            var trimmedSection = section.Trim();
+            if (string.IsNullOrEmpty(trimmedSection)) return [];
+
+            // UPOS Standard: 0 = Coin, 1 = Bill (if 2 sections exist)
+            var sectionType = sections.Length == 2
+                ? (index == 0 ? CurrencyCashType.Coin : CurrencyCashType.Bill)
+                : (CurrencyCashType?)null;
+
+            return trimmedSection.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(part => ParsePart(part, sectionType, activeKeys, currencyFactor));
+        }).ToList();
     }
 
-    private static IEnumerable<CashCount> ParseSection(
-        string section, 
-        int sectionIndex, 
-        int totalSections, 
-        IEnumerable<DenominationKey> activeKeys, 
-        decimal currencyFactor)
-    {
-        var trimmedSection = section.Trim();
-        if (string.IsNullOrEmpty(trimmedSection)) return [];
-
-        // UPOS Standard: 0 = Coin, 1 = Bill (if 2 sections exist)
-        CurrencyCashType? sectionType = totalSections == 2 
-            ? (sectionIndex == 0 ? CurrencyCashType.Coin : CurrencyCashType.Bill) 
-            : null;
-
-        return trimmedSection.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(part => ParsePart(part.Trim(), sectionType, activeKeys, currencyFactor));
-    }
-
-    private static CashCount ParsePart(
-        string part, 
-        CurrencyCashType? sectionType, 
-        IEnumerable<DenominationKey> activeKeys, 
-        decimal currencyFactor)
+    private static CashCount ParsePart(string part, CurrencyCashType? sectionType, IEnumerable<DenominationKey> activeKeys, decimal currencyFactor)
     {
         var pair = part.Split(':');
         if (pair.Length != 2)
-        {
             throw new ArgumentException($"Invalid cash count format: '{part}'. Expected format 'Value:Count'.");
-        }
 
         var keyStr = NormalizeNominalValue(pair[0].Trim());
-        if (!decimal.TryParse(keyStr, out decimal decimalValue))
-        {
+        if (!decimal.TryParse(keyStr, out var decimalValue))
             throw new ArgumentException($"Invalid nominal value: '{keyStr}' in '{part}'.");
-        }
 
-        if (!int.TryParse(pair[1].Trim(), out int count) || count < 0)
-        {
+        if (!int.TryParse(pair[1].Trim(), out var count) || count < 0)
             throw new ArgumentException($"Invalid count value: '{pair[1].Trim()}' in '{part}'.");
-        }
 
         var finalKey = FindKey(decimalValue, sectionType, activeKeys, part);
 
@@ -81,34 +61,27 @@ public static class CashCountParser
             count);
     }
 
-    private static string NormalizeNominalValue(string value) => 
+    private static string NormalizeNominalValue(string value) =>
         value.StartsWith('.') ? "0" + value : value;
 
-    private static DenominationKey FindKey(
-        decimal decimalValue, 
-        CurrencyCashType? sectionType, 
-        IEnumerable<DenominationKey> activeKeys, 
-        string part)
+    private static DenominationKey FindKey(decimal decimalValue, CurrencyCashType? sectionType, IEnumerable<DenominationKey> activeKeys, string part)
     {
         var matchingKeys = activeKeys.Where(k => k.Value == decimalValue).ToList();
+
         if (matchingKeys.Count == 0)
-        {
             throw new ArgumentException($"Unsupported denomination value '{decimalValue}' found in '{part}'.");
-        }
 
         if (sectionType.HasValue)
         {
-            var key = matchingKeys.FirstOrDefault(k => k.Type == sectionType.Value);
-            return key ?? throw new ArgumentException(
-                $"Denomination '{decimalValue}' is not registered as a {sectionType} in the current inventory, but was found in the {sectionType} section.");
+            return matchingKeys.FirstOrDefault(k => k.Type == sectionType.Value)
+                ?? throw new ArgumentException($"Denomination '{decimalValue}' is not registered as a {sectionType} in the current inventory, but was found in the {sectionType} section.");
         }
 
-        if (matchingKeys.Count > 1)
+        return matchingKeys.Count switch
         {
-            throw new ArgumentException(
-                $"Ambiguous denomination value '{decimalValue}' in '{part}'. Please use the 'Coins;Bills' semicolon format to resolve ambiguity.");
-        }
-
-        return matchingKeys.First();
+            1 => matchingKeys[0],
+            > 1 => throw new ArgumentException($"Ambiguous denomination value '{decimalValue}' in '{part}'. Please use the 'Coins;Bills' semicolon format to resolve ambiguity."),
+            _ => throw new ArgumentException($"Unsupported denomination value '{decimalValue}' found in '{part}'.")
+        };
     }
 }
