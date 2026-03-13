@@ -46,25 +46,7 @@ public class Inventory : IReadOnlyInventory
     /// </remarks>
     public virtual void Add(DenominationKey key, int count)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        key = NormalizeKey(key);
-        _logger.ZLogDebug($"Inventory.Add called. Key: {key}, Count: {count}");
-        if (count == 0)
-        {
-            return;
-        }
-
-        var current = GetCount(key);
-        var next = current + count;
-        if (next < 0)
-        {
-            _logger.ZLogWarning($"Inventory.Add: Resulting count for {key} is negative ({next}). Setting to 0.");
-            next = 0;
-        }
-
-        _counts[key] = next;
-        _changed.OnNext(key);
-        _logger.ZLogDebug($"Inventory.Add finished. New Total: {CalculateTotal()}");
+        UpdateBucket(_counts, key, count, "Inventory.Add");
     }
 
     /// <summary>指定された金種の枚数を上書き設定します。</summary>
@@ -88,39 +70,13 @@ public class Inventory : IReadOnlyInventory
     /// <summary>指定された金種の枚数を回収庫に追加する。</summary>
     public virtual void AddCollection(DenominationKey key, int count)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        key = NormalizeKey(key);
-        if (count == 0) return;
-
-        var current = _collectionCounts.GetValueOrDefault(key, 0);
-        var next = current + count;
-        if (next < 0)
-        {
-            _logger.ZLogWarning($"Inventory.AddCollection: Resulting count for {key} is negative ({next}). Setting to 0.");
-            next = 0;
-        }
-
-        _collectionCounts[key] = next;
-        _changed.OnNext(key);
+        UpdateBucket(_collectionCounts, key, count, "Inventory.AddCollection");
     }
 
     /// <summary>指定された金種の枚数をリジェクト庫に追加する。</summary>
     public virtual void AddReject(DenominationKey key, int count)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        key = NormalizeKey(key);
-        if (count == 0) return;
-
-        var current = _rejectCounts.GetValueOrDefault(key, 0);
-        var next = current + count;
-        if (next < 0)
-        {
-            _logger.ZLogWarning($"Inventory.AddReject: Resulting count for {key} is negative ({next}). Setting to 0.");
-            next = 0;
-        }
-
-        _rejectCounts[key] = next;
-        _changed.OnNext(key);
+        UpdateBucket(_rejectCounts, key, count, "Inventory.AddReject");
     }
 
     /// <summary>在庫の枚数を取得します。</summary>
@@ -152,29 +108,10 @@ public class Inventory : IReadOnlyInventory
     /// <remarks>通常庫、回収庫、リジェクト庫のすべての合計を計算します。</remarks>
     public virtual decimal CalculateTotal(string? currencyCode = null)
     {
-        decimal total = 0;
-        foreach (var (key, count) in _counts)
-        {
-            if (currencyCode == null || key.CurrencyCode == currencyCode)
-            {
-                total += key.Value * count;
-            }
-        }
-        foreach (var (key, count) in _collectionCounts)
-        {
-            if (currencyCode == null || key.CurrencyCode == currencyCode)
-            {
-                total += key.Value * count;
-            }
-        }
-        foreach (var (key, count) in _rejectCounts)
-        {
-            if (currencyCode == null || key.CurrencyCode == currencyCode)
-            {
-                total += key.Value * count;
-            }
-        }
-        return total;
+        return new[] { _counts, _collectionCounts, _rejectCounts }
+            .SelectMany(d => d)
+            .Where(kv => currencyCode == null || kv.Key.CurrencyCode == currencyCode)
+            .Sum(kv => kv.Key.Value * kv.Value);
     }
 
 
@@ -250,6 +187,24 @@ public class Inventory : IReadOnlyInventory
             }
         }
         return false;
+    }
+
+    private void UpdateBucket(Dictionary<DenominationKey, int> bucket, DenominationKey key, int count, string methodName)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        key = NormalizeKey(key);
+        if (count == 0) return;
+
+        var current = bucket.GetValueOrDefault(key, 0);
+        var next = Math.Max(0, current + count);
+        if (current + count < 0)
+        {
+            _logger.ZLogWarning($"{methodName}: Resulting count for {key} is negative ({current + count}). Setting to 0.");
+        }
+
+        bucket[key] = next;
+        _changed.OnNext(key);
+        _logger.ZLogDebug($"{methodName} finished. New Total: {CalculateTotal()}");
     }
 
     private static DenominationKey NormalizeKey(DenominationKey key) =>
