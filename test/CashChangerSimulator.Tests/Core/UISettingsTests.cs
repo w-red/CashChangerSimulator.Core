@@ -66,6 +66,32 @@ public class UISettingsTests
         loaded.Inventory["JPY"].Denominations["B2000"].IsRecyclable.ShouldBeFalse();
     }
 
+    [Fact]
+    public void ConfigurationShouldSerializeAndDeserializeBaseTheme()
+    {
+        var config = new SimulatorConfiguration();
+        config.System.BaseTheme = "Light";
+
+        var toml = TomlSerializer.Serialize(config, ModelOptions);
+        var loaded = TomlSerializer.Deserialize<SimulatorConfiguration>(toml, options: ModelOptions) ?? new SimulatorConfiguration();
+
+        loaded.System.BaseTheme.ShouldBe("Light");
+    }
+
+    [Fact]
+    public void ConfigurationShouldSerializeAndDeserializeThresholds()
+    {
+        var config = new SimulatorConfiguration();
+        config.Thresholds.NearEmpty = 5;
+        config.Thresholds.Full = 200;
+
+        var toml = TomlSerializer.Serialize(config, ModelOptions);
+        var loaded = TomlSerializer.Deserialize<SimulatorConfiguration>(toml, options: ModelOptions) ?? new SimulatorConfiguration();
+
+        loaded.Thresholds.NearEmpty.ShouldBe(5);
+        loaded.Thresholds.Full.ShouldBe(200);
+    }
+
     /// <summary>ViewModel を介して UIMode が正しくロードおよび保存されることを検証する。</summary>
     [Fact]
     public void ViewModelShouldLoadAndSaveUIMode()

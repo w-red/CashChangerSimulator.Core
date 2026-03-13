@@ -70,4 +70,72 @@ public class VirtualMockDeviceTests
         _device2.Claim(100);
         _device2.Claimed.ShouldBeTrue();
     }
+
+    [Fact]
+    public void Open_ShouldSetConnected()
+    {
+        _device1.Open();
+        _device1.IsConnected.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Close_ShouldSetDisconnectedAndDisabled()
+    {
+        _device1.Open();
+        _device1.Claim(100);
+        _device1.Enable();
+        
+        _device1.Close();
+        
+        _device1.IsConnected.ShouldBeFalse();
+        _device1.DeviceEnabled.ShouldBeFalse();
+        _device1.Claimed.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Enable_ShouldSucceed_WhenClaimed()
+    {
+        _device1.Open();
+        _device1.Claim(100);
+        _device1.Enable();
+        _device1.DeviceEnabled.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Enable_ShouldThrow_WhenNotClaimed()
+    {
+        _device1.Open();
+        Should.Throw<InvalidOperationException>(() => _device1.Enable());
+    }
+
+    [Fact]
+    public void Deposit_ShouldThrow_WhenNotEnabled()
+    {
+        _device1.Open();
+        _device1.Claim(100);
+        // Not enabled
+        Should.Throw<InvalidOperationException>(() => _device1.Deposit(new Dictionary<DenominationKey, int>()));
+    }
+
+    [Fact]
+    public void Dispense_ShouldThrow_WhenNotEnabled()
+    {
+        _device1.Open();
+        _device1.Claim(100);
+        // Not enabled
+        Should.Throw<InvalidOperationException>(() => _device1.Dispense(1000));
+    }
+
+    [Fact]
+    public void GetInventory_ShouldReturnCorrectData()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _device1.Open();
+        _device1.Claim(100);
+        _device1.Enable();
+        _device1.Deposit(new Dictionary<DenominationKey, int> { { key, 5 } });
+
+        var inventory = _device1.GetInventory();
+        inventory[key].ShouldBe(5);
+    }
 }
