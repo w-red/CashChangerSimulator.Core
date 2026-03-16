@@ -143,6 +143,7 @@ public class DispenseController(
         catch (PosControlException ex)
         {
             _logger.ZLogError(ex, $"Dispense operation failed: {ex.ErrorCode}");
+            _hardwareStatusManager.SetDeviceError((int)ex.ErrorCode, ex.ErrorCodeExtended);
             _status = CashDispenseStatus.Error;
             onComplete(ex.ErrorCode, ex.ErrorCodeExtended);
             throw;
@@ -150,6 +151,7 @@ public class DispenseController(
         catch (InsufficientCashException ex)
         {
             _logger.ZLogError(ex, $"Dispense operation failed due to shortage: {ex.Message}");
+            _hardwareStatusManager.SetDeviceError((int)ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense);
             _status = CashDispenseStatus.Error;
             onComplete(ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense);
             throw new PosControlException(ex.Message, ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.OverDispense);
@@ -157,6 +159,7 @@ public class DispenseController(
         catch (Exception ex)
         {
             _logger.ZLogError(ex, $"Dispense operation encountered an unexpected error.");
+            _hardwareStatusManager.SetDeviceError((int)ErrorCode.Failure, 0);
             _status = CashDispenseStatus.Error;
             onComplete(ErrorCode.Failure, 0);
             throw new PosControlException("Unexpected error during dispense", ErrorCode.Failure, 0, ex);
