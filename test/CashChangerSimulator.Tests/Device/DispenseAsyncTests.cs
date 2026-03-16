@@ -263,7 +263,7 @@ public class DispenseAsyncTests
         bool eventFired = false;
         while (!eventFired && timeout < 50)
         {
-            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2);
+            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken);
             lock (changer.QueuedEvents)
             {
                 eventFired = changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
