@@ -76,7 +76,17 @@ public class DispenseController(
 
         if (asyncMode)
         {
-            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token), token);
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token);
+                }
+                catch (Exception ex)
+                {
+                    _logger.ZLogError($"Unhandled exception in background dispense task (amount): {ex.Message}");
+                }
+            }, token);
         }
         else
         {
@@ -90,6 +100,7 @@ public class DispenseController(
         ArgumentNullException.ThrowIfNull(counts);
         ArgumentNullException.ThrowIfNull(onComplete);
 
+        if (_disposed) return;
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
 
         if (!_hardwareStatusManager.IsConnected.Value)
@@ -112,7 +123,17 @@ public class DispenseController(
 
         if (asyncMode)
         {
-            _ = Task.Run(() => ExecuteDispense(() => _manager.Dispense(counts), onComplete, token), token);
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await ExecuteDispense(() => _manager.Dispense(counts), onComplete, token);
+                }
+                catch (Exception ex)
+                {
+                    _logger.ZLogError($"Unhandled exception in background dispense task (counts): {ex.Message}");
+                }
+            }, token);
         }
         else
         {
@@ -199,12 +220,17 @@ public class DispenseController(
         }
     }
 
+    private bool _disposed;
+
     /// <inheritdoc/>
     public void Dispose()
     {
+        if (_disposed) return;
+        _dispenseCts?.Cancel();
         _dispenseCts?.Dispose();
         _disposables.Dispose();
         _changed.OnCompleted();
+        _disposed = true;
         GC.SuppressFinalize(this);
     }
 }

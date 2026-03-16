@@ -18,7 +18,7 @@ public class StandardLifecycleHandler(
     {
         get
         {
-            if (!hardware.IsConnected.Value) return ControlState.Closed;
+            if (hardware.IsDisposed || !hardware.IsConnected.Value) return ControlState.Closed;
             if (mediator.IsBusy) return ControlState.Busy;
             return ControlState.Idle;
         }

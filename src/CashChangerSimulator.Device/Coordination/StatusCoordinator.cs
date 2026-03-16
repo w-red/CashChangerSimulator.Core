@@ -18,6 +18,7 @@ public class StatusCoordinator(
     private readonly CompositeDisposable _disposables = [];
     private CashChangerStatus _lastCashChangerStatus = CashChangerStatus.OK;
     private CashChangerFullStatus _lastFullStatus = CashChangerFullStatus.OK;
+    private bool _disposed;
 
     /// <summary>現在のデバイスステータス。</summary>
     public CashChangerStatus LastCashChangerStatus => _lastCashChangerStatus;
@@ -28,8 +29,10 @@ public class StatusCoordinator(
     /// <summary>全ステータスの購読を開始します。</summary>
     public void Start()
     {
+        if (_disposed) return;
         _disposables.Add(statusAggregator.DeviceStatus.Subscribe(status =>
         {
+            if (_disposed) return;
             var newDeviceStatus = status switch
             {
                 CashStatus.Empty => CashChangerStatus.Empty,
@@ -62,6 +65,7 @@ public class StatusCoordinator(
 
         _disposables.Add(statusAggregator.FullStatus.Subscribe(status =>
         {
+            if (_disposed) return;
             var newFullStatus = status switch
             {
                 CashStatus.Full => CashChangerFullStatus.Full,
@@ -88,12 +92,14 @@ public class StatusCoordinator(
 
         _disposables.Add(hardwareStatusManager.IsConnected.Subscribe(connected =>
         {
+            if (_disposed) return;
             var code = connected ? UposCashChangerStatusUpdateCode.Inserted : UposCashChangerStatusUpdateCode.Removed;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
         _disposables.Add(hardwareStatusManager.IsJammed.Subscribe(jammed =>
         {
+            if (_disposed) return;
             if (jammed)
             {
                 sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Jam));
@@ -117,6 +123,7 @@ public class StatusCoordinator(
 
         _disposables.Add(depositController.Changed.Subscribe(_ =>
         {
+            if (_disposed) return;
             if (depositController.DepositStatus == CashDepositStatus.Count && !depositController.IsPaused && sink.DataEventEnabled)
             {
                 if (sink.RealTimeDataEnabled || depositController.IsFixed)
@@ -128,6 +135,7 @@ public class StatusCoordinator(
 
         _disposables.Add(dispenseController.Changed.Subscribe(_ =>
         {
+            if (_disposed) return;
             sink.SetAsyncProcessing(dispenseController.IsBusy);
         }));
     }
@@ -135,6 +143,8 @@ public class StatusCoordinator(
     /// <inheritdoc/>
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _disposables.Dispose();
         GC.SuppressFinalize(this);
     }

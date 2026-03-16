@@ -55,8 +55,11 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         _activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
     }
 
+    private bool _disposed;
+
     public void Reload()
     {
+        if (_disposed) return;
         _configProvider.Reload();
         _logger.ZLogInformation($"Configuration reloaded in UposConfigurationManager.");
         UpdateSimulatorState();
@@ -64,12 +67,14 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
 
     private void OnConfigurationReloaded()
     {
+        if (_disposed) return;
         _logger.ZLogInformation($"Configuration reloaded in UposConfigurationManager.");
         UpdateSimulatorState();
     }
 
     private void UpdateSimulatorState()
     {
+        if (_disposed) return;
         // Re-detect active currency if current one is gone
         if (!CurrencyCodeList.Contains(_activeCurrencyCode))
         {
@@ -88,6 +93,8 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _subscription.Dispose();
         GC.SuppressFinalize(this);
     }

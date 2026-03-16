@@ -38,9 +38,15 @@ public class HardwareStatusManager : IDisposable
     /// <summary>現在発生中のデバイスエラーの ErrorCodeExtended 値。</summary>
     public BindableReactiveProperty<int> CurrentErrorCodeExtended => _currentErrorCodeExtended;
 
+    private bool _disposed;
+
+    /// <summary>このインスタンスが破棄されているかどうかを取得します。</summary>
+    public bool IsDisposed => _disposed;
+
     /// <summary>ジャム状態を切り替えます。箇所を指定することも可能です。</summary>
     public void SetJammed(bool jammed, Models.JamLocation location = Models.JamLocation.None)
     {
+        if (_disposed) return;
         _isJammed.Value = jammed;
         _jamLocation.Value = jammed ? location : Models.JamLocation.None;
     }
@@ -48,12 +54,14 @@ public class HardwareStatusManager : IDisposable
     /// <summary>重なり状態を切り替えます。</summary>
     public void SetOverlapped(bool overlapped)
     {
+        if (_disposed) return;
         _isOverlapped.Value = overlapped;
     }
 
     /// <summary>接続状態を切り替えます。</summary>
     public void SetConnected(bool connected)
     {
+        if (_disposed) return;
         _isConnected.Value = connected;
     }
 
@@ -62,6 +70,7 @@ public class HardwareStatusManager : IDisposable
     /// <param name="errorCodeExtended">追加の詳細エラーコード</param>
     public void SetDeviceError(int errorCode, int errorCodeExtended = 0)
     {
+        if (_disposed) return;
         _currentErrorCode.Value = errorCode;
         _currentErrorCodeExtended.Value = errorCodeExtended;
         _isDeviceError.Value = true;
@@ -70,6 +79,7 @@ public class HardwareStatusManager : IDisposable
     /// <summary>すべてのエラー状態を解除します。</summary>
     public void ResetError()
     {
+        if (_disposed) return;
         _isJammed.Value = false;
         _jamLocation.Value = Models.JamLocation.None;
         _isOverlapped.Value = false;
@@ -81,12 +91,23 @@ public class HardwareStatusManager : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        _isJammed.Dispose();
-        _jamLocation.Dispose();
-        _isOverlapped.Dispose();
-        _isDeviceError.Dispose();
-        _currentErrorCode.Dispose();
-        _currentErrorCodeExtended.Dispose();
+        Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            _isJammed.Dispose();
+            _jamLocation.Dispose();
+            _isOverlapped.Dispose();
+            _isDeviceError.Dispose();
+            _isConnected.Dispose();
+            _currentErrorCode.Dispose();
+            _currentErrorCodeExtended.Dispose();
+        }
+        _disposed = true;
     }
 }
