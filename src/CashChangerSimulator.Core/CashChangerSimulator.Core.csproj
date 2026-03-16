@@ -1,34 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>preview</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <InternalsVisibleTo Include="CashChangerSimulator.Tests" />
-    <InternalsVisibleTo Include="CashChangerSimulator.UI.Tests" />
-  </ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="CashChangerSimulator.Tests" />
+        <InternalsVisibleTo Include="CashChangerSimulator.UI.Tests" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MemoryPack" Version="1.21.4" />
-    <PackageReference Include="MemoryPack.Core" Version="1.21.4" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.5" />
-    <PackageReference Include="PolySharp" Version="1.15.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="R3" Version="1.3.0" />
-    <PackageReference Include="System.IO.Hashing" Version="10.0.5" />
-    <PackageReference Include="Tomlyn" Version="1.2.0" />
-    <PackageReference Include="Utf8StringInterpolation" Version="1.3.2" />
-    <PackageReference Include="ZLogger" Version="2.5.10" />
-  </ItemGroup>
-
-  
+    <ItemGroup>
+        <PackageReference Include="MemoryPack" Version="1.21.4" />
+        <PackageReference Include="MemoryPack.Core" Version="1.21.4" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.5" />
+        <PackageReference Include="PolySharp" Version="1.15.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="R3" Version="1.3.0" />
+        <PackageReference Include="System.IO.Hashing" Version="10.0.5" />
+        <PackageReference Include="Tomlyn" Version="1.2.0" />
+        <PackageReference Include="Utf8StringInterpolation" Version="1.3.2" />
+        <PackageReference Include="ZLogger" Version="2.5.10" />
+    </ItemGroup>
 
 </Project>
 

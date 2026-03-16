@@ -24,8 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Core" Version="1.51.1" />
-    <PackageReference Include="Castle.Core" Version="5.2.1" />
     <PackageReference Include="Cocona" Version="2.2.0" />
     <PackageReference Include="coverlet.collector" Version="8.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -35,7 +33,6 @@
     <PackageReference Include="MaterialDesignThemes" Version="5.3.0" />
     <PackageReference Include="MemoryPack" Version="1.21.4" />
     <PackageReference Include="MemoryPack.Core" Version="1.21.4" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="3.0.0" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.5" />
@@ -49,7 +46,6 @@
     <PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.5" />
-    <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.5" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
@@ -57,9 +53,6 @@
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport.Abstractions" Version="2.1.0" />
     <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.1.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="OpenTelemetry" Version="1.15.0" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
     <PackageReference Include="PolySharp" Version="1.15.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -68,7 +61,6 @@
     <PackageReference Include="ReadLine" Version="2.0.1" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="Spectre.Console.Testing" Version="0.54.0" />
-    <PackageReference Include="System.ClientModel" Version="1.9.0" />
     <PackageReference Include="System.CodeDom" Version="10.0.5" />
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.5" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.5" />
