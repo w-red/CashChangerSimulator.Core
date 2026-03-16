@@ -29,7 +29,7 @@ public partial record DenominationKey(
     public char PrefixChar => Type == CurrencyCashType.Bill ? BillPrefix : CoinPrefix;
 
     /// <summary>設定ファイル等で使用する文字列形式を取得します（例: "B1000", "C500", "C0.25"）。</summary>
-    public string ToDenominationString() => $"{PrefixChar}{Value}";
+    public string ToDenominationString() => $"{PrefixChar}{Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
     /// <summary>文字列形式から金種キーを解析します。</summary>
     public static bool TryParse(string s, out DenominationKey? result)

@@ -33,7 +33,8 @@ public class MonitorsProvider
         
         RefreshMonitors();
 
-        // メタデータ変更時（通貨変更時など）にモニターリストも更新する
+        // 構成変更時またはメタデータ変更時（通貨変更時など）にモニターリストも更新する
+        _configProvider.Reloaded.Subscribe(_ => RefreshMonitors());
         _metadataProvider.Changed.Subscribe(_ => RefreshMonitors());
     }
 
@@ -46,7 +47,7 @@ public class MonitorsProvider
         _monitors = keys.Select(k =>
         {
             var activeCurrency = config.System.CurrencyCode ?? "JPY";
-            var keyStr = (k.Type == CurrencyCashType.Bill ? "B" : "C") + k.Value.ToString();
+            var keyStr = k.ToDenominationString();
 
             if (config.Inventory.TryGetValue(activeCurrency, out var inventorySettings) &&
                 inventorySettings.Denominations.TryGetValue(keyStr, out var setting))
@@ -78,7 +79,7 @@ public class MonitorsProvider
         foreach (var monitor in Monitors)
         {
             var k = monitor.Key;
-            var keyStr = (k.Type == CurrencyCashType.Bill ? "B" : "C") + k.Value.ToString();
+            var keyStr = k.ToDenominationString();
 
             if (config.Inventory.TryGetValue(activeCurrency, out var inventorySettings) &&
                 inventorySettings.Denominations.TryGetValue(keyStr, out var setting))
@@ -98,4 +99,7 @@ public class MonitorsProvider
             }
         }
     }
+
+    /// <summary>テスト用：手動で変更通知を発火させます。</summary>
+    public void TriggerChanged() => _changed.OnNext(Unit.Default);
 }
