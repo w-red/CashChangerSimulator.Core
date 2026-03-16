@@ -20,12 +20,12 @@ public class UISettingsTests
     public void ConfigurationShouldSerializeAndDeserializeUIMode()
     {
         var config = new SimulatorConfiguration();
-        config.System.UIMode = UIMode.PosTransaction;
+        config.System.UIMode = UIMode.Standard;
 
         var toml = TomlSerializer.Serialize(config, ModelOptions);
         var loaded = TomlSerializer.Deserialize<SimulatorConfiguration>(toml, options: ModelOptions) ?? new SimulatorConfiguration();
 
-        loaded.System.UIMode.ShouldBe(UIMode.PosTransaction);
+        loaded.System.UIMode.ShouldBe(UIMode.Standard);
     }
 
     /// <summary>金種の表示名（EN/JP）が正しくシリアライズおよびデシリアライズされることを検証する。</summary>
@@ -97,13 +97,13 @@ public class UISettingsTests
     public void ViewModelShouldLoadAndSaveUIMode()
     {
         var configProvider = new ConfigurationProvider();
-        configProvider.Config.System.UIMode = UIMode.PosTransaction;
+        configProvider.Config.System.UIMode = UIMode.Standard;
 
         var vm = CreateViewModel(configProvider);
 
-        vm.ActiveUIMode.Value.ShouldBe(UIMode.PosTransaction);
+        vm.ActiveUIMode.Value.ShouldBe(UIMode.Standard);
 
-        // Edit
+        // Edit (Remaining one mode)
         vm.ActiveUIMode.Value = UIMode.Standard;
 
         // Save
@@ -168,7 +168,7 @@ public class UISettingsTests
         config.System.CurrencyCode = "JPY";
         config.System.CultureCode = "en-US";
 
-        var tempFile = Path.Combine(Path.Combine(AppDomain.CurrentDomain.BaseDirectory), Guid.NewGuid().ToString() + ".toml");
+        var tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Guid.NewGuid().ToString() + ".toml");
         ConfigurationLoader.Save(config, tempFile);
 
         var provider = ConfigurationProvider.CreateWithFilePath(tempFile);
@@ -183,7 +183,6 @@ public class UISettingsTests
         ConfigurationLoader.Save(config, tempFile);
         provider.Reload();
 
-        // This is expected to FAIL until we implement reactivity in CurrencyMetadataProvider
         metadata.SymbolPrefix.CurrentValue.ShouldBe("");
         metadata.SymbolSuffix.CurrentValue.ShouldBe("円");
 
