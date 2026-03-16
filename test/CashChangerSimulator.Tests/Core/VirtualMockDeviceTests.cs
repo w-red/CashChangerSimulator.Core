@@ -45,7 +45,7 @@ public class VirtualMockDeviceTests
         _device1.Claim(100);
 
         // 別スレッドで _device2.Claim を実行し、例外を確認する
-        var task = Task.Run(() => _device2.Claim(100));
+        var task = Task.Run(() => _device2.Claim(100), TestContext.Current.CancellationToken);
 
         // Assert: 別スレッドからの Claim は失敗するはず
         var ex = Should.Throw<Exception>(async () => await task.WaitAsync(TestContext.Current.CancellationToken));
