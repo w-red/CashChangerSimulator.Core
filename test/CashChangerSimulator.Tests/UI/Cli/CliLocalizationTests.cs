@@ -36,7 +36,7 @@ public class CliLocalizationTests
             var welcome = localizer["messages.welcome"];
 
             // Assert
-            welcome.Value.ShouldBe("現役入出金機シミュレータ CLI");
+            welcome.Value.ShouldBe("自動釣銭機シミュレータ CLI");
         }
         finally
         {
