@@ -46,7 +46,7 @@ public class AdvancedSimulationViewModelTests
             aggregatorProvider, 
             monitorsProvider, 
             new Mock<INotifyService>().Object,
-            new Mock<IDispatcherService>().Object);
+            new ImmediateDispatcherService());
 
         return new AdvancedSimulationViewModel(facade, scriptService, metadataProvider);
     }

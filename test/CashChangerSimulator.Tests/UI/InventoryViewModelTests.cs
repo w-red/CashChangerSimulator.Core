@@ -63,7 +63,7 @@ public class InventoryViewModelTests
             aggregatorProvider,
             monitorsProvider,
             notifyService,
-            new Mock<IDispatcherService>().Object);
+            new ImmediateDispatcherService());
 
         var vm = new InventoryViewModel(facade, config, metadataProvider, notifyService);
         return (vm, inv, config, history);
