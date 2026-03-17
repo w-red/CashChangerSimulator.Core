@@ -8,5 +8,7 @@ public interface INotifyService
     /// </summary>
     /// <param name="message">表示するメッセージ。</param>
     /// <param name="title">ダイアログのタイトル。</param>
-    void ShowWarning(string message, string title);
+    void ShowWarning(string message, string title = "Warning");
+    void ShowError(string message, string title = "Error");
+    void ShowInfo(string message, string title = "Info");
 }
