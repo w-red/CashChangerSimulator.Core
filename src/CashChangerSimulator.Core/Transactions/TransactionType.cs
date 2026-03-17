@@ -26,5 +26,9 @@ public enum TransactionType
     /// <summary>デバイスの占有解除。</summary>
     Release,
     /// <summary>エラーイベント。</summary>
-    Error
+    Error,
+    /// <summary>ハードウェアエラー（ジャム等）。</summary>
+    HardwareError,
+    /// <summary>エラー復旧（ジャム解除等）。</summary>
+    ErrorRecovery
 }
