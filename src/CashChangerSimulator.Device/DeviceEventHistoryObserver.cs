@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Core.Opos;
 using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device;
@@ -38,10 +39,31 @@ public class DeviceEventHistoryObserver : IDisposable
         {
             _history.Add(new TransactionEntry(
                 DateTimeOffset.Now,
-                TransactionType.Error,
+                TransactionType.HardwareError,
                 0,
                 new Dictionary<DenominationKey, int>()
             ));
+        }
+        else if (e is StatusUpdateEventArgs se)
+        {
+            if (se.Status == (int)UposCashChangerStatusUpdateCode.Jam)
+            {
+                _history.Add(new TransactionEntry(
+                    DateTimeOffset.Now,
+                    TransactionType.HardwareError,
+                    0,
+                    new Dictionary<DenominationKey, int>()
+                ));
+            }
+            else if (se.Status == (int)UposCashChangerStatusUpdateCode.Ok)
+            {
+                _history.Add(new TransactionEntry(
+                    DateTimeOffset.Now,
+                    TransactionType.ErrorRecovery,
+                    0,
+                    new Dictionary<DenominationKey, int>()
+                ));
+            }
         }
     }
 
