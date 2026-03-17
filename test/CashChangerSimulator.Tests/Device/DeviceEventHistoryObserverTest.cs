@@ -37,9 +37,9 @@ public class DeviceEventHistoryObserverTest
         entry.Counts.ShouldBeEmpty();
     }
 
-    /// <summary>DataEventArgs 以外のデバイスイベントが発生した際、履歴に追加「されない」ことを検証します。</summary>
+    /// <summary>StatusUpdateEventArgs(Ok=0) が ErrorRecovery として履歴に記録されることを検証します。</summary>
     [Fact]
-    public void HandleDeviceEventWhenNotDataEventArgsDoesNotRecordToHistory()
+    public void HandleDeviceEventWhenStatusOkRecordsErrorRecovery()
     {
         // Arrange
         var history = new TransactionHistory();
@@ -47,8 +47,44 @@ public class DeviceEventHistoryObserverTest
         var device = new InternalSimulatorCashChanger(deps);
         using var observer = new DeviceEventHistoryObserver(device, history);
 
-        // Act
+        // Act — StatusUpdateEventArgs(0) corresponds to UposCashChangerStatusUpdateCode.Ok
         device.OnEventQueued?.Invoke(new StatusUpdateEventArgs(0));
+
+        // Assert
+        history.Entries.Count.ShouldBe(1);
+        history.Entries[0].Type.ShouldBe(TransactionType.ErrorRecovery);
+    }
+
+    /// <summary>StatusUpdateEventArgs(Jam=31) が HardwareError として履歴に記録されることを検証します。</summary>
+    [Fact]
+    public void HandleDeviceEventWhenStatusJamRecordsHardwareError()
+    {
+        // Arrange
+        var history = new TransactionHistory();
+        var deps = new SimulatorDependencies(History: history);
+        var device = new InternalSimulatorCashChanger(deps);
+        using var observer = new DeviceEventHistoryObserver(device, history);
+
+        // Act — StatusUpdateEventArgs(31) corresponds to UposCashChangerStatusUpdateCode.Jam
+        device.OnEventQueued?.Invoke(new StatusUpdateEventArgs(31));
+
+        // Assert
+        history.Entries.Count.ShouldBe(1);
+        history.Entries[0].Type.ShouldBe(TransactionType.HardwareError);
+    }
+
+    /// <summary>未対応のステータスコードではエントリが追加されないことを検証します。</summary>
+    [Fact]
+    public void HandleDeviceEventWhenUnhandledStatusDoesNotRecord()
+    {
+        // Arrange
+        var history = new TransactionHistory();
+        var deps = new SimulatorDependencies(History: history);
+        var device = new InternalSimulatorCashChanger(deps);
+        using var observer = new DeviceEventHistoryObserver(device, history);
+
+        // Act — Use a status code that is NOT Ok (0) or Jam (31)
+        device.OnEventQueued?.Invoke(new StatusUpdateEventArgs(11)); // Empty
 
         // Assert
         history.Entries.ShouldBeEmpty();
