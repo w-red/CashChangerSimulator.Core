@@ -26,6 +26,7 @@ public sealed class SimulatorContext : IDisposable
     public required LifecycleManager LifecycleManager { get; init; }
     public required IUposEventNotifier EventNotifier { get; init; }
     public StatusCoordinator StatusCoordinator { get; internal set; } = null!;
+    internal ConfigurationProvider? InternalConfigProvider { get; init; }
 
     /// <summary>依存関係からコンテキストを構築します（デフォルト値の解決を含む）。</summary>
     public static SimulatorContext Create(SimulatorDependencies deps, SimulatorCashChanger so, ILogger logger)
@@ -33,7 +34,14 @@ public sealed class SimulatorContext : IDisposable
         var hardwareStatusManager = deps.HardwareStatusManager ?? new HardwareStatusManager();
         var mediator = deps.Mediator as UposMediator ?? new UposMediator(so);
 
-        var configProvider = deps.ConfigProvider ?? new ConfigurationProvider();
+        ConfigurationProvider? internalConfigProvider = null;
+        var configProvider = deps.ConfigProvider;
+        if (configProvider == null)
+        {
+            configProvider = new ConfigurationProvider();
+            internalConfigProvider = configProvider;
+        }
+
         var inventory = deps.Inventory ?? new Inventory();
         var history = deps.History ?? new TransactionHistory();
 
@@ -64,7 +72,8 @@ public sealed class SimulatorContext : IDisposable
             DiagnosticController = diagnosticController,
             Mediator = mediator,
             LifecycleManager = lifecycleManager,
-            EventNotifier = eventNotifier
+            EventNotifier = eventNotifier,
+            InternalConfigProvider = internalConfigProvider
         };
 
         ctx.StatusCoordinator = new StatusCoordinator(so, aggregator, hardwareStatusManager, depositController, dispenseController);
@@ -82,6 +91,7 @@ public sealed class SimulatorContext : IDisposable
         DispenseController?.Dispose();
         StatusAggregator?.Dispose();
         HardwareStatusManager?.Dispose();
+        InternalConfigProvider?.Dispose();
 
         _isDisposed = true;
         GC.SuppressFinalize(this);

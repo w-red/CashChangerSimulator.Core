@@ -66,6 +66,7 @@ public class OverallStatusAggregator : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
+        _currentSubscription?.Dispose();
         _deviceStatus.Dispose();
         _fullStatus.Dispose();
         GC.SuppressFinalize(this);

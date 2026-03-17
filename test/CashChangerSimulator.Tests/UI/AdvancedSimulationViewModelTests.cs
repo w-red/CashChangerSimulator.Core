@@ -6,6 +6,7 @@ using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Services;
 using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
+using CashChangerSimulator.Tests.Mocks;
 using Moq;
 using Shouldly;
 using CashChangerSimulator.Core.Configuration;
@@ -46,7 +47,8 @@ public class AdvancedSimulationViewModelTests
             aggregatorProvider, 
             monitorsProvider, 
             new Mock<INotifyService>().Object,
-            new ImmediateDispatcherService());
+            new ImmediateDispatcherService(),
+            new ImmediateViewService());
 
         return new AdvancedSimulationViewModel(facade, scriptService, metadataProvider);
     }

@@ -8,6 +8,7 @@ using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
 using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
+using CashChangerSimulator.Tests.Mocks;
 using Moq;
 using R3;
 using Shouldly;
@@ -54,7 +55,8 @@ public class HotReloadTest
             aggregatorProvider,
             monitorsProvider,
             notifyService,
-            new ImmediateDispatcherService());
+            new ImmediateDispatcherService(),
+            new ImmediateViewService());
 
         var vm = new InventoryViewModel(
             facade,

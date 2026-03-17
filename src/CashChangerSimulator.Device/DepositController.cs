@@ -19,11 +19,7 @@ namespace CashChangerSimulator.Device;
 /// <param name="hardwareStatusManager">デバイスの状態を管理する <see cref="HardwareStatusManager"/>。未指定時は新規作成されます。</param>
 /// <param name="manager">在庫操作を統括する <see cref="CashChangerManager"/>。</param>
 /// <param name="configProvider">金種設定などを提供する <see cref="ConfigurationProvider"/>。未指定時は新規作成されます。</param>
-public class DepositController(
-    Inventory inventory,
-    HardwareStatusManager? hardwareStatusManager = null,
-    CashChangerManager? manager = null,
-    ConfigurationProvider? configProvider = null) : IDisposable
+public class DepositController : IDisposable
 {
     private static T EnsureNotNull<T>(T value) where T : class
     {
@@ -31,9 +27,33 @@ public class DepositController(
         return value;
     }
 
-    private readonly Inventory _inventory = EnsureNotNull(inventory);
-    private readonly HardwareStatusManager _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-    private readonly ConfigurationProvider _configProvider = configProvider ?? new ConfigurationProvider();
+    private readonly Inventory _inventory;
+    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly ConfigurationProvider _configProvider;
+    private readonly ConfigurationProvider? _internalConfigProvider;
+
+    public DepositController(
+        Inventory inventory,
+        HardwareStatusManager? hardwareStatusManager = null,
+        CashChangerManager? manager = null,
+        ConfigurationProvider? configProvider = null)
+    {
+        _inventory = EnsureNotNull(inventory);
+        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+        if (configProvider == null)
+        {
+            _configProvider = new ConfigurationProvider();
+            _internalConfigProvider = _configProvider;
+        }
+        else
+        {
+            _configProvider = configProvider;
+            _internalConfigProvider = null;
+        }
+        this.manager = manager;
+    }
+
+    private readonly CashChangerManager? manager;
     
     /// <summary>リアルタイムデータの通知能力を外部から受け取ります。</summary>
     public bool RealTimeDataEnabled { get; set; }
@@ -244,7 +264,7 @@ public class DepositController(
 
             // オーバーフロー・リサイクル可否のチェック
             var setting = _configProvider.Config.GetDenominationSetting(key);
-            var currentInInventory = inventory.GetCount(key);
+            var currentInInventory = _inventory.GetCount(key);
             var currentInDeposit = _depositCounts.GetValueOrDefault(key, 0);
             
             if (setting.IsRecyclable)
@@ -297,6 +317,7 @@ public class DepositController(
     {
         _disposables.Dispose();
         _changed.OnCompleted();
+        _internalConfigProvider?.Dispose();
         GC.SuppressFinalize(this);
     }
 }

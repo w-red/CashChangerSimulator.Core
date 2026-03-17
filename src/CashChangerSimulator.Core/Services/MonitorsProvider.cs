@@ -13,6 +13,7 @@ public class MonitorsProvider
     private readonly ICurrencyMetadataProvider _metadataProvider;
     private List<CashStatusMonitor> _monitors = [];
     private readonly Subject<Unit> _changed = new();
+    private readonly CompositeDisposable _disposables = [];
 
     /// <summary>生成されたモニターのリスト。</summary>
     public IReadOnlyList<CashStatusMonitor> Monitors => _monitors;
@@ -34,8 +35,8 @@ public class MonitorsProvider
         RefreshMonitors();
 
         // 構成変更時またはメタデータ変更時（通貨変更時など）にモニターリストも更新する
-        _configProvider.Reloaded.Subscribe(_ => RefreshMonitors());
-        _metadataProvider.Changed.Subscribe(_ => RefreshMonitors());
+        _configProvider.Reloaded.Subscribe(_ => RefreshMonitors()).AddTo(_disposables);
+        _metadataProvider.Changed.Subscribe(_ => RefreshMonitors()).AddTo(_disposables);
     }
 
     /// <summary>現在の通貨設定に基づいてモニターリストを再構築する。</summary>
@@ -102,4 +103,17 @@ public class MonitorsProvider
 
     /// <summary>テスト用：手動で変更通知を発火させます。</summary>
     public void TriggerChanged() => _changed.OnNext(Unit.Default);
+
+    /// <summary>リソースを解放します。</summary>
+    public void Dispose()
+    {
+        _disposables.Dispose();
+        _changed.Dispose();
+        foreach (var monitor in _monitors)
+        {
+            monitor.Dispose();
+        }
+        _monitors.Clear();
+        GC.SuppressFinalize(this);
+    }
 }

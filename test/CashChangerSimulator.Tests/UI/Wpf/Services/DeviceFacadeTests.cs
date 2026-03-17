@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using Moq;
 using Shouldly;
 using Xunit;
+using CashChangerSimulator.Tests.Mocks;
 
 namespace CashChangerSimulator.Tests.UI.Wpf.Services;
 
@@ -29,6 +30,7 @@ public class DeviceFacadeTests
         var monitors = (MonitorsProvider)RuntimeHelpers.GetUninitializedObject(typeof(MonitorsProvider));
         var notify = new Mock<INotifyService>().Object;
         var dispatcher = new Mock<IDispatcherService>().Object;
+        var view = new Mock<IViewService>().Object;
 
         // Act
         var facade = new DeviceFacade(
@@ -42,7 +44,8 @@ public class DeviceFacadeTests
             aggregator,
             monitors,
             notify,
-            dispatcher);
+            dispatcher,
+            view);
 
         // Assert
         facade.Inventory.ShouldBeSameAs(inventory);
@@ -56,11 +59,12 @@ public class DeviceFacadeTests
         facade.Monitors.ShouldBeSameAs(monitors);
         facade.Notify.ShouldBeSameAs(notify);
         facade.Dispatcher.ShouldBeSameAs(dispatcher);
+        facade.View.ShouldBeSameAs(view);
     }
 
     [Fact]
     public void Constructor_WithNullArgument_ShouldThrowArgumentNullException()
     {
-        Should.Throw<ArgumentNullException>(() => new DeviceFacade(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!));
+        Should.Throw<ArgumentNullException>(() => new DeviceFacade(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!));
     }
 }

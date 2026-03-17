@@ -7,6 +7,7 @@ namespace CashChangerSimulator.Device;
 public class HardwareSimulator : IDeviceSimulator
 {
     private readonly ConfigurationProvider? _configProvider;
+    private readonly ConfigurationProvider? _internalConfigProvider;
 
     /// <summary>デフォルト設定でシミュレーターを初期化する。</summary>
     public HardwareSimulator() : this(null) { }
@@ -14,7 +15,16 @@ public class HardwareSimulator : IDeviceSimulator
     /// <summary>設定プロバイダーを指定してシミュレーターを初期化する。</summary>
     public HardwareSimulator(ConfigurationProvider? configProvider)
     {
-        _configProvider = configProvider;
+        if (configProvider == null)
+        {
+            _configProvider = new ConfigurationProvider();
+            _internalConfigProvider = _configProvider;
+        }
+        else
+        {
+            _configProvider = configProvider;
+            _internalConfigProvider = null;
+        }
     }
 
     /// <inheritdoc/>
@@ -25,5 +35,12 @@ public class HardwareSimulator : IDeviceSimulator
         {
             await Task.Delay(delay, ct);
         }
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        _internalConfigProvider?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
