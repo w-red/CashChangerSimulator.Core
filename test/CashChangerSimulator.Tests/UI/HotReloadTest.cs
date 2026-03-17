@@ -53,7 +53,8 @@ public class HotReloadTest
             history,
             aggregatorProvider,
             monitorsProvider,
-            notifyService);
+            notifyService,
+            new Mock<IDispatcherService>().Object);
 
         var vm = new InventoryViewModel(
             facade,

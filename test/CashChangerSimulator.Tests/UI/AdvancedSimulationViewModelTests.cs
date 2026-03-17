@@ -45,7 +45,8 @@ public class AdvancedSimulationViewModelTests
             new TransactionHistory(), 
             aggregatorProvider, 
             monitorsProvider, 
-            new Mock<INotifyService>().Object);
+            new Mock<INotifyService>().Object,
+            new Mock<IDispatcherService>().Object);
 
         return new AdvancedSimulationViewModel(facade, scriptService, metadataProvider);
     }

@@ -28,6 +28,7 @@ public class DeviceFacadeTests
         var aggregator = (OverallStatusAggregatorProvider)RuntimeHelpers.GetUninitializedObject(typeof(OverallStatusAggregatorProvider));
         var monitors = (MonitorsProvider)RuntimeHelpers.GetUninitializedObject(typeof(MonitorsProvider));
         var notify = new Mock<INotifyService>().Object;
+        var dispatcher = new Mock<IDispatcherService>().Object;
 
         // Act
         var facade = new DeviceFacade(
@@ -40,7 +41,8 @@ public class DeviceFacadeTests
             history,
             aggregator,
             monitors,
-            notify);
+            notify,
+            dispatcher);
 
         // Assert
         facade.Inventory.ShouldBeSameAs(inventory);
@@ -53,11 +55,12 @@ public class DeviceFacadeTests
         facade.AggregatorProvider.ShouldBeSameAs(aggregator);
         facade.Monitors.ShouldBeSameAs(monitors);
         facade.Notify.ShouldBeSameAs(notify);
+        facade.Dispatcher.ShouldBeSameAs(dispatcher);
     }
 
     [Fact]
     public void Constructor_WithNullArgument_ShouldThrowArgumentNullException()
     {
-        Should.Throw<ArgumentNullException>(() => new DeviceFacade(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!));
+        Should.Throw<ArgumentNullException>(() => new DeviceFacade(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!));
     }
 }
