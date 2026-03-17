@@ -184,13 +184,13 @@ public class DispenseControllerTests
     }
 
     [Fact]
-    public void ClearError_ShouldResetStatusFromErrorToIdle()
+    public async Task ClearError_ShouldResetStatusFromErrorToIdle()
     {
         // Arrange
         _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new Exception("Fail"));
 
-        Should.ThrowAsync<PosControlException>(() => _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
+        await Should.ThrowAsync<PosControlException>(() => _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
 
         // Act

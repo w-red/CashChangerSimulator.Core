@@ -56,6 +56,12 @@ public class DispenseController(
         ArgumentNullException.ThrowIfNull(onComplete);
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
 
+        _status = CashDispenseStatus.Busy;
+        _changed.OnNext(Unit.Default);
+
+        // Ensure async context to avoid unobserved exceptions on synchronous throws
+        await Task.Yield();
+
         if (!_hardwareStatusManager.IsConnected.Value)
         {
             throw new PosControlException("Device is not open (Closed).", ErrorCode.Closed);
@@ -102,6 +108,12 @@ public class DispenseController(
 
         if (_disposed) return;
         if (IsBusy) throw new PosControlException("Device is busy", ErrorCode.Busy);
+
+        _status = CashDispenseStatus.Busy;
+        _changed.OnNext(Unit.Default);
+
+        // Ensure async context to avoid unobserved exceptions on synchronous throws
+        await Task.Yield();
 
         if (!_hardwareStatusManager.IsConnected.Value)
         {
@@ -228,6 +240,7 @@ public class DispenseController(
         if (_disposed) return;
         _dispenseCts?.Cancel();
         _dispenseCts?.Dispose();
+        _simulator.Dispose();
         _disposables.Dispose();
         _changed.OnCompleted();
         _disposed = true;
