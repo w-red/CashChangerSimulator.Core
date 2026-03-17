@@ -7,6 +7,7 @@ using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Coordination;
 using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
+using CashChangerSimulator.Tests.Mocks;
 using Moq;
 using R3;
 using Shouldly;
@@ -20,20 +21,18 @@ public class InventoryViewModelTests
     {
         var config = new ConfigurationProvider();
         // Setup some initial counts in config
-        config.Config.Inventory["JPY"] = new InventorySettings
+        config.Config.Inventory[TestConstants.DefaultCurrency] = new InventorySettings
         {
             Denominations = new()
             {
-                ["C100"] = new() { InitialCount = 50 },
-                ["B1000"] = new() { InitialCount = 20 }
+                ["C100"] = new() { InitialCount = TestConstants.ConfigCount100 },
+                ["B1000"] = new() { InitialCount = TestConstants.ConfigCount1000 }
             }
         };
 
         var inv = new Inventory();
-        var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
-        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        inv.SetCount(key100, 10);
-        inv.SetCount(key1000, 5);
+        inv.SetCount(TestConstants.Key100, TestConstants.StartCount100);
+        inv.SetCount(TestConstants.Key1000, TestConstants.StartCount1000);
 
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inv, history, new ChangeCalculator());
@@ -63,7 +62,8 @@ public class InventoryViewModelTests
             aggregatorProvider,
             monitorsProvider,
             notifyService,
-            new ImmediateDispatcherService());
+            new ImmediateDispatcherService(),
+            new ImmediateViewService());
 
         var vm = new InventoryViewModel(facade, config, metadataProvider, notifyService);
         return (vm, inv, config, history);
@@ -75,15 +75,13 @@ public class InventoryViewModelTests
     {
         // Arrange
         var (vm, inv, _, _) = CreateViewModel();
-        var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
-        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-
+ 
         // Act
         vm.CollectAllCommand.Execute(Unit.Default);
-
+ 
         // Assert
-        inv.GetCount(key100).ShouldBe(0);
-        inv.GetCount(key1000).ShouldBe(0);
+        inv.GetCount(TestConstants.Key100).ShouldBe(0);
+        inv.GetCount(TestConstants.Key1000).ShouldBe(0);
     }
 
     /// <summary>Tests the behavior of ReplenishAllCommandShouldSetCountsToInitialValues to ensure proper functionality.</summary>
@@ -92,15 +90,13 @@ public class InventoryViewModelTests
     {
         // Arrange
         var (vm, inv, _, _) = CreateViewModel();
-        var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
-        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-
+ 
         // Act
         vm.ReplenishAllCommand.Execute(Unit.Default);
-
+ 
         // Assert
-        inv.GetCount(key100).ShouldBe(50); // InitialCount in CreateViewModel
-        inv.GetCount(key1000).ShouldBe(20);
+        inv.GetCount(TestConstants.Key100).ShouldBe(TestConstants.ConfigCount100);
+        inv.GetCount(TestConstants.Key1000).ShouldBe(TestConstants.ConfigCount1000);
     }
 
     [Fact]
@@ -125,11 +121,10 @@ public class InventoryViewModelTests
         var (vm, inv, config, history) = CreateViewModel();
         vm.RecentTransactions.Clear();
         var manager = new CashChangerManager(inv, history, new ChangeCalculator(), config);
-        var key100 = new DenominationKey(100, CurrencyCashType.Coin, "JPY");
-
+ 
         // Act
-        manager.Deposit(new Dictionary<DenominationKey, int> { [key100] = 1 });
-
+        manager.Deposit(new Dictionary<DenominationKey, int> { [TestConstants.Key100] = 1 });
+ 
         // Assert
         vm.RecentTransactions.Count.ShouldBe(1);
         vm.RecentTransactions[0].Type.ShouldBe(TransactionType.Deposit);
