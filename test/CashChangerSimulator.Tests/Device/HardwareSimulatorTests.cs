@@ -47,4 +47,28 @@ public class HardwareSimulatorTests
         // Assert: 即座に完了すること
         sw.ElapsedMilliseconds.ShouldBeLessThan(50);
     }
+
+    [Fact]
+    public void Constructor_ShouldInitializeWithDefaultConfig()
+    {
+        // Act
+        using var simulator = new HardwareSimulator();
+
+        // Assert
+        simulator.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Dispose_ShouldHandleExternalConfig()
+    {
+        // Arrange
+        var configProvider = new ConfigurationProvider();
+        var simulator = new HardwareSimulator(configProvider);
+
+        // Act
+        simulator.Dispose();
+
+        // Assert: configProvider should NOT be disposed because it was external
+        Should.NotThrow(() => { var _ = configProvider.Config; });
+    }
 }
