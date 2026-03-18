@@ -82,8 +82,12 @@ public class ConfigurationProvider : IDisposable
         Reload();
     }
 
+    private bool _disposed;
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+
         _watcher?.Dispose();
         _reloaded.OnCompleted();
         _reloaded.Dispose();
