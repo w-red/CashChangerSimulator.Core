@@ -71,6 +71,32 @@ public class HistoryPersistenceServiceTests : IDisposable
         loaded.Entries[0].Amount.ShouldBe(500);
     }
 
+    [Fact]
+    public void Load_ShouldReturnEmpty_WhenFileIsCorrupted()
+    {
+        // Arrange
+        File.WriteAllText(_testPath, "INVALID_BINARY_DATA");
+
+        // Act
+        var state = _service.Load();
+
+        // Assert
+        state.ShouldNotBeNull();
+        state.Entries.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Save_ShouldHandleException_WhenPathIsInvalid()
+    {
+        // Arrange
+        var invalidPath = Path.Combine(_testPath, "invalid_subdir", "file.bin"); // Path to a non-existent directory
+        var service = new HistoryPersistenceService(_history, invalidPath);
+        var state = new HistoryState { Entries = [] };
+
+        // Act & Assert
+        Should.NotThrow(() => service.Save(state));
+    }
+
     public void Dispose()
     {
         _service.Dispose();
