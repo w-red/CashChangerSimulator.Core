@@ -97,6 +97,13 @@ public class StatusCoordinator(
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
+        _disposables.Add(hardwareStatusManager.IsCollectionBoxRemoved.Skip(1).Subscribe(removed =>
+        {
+            if (_disposed) return;
+            var code = removed ? UposCashChangerStatusUpdateCode.Removed : UposCashChangerStatusUpdateCode.Inserted;
+            sink.FireEvent(new StatusUpdateEventArgs((int)code));
+        }));
+
         _disposables.Add(hardwareStatusManager.IsJammed.Subscribe(jammed =>
         {
             if (_disposed) return;

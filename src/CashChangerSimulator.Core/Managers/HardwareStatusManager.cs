@@ -14,6 +14,7 @@ public class HardwareStatusManager : IDisposable
     private readonly BindableReactiveProperty<bool> _isOverlapped = new(false);
     private readonly BindableReactiveProperty<bool> _isDeviceError = new(false);
     private readonly BindableReactiveProperty<bool> _isConnected = new(false); // Default is disconnected (COLD start baseline)
+    private readonly BindableReactiveProperty<bool> _isCollectionBoxRemoved = new(false);
     private readonly BindableReactiveProperty<int?> _currentErrorCode = new(null);
     private readonly BindableReactiveProperty<int> _currentErrorCodeExtended = new(0);
 
@@ -31,6 +32,9 @@ public class HardwareStatusManager : IDisposable
 
     /// <summary>デバイスが論理的に接続（Open）されているかどうか。</summary>
     public BindableReactiveProperty<bool> IsConnected => _isConnected;
+
+    /// <summary>回収庫が取り外されているかどうか。</summary>
+    public BindableReactiveProperty<bool> IsCollectionBoxRemoved => _isCollectionBoxRemoved;
 
     /// <summary>現在発生中のデバイスエラーの ErrorCode 値 (Nullable)。</summary>
     public BindableReactiveProperty<int?> CurrentErrorCode => _currentErrorCode;
@@ -65,6 +69,13 @@ public class HardwareStatusManager : IDisposable
         _isConnected.Value = connected;
     }
 
+    /// <summary>回収庫の取り外し状態を設定します。</summary>
+    public void SetCollectionBoxRemoved(bool removed)
+    {
+        if (_disposed) return;
+        _isCollectionBoxRemoved.Value = removed;
+    }
+
     /// <summary>デバイスエラー状態とそのエラーコードを設定します。</summary>
     /// <param name="errorCode">発生した ErrorCode の整数値</param>
     /// <param name="errorCodeExtended">追加の詳細エラーコード</param>
@@ -84,6 +95,7 @@ public class HardwareStatusManager : IDisposable
         _jamLocation.Value = Models.JamLocation.None;
         _isOverlapped.Value = false;
         _isDeviceError.Value = false;
+        _isCollectionBoxRemoved.Value = false;
         _currentErrorCode.Value = null;
         _currentErrorCodeExtended.Value = 0;
     }
@@ -105,6 +117,7 @@ public class HardwareStatusManager : IDisposable
             _isOverlapped.Dispose();
             _isDeviceError.Dispose();
             _isConnected.Dispose();
+            _isCollectionBoxRemoved.Dispose();
             _currentErrorCode.Dispose();
             _currentErrorCodeExtended.Dispose();
         }
