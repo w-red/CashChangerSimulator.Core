@@ -17,7 +17,7 @@ public class ConfigurationProvider : IDisposable
     public Observable<Unit> Reloaded => _reloaded;
 
     /// <summary>現在保持している設定インスタンス。</summary>
-    public SimulatorConfiguration Config { get; private set; }
+    public virtual SimulatorConfiguration Config { get; protected set; }
 
     private string? _configPath;
 
@@ -38,7 +38,7 @@ public class ConfigurationProvider : IDisposable
     }
 
     /// <summary>設定ファイルを再読み込みして保持するインスタンスを更新します。</summary>
-    public void Reload()
+    public virtual void Reload()
     {
         Config = _configPath != null ? ConfigurationLoader.Load(_configPath) : ConfigurationLoader.Load();
         _reloaded.OnNext(Unit.Default);
