@@ -181,4 +181,36 @@ public class StatusUpdateEventTests
         // UPOS standard: CHAN_STATUS_OK = 0
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Ok);
     }
+
+    // ========== Physical Unit (Collection Box) StatusUpdateEvent ==========
+
+    /// <summary>回収庫が取り外された際に StatusUpdateEvent (REMOVED) が発火することを検証する。</summary>
+    [Fact]
+    public void ShouldFireStatusUpdateEventWhenCollectionBoxIsRemoved()
+    {
+        var (_, _, hw, events) = CreateTestCashChanger();
+
+        // Simulate collection box removal
+        // Note: SetCollectionBoxRemoved is expected to be implemented in HardwareStatusManager
+        hw.SetCollectionBoxRemoved(true);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
+
+        events.ShouldContain((int)UposCashChangerStatusUpdateCode.Removed);
+    }
+
+    /// <summary>回収庫が装着された際に StatusUpdateEvent (INSERTED) が発火することを検証する。</summary>
+    [Fact]
+    public void ShouldFireStatusUpdateEventWhenCollectionBoxIsInserted()
+    {
+        var (_, _, hw, events) = CreateTestCashChanger();
+
+        hw.SetCollectionBoxRemoved(true);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
+        events.Clear();
+
+        hw.SetCollectionBoxRemoved(false);
+        Thread.Sleep(TestTimingConstants.EventPropagationDelayMs);
+
+        events.ShouldContain((int)UposCashChangerStatusUpdateCode.Inserted);
+    }
 }
