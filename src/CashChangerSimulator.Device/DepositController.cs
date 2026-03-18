@@ -106,6 +106,9 @@ public class DepositController : IDisposable
     /// <summary>直前の入金セッションで投入されたシリアル番号一覧。</summary>
     public virtual IReadOnlyList<string> LastDepositedSerials => _lastDepositedSerials;
 
+    /// <summary>入金の要求額。</summary>
+    public virtual decimal RequiredAmount { get; set; }
+
     // ========== Methods ==========
 
     /// <summary>入金受付を開始します。</summary>
@@ -131,6 +134,7 @@ public class DepositController : IDisposable
             throw new PosControlException("Device has overlapped cash. Cannot begin deposit.", ErrorCode.Failure);
         }
         _depositStatus = CashDepositStatus.Count;
+        _inventory.ClearEscrow(); // 安全のためリセット
         _changed.OnNext(Unit.Default);
         _logger.ZLogInformation($"BeginDeposit finished. New Status: {_depositStatus}");
     }
@@ -158,22 +162,89 @@ public class DepositController : IDisposable
 
         if (action == CashDepositAction.Repay)
         {
-            // (Since we haven't added to inventory yet, we don't need to subtract)
-            _logger.ZLogInformation($"Deposit Repay: Returning cash without updating inventory.");
+            _logger.ZLogInformation($"Deposit Repay: Returning cash from escrow without updating main inventory.");
+            _inventory.ClearEscrow();
         }
         else
         {
-            // Store (Change/NoChange): Commit deposit to inventory via Manager
+            // Calculate Change Amount
+            decimal changeAmount = 0;
+            if (action == CashDepositAction.Change)
+            {
+                changeAmount = Math.Max(0, _depositAmount - RequiredAmount);
+            }
+
+            // Escrow-First dispensing logic for Change
+            var storeCounts = new Dictionary<DenominationKey, int>(_depositCounts);
+            var dispenseCounts = new Dictionary<DenominationKey, int>();
+
+            if (changeAmount > 0)
+            {
+                // エスクローにある金種の中から大きい順にお釣りに充当する
+                var availableInEscrow = _inventory.EscrowCounts
+                    .OrderByDescending(kv => kv.Key.Value)
+                    .ToList();
+
+                decimal remainingChange = changeAmount;
+                foreach (var (key, countInEscrow) in availableInEscrow)
+                {
+                    if (remainingChange <= 0) break;
+
+                    int useCount = (int)Math.Min(countInEscrow, Math.Floor(remainingChange / key.Value));
+                    if (useCount > 0)
+                    {
+                        dispenseCounts[key] = useCount;
+                        storeCounts[key] -= useCount;
+                        remainingChange -= key.Value * useCount;
+                    }
+                }
+
+                // 本在庫へ登録する前に、エスクローからお釣り分を先に「返却」したことにする
+                _inventory.ClearEscrow();
+                foreach(var kv in storeCounts)
+                {
+                    if (kv.Value > 0) _inventory.AddEscrow(kv.Key, kv.Value);
+                }
+
+                // それでもお釣りが足りない場合は、本在庫から払い出す必要がある（Dispenseで処理）
+                if (remainingChange > 0)
+                {
+                    _logger.ZLogInformation($"Additional change required from main inventory: {remainingChange}");
+                    // この分は manager.Dispense(remainingChange) に任せるか、
+                    // ここで内訳計算して storeCounts をさらにいじる必要があるが、
+                    // シンプルに manager.Dispense(remainingChange) を呼び出す構成にする。
+                }
+            }
+            else
+            {
+                _inventory.ClearEscrow();
+            }
+
+            // Store (Change/NoChange): Commit remaining escrow to inventory via Manager
             if (manager != null)
             {
-                manager.Deposit(new Dictionary<DenominationKey, int>(_depositCounts));
+                manager.Deposit(new Dictionary<DenominationKey, int>(storeCounts));
+                if (action == CashDepositAction.Change && changeAmount > 0)
+                {
+                    // エスクローで足りなかった分がある場合は manager に要求する
+                    // (エスクローで充当した分はすでに storeCounts から引かれているので、
+                    // ここで Dispense(changeAmount) を呼ぶと二重になる可能性がある。
+                    // 正しくは「本在庫から出すべき不足分」だけを投げる必要がある)
+                    
+                    decimal alreadyDispensedFromEscrow = dispenseCounts.Sum(kv => kv.Key.Value * kv.Value);
+                    decimal requiredFromMain = changeAmount - alreadyDispensedFromEscrow;
+                    if (requiredFromMain > 0)
+                    {
+                        manager.Dispense(requiredFromMain);
+                    }
+                }
             }
             else
             {
                 // Fallback for tests lacking manager injection
-                foreach (var kv in _depositCounts)
+                foreach (var kv in storeCounts)
                 {
-                    _inventory.Add(kv.Key, kv.Value);
+                    if (kv.Value > 0) _inventory.Add(kv.Key, kv.Value);
                 }
             }
         }
@@ -191,7 +262,9 @@ public class DepositController : IDisposable
         _overflowAmount = 0m;
         _rejectAmount = 0m;
         _depositCounts.Clear();
+        _inventory.ClearEscrow(); // UI表示用から完全にクリア
         _changed.OnNext(Unit.Default);
+        _logger.ZLogInformation($"EndDeposit finished. Status: {_depositStatus}");
     }
 
     /// <summary>投入された現金を返却し、入金セッションを終了します。</summary>
@@ -203,6 +276,7 @@ public class DepositController : IDisposable
         }
 
         _logger.ZLogInformation($"RepayDeposit: Returning accepted cash ({_depositAmount}).");
+        _inventory.ClearEscrow();
         _depositStatus = CashDepositStatus.End;
         _depositPaused = false;
         _depositFixed = false;
@@ -287,6 +361,8 @@ public class DepositController : IDisposable
             _depositCounts[key] =
                 _depositCounts.TryGetValue(key, out int value)
                 ? value + count : count;
+
+            _inventory.AddEscrow(key, count);
 
             // Logic Correction: Inventory is NOT updated here.
             // It will be updated in EndDeposit if action is Store.

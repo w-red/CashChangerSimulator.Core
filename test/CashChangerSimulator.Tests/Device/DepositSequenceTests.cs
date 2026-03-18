@@ -253,4 +253,61 @@ public class DepositSequenceTests
         controller.RejectAmount.ShouldBe(1000m);
         changedEventFired.ShouldBeTrue();
     }
+
+    [Fact]
+    public void TrackDeposit_ShouldUpdateInventoryEscrow()
+    {
+        var (controller, inventory) = CreateController();
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+
+        controller.BeginDeposit();
+        controller.TrackDeposit(b1000);
+
+        // Escrow should be updated in real-time
+        inventory.EscrowCounts.ShouldContain(kv => kv.Key == b1000 && kv.Value == 1);
+        inventory.GetCount(b1000).ShouldBe(0); // Not in main inventory yet
+    }
+
+    [Fact]
+    public void EndDeposit_Change_ShouldDispenseFromEscrowFirst()
+    {
+        var (controller, inventory) = CreateController();
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var c10 = new DenominationKey(10, CurrencyCashType.Coin);
+
+        // Required Amount: 1050
+        controller.RequiredAmount = 1050; // New property
+
+        controller.BeginDeposit();
+        
+        // Input: 5x1000 bills, 7x10 coins = 5070
+        for (int i = 0; i < 5; i++) controller.TrackDeposit(b1000);
+        for (int i = 0; i < 7; i++) controller.TrackDeposit(c10);
+
+        controller.FixDeposit();
+
+        // Total: 5070, Required: 1050 -> Change: 4020
+        // Escrow-First Return: 4x1000 bills, 2x10 coins should be returned (stay out of inventory)
+        // 1x1000 bill, 5x10 coins should go to inventory
+        controller.EndDeposit(CashDepositAction.Change);
+
+        inventory.GetCount(b1000).ShouldBe(1);
+        inventory.GetCount(c10).ShouldBe(5);
+        inventory.EscrowCounts.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void EndDeposit_Repay_ShouldClearInventoryEscrow()
+    {
+        var (controller, inventory) = CreateController();
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+
+        controller.BeginDeposit();
+        controller.TrackDeposit(b1000);
+        controller.FixDeposit();
+        controller.EndDeposit(CashDepositAction.Repay);
+
+        inventory.GetCount(b1000).ShouldBe(0);
+        inventory.EscrowCounts.ShouldBeEmpty();
+    }
 }

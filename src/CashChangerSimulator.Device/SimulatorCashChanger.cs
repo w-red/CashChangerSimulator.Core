@@ -182,6 +182,12 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override CashDepositStatus DepositStatus => _depositFacade.DepositStatus;
     public override int CurrentExit { get => _capFacade.CurrentExit; set => _capFacade.CurrentExit = value; }
     public override int DeviceExits => _capFacade.DeviceExits;
+    
+    /// <summary>入金の要求額を取得または設定します。</summary>
+    public decimal RequiredAmount { get => DepositController.RequiredAmount; set => DepositController.RequiredAmount = value; }
+
+    /// <summary>現在入金処理中（計数中）かどうかを取得します。</summary>
+    public bool IsDepositInProgress => DepositController.IsDepositInProgress;
 
     // DirectIO
     public override DirectIOData DirectIO(int command, int data, object obj)
