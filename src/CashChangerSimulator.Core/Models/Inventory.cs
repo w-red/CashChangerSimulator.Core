@@ -16,6 +16,7 @@ public class Inventory : IReadOnlyInventory
     private readonly Dictionary<DenominationKey, int> _counts = [];
     private readonly Dictionary<DenominationKey, int> _collectionCounts = [];
     private readonly Dictionary<DenominationKey, int> _rejectCounts = [];
+    private readonly Dictionary<DenominationKey, int> _escrowCounts = [];
     private readonly Subject<DenominationKey> _changed = new();
 
     /// <inheritdoc/>
@@ -39,6 +40,10 @@ public class Inventory : IReadOnlyInventory
 
     /// <summary>リジェクト庫（汚損等）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts => _rejectCounts;
+    
+    /// <summary>入金トレイ（エスクロー）の全枚数。</summary>
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts => _escrowCounts;
+
     /// <summary>指定された金種の枚数を追加します。</summary>
     /// <remarks>
     /// 金種キーを正規化し、指定された枚数を通常庫に加算します。
@@ -79,6 +84,24 @@ public class Inventory : IReadOnlyInventory
         UpdateBucket(_rejectCounts, key, count, "Inventory.AddReject");
     }
 
+    /// <summary>指定された金種の枚数を入金トレイ（エスクロー）に追加する。</summary>
+    public virtual void AddEscrow(DenominationKey key, int count)
+    {
+        UpdateBucket(_escrowCounts, key, count, "Inventory.AddEscrow");
+    }
+
+    /// <summary>入金トレイ（エスクロー）をクリアします。</summary>
+    public virtual void ClearEscrow()
+    {
+        var keys = _escrowCounts.Keys.ToList();
+        _escrowCounts.Clear();
+        foreach (var key in keys)
+        {
+            _changed.OnNext(key);
+        }
+        _logger.LogDebug("Inventory.ClearEscrow finished.");
+    }
+
     /// <summary>在庫の枚数を取得します。</summary>
     public virtual int GetCount(DenominationKey key)
     {
@@ -93,7 +116,8 @@ public class Inventory : IReadOnlyInventory
         key = NormalizeKey(key);
         return _counts.GetValueOrDefault(key, 0) +
                _collectionCounts.GetValueOrDefault(key, 0) +
-               _rejectCounts.GetValueOrDefault(key, 0);
+               _rejectCounts.GetValueOrDefault(key, 0) +
+               _escrowCounts.GetValueOrDefault(key, 0);
     }
 
     /// <summary>在庫をすべてクリアします。</summary>
@@ -102,13 +126,14 @@ public class Inventory : IReadOnlyInventory
         _counts.Clear();
         _collectionCounts.Clear();
         _rejectCounts.Clear();
+        _escrowCounts.Clear();
     }
 
     /// <summary>現在の在庫の合計金額を計算します。</summary>
     /// <remarks>通常庫、回収庫、リジェクト庫のすべての合計を計算します。</remarks>
     public virtual decimal CalculateTotal(string? currencyCode = null)
     {
-        return new[] { _counts, _collectionCounts, _rejectCounts }
+        return new[] { _counts, _collectionCounts, _rejectCounts, _escrowCounts }
             .SelectMany(d => d)
             .Where(kv => currencyCode == null || kv.Key.CurrencyCode == currencyCode)
             .Sum(kv => kv.Key.Value * kv.Value);

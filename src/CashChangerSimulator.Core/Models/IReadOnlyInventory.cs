@@ -19,6 +19,8 @@ public interface IReadOnlyInventory
     System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<DenominationKey, int>> CollectionCounts { get; }
     /// <summary>リジェクト庫の全金種と枚数の列挙を取得する。</summary>
     System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<DenominationKey, int>> RejectCounts { get; }
+    /// <summary>入金トレイ（エスクロー）の全金種と枚数の列挙を取得する。</summary>
+    System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<DenominationKey, int>> EscrowCounts { get; }
     /// <summary>在庫の不一致が発生しているかどうかを取得します。</summary>
     /// <remarks>物理在庫と論理在庫の差（回収庫やリジェクト庫の有無）を示します。</remarks>
     bool HasDiscrepancy { get; }

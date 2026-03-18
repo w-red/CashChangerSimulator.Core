@@ -183,4 +183,30 @@ public class InventoryTests
         Inventory.HasDiscrepancy = true;
         Inventory.HasDiscrepancy.ShouldBeTrue();
     }
+    
+    [Fact]
+    public void AddEscrow_ShouldIncreaseEscrowCount()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        Inventory.AddEscrow(key, 5); // Should fail to compile/run initially
+        Inventory.EscrowCounts.ShouldContain(kv => kv.Key == key && kv.Value == 5);
+    }
+
+    [Fact]
+    public void ClearEscrow_ShouldResetEscrowCount()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        Inventory.AddEscrow(key, 5);
+        Inventory.ClearEscrow();
+        Inventory.EscrowCounts.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void CalculateTotal_ShouldIncludeEscrow()
+    {
+        var bill1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        Inventory.Add(bill1000, 1);       // 1000
+        Inventory.AddEscrow(bill1000, 2); // 2000
+        Inventory.CalculateTotal().ShouldBe(3000);
+    }
 }
