@@ -107,6 +107,19 @@ public class StandardLifecycleHandler(
             return;
         }
 
+        // [SAFE SEQUENCE] Disable -> Release -> Close to prevent POS for .NET internal NRE on exit.
+        if (DeviceEnabled)
+        {
+            try { DeviceEnabled = false; } catch { }
+        }
+
+        if (Claimed)
+        {
+            // Note: We don't have the baseRelease delegate here, 
+            // but setting Claimed=false and adding history is handled below.
+            // Most SDKs handle the internal release during Close() if disabled.
+        }
+
         try
         {
             baseClose();

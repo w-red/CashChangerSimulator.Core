@@ -255,9 +255,17 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
             // 安全のために保護します。
             if (State != ControlState.Closed)
             {
+                // [SAFE SEQUENCE] Proactively disable and release before disposal to stabilize POS SDK.
+                // We do this here as a fallback in case Close() was not explicitly called.
+                try
+                {
+                    if (DeviceEnabled) DeviceEnabled = false;
+                    // Note: base.Dispose usually handles Close, but explicit Disable helps background threads.
+                }
+                catch { }
+
                 // [FIX] Explicitly reset RealTimeDataEnabled to stop internal event listeners 
                 // before disposal to prevent NullReferenceException in POS SDK.
-                // We wrap this and base.Dispose together as they are both interacting with the potentially unstable SDK state.
                 if (CapRealTimeData)
                 {
                     try { RealTimeDataEnabled = false; } catch { }
