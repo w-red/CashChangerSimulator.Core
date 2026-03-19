@@ -29,6 +29,10 @@ public class DenominationViewModelTests
         facadeMock.Setup(f => f.Inventory).Returns(inv);
         facadeMock.Setup(f => f.Deposit).Returns(depositController);
         
+        var dispatcherMock = new Mock<IDispatcherService>();
+        dispatcherMock.Setup(d => d.SafeInvoke(It.IsAny<Action>())).Callback<Action>(a => a());
+        facadeMock.Setup(f => f.Dispatcher).Returns(dispatcherMock.Object);
+        
         var vm = new DenominationViewModel(facadeMock.Object, key, metadataProvider, monitor, configProvider);
 
         // Act & Assert: Recyclable (Normal)
