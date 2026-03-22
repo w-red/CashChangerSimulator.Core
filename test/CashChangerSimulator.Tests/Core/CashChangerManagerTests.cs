@@ -65,7 +65,7 @@ public class CashChangerManagerTests
         entry.Amount.ShouldBe(3000m);
     }
 
-    /// <summary>金額指定の払出時に計算、更新、記録が正しく行われることを検証する。</summary>
+    /// <summary>金額指定の払出時に計算、在庫更新、履歴記録が正しく行われることを検証する。</summary>
     [Fact]
     public void DispenseByAmountShouldCalculateUpdateAndRecord()
     {

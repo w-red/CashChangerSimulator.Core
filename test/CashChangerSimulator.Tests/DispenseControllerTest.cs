@@ -17,7 +17,7 @@ public class DispenseControllerTest
     /// <summary>ディスペンス結果を無視するコールバック。</summary>
     private static void IgnoreDispenseResult(ErrorCode code, int codeEx) { }
 
-    /// <summary>同期的な払い出し操作でステータスが遷移することを検証します。</summary>
+    /// <summary>同期的な払い出し操作でステータスが遷移することを検証する。</summary>
     [Fact]
     public async Task DispenseChangeAsyncShouldTransitionToBusyAndBackToIdle()
     {
@@ -42,7 +42,7 @@ public class DispenseControllerTest
         inventory.GetCount(key).ShouldBe(9);
     }
 
-    /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証します。</summary>
+    /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証する。</summary>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowIfBusy()
     {
@@ -64,7 +64,7 @@ public class DispenseControllerTest
         await Should.ThrowAsync<PosControlException>(() => controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult));
     }
 
-    /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証します。</summary>
+    /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証する。</summary>
     [Fact]
     public async Task DispenseChangeAsyncShouldCallSimulator()
     {

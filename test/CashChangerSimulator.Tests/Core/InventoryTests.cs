@@ -7,16 +7,18 @@ public class InventoryTests
 {
     private readonly Inventory Inventory = new();
 
+    /// <summary>指定された金種の数量を増加させることができることを検証する。</summary>
     [Fact]
-    public void Add_ShouldIncreaseCount()
+    public void AddShouldIncreaseCount()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.Add(key, 5);
         Inventory.GetCount(key).ShouldBe(5);
     }
 
+    /// <summary>負の値を加算した際に数量が減少することを検証する。</summary>
     [Fact]
-    public void Add_NegativeShouldDecreaseCount()
+    public void AddNegativeShouldDecreaseCount()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.SetCount(key, 10);
@@ -24,8 +26,9 @@ public class InventoryTests
         Inventory.GetCount(key).ShouldBe(7);
     }
 
+    /// <summary>加算の結果が負になる場合に数量が0になることを検証する。</summary>
     [Fact]
-    public void Add_ResultingInNegative_ShouldBeZero()
+    public void AddResultingInNegativeShouldBeZero()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.SetCount(key, 5);
@@ -33,8 +36,9 @@ public class InventoryTests
         Inventory.GetCount(key).ShouldBe(0);
     }
 
+    /// <summary>指定された金種の数量を直接設定できることを検証する。</summary>
     [Fact]
-    public void SetCount_ShouldOverwriteCount()
+    public void SetCountShouldOverwriteCount()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.SetCount(key, 10);
@@ -42,8 +46,9 @@ public class InventoryTests
         Inventory.GetCount(key).ShouldBe(5);
     }
 
+    /// <summary>負の数量を設定しようとした際に、操作が無視されることを検証する。</summary>
     [Fact]
-    public void SetCount_Negative_ShouldBeIgnored()
+    public void SetCountNegativeShouldBeIgnored()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.SetCount(key, 10);
@@ -51,8 +56,9 @@ public class InventoryTests
         Inventory.GetCount(key).ShouldBe(10);
     }
 
+    /// <summary>回収庫の数量を増加させることができることを検証する。</summary>
     [Fact]
-    public void AddCollection_ShouldIncreaseCollectionCount()
+    public void AddCollectionShouldIncreaseCollectionCount()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.AddCollection(key, 5);
@@ -60,8 +66,9 @@ public class InventoryTests
         Inventory.HasDiscrepancy.ShouldBeTrue();
     }
 
+    /// <summary>回収庫の加算結果が負になる場合に数量が0になることを検証する。</summary>
     [Fact]
-    public void AddCollection_ResultingInNegative_ShouldBeZero()
+    public void AddCollectionResultingInNegativeShouldBeZero()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.AddCollection(key, 5);
@@ -69,8 +76,9 @@ public class InventoryTests
         Inventory.CollectionCounts.ShouldContain(kv => kv.Key == key && kv.Value == 0);
     }
 
+    /// <summary>リジェクト庫の数量を増加させることができることを検証する。</summary>
     [Fact]
-    public void AddReject_ShouldIncreaseRejectCount()
+    public void AddRejectShouldIncreaseRejectCount()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.AddReject(key, 5);
@@ -78,8 +86,9 @@ public class InventoryTests
         Inventory.HasDiscrepancy.ShouldBeTrue();
     }
 
+    /// <summary>リジェクト庫の加算結果が負になる場合に数量が0になることを検証する。</summary>
     [Fact]
-    public void AddReject_ResultingInNegative_ShouldBeZero()
+    public void AddRejectResultingInNegativeShouldBeZero()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.AddReject(key, 5);
@@ -87,8 +96,9 @@ public class InventoryTests
         Inventory.RejectCounts.ShouldContain(kv => kv.Key == key && kv.Value == 0);
     }
 
+    /// <summary>通常庫、回収庫、リジェクト庫の合計金額を正しく計算できることを検証する。</summary>
     [Fact]
-    public void CalculateTotal_ShouldIncludeAllSources()
+    public void CalculateTotalShouldIncludeAllSources()
     {
         var bill1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         var coin500 = new DenominationKey(500, CurrencyCashType.Coin);
@@ -100,32 +110,36 @@ public class InventoryTests
         Inventory.CalculateTotal().ShouldBe(2500);
     }
 
+    /// <summary>数量0の加算操作が状態を変更しないことを検証する。</summary>
     [Fact]
-    public void Add_Zero_ShouldDoNothing()
+    public void AddZeroShouldDoNothing()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.Add(key, 0);
         Inventory.GetCount(key).ShouldBe(0);
     }
 
+    /// <summary>回収庫への数量0の加算操作が状態を変更しないことを検証する。</summary>
     [Fact]
-    public void AddCollection_Zero_ShouldDoNothing()
+    public void AddCollectionZeroShouldDoNothing()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.AddCollection(key, 0);
         Inventory.CollectionCounts.ShouldBeEmpty();
     }
 
+    /// <summary>リジェクト庫への数量0の加算操作が状態を変更しないことを検証する。</summary>
     [Fact]
-    public void AddReject_Zero_ShouldDoNothing()
+    public void AddRejectZeroShouldDoNothing()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.AddReject(key, 0);
         Inventory.RejectCounts.ShouldBeEmpty();
     }
 
+    /// <summary>通貨コードが空の場合にデフォルトの通貨コードが設定されることを検証する。</summary>
     [Fact]
-    public void NormalizeKey_ShouldSetDefaultCurrencyIfEmpty()
+    public void NormalizeKeyShouldSetDefaultCurrencyIfEmpty()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "");
         Inventory.Add(key, 1);
@@ -133,8 +147,9 @@ public class InventoryTests
         Inventory.AllCounts.First().Key.CurrencyCode.ShouldBe(DenominationKey.DefaultCurrencyCode);
     }
 
+    /// <summary>通貨コードを指定した合計金額の計算が、該当する通貨のみを集計することを検証する。</summary>
     [Fact]
-    public void CalculateTotal_WithCurrencyCode_ShouldOnlyIncludeMatches()
+    public void CalculateTotalWithCurrencyCodeShouldOnlyIncludeMatches()
     {
         var jpy1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         var usd1 = new DenominationKey(1, CurrencyCashType.Bill, "USD");
@@ -147,8 +162,9 @@ public class InventoryTests
         Inventory.CalculateTotal().ShouldBe(1001);
     }
 
+    /// <summary>ディクショナリ形式へのシリアライズとデシリアライズが正しく動作することを検証する。</summary>
     [Fact]
-    public void Dictionary_Serialization_ShouldWork()
+    public void DictionarySerializationShouldWork()
     {
         var pay = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         Inventory.Add(pay, 1);
@@ -168,32 +184,36 @@ public class InventoryTests
         newInventory.RejectCounts.First(kv => kv.Key == pay).Value.ShouldBe(3);
     }
 
+    /// <summary>不正なキーを含むディクショナリからの読み込みが、エラーなく無視されることを検証する。</summary>
     [Fact]
-    public void LoadFromDictionary_InvalidKey_ShouldIgnore()
+    public void LoadFromDictionaryInvalidKeyShouldIgnore()
     {
         var dict = new Dictionary<string, int> { { "INVALID", 10 } };
         Inventory.LoadFromDictionary(dict); // Should not throw
         Inventory.CalculateTotal().ShouldBe(0);
     }
 
+    /// <summary>不一致状態（Discrepancy）の設定と取得が正しく行われることを検証する。</summary>
     [Fact]
-    public void SetDiscrepancy_ShouldWork()
+    public void SetDiscrepancyShouldWork()
     {
         Inventory.HasDiscrepancy.ShouldBeFalse();
         Inventory.HasDiscrepancy = true;
         Inventory.HasDiscrepancy.ShouldBeTrue();
     }
     
+    /// <summary>エスクロー（投入中）の数量を増加させることができることを検証する。</summary>
     [Fact]
-    public void AddEscrow_ShouldIncreaseEscrowCount()
+    public void AddEscrowShouldIncreaseEscrowCount()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        Inventory.AddEscrow(key, 5); // Should fail to compile/run initially
+        Inventory.AddEscrow(key, 5); 
         Inventory.EscrowCounts.ShouldContain(kv => kv.Key == key && kv.Value == 5);
     }
 
+    /// <summary>エスクローの数量をリセットできることを検証する。</summary>
     [Fact]
-    public void ClearEscrow_ShouldResetEscrowCount()
+    public void ClearEscrowShouldResetEscrowCount()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.AddEscrow(key, 5);
@@ -201,8 +221,9 @@ public class InventoryTests
         Inventory.EscrowCounts.ShouldBeEmpty();
     }
 
+    /// <summary>合計金額の計算にエスクローの金額が含まれることを検証する。</summary>
     [Fact]
-    public void CalculateTotal_ShouldIncludeEscrow()
+    public void CalculateTotalShouldIncludeEscrow()
     {
         var bill1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.Add(bill1000, 1);       // 1000
