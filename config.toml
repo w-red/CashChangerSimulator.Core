@@ -5,7 +5,7 @@ UIMode = "Standard"
 BaseTheme = "Dark"
 
 [Inventory.JPY.Denominations.B10000]
-DisplayName = "10,000 Yen Bill"
+DisplayName = "¥10,000 Bill"
 DisplayNameJP = "一万円札"
 InitialCount = 10
 NearEmpty = 5
@@ -14,7 +14,7 @@ Full = 100
 IsRecyclable = true
 
 [Inventory.JPY.Denominations.B5000]
-DisplayName = "5,000 Yen Bill"
+DisplayName = "¥5,000 Bill"
 DisplayNameJP = "五千円札"
 InitialCount = 10
 NearEmpty = 5
@@ -23,7 +23,7 @@ Full = 100
 IsRecyclable = true
 
 [Inventory.JPY.Denominations.B2000]
-DisplayName = "2,000 Yen Bill"
+DisplayName = "¥2,000 Bill"
 DisplayNameJP = "二千円札"
 InitialCount = 0
 NearEmpty = -1
@@ -32,7 +32,7 @@ Full = 100
 IsRecyclable = false
 
 [Inventory.JPY.Denominations.B1000]
-DisplayName = "1,000 Yen Bill"
+DisplayName = "¥1,000 Bill"
 DisplayNameJP = "千円札"
 InitialCount = 50
 NearEmpty = 5
@@ -41,7 +41,7 @@ Full = 100
 IsRecyclable = true
 
 [Inventory.JPY.Denominations.C500]
-DisplayName = "500 Yen Coin"
+DisplayName = "¥500 Coin"
 DisplayNameJP = "五百円玉"
 InitialCount = 50
 NearEmpty = 5
@@ -50,7 +50,7 @@ Full = 100
 IsRecyclable = true
 
 [Inventory.JPY.Denominations.C100]
-DisplayName = "100 Yen Coin"
+DisplayName = "¥100 Coin"
 DisplayNameJP = "百円玉"
 InitialCount = 100
 NearEmpty = 5
@@ -59,7 +59,7 @@ Full = 100
 IsRecyclable = true
 
 [Inventory.JPY.Denominations.C50]
-DisplayName = "50 Yen Coin"
+DisplayName = "¥50 Coin"
 DisplayNameJP = "五十円玉"
 InitialCount = 100
 NearEmpty = 5
@@ -68,7 +68,7 @@ Full = 100
 IsRecyclable = true
 
 [Inventory.JPY.Denominations.C10]
-DisplayName = "10 Yen Coin"
+DisplayName = "¥10 Coin"
 DisplayNameJP = "十円玉"
 InitialCount = 100
 NearEmpty = 5
@@ -77,7 +77,7 @@ Full = 100
 IsRecyclable = true
 
 [Inventory.JPY.Denominations.C5]
-DisplayName = "5 Yen Coin"
+DisplayName = "¥5 Coin"
 DisplayNameJP = "五円玉"
 InitialCount = 100
 NearEmpty = 5
@@ -86,7 +86,7 @@ Full = 100
 IsRecyclable = true
 
 [Inventory.JPY.Denominations.C1]
-DisplayName = "1 Yen Coin"
+DisplayName = "¥1 Coin"
 DisplayNameJP = "一円玉"
 InitialCount = 100
 NearEmpty = 5
