@@ -41,14 +41,20 @@ public class ConfigurationProvider : IDisposable
     public virtual void Reload()
     {
         Config = _configPath != null ? ConfigurationLoader.Load(_configPath) : ConfigurationLoader.Load();
-        _reloaded.OnNext(Unit.Default);
+        if (!_disposed)
+        {
+            _reloaded.OnNext(Unit.Default);
+        }
     }
 
     /// <summary>設定インスタンスを直接更新します（主にテスト用）。</summary>
     public void Update(SimulatorConfiguration config)
     {
         Config = config;
-        _reloaded.OnNext(Unit.Default);
+        if (!_disposed)
+        {
+            _reloaded.OnNext(Unit.Default);
+        }
     }
 
     private void SetupWatcher(string path)
