@@ -106,8 +106,19 @@ public class DepositController : IDisposable
     /// <summary>直前の入金セッションで投入されたシリアル番号一覧。</summary>
     public virtual IReadOnlyList<string> LastDepositedSerials => _lastDepositedSerials;
 
+    private decimal _requiredAmount;
+
     /// <summary>入金の要求額。</summary>
-    public virtual decimal RequiredAmount { get; set; }
+    public virtual decimal RequiredAmount
+    {
+        get => _requiredAmount;
+        set
+        {
+            if (_requiredAmount == value) return;
+            _requiredAmount = value;
+            _changed.OnNext(Unit.Default);
+        }
+    }
 
     // ========== Methods ==========
 
