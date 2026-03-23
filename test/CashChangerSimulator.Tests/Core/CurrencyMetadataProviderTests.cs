@@ -63,7 +63,8 @@ public class CurrencyMetadataProviderTests
         var eur2 = new DenominationKey(2, CurrencyCashType.Coin, "EUR");
         var unknown = new DenominationKey(100, CurrencyCashType.Bill, "XXX");
 
-        // JPY ja-JP
+        // JPY ja-JP (Clear DisplayNameJP to test fallback formatting)
+        _configProvider.Config.Inventory["JPY"].Denominations["B1000"].DisplayNameJP = "";
         _provider.GetDenominationName(jpy1000, "ja-JP").ShouldBe("1,000円");
         // JPY en-US
         _provider.GetDenominationName(jpy1000, "en-US").ShouldBe("1,000 Yen");
