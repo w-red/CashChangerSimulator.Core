@@ -126,4 +126,35 @@ public class OverallStatusAggregatorTests
         // Assert: 5000円が Empty なので集約結果も Empty になるはず
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
     }
+
+    /// <summary>非リサイクル金種のステータスが、全体のステータス集計から除外されることを検証する。</summary>
+    [Fact]
+    public void AggregatorShouldIgnoreNonRecyclableMonitors()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var kRecyclable = new DenominationKey(1000, CurrencyCashType.Bill);
+        var kNonRecyclable = new DenominationKey(2000, CurrencyCashType.Bill);
+        
+        inventory.SetCount(kRecyclable, 5);    // Normal
+        inventory.SetCount(kNonRecyclable, 0); // Empty but should be ignored
+
+        var monitorRecyclable = new CashStatusMonitor(inventory, kRecyclable, 2, 8, 10, isRecyclable: true);
+        var monitorNonRecyclable = new CashStatusMonitor(inventory, kNonRecyclable, 2, 8, 10, isRecyclable: false);
+        
+        var aggregator = new OverallStatusAggregator([monitorRecyclable, monitorNonRecyclable]);
+
+        // Assert: 2000円札が Empty だが、非リサイクルなので DeviceStatus は Normal のはず
+        aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);
+        
+        // Act: リサイクル金種を Empty にする
+        inventory.SetCount(kRecyclable, 0);
+        // Assert: リサイクル金種が Empty なので集約結果も Empty
+        aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
+        
+        // Act: 非リサイクル金種を Full にする
+        inventory.SetCount(kNonRecyclable, 100);
+        // Assert: 非リサイクルなので FullStatus は Normal のまま
+        aggregator.FullStatus.CurrentValue.ShouldBe(CashStatus.Normal);
+    }
 }

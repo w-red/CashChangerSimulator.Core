@@ -8,10 +8,13 @@ public class CashStatusMonitor : IDisposable
 {
     private readonly IReadOnlyInventory _inventory;
     private readonly DenominationKey _key;
+    private readonly bool _isRecyclable;
     private int _nearEmptyThreshold;
     private int _nearFullThreshold;
     private int _fullThreshold;
 
+    /// <summary>この金種がリサイクル可能かどうか。</summary>
+    public bool IsRecyclable => _isRecyclable;
     /// <summary>ニアエンプティしきい値。</summary>
     public int NearEmptyThreshold => _nearEmptyThreshold;
     /// <summary>ニアフルしきい値。</summary>
@@ -29,13 +32,14 @@ public class CashStatusMonitor : IDisposable
     public DenominationKey Key => _key;
 
     /// <summary>在庫、金種キー、各種しきい値を指定してインスタンスを初期化する。</summary>
-    public CashStatusMonitor(IReadOnlyInventory inventory, DenominationKey key, int nearEmptyThreshold, int nearFullThreshold, int fullThreshold)
+    public CashStatusMonitor(IReadOnlyInventory inventory, DenominationKey key, int nearEmptyThreshold, int nearFullThreshold, int fullThreshold, bool isRecyclable = true)
     {
         ArgumentNullException.ThrowIfNull(inventory);
         ArgumentNullException.ThrowIfNull(key);
 
         _inventory = inventory;
         _key = key;
+        _isRecyclable = isRecyclable;
         _nearEmptyThreshold = nearEmptyThreshold;
         _nearFullThreshold = nearFullThreshold;
         _fullThreshold = fullThreshold;

@@ -58,7 +58,8 @@ public class MonitorsProvider
                     k,
                     setting.IsRecyclable ? setting.NearEmpty : -1,
                     setting.IsRecyclable ? setting.NearFull : -1,
-                    setting.IsRecyclable ? setting.Full : -1);
+                    setting.IsRecyclable ? setting.Full : -1,
+                    setting.IsRecyclable);
             }
 
             var globalSetting = config.GetDenominationSetting(k);
@@ -67,7 +68,8 @@ public class MonitorsProvider
                 k,
                 globalSetting.IsRecyclable ? config.Thresholds.NearEmpty : -1,
                 globalSetting.IsRecyclable ? config.Thresholds.NearFull : -1,
-                globalSetting.IsRecyclable ? config.Thresholds.Full : -1);
+                globalSetting.IsRecyclable ? config.Thresholds.Full : -1,
+                globalSetting.IsRecyclable);
         }).ToList();
         _changed.OnNext(Unit.Default);
     }
