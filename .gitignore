@@ -483,3 +483,5 @@ $RECYCLE.BIN/
 coveragereport/
 .antigravity/
 LocalSettings/
+AGENTS.md
+.agent/
