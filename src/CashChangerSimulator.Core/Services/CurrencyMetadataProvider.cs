@@ -11,6 +11,7 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
     private readonly BindableReactiveProperty<string> _symbolSuffix;
     private readonly BindableReactiveProperty<string> _currencyCode;
     private readonly BindableReactiveProperty<string> _cultureCode;
+    private readonly ConfigurationProvider _configProvider;
     private readonly Subject<Unit> _changed = new();
 
     /// <inheritdoc/>
@@ -95,6 +96,7 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
     public CurrencyMetadataProvider(ConfigurationProvider configProvider)
     {
         ArgumentNullException.ThrowIfNull(configProvider);
+        _configProvider = configProvider;
         _currencyCode = new BindableReactiveProperty<string>(string.IsNullOrWhiteSpace(configProvider.Config.System.CurrencyCode) ? "JPY" : configProvider.Config.System.CurrencyCode);
         _cultureCode = new BindableReactiveProperty<string>(configProvider.Config.System.CultureCode ?? "en-US");
         _symbolPrefix = new BindableReactiveProperty<string>("");
@@ -168,16 +170,31 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider
 
         if (CurrencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
         {
+            var setting = _configProvider.Config.GetDenominationSetting(key);
+            if (isJapanese && !string.IsNullOrEmpty(setting.DisplayNameJP)) return setting.DisplayNameJP;
+            if (!isJapanese && !string.IsNullOrEmpty(setting.DisplayName)) return setting.DisplayName;
+
             return isJapanese ? $"{key.Value:N0}円" : $"{key.Value:N0} Yen";
         }
 
         if (CurrencyCode.Equals("USD", StringComparison.OrdinalIgnoreCase))
         {
+            var setting = _configProvider.Config.GetDenominationSetting(key);
+            if (!string.IsNullOrEmpty(setting.DisplayName)) return setting.DisplayName;
             return key.Type == CurrencyCashType.Bill ? $"${key.Value:N0} Bill" : $"${key.Value} Coin";
         }
 
-        return CurrencyCode.Equals("EUR", StringComparison.OrdinalIgnoreCase)
-            ? key.Type == CurrencyCashType.Bill ? $"€{key.Value:N0} Note" : $"€{key.Value} Coin"
-            : $"{key.Value:N0} ({key.Type})";
+        if (CurrencyCode.Equals("EUR", StringComparison.OrdinalIgnoreCase))
+        {
+            var setting = _configProvider.Config.GetDenominationSetting(key);
+            if (!string.IsNullOrEmpty(setting.DisplayName)) return setting.DisplayName;
+            return key.Type == CurrencyCashType.Bill ? $"€{key.Value:N0} Note" : $"€{key.Value} Coin";
+        }
+
+        var fallbackSetting = _configProvider.Config.GetDenominationSetting(key);
+        if (isJapanese && !string.IsNullOrEmpty(fallbackSetting.DisplayNameJP)) return fallbackSetting.DisplayNameJP;
+        if (!isJapanese && !string.IsNullOrEmpty(fallbackSetting.DisplayName)) return fallbackSetting.DisplayName;
+
+        return $"{key.Value:N0} ({key.Type})";
     }
 }

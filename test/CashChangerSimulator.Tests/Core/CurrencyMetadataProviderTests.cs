@@ -73,7 +73,7 @@ public class CurrencyMetadataProviderTests
         _configProvider.Update(_configProvider.Config);
         _provider.GetDenominationName(usd1, "en-US").ShouldBe("$1 Bill");
         var usdCoin = new DenominationKey(0.25m, CurrencyCashType.Coin, "USD");
-        _provider.GetDenominationName(usdCoin, "en-US").ShouldBe("$0.25 Coin");
+        _provider.GetDenominationName(usdCoin, "en-US").ShouldBe("25¢ Coin");
 
         // EUR
         _configProvider.Config.System.CurrencyCode = "EUR";
@@ -98,5 +98,24 @@ public class CurrencyMetadataProviderTests
         _configProvider.Update(_configProvider.Config);
         
         called.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void GetDenominationName_ShouldRespectDisplayNameJPForJPY()
+    {
+        // Arrange
+        // (Note: _configProvider is already JPY by default in constructor)
+        _configProvider.Config.System.CultureCode = "ja-JP";
+        
+        // 2000 Yen Bill setting
+        var key = new DenominationKey(2000, CurrencyCashType.Bill, "JPY");
+        _configProvider.Config.Inventory["JPY"].Denominations["B2000"].DisplayNameJP = "二千円札";
+        _configProvider.Update(_configProvider.Config);
+        
+        // Act
+        var name = _provider.GetDenominationName(key);
+
+        // Assert
+        name.ShouldBe("二千円札");
     }
 }
