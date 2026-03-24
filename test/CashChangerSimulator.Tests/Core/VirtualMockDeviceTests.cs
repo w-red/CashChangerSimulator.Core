@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Core;
 

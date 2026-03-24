@@ -3,7 +3,6 @@ using CashChangerSimulator.Device.Lifecycle;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;
 using Shouldly;
-using Moq;
 
 namespace CashChangerSimulator.Tests.Device;
 

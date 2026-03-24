@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device.Coordination;
 using CashChangerSimulator.Device.Services;
 using Microsoft.PointOfService;
 using Moq;

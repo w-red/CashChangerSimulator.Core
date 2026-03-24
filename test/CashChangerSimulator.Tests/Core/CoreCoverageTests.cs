@@ -1,9 +1,7 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
-using Moq;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Core;
 
