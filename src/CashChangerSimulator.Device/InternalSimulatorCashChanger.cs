@@ -104,7 +104,8 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             depositController,
             dispenseController,
             aggregatorProvider,
-            hardwareStatusManager))
+            hardwareStatusManager,
+            GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
