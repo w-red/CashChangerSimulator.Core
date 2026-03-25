@@ -25,6 +25,7 @@ public sealed class SimulatorContext : IDisposable
     public required UposMediator Mediator { get; init; }
     public required LifecycleManager LifecycleManager { get; init; }
     public required IUposEventNotifier EventNotifier { get; init; }
+    public GlobalLockManager? GlobalLockManager { get; private set; }
     public StatusCoordinator StatusCoordinator { get; internal set; } = null!;
     internal ConfigurationProvider? InternalConfigProvider { get; init; }
 
@@ -32,6 +33,10 @@ public sealed class SimulatorContext : IDisposable
     public static SimulatorContext Create(SimulatorDependencies deps, SimulatorCashChanger so, ILogger logger)
     {
         var hardwareStatusManager = deps.HardwareStatusManager ?? new HardwareStatusManager();
+        var lockFilePath = deps.GlobalLockFilePath ?? Path.Combine(AppContext.BaseDirectory, "LocalSettings", "device_claim.lock");
+        var lockManager = new GlobalLockManager(lockFilePath, logger);
+        hardwareStatusManager.SetGlobalLockManager(lockManager);
+
         var mediator = deps.Mediator as UposMediator ?? new UposMediator(so);
 
         ConfigurationProvider? internalConfigProvider = null;
@@ -73,6 +78,7 @@ public sealed class SimulatorContext : IDisposable
             Mediator = mediator,
             LifecycleManager = lifecycleManager,
             EventNotifier = eventNotifier,
+            GlobalLockManager = lockManager,
             InternalConfigProvider = internalConfigProvider
         };
 
@@ -91,6 +97,7 @@ public sealed class SimulatorContext : IDisposable
         DispenseController?.Dispose();
         StatusAggregator?.Dispose();
         HardwareStatusManager?.Dispose();
+        GlobalLockManager?.Dispose();
         InternalConfigProvider?.Dispose();
 
         _isDisposed = true;

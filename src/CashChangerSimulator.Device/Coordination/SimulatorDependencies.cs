@@ -36,5 +36,6 @@ public record SimulatorDependencies(
     DiagnosticController? DiagnosticController = null,
     IUposMediator? Mediator = null,
     IUposConfigurationManager? ConfigurationManager = null,
-    IUposEventNotifier? EventNotifier = null
+    IUposEventNotifier? EventNotifier = null,
+    string? GlobalLockFilePath = null
 );
