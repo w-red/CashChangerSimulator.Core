@@ -20,7 +20,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
 
     /// <summary>テスト用：構成を指定せずに初期化します。</summary>
     public InternalSimulatorCashChanger()
-        : base(new SimulatorDependencies())
+        : base(new SimulatorDependencies(GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
@@ -80,7 +80,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
 
     /// <summary>指定された引数で新しいインスタンスを初期化します。</summary>
     public InternalSimulatorCashChanger(SimulatorDependencies deps)
-        : base(deps)
+        : base(deps with { GlobalLockFilePath = deps.GlobalLockFilePath ?? Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock") })
     {
         Context.Mediator.SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
@@ -130,7 +130,8 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             dispenseController,
             aggregatorProvider,
             hardwareStatusManager,
-            diagnosticController))
+            diagnosticController,
+            GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = true;
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
