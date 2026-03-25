@@ -9,13 +9,13 @@ public interface IUposEventNotifier : ICashChangerStatusSink
 {
     /// <summary>イベントを通知キューに追加（または即時送信）します。</summary>
     /// <param name="e">イベント引数。</param>
-    void NotifyEvent(System.EventArgs e);
+    void NotifyEvent(EventArgs e);
 
     /// <summary>外部からイベントを強制的に発生させます。</summary>
     /// <param name="e">イベント引数。</param>
-    new void FireEvent(System.EventArgs e);
+    new void FireEvent(EventArgs e);
 
     /// <summary>イベントを適切なキューに追加します。</summary>
     /// <param name="e">イベント引数。</param>
-    void QueueEvent(System.EventArgs e);
+    void QueueEvent(EventArgs e);
 }

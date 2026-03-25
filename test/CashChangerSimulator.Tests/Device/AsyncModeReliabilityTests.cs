@@ -33,9 +33,9 @@ public class AsyncModeReliabilityTests
         public bool EventCaptured { get; private set; }
 
         private readonly DispenseController _controller = controller;
-        private readonly List<System.EventArgs> _eventHistory = [];
+        private readonly List<EventArgs> _eventHistory = [];
  
-        protected override void NotifyEvent(System.EventArgs e)
+        protected override void NotifyEvent(EventArgs e)
         {
             _eventHistory.Add(e);
             base.NotifyEvent(e);

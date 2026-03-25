@@ -23,7 +23,7 @@ public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManag
                 var location = JamLocation.None;
                 if (!string.IsNullOrEmpty(cmd.Location))
                 {
-                    Enum.TryParse<JamLocation>(cmd.Location, true, out location);
+                    Enum.TryParse(cmd.Location, true, out location);
                 }
                 hardwareStatusManager.SetJammed(true, location);
                 break;

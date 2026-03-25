@@ -21,8 +21,8 @@ public class UposCommandTests
     {
         _mediatorMock = new Mock<IUposMediator>();
         // DepositController needs Inventory and HardwareStatusManager
-        var inventory = new CashChangerSimulator.Core.Models.Inventory();
-        var hardware = new CashChangerSimulator.Core.Managers.HardwareStatusManager();
+        var inventory = new Inventory();
+        var hardware = new HardwareStatusManager();
         DepositControllerMock = new Mock<DepositController>(inventory, hardware, null!, null!);
     }
 

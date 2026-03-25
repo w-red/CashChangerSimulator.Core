@@ -50,7 +50,7 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
     {
     }
 
-    protected override void NotifyEvent(System.EventArgs e)
+    protected override void NotifyEvent(EventArgs e)
     {
         QueuedEvents.Add(e);
         base.NotifyEvent(e);

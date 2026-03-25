@@ -150,7 +150,7 @@ public class UposMediatorTests
     [Fact]
     public void Execute_ShouldHandlePosControlException()
     {
-        var mock = new Moq.Mock<IUposCommand>();
+        var mock = new Mock<IUposCommand>();
         mock.Setup(c => c.Verify(It.IsAny<IUposMediator>()));
         mock.Setup(c => c.Execute()).Throws(new PosControlException("Pos error", ErrorCode.Illegal, 789));
 
@@ -165,7 +165,7 @@ public class UposMediatorTests
     [Fact]
     public void Execute_ShouldSucceed()
     {
-        var mock = new Moq.Mock<IUposCommand>();
+        var mock = new Mock<IUposCommand>();
         _mediator.Execute(mock.Object);
         _mediator.ResultCode.ShouldBe((int)ErrorCode.Success);
     }

@@ -22,7 +22,7 @@ public class UposEventNotifier(IUposEventSink sink) : IUposEventNotifier, ICashC
     public bool RealTimeDataEnabled => _sink.RealTimeDataEnabled;
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
-    public void NotifyEvent(System.EventArgs e)
+    public void NotifyEvent(EventArgs e)
     {
         // DataEvent の制約を確認
         if (e is DataEventArgs)
@@ -38,7 +38,7 @@ public class UposEventNotifier(IUposEventSink sink) : IUposEventNotifier, ICashC
     }
 
     /// <summary>イベントを強制的に発生させます（NotifyEvent のエイリアス）。</summary>
-    public void FireEvent(System.EventArgs e) => NotifyEvent(e);
+    public void FireEvent(EventArgs e) => NotifyEvent(e);
 
     /// <summary>非同期処理中（ビジー状態）かどうかを設定します。</summary>
     public void SetAsyncProcessing(bool isBusy)
@@ -50,7 +50,7 @@ public class UposEventNotifier(IUposEventSink sink) : IUposEventNotifier, ICashC
     }
 
     /// <summary>イベントを適切なキューに追加します。</summary>
-    public void QueueEvent(System.EventArgs e)
+    public void QueueEvent(EventArgs e)
     {
         if (e is DataEventArgs de)
         {

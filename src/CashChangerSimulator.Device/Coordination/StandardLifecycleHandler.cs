@@ -83,7 +83,7 @@ public class StandardLifecycleHandler(
         {
             baseOpen();
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             // POS for .NET often throws NRE or PosControlException when registry entries are missing.
             // We ignore these in the simulator's standard handler to allow testing logic without a full installation.
@@ -129,7 +129,7 @@ public class StandardLifecycleHandler(
         {
             baseClose();
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             if (logger != null)
             {
@@ -186,7 +186,7 @@ public class StandardLifecycleHandler(
             }
             baseClaim(timeout);
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             // POS for .NET often throws NRE if internal state is not perfect (e.g. missing registry).
             // We MUST catch this to allow the simulator to proceed in a standalone/test environment.
@@ -228,7 +228,7 @@ public class StandardLifecycleHandler(
         {
             baseRelease();
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             if (logger != null)
             {

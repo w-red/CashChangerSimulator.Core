@@ -45,7 +45,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     public override void Open()
     {
         OposHistory.Add("Open");
-        if (SimulateOpenException) throw new System.IO.IOException("Simulated open exception");
+        if (SimulateOpenException) throw new IOException("Simulated open exception");
         base.Open();
     }
 
@@ -53,7 +53,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     public override void Close()
     {
         OposHistory.Add("Close");
-        if (SimulateCloseException) throw new System.IO.IOException("Simulated close exception");
+        if (SimulateCloseException) throw new IOException("Simulated close exception");
         base.Close();
     }
 
@@ -66,7 +66,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     }
 
     /// <summary>IDeviceSimulator の実装として、払い出し動作のシミュレーションを行います。</summary>
-    public async Task SimulateDispenseAsync(System.Threading.CancellationToken ct = default)
+    public async Task SimulateDispenseAsync(CancellationToken ct = default)
     {
         // ViewModels から呼び出された際の履歴を記録（テスト検証用）
         OposHistory.Add("DispenseCash (Triggered)");
@@ -138,7 +138,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     }
 
     /// <summary>イベント通知をオーバーライドし、OnEventQueued フックを実行します。</summary>
-    protected override void NotifyEvent(System.EventArgs e)
+    protected override void NotifyEvent(EventArgs e)
     {
         OnEventQueued?.Invoke(e);
         base.NotifyEvent(e);

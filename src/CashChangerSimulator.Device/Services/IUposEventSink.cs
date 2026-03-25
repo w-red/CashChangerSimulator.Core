@@ -23,11 +23,11 @@ public interface IUposEventSink
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">イベント引数。</param>
-    void NotifyEvent(System.EventArgs e);
+    void NotifyEvent(EventArgs e);
 
     /// <summary>イベントをキューに追加します。</summary>
     /// <param name="e">イベント引数。</param>
-    void QueueEvent(System.EventArgs e);
+    void QueueEvent(EventArgs e);
 
     /// <summary>データイベントをキューに追加します。</summary>
     /// <param name="e">イベント引数。</param>
