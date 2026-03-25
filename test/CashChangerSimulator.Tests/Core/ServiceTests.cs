@@ -7,8 +7,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
+/// <summary>MonitorsProvider の金種モニター管理およびしきい値更新機能を検証するテストクラス。</summary>
 public class MonitorsProviderTests
 {
+    /// <summary>設定（Configuration）の変更が、各モニターのしきい値へ正しく反映されることを検証します。</summary>
     [Fact]
     public void UpdateThresholdsFromConfig_ShouldUpdateCorrectly()
     {
@@ -28,6 +30,7 @@ public class MonitorsProviderTests
         monitor.NearEmptyThreshold.ShouldBe(99);
     }
 
+    /// <summary>非還流金種（IsRecyclable=false）の設定時、モニターの監視が無効化（しきい値-1）されることを検証します。</summary>
     [Fact]
     public void RefreshMonitors_ShouldHandleNonRecyclable()
     {
@@ -45,6 +48,7 @@ public class MonitorsProviderTests
         monitor2000.FullThreshold.ShouldBe(-1);
     }
 
+    /// <summary>通貨個別の設定が見つからない場合に、グローバル設定のしきい値が使用されることを検証します。</summary>
     [Fact]
     public void RefreshMonitors_ShouldFallbackToGlobal_WhenSpecificCurrencyNotFound()
     {
@@ -63,6 +67,7 @@ public class MonitorsProviderTests
         monitor.NearEmptyThreshold.ShouldBe(123);
     }
 
+    /// <summary>TriggerChanged 呼び出しにより、変更通知（Changed）が発火されることを検証します。</summary>
     [Fact]
     public void TriggerChanged_ShouldNotifyObservers()
     {
@@ -78,6 +83,7 @@ public class MonitorsProviderTests
         called.ShouldBeTrue();
     }
 
+    /// <summary>Dispose 呼び出しにより、管理対象のモニターがクリアされることを検証します。</summary>
     [Fact]
     public void Dispose_ShouldClearMonitors()
     {
@@ -91,6 +97,7 @@ public class MonitorsProviderTests
         provider.Monitors.ShouldBeEmpty();
     }
 
+    /// <summary>設定のリロードにより、モニターのしきい値が再読み込みされることを検証します。</summary>
     [Fact]
     public void Reload_ShouldRefreshMonitors()
     {
@@ -107,6 +114,7 @@ public class MonitorsProviderTests
         provider.Monitors.First(m => m.Key.Value == 1000).NearEmptyThreshold.ShouldBe(555);
     }
 
+    /// <summary>通貨メタデータの変更に伴い、監視対象の金種キーリストが更新されることを検証します。</summary>
     [Fact]
     public void MetadataChange_ShouldRefreshMonitors()
     {

@@ -24,6 +24,7 @@ public class CustomLogger<T> : ILogger<T>
 }
 
 /// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。</summary>
+[Collection("GlobalLock")]
 public class UposLifecycleTests
 {
     private static (InternalSimulatorCashChanger cc, CustomLogger<SimulatorCashChanger> logger) CreateCashChangerWithLogger()

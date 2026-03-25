@@ -5,6 +5,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Parsers;
 
+/// <summary>金種カウント文字列（UPOS標準形式）のパースロジックを検証するテストクラス。</summary>
 public class CashCountParserTests
 {
     private readonly List<DenominationKey> _jpyKeys =
@@ -26,6 +27,7 @@ public class CashCountParserTests
         new DenominationKey(0.1m, CurrencyCashType.Coin, "USD")
     ];
 
+    /// <summary>セミコロン区切り形式（硬貨;紙幣）が JPY 環境で正しくパースされることを検証します。</summary>
     [Fact]
     public void ParseParsesSemicolonFormatCorrectlyJpy()
     {

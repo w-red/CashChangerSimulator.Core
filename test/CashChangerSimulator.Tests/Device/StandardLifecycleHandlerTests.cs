@@ -8,6 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>標準的なライフサイクルハンドラの状態遷移、Open/Claim/Close/Release 操作を検証するテストクラス。</summary>
 public class StandardLifecycleHandlerTests
 {
     private readonly HardwareStatusManager _hardware;
@@ -23,6 +24,7 @@ public class StandardLifecycleHandlerTests
         _handler = new StandardLifecycleHandler(_hardware, _mediator.Object, _history, NullLogger.Instance);
     }
 
+    /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を正しく反映することを検証します。</summary>
     [Fact]
     public void State_ShouldReflectHardwareAndMediator()
     {
@@ -40,6 +42,7 @@ public class StandardLifecycleHandlerTests
         _handler.State.ShouldBe(ControlState.Busy);
     }
 
+    /// <summary>Closed 状態で DeviceEnabled を設定しようとした際に例外が発生することを検証します。</summary>
     [Fact]
     public void DeviceEnabled_Setter_ShouldThrowWhenClosed()
     {
@@ -48,15 +51,27 @@ public class StandardLifecycleHandlerTests
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
+    /// <summary>Unclaimed 状態で DeviceEnabled を設定しようとした際に例外が発生することを検証します。</summary>
     [Fact]
     public void DeviceEnabled_Setter_ShouldThrowWhenNotClaimed()
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(false);
         Should.Throw<PosControlException>(() => _handler.DeviceEnabled = true)
-            .ErrorCode.ShouldBe(ErrorCode.Illegal);
+            .ErrorCode.ShouldBe(ErrorCode.NotClaimed);
     }
 
+    /// <summary>他者に Claim されている状態で DeviceEnabled を設定しようとした際に例外が発生することを検証します。</summary>
+    [Fact]
+    public void DeviceEnabled_Setter_ShouldThrowWhenClaimedByAnother()
+    {
+        _hardware.SetConnected(true);
+        _hardware.SetClaimedByAnother(true);
+        Should.Throw<PosControlException>(() => _handler.DeviceEnabled = true)
+            .ErrorCode.ShouldBe(ErrorCode.Claimed);
+    }
+
+    /// <summary>Claim されている状態で DeviceEnabled が正常に設定できることを検証します。</summary>
     [Fact]
     public void DeviceEnabled_Setter_ShouldWorkWhenClaimed()
     {
@@ -68,6 +83,7 @@ public class StandardLifecycleHandlerTests
         _mediator.Object.DeviceEnabled.ShouldBeTrue();
     }
 
+    /// <summary>既に Open されている状態での Open 呼び出しが正常に処理されることを検証します。</summary>
     [Fact]
     public void Open_ShouldHandleAlreadyOpen()
     {
@@ -79,6 +95,7 @@ public class StandardLifecycleHandlerTests
         _mediator.Verify(m => m.SetSuccess(), Times.Once);
     }
 
+    /// <summary>Open 処理中の例外発生時に、ハードウェア接続状態が正しく更新されることを検証します。</summary>
     [Fact]
     public void Open_ShouldHandleBaseException()
     {
@@ -89,6 +106,7 @@ public class StandardLifecycleHandlerTests
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Open);
     }
 
+    /// <summary>既に Closed 状態での Close 呼び出しが正常に処理されることを検証します。</summary>
     [Fact]
     public void Close_ShouldHandleAlreadyClosed()
     {
@@ -100,6 +118,7 @@ public class StandardLifecycleHandlerTests
         _mediator.Verify(m => m.SetSuccess(), Times.Once);
     }
 
+    /// <summary>Close 処理中の例外発生時に、暗黙的な Release と Close が行われることを検証します。</summary>
     [Fact]
     public void Close_ShouldHandleBaseExceptionAndImplicitRelease()
     {
@@ -113,6 +132,7 @@ public class StandardLifecycleHandlerTests
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Close);
     }
 
+    /// <summary>Closed 状態で Claim を試みた際に例外が発生することを検証します。</summary>
     [Fact]
     public void Claim_ShouldThrowWhenClosed()
     {
@@ -121,6 +141,7 @@ public class StandardLifecycleHandlerTests
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
+    /// <summary>既に Claim されている状態での Claim 呼び出しが正常に処理されることを検証します。</summary>
     [Fact]
     public void Claim_ShouldHandleAlreadyClaimed()
     {
@@ -133,6 +154,7 @@ public class StandardLifecycleHandlerTests
         baseCalled.ShouldBeFalse();
     }
 
+    /// <summary>Claim 処理中の例外発生時に、メディエータの状態が正しく更新されることを検証します。</summary>
     [Fact]
     public void Claim_ShouldHandleBaseException()
     {
@@ -145,6 +167,7 @@ public class StandardLifecycleHandlerTests
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Claim);
     }
 
+    /// <summary>Closed 状態で Release を試みた際に例外が発生することを検証します。</summary>
     [Fact]
     public void Release_ShouldThrowWhenClosed()
     {
@@ -153,6 +176,7 @@ public class StandardLifecycleHandlerTests
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
+    /// <summary>Claim されていない状態での Release 呼び出しが正常に処理されることを検証します。</summary>
     [Fact]
     public void Release_ShouldHandleNotClaimed()
     {
@@ -165,6 +189,7 @@ public class StandardLifecycleHandlerTests
         baseCalled.ShouldBeFalse();
     }
 
+    /// <summary>Release 処理中の例外発生時に、メディエータの状態が正しく更新されることを検証します。</summary>
     [Fact]
     public void Release_ShouldHandleBaseException()
     {

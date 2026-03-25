@@ -9,10 +9,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>Test class for providing BulkOperationTests functionality.</summary>
+/// <summary>一括操作（スクリプト実行）による在庫更新や払い戻しを検証するテストクラス。</summary>
 public class BulkOperationTests
 {
-    /// <summary>Tests the behavior of ExecuteScriptAsyncShouldUpdateInventoryCorrectly to ensure proper functionality.</summary>
+    /// <summary>複雑な入出金スクリプトを実行し、最終的なインベントリが正しく更新されることを検証します。</summary>
     [Fact]
     public async Task ExecuteScriptAsyncShouldUpdateInventoryCorrectly()
     {
@@ -42,7 +42,7 @@ public class BulkOperationTests
         inv.GetCount(key1000).ShouldBe(3); // 5 deposited - 2 dispensed
     }
 
-    /// <summary>Tests the behavior of ExecuteScriptAsyncRepayActionShouldNotUpdateInventory to ensure proper functionality.</summary>
+    /// <summary>Action="Repay" を指定した入金完了操作で、在庫が更新されない（返却される）ことを検証します。</summary>
     [Fact]
     public async Task ExecuteScriptAsyncRepayActionShouldNotUpdateInventory()
     {

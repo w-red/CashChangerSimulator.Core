@@ -5,8 +5,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>カバレッジ向上のため、通常ルート以外のメソッド（DispenseCash, Dispose 複数回実行等）を検証するテストクラス。</summary>
 public class SimulatorCashChangerCoverageTests
 {
+    /// <summary>DispenseCash(CashCount[]) オーバーロードが正常に動作することを検証します。</summary>
     [Fact]
     public void DispenseCash_ShouldExecuteWithoutError()
     {
@@ -33,6 +35,7 @@ public class SimulatorCashChangerCoverageTests
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 
+    /// <summary>Dispose を複数回呼び出しても例外が発生しないことを検証します。</summary>
     [Fact]
     public void Dispose_SafeToCallMultipleTimes()
     {
@@ -50,6 +53,7 @@ public class SimulatorCashChangerCoverageTests
         act.ShouldNotThrow();
     }
 
+    /// <summary>ClearError 呼び出しが内部ステータスを正常にリセットすることを検証します。</summary>
     [Fact]
     public void ClearError_ShouldResetStatus()
     {
@@ -69,6 +73,7 @@ public class SimulatorCashChangerCoverageTests
         controller.Status.ShouldNotBe(CashChangerSimulator.Core.Monitoring.CashDispenseStatus.Error);
     }
 
+    /// <summary>DeviceEnabled プロパティの Get/Set アクセスをカバレッジのために検証します。</summary>
     [Fact]
     public void DeviceEnabled_GetSet_ShouldCoverProperty()
     {

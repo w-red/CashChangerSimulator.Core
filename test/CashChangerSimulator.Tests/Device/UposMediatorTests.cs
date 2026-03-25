@@ -7,6 +7,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>UPOS メディエータの状態検証（VerifyState）、コマンド実行、非同期結果処理をテストするクラス。</summary>
 public class UposMediatorTests
 {
     private readonly InternalSimulatorCashChanger _so;
@@ -18,6 +19,7 @@ public class UposMediatorTests
         _mediator = new UposMediator(_so);
     }
 
+    /// <summary>Closed 状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyState_ShouldThrowClosed_WhenClosed()
     {
@@ -26,14 +28,16 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
+    /// <summary>占有（Claim）されていない状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
-    public void VerifyState_ShouldThrowIllegal_WhenNotClaimed()
+    public void VerifyState_ShouldThrowNotClaimed_WhenNotClaimed()
     {
         _so.Open();
         Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true))
-            .ErrorCode.ShouldBe(ErrorCode.Illegal);
+            .ErrorCode.ShouldBe(ErrorCode.NotClaimed);
     }
 
+    /// <summary>無効（Disabled）状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyState_ShouldThrowDisabled_WhenNotEnabled()
     {
@@ -43,6 +47,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Disabled);
     }
 
+    /// <summary>ビジー状態での状態検証時に例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyState_ShouldThrowBusy_WhenBusy()
     {
@@ -55,6 +60,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Busy);
     }
 
+    /// <summary>全ての条件（Open, Claimed, Enabled, NotBusy）を満たす場合に状態検証が成功することを検証します。</summary>
     [Fact]
     public void VerifyState_ShouldNotThrow_WhenAllConditionsMet()
     {
@@ -66,6 +72,7 @@ public class UposMediatorTests
         _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
     }
 
+    /// <summary>検証スキップフラグが有効な場合に、不正な状態でも検証が成功することを検証します。</summary>
     [Fact]
     public void VerifyState_ShouldSkip_WhenSkipFlagIsSet()
     {
@@ -73,6 +80,7 @@ public class UposMediatorTests
         _mediator.VerifyState(); // Should not throw even if Closed
     }
 
+    /// <summary>ThrowIfBusy メソッドがビジー判定時に例外をスローすることを検証します。</summary>
     [Fact]
     public void ThrowIfBusy_ShouldThrow_WhenBusy()
     {
@@ -80,6 +88,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Busy);
     }
 
+    /// <summary>ThrowIfDepositInProgress メソッドが入金中判定時に例外をスローすることを検証します。</summary>
     [Fact]
     public void ThrowIfDepositInProgress_ShouldThrow_WhenInProgress()
     {
@@ -87,6 +96,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
+    /// <summary>非同期出金処理の結果が正常に内部プロパティへ反映され、完了イベントが発火することを検証します。</summary>
     [Fact]
     public void HandleDispenseResult_ShouldSetCodesAndFireEvent_WhenAsync()
     {
@@ -110,6 +120,7 @@ public class UposMediatorTests
         eventFired.ShouldBeTrue();
     }
 
+    /// <summary>同期出金処理の結果が内部プロパティへ反映され、完了イベントが発火しないことを検証します。</summary>
     [Fact]
     public void HandleDispenseResult_ShouldNotFireEvent_WhenSync()
     {
@@ -123,6 +134,7 @@ public class UposMediatorTests
         eventFired.ShouldBeFalse();
     }
 
+    /// <summary>SetSuccess および SetFailure により ResultCode 等が正しく更新されることを検証します。</summary>
     [Fact]
     public void SetSuccessAndFailure_ShouldUpdateProperties()
     {
@@ -134,6 +146,7 @@ public class UposMediatorTests
         _mediator.ResultCodeExtended.ShouldBe(456);
     }
 
+    /// <summary>コマンド実行中に PosControlException が発生した場合に、ResultCode 等が適切にキャッチ・設定されることを検証します。</summary>
     [Fact]
     public void Execute_ShouldHandlePosControlException()
     {
@@ -148,6 +161,7 @@ public class UposMediatorTests
         ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
+    /// <summary>コマンドの正常実行が成功し、ResultCode が Success になることを検証します。</summary>
     [Fact]
     public void Execute_ShouldSucceed()
     {

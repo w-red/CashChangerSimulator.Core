@@ -5,9 +5,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>
-/// CsvHistoryExportService の機能を検証するためのテストクラス。
-/// </summary>
+/// <summary>CsvHistoryExportService の CSV エクスポート機能を検証するテストクラス。</summary>
 public class CsvHistoryExportServiceTests
 {
     private readonly CsvHistoryExportService _service;
@@ -17,6 +15,7 @@ public class CsvHistoryExportServiceTests
         _service = new CsvHistoryExportService();
     }
 
+    /// <summary>取引履歴リストが正しい CSV 文字列（ヘッダーとデータ行）に変換されることを検証します。</summary>
     [Fact]
     public void Export_ShouldReturnCorrectCsvString()
     {
@@ -68,6 +67,7 @@ public class CsvHistoryExportServiceTests
         lines[2].ShouldContain("JPY-C100:-2");
     }
 
+    /// <summary>空の取引履歴リストを渡した際に、ヘッダーのみの CSV が生成されることを検証します。</summary>
     [Fact]
     public void Export_ShouldHandleEmptyList()
     {

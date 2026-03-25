@@ -7,6 +7,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>UPOS 設定マネージャによる通貨設定、設定リロード、初期化処理を検証するテストクラス。</summary>
 public class UposConfigurationManagerTests
 {
     private readonly ConfigurationProvider _configProvider;
@@ -22,6 +23,7 @@ public class UposConfigurationManagerTests
         _manager = new UposConfigurationManager(_configProvider, _inventory, _stateProvider.Object);
     }
 
+    /// <summary>サポートされていない通貨コードを設定しようとした際に例外が発生することを検証します。</summary>
     [Fact]
     public void CurrencyCode_ShouldThrowWhenUnsupported()
     {
@@ -29,6 +31,7 @@ public class UposConfigurationManagerTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
+    /// <summary>正当な通貨コードが正常に設定・取得できることを検証します。</summary>
     [Fact]
     public void CurrencyCode_ShouldWorkWhenSupported()
     {
@@ -37,6 +40,7 @@ public class UposConfigurationManagerTests
         _manager.CurrencyCode.ShouldBe("USD");
     }
 
+    /// <summary>設定変更時に内部状態（在庫等）が正しくリセットされることを検証します。</summary>
     [Fact]
     public void ResetState_WhenConfigurationChanges()
     {
@@ -49,6 +53,7 @@ public class UposConfigurationManagerTests
         _inventory.AllCounts.ShouldBeEmpty();
     }
 
+    /// <summary>手動リロード実行時に内部状態がリセットされることを検証します。</summary>
     [Fact]
     public void Reload_ShouldManuallyTriggerUpdate()
     {
@@ -60,6 +65,7 @@ public class UposConfigurationManagerTests
         _inventory.AllCounts.ShouldBeEmpty();
     }
 
+    /// <summary>初期化処理によってアクティブな通貨が正しく設定されることを検証します。</summary>
     [Fact]
     public void Initialize_ShouldSetActiveCurrency()
     {
@@ -70,6 +76,7 @@ public class UposConfigurationManagerTests
         _manager.CurrencyCode.ShouldBe("EUR");
     }
 
+    /// <summary>破棄（Dispose）後に設定変更を受け取っても副作用が発生しないことを検証します。</summary>
     [Fact]
     public void Dispose_ShouldUnsubscribe()
     {
@@ -78,6 +85,7 @@ public class UposConfigurationManagerTests
         _configProvider.Update(new SimulatorConfiguration());
     }
 
+    /// <summary>CurrencyCashList プロパティが UPOS 規定の形式でデータを返却することを検証します。</summary>
     [Fact]
     public void CurrencyCashList_ShouldReturnUposUnits()
     {

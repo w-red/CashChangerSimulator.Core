@@ -4,6 +4,7 @@ using Moq;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>UPOS イベント通知（DataEvent, StatusUpdateEvent）のキューイング処理を検証するテストクラス。</summary>
 public class UposEventNotifierTests
 {
     private readonly Mock<IUposEventSink> _mockSink;
@@ -15,6 +16,7 @@ public class UposEventNotifierTests
         _notifier = new UposEventNotifier(_mockSink.Object);
     }
 
+    /// <summary>DataEventArgs がキューイングされた際に、適切にイベントシンクへ委譲されることを検証します。</summary>
     [Fact]
     public void QueueEvent_ShouldCallQueueDataEvent_WhenEventArgsIsDataEventArgs()
     {
@@ -30,6 +32,7 @@ public class UposEventNotifierTests
         _mockSink.Verify(s => s.QueueDataEvent(args), Times.Once);
     }
 
+    /// <summary>StatusUpdateEventArgs がキューイングされた際に、適切にイベントシンクへ委譲されることを検証します。</summary>
     [Fact]
     public void QueueEvent_ShouldCallQueueStatusUpdateEvent_WhenEventArgsIsStatusUpdateEventArgs()
     {

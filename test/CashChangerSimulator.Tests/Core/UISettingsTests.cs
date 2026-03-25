@@ -66,6 +66,7 @@ public class UISettingsTests
         loaded.Inventory["JPY"].Denominations["B2000"].IsRecyclable.ShouldBeFalse();
     }
 
+    /// <summary>基本テーマ（BaseTheme）が正しくシリアライズおよびデシリアライズされることを検証します。</summary>
     [Fact]
     public void ConfigurationShouldSerializeAndDeserializeBaseTheme()
     {
@@ -78,6 +79,7 @@ public class UISettingsTests
         loaded.System.BaseTheme.ShouldBe("Light");
     }
 
+    /// <summary>在庫しきい値（Thresholds）が正しくシリアライズおよびデシリアライズされることを検証します。</summary>
     [Fact]
     public void ConfigurationShouldSerializeAndDeserializeThresholds()
     {
@@ -160,6 +162,7 @@ public class UISettingsTests
         return new SettingsViewModel(cp, mp, meta);
     }
 
+    /// <summary>通貨コードやカルチャの変更に伴い、通貨記号や単位が正しく更新されることを検証します。</summary>
     [Fact]
     public void CurrencyMetadataProviderShouldUpdateSymbolsWhenConfigReloaded()
     {

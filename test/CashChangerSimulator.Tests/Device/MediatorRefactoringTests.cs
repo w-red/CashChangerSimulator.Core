@@ -5,8 +5,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>UposMediator のリファクタリングに関わる機能（検証スキップフラグ等）を検証するテストクラス。</summary>
 public class MediatorRefactoringTests
 {
+    /// <summary>メディエータが検証スキップフラグ（SkipStateVerification）を正しく保持できることを検証します。</summary>
     [Fact]
     public void Mediator_ShouldSupportSkipStateVerificationProperty()
     {
@@ -17,6 +19,7 @@ public class MediatorRefactoringTests
         mediator.SkipStateVerification.ShouldBeTrue();
     }
 
+    /// <summary>Execute メソッドが内部のスキップフラグを参照してコマンドを実行することを検証します。</summary>
     [Fact]
     public void Execute_ShouldUseInternalSkipFlag()
     {

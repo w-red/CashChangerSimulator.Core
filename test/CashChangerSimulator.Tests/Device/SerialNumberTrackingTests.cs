@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>Test class for providing SerialNumberTrackingTests functionality.</summary>
+/// <summary>入金確定（FixDeposit）時の記番号（シリアルナンバー）追跡機能を検証するテストクラス。</summary>
 public class SerialNumberTrackingTests
 {
     private static (InternalSimulatorCashChanger changer, DepositController controller) CreateChanger()
@@ -25,7 +25,7 @@ public class SerialNumberTrackingTests
         return (changer, controller);
     }
 
-    /// <summary>Tests the behavior of DirectIOGetVersionShouldWorkWithConstant to ensure proper functionality.</summary>
+    /// <summary>DirectIO(GetVersion) が正しいバージョン文字列を返却することを検証します。</summary>
     [Fact]
     public void DirectIOGetVersionShouldWorkWithConstant()
     {
@@ -40,7 +40,7 @@ public class SerialNumberTrackingTests
         result.Object.ToString()!.ShouldContain("InternalSimulatorCashChanger");
     }
 
-    /// <summary>Tests the behavior of DirectIOGetDepositedSerialsShouldReturnEmptyInitially to ensure proper functionality.</summary>
+    /// <summary>初期状態で DirectIO(GetDepositedSerials) が空の結果を返却することを検証します。</summary>
     [Fact]
     public void DirectIOGetDepositedSerialsShouldReturnEmptyInitially()
     {
@@ -55,7 +55,7 @@ public class SerialNumberTrackingTests
         result.Object.ToString()!.ShouldBe("");
     }
 
-    /// <summary>Tests the behavior of DirectIOGetDepositedSerialsShouldReturnSerialsAfterDepositFix to ensure proper functionality.</summary>
+    /// <summary>FixDeposit 実行後に DirectIO(GetDepositedSerials) から記番号が取得できることを検証します。</summary>
     [Fact]
     public void DirectIOGetDepositedSerialsShouldReturnSerialsAfterDepositFix()
     {
@@ -83,7 +83,7 @@ public class SerialNumberTrackingTests
         serials?[0].ShouldNotBe(serials?[1]);
     }
 
-    /// <summary>Tests the behavior of DirectIOGetDepositedSerialsShouldPersistAfterEndDeposit to ensure proper functionality.</summary>
+    /// <summary>EndDeposit 実行後も直近の記番号データが保持されていることを検証します。</summary>
     [Fact]
     public void DirectIOGetDepositedSerialsShouldPersistAfterEndDeposit()
     {

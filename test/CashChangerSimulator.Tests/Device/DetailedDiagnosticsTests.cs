@@ -4,7 +4,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>Tests for detailed diagnostic functions including CheckHealth and Statistics.</summary>
+/// <summary>CheckHealth や統計情報（Statistics）などの自己診断機能を検証するテストクラス。</summary>
 public class DetailedDiagnosticsTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
@@ -16,7 +16,7 @@ public class DetailedDiagnosticsTests
         return simulator;
     }
 
-    /// <summary>Verifies that CheckHealth(Internal) returns a detailed report when the system is healthy.</summary>
+    /// <summary>CheckHealth(Internal) が詳細な内部状態レポートを返却することを検証します。</summary>
     [Fact]
     public void CheckHealthInternal_ShouldReturnDetailedReport()
     {
@@ -29,7 +29,7 @@ public class DetailedDiagnosticsTests
         report.ShouldContain("Status: OK");
     }
 
-    /// <summary>Verifies that CheckHealth(External) returns a report about simulated hardware connection.</summary>
+    /// <summary>CheckHealth(External) がハードウェア接続状態を含むレポートを返却することを検証します。</summary>
     [Fact]
     public void CheckHealthExternal_ShouldReturnHardwareReport()
     {
@@ -41,7 +41,7 @@ public class DetailedDiagnosticsTests
         report.ShouldContain("Hardware: Connected");
     }
 
-    /// <summary>Verifies that statistics are tracked and can be retrieved.</summary>
+    /// <summary>デバイス統計情報（Statistics）が正しく集計・提供されることを検証します。</summary>
     [Fact]
     public void RetrieveStatistics_ShouldReturnOperationCounts()
     {
@@ -58,7 +58,7 @@ public class DetailedDiagnosticsTests
         result.ShouldContain("SuccessfulDepletionCount");
     }
 
-    /// <summary>Verifies that Diagnostic Log can be retrieved via DirectIO (1002).</summary>
+    /// <summary>DirectIO(1002) 経由で診断ログが取得できることを検証します。</summary>
     [Fact]
     public void DirectIO_GetDiagnosticLog_ShouldReturnReport()
     {

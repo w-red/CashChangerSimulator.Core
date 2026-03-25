@@ -12,6 +12,7 @@ using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>各機能ファサード（DepositFacade, InventoryFacade等）がメディエータを介してコマンドを正しく発行することを検証するテストクラス。</summary>
 public class FacadeTests
 {
     private readonly Mock<IUposMediator> _mediatorMock;
@@ -42,6 +43,7 @@ public class FacadeTests
         _diagnosticControllerMock = new Mock<DiagnosticController>(inventory, hardwareStatusManager);
     }
 
+    /// <summary>DepositFacade.BeginDeposit が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
     public void DepositFacade_BeginDeposit_ShouldExecuteCommand()
     {
@@ -55,6 +57,7 @@ public class FacadeTests
         _mediatorMock.Verify(m => m.Execute(It.IsAny<BeginDepositCommand>()), Times.Once);
     }
 
+    /// <summary>InventoryFacade.ReadCashCounts が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
     public void InventoryFacade_ReadCashCounts_ShouldExecuteCommand()
     {
@@ -68,6 +71,7 @@ public class FacadeTests
         _mediatorMock.Verify(m => m.Execute(It.IsAny<ReadCashCountsCommand>()), Times.Once);
     }
 
+    /// <summary>DiagnosticsFacade.CheckHealth が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
     public void DiagnosticsFacade_CheckHealth_ShouldExecuteCommand()
     {

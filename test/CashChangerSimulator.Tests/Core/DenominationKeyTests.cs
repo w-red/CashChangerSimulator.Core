@@ -3,8 +3,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
+/// <summary>金種キー（DenominationKey）のパース、文字列表現、プロパティを検証するテストクラス。</summary>
 public class DenominationKeyTests
 {
+    /// <summary>有効な文字列（B1000等）から金種キーが正しくパースされることを検証します。</summary>
     [Theory]
     [InlineData("B1000", 1000, CurrencyCashType.Bill, "JPY")]
     [InlineData("C500", 500, CurrencyCashType.Coin, "JPY")]
@@ -18,6 +20,7 @@ public class DenominationKeyTests
         result.CurrencyCode.ShouldBe(expectedCurrency);
     }
 
+    /// <summary>不正な形式や null 文字列を指定した際、パースが失敗することを検証します。</summary>
     [Theory]
     [InlineData("")]
     [InlineData("B")]
@@ -30,6 +33,7 @@ public class DenominationKeyTests
         result.ShouldBeNull();
     }
 
+    /// <summary>通貨コードを指定したパースが正しく行われることを検証します。</summary>
     [Fact]
     public void TryParse_WithCurrencyCode_ShouldSucceed()
     {
@@ -37,6 +41,7 @@ public class DenominationKeyTests
         result!.CurrencyCode.ShouldBe("USD");
     }
 
+    /// <summary>金種タイプに応じた接頭辞（B/C）が正しく返されることを検証します。</summary>
     [Fact]
     public void PrefixChar_ShouldBeCorrect()
     {
@@ -44,6 +49,7 @@ public class DenominationKeyTests
         new DenominationKey(1, CurrencyCashType.Coin).PrefixChar.ShouldBe('C');
     }
 
+    /// <summary>金種キーの文字列表現（例：C10.5）が正しく出力されることを検証します。</summary>
     [Fact]
     public void ToDenominationString_ShouldBeCorrect()
     {

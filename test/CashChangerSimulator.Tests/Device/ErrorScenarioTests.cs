@@ -13,6 +13,7 @@ using Shouldly;
 namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>各種エラーシナリオ（ビジー、不正なパラメータ/シーケンス、在庫不足、ジャム）の検証テスト。</summary>
+[Collection("GlobalLock")]
 public class ErrorScenarioTests
 {
     private static (InternalSimulatorCashChanger Device, HardwareStatusManager Hardware) CreateDevice()
@@ -79,7 +80,7 @@ public class ErrorScenarioTests
         return (device, hardware);
     }
 
-    /// <summary>DispenseChange に 0 以下の金額を指定した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    /// <summary>0 以下の金額での出金要求が E_ILLEGAL になることを検証します。</summary>
     [Fact]
     public void DispenseChangeWithNegativeAmountShouldThrowIllegal()
     {
@@ -112,7 +113,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>在庫不足で払出ができない際、ErrorCode.Extended (ECHAN_OVERDISPENSE) が発生することを検証する。</summary>
+    /// <summary>在庫不足時（OverDispense）の例外処理を検証します。</summary>
     [Fact]
     public void DispenseWithShortageShouldThrowOverdispense()
     {

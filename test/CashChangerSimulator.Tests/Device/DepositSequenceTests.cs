@@ -10,11 +10,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>Deposit シーケンスの検証テスト。</summary>
-/// <remarks>
-/// UPOS 8.3.4 シーケンス図 / 8.3.5 状態遷移図に基づく検証を行います。
-/// </remarks>
-/// <summary>Test class for providing DepositSequenceTests functionality.</summary>
+/// <summary>入金シーケンスの各状態遷移（UPOS準拠）を検証するテストクラス。</summary>
 public class DepositSequenceTests
 {
     private static (DepositController Controller, Inventory Inventory) CreateController()
@@ -254,6 +250,7 @@ public class DepositSequenceTests
         changedEventFired.ShouldBeTrue();
     }
 
+    /// <summary>投入された現金がリアルタイムでエスクロー在庫を更新することを検証します。</summary>
     [Fact]
     public void TrackDeposit_ShouldUpdateInventoryEscrow()
     {
@@ -268,6 +265,7 @@ public class DepositSequenceTests
         inventory.GetCount(b1000).ShouldBe(0); // Not in main inventory yet
     }
 
+    /// <summary>釣銭返却アクション（EndDeposit Change）時にエスクロー内の特定金種が優先的に扱われることを検証します。</summary>
     [Fact]
     public void EndDeposit_Change_ShouldDispenseFromEscrowFirst()
     {
@@ -296,6 +294,7 @@ public class DepositSequenceTests
         inventory.EscrowCounts.ShouldBeEmpty();
     }
 
+    /// <summary>入金キャンセル（Repay）時にエスクロー在庫がクリアされることを検証します。</summary>
     [Fact]
     public void EndDeposit_Repay_ShouldClearInventoryEscrow()
     {

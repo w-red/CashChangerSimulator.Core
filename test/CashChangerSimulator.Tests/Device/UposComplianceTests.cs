@@ -10,6 +10,8 @@ using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>UPOS 規約に関連する複雑な操作（不整合フラグ管理、金種文字列解釈等）を検証するテストクラス。</summary>
+[Collection("GlobalLock")]
 public class UposComplianceTests
 {
     private readonly Mock<IUposMediator> _mediatorMock;
@@ -38,6 +40,7 @@ public class UposComplianceTests
         _facade = new InventoryFacade(Inventory, _managerMock.Object, _mediatorMock.Object);
     }
 
+    /// <summary>AdjustCashCounts 実行時に「discrepancy」文字列が含まれる場合に不整合フラグが立つことを検証します。</summary>
     [Fact]
     public void AdjustCashCounts_WithDiscrepancyString_ShouldSetDiscrepancy()
     {
@@ -54,6 +57,7 @@ public class UposComplianceTests
         Inventory.HasDiscrepancy.ShouldBeTrue();
     }
 
+    /// <summary>AdjustCashCounts において、特定の金種カウント形式の文字列が正しく在庫に反映されることを検証します。</summary>
     [Fact]
     public void AdjustCashCounts_WithCountString_ShouldUpdateInventory()
     {
@@ -73,6 +77,7 @@ public class UposComplianceTests
         Inventory.GetCount(key5000).ShouldBe(2);
     }
 
+    /// <summary>ReadCashCounts 実行結果の不整合フラグが、内部在庫の状態を正しく反映していることを検証します。</summary>
     [Fact]
     public void ReadCashCounts_ShouldReflectDiscrepancyState()
     {

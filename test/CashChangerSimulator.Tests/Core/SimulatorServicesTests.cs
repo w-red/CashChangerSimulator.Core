@@ -46,6 +46,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeSameAs(inventory);
     }
 
+    /// <summary>サービスプロバイダーが例外をスローした場合に、TryResolve が null を返すことを検証します。</summary>
     [Fact]
     public void TryResolve_ProviderThrows_ShouldReturnNull()
     {
@@ -56,6 +57,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeNull();
     }
 
+    /// <summary>プロバイダーが未設定の状態で Resolve を呼び出した際に InvalidOperationException が発生することを検証します。</summary>
     [Fact]
     public void Resolve_NotRegistered_ShouldThrow()
     {

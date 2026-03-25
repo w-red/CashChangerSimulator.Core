@@ -6,6 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>デバイスのライフサイクル状態（Closed, Opened, Claimed）の遷移ロジックを個別検証するテストクラス。</summary>
 public class LifecycleStateTests
 {
     private readonly DeviceLifecycleContext _context;
@@ -17,6 +18,7 @@ public class LifecycleStateTests
         _context = new DeviceLifecycleContext(hw, NullLogger.Instance, enabled => _deviceEnabled = enabled);
     }
 
+    /// <summary>ClosedState からの各操作による状態遷移と例外発生を検証します。</summary>
     [Fact]
     public void ClosedState_Transitions()
     {
@@ -29,9 +31,10 @@ public class LifecycleStateTests
         // Already closed or invalid operations
         Should.Throw<PosControlException>(() => state.Close(_context)).ErrorCode.ShouldBe(ErrorCode.Closed);
         Should.Throw<PosControlException>(() => state.Claim(_context, 0)).ErrorCode.ShouldBe(ErrorCode.Closed);
-        Should.Throw<PosControlException>(() => state.Release(_context)).ErrorCode.ShouldBe(ErrorCode.Illegal);
+        Should.Throw<PosControlException>(() => state.Release(_context)).ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
+    /// <summary>OpenedState からの各操作による状態遷移（Claim, Close等）を検証します。</summary>
     [Fact]
     public void OpenedState_Transitions()
     {
@@ -52,6 +55,7 @@ public class LifecycleStateTests
         state.Release(_context).ShouldBe(state);
     }
 
+    /// <summary>ClaimedState からの解放（Release）および自動解放を伴う Close 操作を検証します。</summary>
     [Fact]
     public void ClaimedState_Transitions()
     {

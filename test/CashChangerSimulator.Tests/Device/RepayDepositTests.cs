@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>Test class for providing RepayDepositTests functionality.</summary>
+/// <summary>入金キャンセル（Repay）操作時に在庫が更新されず、セッションが正しく終了することを検証するテストクラス。</summary>
 public class RepayDepositTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
@@ -14,7 +14,7 @@ public class RepayDepositTests
         return new InternalSimulatorCashChanger(new SimulatorDependencies());
     }
 
-    /// <summary>Tests the behavior of CapRepayDepositShouldBeTrue to ensure proper functionality.</summary>
+    /// <summary>CapRepayDeposit プロパティが True を返すことを検証します。</summary>
     [Fact]
     public void CapRepayDepositShouldBeTrue()
     {
@@ -22,7 +22,7 @@ public class RepayDepositTests
         simulator.CapRepayDeposit.ShouldBeTrue("UPOS standard requires CapRepayDeposit to be true to use Repay action.");
     }
 
-    /// <summary>Tests the behavior of EndDepositWithRepayShouldNotUpdateInventory to ensure proper functionality.</summary>
+    /// <summary>EndDeposit(Repay) 実行時に投入金額が在庫に加算されないことを検証します。</summary>
     [Fact]
     public void EndDepositWithRepayShouldNotUpdateInventory()
     {
@@ -61,7 +61,7 @@ public class RepayDepositTests
         finalCount.ShouldBe(initialCount, "Inventory should not be updated when action is Repay.");
     }
 
-    /// <summary>Tests the behavior of RepayDepositMethodShouldEndSession to ensure proper functionality.</summary>
+    /// <summary>RepayDeposit メソッドの呼び出しにより入金セッションが正しく終了することを検証します。</summary>
     [Fact]
     public void RepayDepositMethodShouldEndSession()
     {

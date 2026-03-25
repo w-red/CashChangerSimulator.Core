@@ -70,6 +70,7 @@ public class VirtualMockDeviceTests
         _device2.Claimed.ShouldBeTrue();
     }
 
+    /// <summary>Open メソッドにより接続状態（IsConnected）が有効になることを検証します。</summary>
     [Fact]
     public void Open_ShouldSetConnected()
     {
@@ -77,6 +78,7 @@ public class VirtualMockDeviceTests
         _device1.IsConnected.ShouldBeTrue();
     }
 
+    /// <summary>Close メソッドにより、切断状態および非有効化状態に遷移することを検証します。</summary>
     [Fact]
     public void Close_ShouldSetDisconnectedAndDisabled()
     {
@@ -91,6 +93,7 @@ public class VirtualMockDeviceTests
         _device1.Claimed.ShouldBeFalse();
     }
 
+    /// <summary>占有（Claim）されている状態で Enable が成功することを検証します。</summary>
     [Fact]
     public void Enable_ShouldSucceed_WhenClaimed()
     {
@@ -100,6 +103,7 @@ public class VirtualMockDeviceTests
         _device1.DeviceEnabled.ShouldBeTrue();
     }
 
+    /// <summary>占有（Claim）されていない状態で Enable を呼び出すと例外が発生することを検証します。</summary>
     [Fact]
     public void Enable_ShouldThrow_WhenNotClaimed()
     {
@@ -107,6 +111,7 @@ public class VirtualMockDeviceTests
         Should.Throw<InvalidOperationException>(() => _device1.Enable());
     }
 
+    /// <summary>デバイスが有効化（Enable）されていない状態で入金操作を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void Deposit_ShouldThrow_WhenNotEnabled()
     {
@@ -116,6 +121,7 @@ public class VirtualMockDeviceTests
         Should.Throw<InvalidOperationException>(() => _device1.Deposit(new Dictionary<DenominationKey, int>()));
     }
 
+    /// <summary>デバイスが有効化（Enable）されていない状態で出金操作を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void Dispense_ShouldThrow_WhenNotEnabled()
     {
@@ -125,6 +131,7 @@ public class VirtualMockDeviceTests
         Should.Throw<InvalidOperationException>(() => _device1.Dispense(1000));
     }
 
+    /// <summary>現在の在庫情報を正しく取得できることを検証します。</summary>
     [Fact]
     public void GetInventory_ShouldReturnCorrectData()
     {

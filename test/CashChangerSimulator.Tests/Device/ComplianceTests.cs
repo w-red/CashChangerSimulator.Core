@@ -13,6 +13,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// リアルタイムデータ通知、ディレクトIOによる状態操作、不整合フラグのレポートなど、
 /// デバイスの標準的な振る舞いとカスタムコマンドの正確性を網羅的に検証します。
 /// </remarks>
+[Collection("GlobalLock")]
 public class ComplianceTests
 {
     private static (InternalSimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history, DeviceEventHistoryObserver observer) CreateChanger()
@@ -45,7 +46,7 @@ public class ComplianceTests
         return (changer, controller, inventory, history, observer);
     }
 
-    /// <summary>Tests the behavior of ReadCashCountsShouldReportDiscrepancy to ensure proper functionality.</summary>
+    /// <summary>ReadCashCounts が在庫の不整合（Discrepancy）を正しく報告することを検証します。</summary>
     [Fact]
     public void ReadCashCountsShouldReportDiscrepancy()
     {
@@ -60,7 +61,7 @@ public class ComplianceTests
         counts.Discrepancy.ShouldBeTrue();
     }
 
-    /// <summary>Tests the behavior of RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix to ensure proper functionality.</summary>
+    /// <summary>リアルタイム通知が無効な場合、入金確定時にのみ DataEvent が発火することを検証します。</summary>
     [Fact]
     public void RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix()
     {
@@ -79,7 +80,7 @@ public class ComplianceTests
         eventCount.ShouldBe(1); // Fired on Fix (buffered data notification)
     }
 
-    /// <summary>Tests the behavior of RealTimeDataEnabledTrueShouldFireDataEventOnTrack to ensure proper functionality.</summary>
+    /// <summary>リアルタイム通知が有効な場合、投入の都度 DataEvent が発火することを検証します。</summary>
     [Fact]
     public void RealTimeDataEnabledTrueShouldFireDataEventOnTrack()
     {
@@ -99,7 +100,7 @@ public class ComplianceTests
         history.Entries.ShouldContain(e => e.Type == CashChangerSimulator.Core.Transactions.TransactionType.DataEvent);
     }
 
-    /// <summary>Tests the behavior of DirectIOSimulateRemovedShouldFireStatusUpdateEvent to ensure proper functionality.</summary>
+    /// <summary>DirectIO(SimulateRemoved) によりカセット取外しイベントが発火することを検証します。</summary>
     [Fact]
     public void DirectIOSimulateRemovedShouldFireStatusUpdateEvent()
     {
@@ -120,7 +121,7 @@ public class ComplianceTests
         status.ShouldBe(41); // CHAN_STATUS_REMOVED
     }
 
-    /// <summary>Tests the behavior of DirectIOSimulateInsertedShouldFireStatusUpdateEvent to ensure proper functionality.</summary>
+    /// <summary>DirectIO(SimulateInserted) によりカセット装着イベントが発火することを検証します。</summary>
     [Fact]
     public void DirectIOSimulateInsertedShouldFireStatusUpdateEvent()
     {
@@ -136,7 +137,7 @@ public class ComplianceTests
         status.ShouldBe(42); // CHAN_STATUS_INSERTED
     }
 
-    /// <summary>Tests the behavior of DirectIOSetDiscrepancyShouldUpdateHasDiscrepancy to ensure proper functionality.</summary>
+    /// <summary>DirectIO(SetDiscrepancy) により不整合フラグが更新されることを検証します。</summary>
     [Fact]
     public void DirectIOSetDiscrepancyShouldUpdateHasDiscrepancy()
     {
@@ -153,7 +154,7 @@ public class ComplianceTests
         changer.ReadCashCounts().Discrepancy.ShouldBeFalse();
     }
 
-    /// <summary>Tests the behavior of DirectIOAdjustCashCountsStrShouldUpdateInventory to ensure proper functionality.</summary>
+    /// <summary>DirectIO(AdjustCashCountsStr) により在庫が文字列指定で更新されることを検証します。</summary>
     [Fact]
     public void DirectIOAdjustCashCountsStrShouldUpdateInventory()
     {
@@ -172,7 +173,7 @@ public class ComplianceTests
         inventory.GetCount(jpy1000).ShouldBe(15);
     }
 
-    /// <summary>Tests the behavior of AdjustCashCountsStrShouldUpdateInventory to ensure proper functionality.</summary>
+    /// <summary>AdjustCashCounts(string) により在庫が正しく更新されることを検証します。</summary>
     [Fact]
     public void AdjustCashCountsStrShouldUpdateInventory()
     {
@@ -188,7 +189,7 @@ public class ComplianceTests
         inventory.GetCount(jpy1000).ShouldBe(20);
     }
 
-    /// <summary>Tests the behavior of ReadCashCountsWithDiscrepancyShouldReturnProperFlags to ensure proper functionality.</summary>
+    /// <summary>ReadCashCounts(ref variables) 形式で不整合フラグが正しく取得できることを検証します。</summary>
     [Fact]
     public void ReadCashCountsWithDiscrepancyShouldReturnProperFlags()
     {

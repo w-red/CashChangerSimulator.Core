@@ -50,7 +50,7 @@ public class AsyncModeReliabilityTests
         }
     }
 
-    /// <summary>Tests the behavior of AsyncDispenseShouldHaveCorrectStateWhenEventFires to ensure proper functionality.</summary>
+    /// <summary>非同期出金処理において、完了イベント通知時の内部状態が正しいことを検証します。</summary>
     [Fact]
     public async Task AsyncDispenseShouldHaveCorrectStateWhenEventFires()
     {

@@ -6,6 +6,7 @@ using R3;
 
 namespace CashChangerSimulator.Tests.Core;
 
+/// <summary>通貨メタデータ（記号、名称、サポート金種等）の提供機能を検証するテストクラス。</summary>
 public class CurrencyMetadataProviderTests
 {
     private readonly ConfigurationProvider _configProvider;
@@ -17,6 +18,7 @@ public class CurrencyMetadataProviderTests
         _provider = new CurrencyMetadataProvider(_configProvider);
     }
 
+    /// <summary>コンストラクタ実行時にデフォルトの通貨（JPY）で初期化されることを検証します。</summary>
     [Fact]
     public void Constructor_ShouldInitializeWithDefaultJPY()
     {
@@ -24,6 +26,7 @@ public class CurrencyMetadataProviderTests
         _provider.Symbol.ShouldBe("¥");
     }
 
+    /// <summary>未知の通貨コードが設定された際、適切にデフォルト（JPY）へフォールバックされることを検証します。</summary>
     [Fact]
     public void Refresh_ShouldHandleUnknownCurrency()
     {
@@ -35,6 +38,7 @@ public class CurrencyMetadataProviderTests
         _provider.SupportedDenominations.Count.ShouldBe(10); // JPY count
     }
 
+    /// <summary>通貨記号が文化圏（Culture）や設定に応じて正しく取得されることを検証します。</summary>
     [Fact]
     public void Symbol_ShouldHandlePrefixAndSuffix()
     {
@@ -55,6 +59,7 @@ public class CurrencyMetadataProviderTests
         _provider.Symbol.ShouldBe("$");
     }
 
+    /// <summary>様々な文化圏や通貨において、金種名称が正しく生成されることを検証します。</summary>
     [Fact]
     public void GetDenominationName_ShouldHandleVariousCulturesAndCurrencies()
     {
@@ -90,6 +95,7 @@ public class CurrencyMetadataProviderTests
         _provider.GetDenominationName(unknown, "en-US").ShouldBe("100 (Bill)");
     }
 
+    /// <summary>設定変更時に通知イベント（Changed）が正しく発火されることを検証します。</summary>
     [Fact]
     public void Changed_ShouldNotifyOnUpdate()
     {
@@ -102,6 +108,7 @@ public class CurrencyMetadataProviderTests
         called.ShouldBeTrue();
     }
 
+    /// <summary>日本円（JPY）において、設定ファイルの DisplayNameJP が優先的に使用されることを検証します。</summary>
     [Fact]
     public void GetDenominationName_ShouldRespectDisplayNameJPForJPY()
     {
