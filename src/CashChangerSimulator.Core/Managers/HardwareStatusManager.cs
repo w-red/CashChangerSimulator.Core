@@ -9,14 +9,29 @@ namespace CashChangerSimulator.Core.Managers;
 /// </remarks>
 public class HardwareStatusManager : IDisposable
 {
+    private GlobalLockManager? _globalLockManager;
     private readonly BindableReactiveProperty<bool> _isJammed = new(false);
     private readonly BindableReactiveProperty<Models.JamLocation> _jamLocation = new(Models.JamLocation.None);
     private readonly BindableReactiveProperty<bool> _isOverlapped = new(false);
     private readonly BindableReactiveProperty<bool> _isDeviceError = new(false);
     private readonly BindableReactiveProperty<bool> _isConnected = new(false); // Default is disconnected (COLD start baseline)
     private readonly BindableReactiveProperty<bool> _isCollectionBoxRemoved = new(false);
+    private readonly BindableReactiveProperty<bool> _isClaimedByAnother = new(false);
     private readonly BindableReactiveProperty<int?> _currentErrorCode = new(null);
     private readonly BindableReactiveProperty<int> _currentErrorCodeExtended = new(0);
+
+    /// <summary>他のアプリケーションによって占有（Claim）されているかどうか。</summary>
+    public BindableReactiveProperty<bool> IsClaimedByAnother
+    {
+        get
+        {
+            if (_globalLockManager != null)
+            {
+                _isClaimedByAnother.Value = _globalLockManager.IsLockHeldByAnother();
+            }
+            return _isClaimedByAnother;
+        }
+    }
 
     /// <summary>ジャムが発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsJammed => _isJammed;
@@ -76,6 +91,26 @@ public class HardwareStatusManager : IDisposable
         _isCollectionBoxRemoved.Value = removed;
     }
 
+    /// <summary>他者による占有（Claim）状態を設定します。</summary>
+    public void SetClaimedByAnother(bool claimed)
+    {
+        if (_disposed) return;
+        _isClaimedByAnother.Value = claimed;
+    }
+
+    /// <summary>グローバルロックマネージャーを設定します。</summary>
+    public void SetGlobalLockManager(GlobalLockManager manager)
+    {
+        if (_disposed) return;
+        _globalLockManager = manager;
+    }
+
+    /// <summary>グローバルロックの取得を試みます。</summary>
+    public bool TryAcquireGlobalLock() => _globalLockManager?.TryAcquire() ?? true;
+
+    /// <summary>グローバルロックを解放します。</summary>
+    public void ReleaseGlobalLock() => _globalLockManager?.Release();
+
     /// <summary>デバイスエラー状態とそのエラーコードを設定します。</summary>
     /// <param name="errorCode">発生した ErrorCode の整数値</param>
     /// <param name="errorCodeExtended">追加の詳細エラーコード</param>
@@ -98,6 +133,7 @@ public class HardwareStatusManager : IDisposable
         _isCollectionBoxRemoved.Value = false;
         _currentErrorCode.Value = null;
         _currentErrorCodeExtended.Value = 0;
+        _globalLockManager?.Release();
     }
 
     /// <inheritdoc/>

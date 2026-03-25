@@ -55,9 +55,14 @@ namespace CashChangerSimulator.Device.Coordination;
             throw new PosControlException("Device is not open.", ErrorCode.Closed);
         }
 
+        if (mustBeClaimed && _so.HardwareStatus.IsClaimedByAnother.Value)
+        {
+            throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
+        }
+
         if (mustBeClaimed && !_so.Claimed)
         {
-            throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
+            throw new PosControlException("Device is not claimed.", ErrorCode.NotClaimed);
         }
 
         if (mustBeEnabled && !_so.DeviceEnabled)

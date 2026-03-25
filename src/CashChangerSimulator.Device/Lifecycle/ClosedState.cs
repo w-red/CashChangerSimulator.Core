@@ -29,6 +29,6 @@ public class ClosedState : IDeviceState
     /// <inheritdoc/>
     public IDeviceState Release(DeviceLifecycleContext context)
     {
-        throw new PosControlException("Device is not claimed.", ErrorCode.Illegal);
+        throw new PosControlException("Device is not open.", ErrorCode.Closed);
     }
 }

@@ -38,9 +38,14 @@ public class StandardLifecycleHandler(
                     throw new PosControlException("Device is not open.", ErrorCode.Closed);
                 }
 
+                if (hardware.IsClaimedByAnother.Value)
+                {
+                    throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
+                }
+
                 if (!Claimed)
                 {
-                    throw new PosControlException("Device must be claimed before enabling.", ErrorCode.Illegal);
+                    throw new PosControlException("Device must be claimed before enabling.", ErrorCode.NotClaimed);
                 }
             }
 
@@ -171,6 +176,14 @@ public class StandardLifecycleHandler(
 
         try
         {
+            if (!hardware.TryAcquireGlobalLock())
+            {
+                if (logger != null)
+                {
+                    logger.LogWarning("Claim failed due to global lock (claimed by another process).");
+                }
+                throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
+            }
             baseClaim(timeout);
         }
         catch (System.Exception ex)
@@ -224,6 +237,7 @@ public class StandardLifecycleHandler(
         }
 
         mediator.Claimed = false;
+        hardware.ReleaseGlobalLock();
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
         mediator.SetSuccess();
     }
