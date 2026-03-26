@@ -208,13 +208,13 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     void IUposEventSink.QueueEvent(EventArgs e)
     {
         if (_disposedValue) return;
-        if (e is DataEventArgs de) base.QueueEvent(de);
-        else if (e is StatusUpdateEventArgs se) base.QueueEvent(se);
-        else if (e is DirectIOEventArgs die) base.QueueEvent(die);
+        if (e is DataEventArgs de) QueueEvent(de);
+        else if (e is StatusUpdateEventArgs se) QueueEvent(se);
+        else if (e is DirectIOEventArgs die) QueueEvent(die);
     }
 
-    void IUposEventSink.QueueDataEvent(DataEventArgs e) => base.QueueEvent(e);
-    void IUposEventSink.QueueStatusUpdateEvent(StatusUpdateEventArgs se) => base.QueueEvent(se);
+    void IUposEventSink.QueueDataEvent(DataEventArgs e) => QueueEvent(e);
+    void IUposEventSink.QueueStatusUpdateEvent(StatusUpdateEventArgs se) => QueueEvent(se);
 
     protected virtual void NotifyEvent(EventArgs e)
     {

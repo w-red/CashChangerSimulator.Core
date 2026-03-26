@@ -84,7 +84,7 @@ public class ConfigurationProvider : IDisposable
         _lastRead = DateTime.Now;
 
         // Give the file a moment to be released by the writer
-        System.Threading.Thread.Sleep(100);
+        Thread.Sleep(100);
         Reload();
     }
 
