@@ -485,3 +485,6 @@ coveragereport/
 LocalSettings/
 AGENTS.md
 .agent/
+
+# Temporary files and screenshots
+tmp/
