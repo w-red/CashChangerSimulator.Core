@@ -80,4 +80,11 @@ public static class LogProvider
     /// <typeparam name="T">ロガーを使用するクラスの型。</typeparam>
     /// <returns>ILogger インスタンス。</returns>
     public static ILogger<T> CreateLogger<T>() => Factory.CreateLogger<T>();
+
+    /// <summary>ロガーファクトリを破棄し、保留中のログをフラッシュします。</summary>
+    public static void Dispose()
+    {
+        _factory?.Dispose();
+        _factory = null;
+    }
 }
