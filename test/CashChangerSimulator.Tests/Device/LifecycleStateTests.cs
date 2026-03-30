@@ -20,7 +20,7 @@ public class LifecycleStateTests
 
     /// <summary>ClosedState からの各操作による状態遷移と例外発生を検証します。</summary>
     [Fact]
-    public void ClosedState_Transitions()
+    public void ClosedStateTransitions()
     {
         var state = new ClosedState();
         
@@ -36,7 +36,7 @@ public class LifecycleStateTests
 
     /// <summary>OpenedState からの各操作による状態遷移（Claim, Close等）を検証します。</summary>
     [Fact]
-    public void OpenedState_Transitions()
+    public void OpenedStateTransitions()
     {
         var state = new OpenedState();
 
@@ -57,7 +57,7 @@ public class LifecycleStateTests
 
     /// <summary>ClaimedState からの解放（Release）および自動解放を伴う Close 操作を検証します。</summary>
     [Fact]
-    public void ClaimedState_Transitions()
+    public void ClaimedStateTransitions()
     {
         var state = new ClaimedState();
 

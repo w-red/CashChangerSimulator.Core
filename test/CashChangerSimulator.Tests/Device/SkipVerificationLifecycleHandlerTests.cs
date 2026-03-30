@@ -26,7 +26,7 @@ public class SkipVerificationLifecycleHandlerTests
 
     /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を反映することを検証します。</summary>
     [Fact]
-    public void State_ShouldReflectHardwareAndMediator()
+    public void StateShouldReflectHardwareAndMediator()
     {
         // Closed
         _hardware.SetConnected(false);
@@ -44,7 +44,7 @@ public class SkipVerificationLifecycleHandlerTests
 
     /// <summary>Open, Claim, Close の各ライフサイクル操作がハードウェアおよび履歴に正しく反映されることを検証します。</summary>
     [Fact]
-    public void Lifecycle_ShouldWork()
+    public void LifecycleShouldWork()
     {
         // Open
         _handler.Open(() => { });
@@ -68,7 +68,7 @@ public class SkipVerificationLifecycleHandlerTests
 
     /// <summary>Closed 状態で Claim や Release を試みた際に例外が発生することを検証します。</summary>
     [Fact]
-    public void ClaimAndRelease_ShouldThrowWhenClosed()
+    public void ClaimAndReleaseShouldThrowWhenClosed()
     {
         _hardware.SetConnected(false);
         
@@ -81,7 +81,7 @@ public class SkipVerificationLifecycleHandlerTests
 
     /// <summary>Open 状態で Release を実行した際の正常動作を検証します。</summary>
     [Fact]
-    public void Release_ShouldWorkWhenOpen()
+    public void ReleaseShouldWorkWhenOpen()
     {
         _hardware.SetConnected(true);
         _handler.Release(() => { });
@@ -92,7 +92,7 @@ public class SkipVerificationLifecycleHandlerTests
 
     /// <summary>DeviceEnabled などのプロパティがメディエータへ正しく委譲されることを検証します。</summary>
     [Fact]
-    public void Properties_ShouldProxyToMediator()
+    public void PropertiesShouldProxyToMediator()
     {
         _mediator.SetupProperty(m => m.DeviceEnabled);
         _mediator.SetupProperty(m => m.DataEventEnabled);

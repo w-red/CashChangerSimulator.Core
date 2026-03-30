@@ -32,7 +32,7 @@ public class UposErrorPrecedenceTests
     }
 
     [Fact]
-    public void VerifyState_ShouldPrioritizeClosed_WhenMultipleErrorsExist()
+    public void VerifyStateShouldPrioritizeClosedWhenMultipleErrorsExist()
     {
         // 状態: Closed, ClaimedByAnother: true, NotClaimed, Disabled
         _so.HardwareStatusManager.SetConnected(false); // Closed
@@ -50,7 +50,7 @@ public class UposErrorPrecedenceTests
     }
 
     [Fact]
-    public void VerifyState_ShouldPrioritizeClaimed_WhenOpenButOccupiedByAnother()
+    public void VerifyStateShouldPrioritizeClaimedWhenOpenButOccupiedByAnother()
     {
         // 状態: Open, ClaimedByAnother: true, NotClaimed, Disabled
         _so.Open();
@@ -68,7 +68,7 @@ public class UposErrorPrecedenceTests
     }
 
     [Fact]
-    public void VerifyState_ShouldPrioritizeNotClaimed_WhenOpenAndNotOccupiedButNotClaimedBySelf()
+    public void VerifyStateShouldPrioritizeNotClaimedWhenOpenAndNotOccupiedButNotClaimedBySelf()
     {
         // 状態: Open, ClaimedByAnother: false, NotClaimed by self, Disabled
         _so.Open();
@@ -79,7 +79,7 @@ public class UposErrorPrecedenceTests
     }
 
     [Fact]
-    public void VerifyState_ShouldReturnDisabled_WhenOpenAndClaimedButNotEnabled()
+    public void VerifyStateShouldReturnDisabledWhenOpenAndClaimedButNotEnabled()
     {
         // 状態: Open, ClaimedByAnother: false, Claimed by self, Disabled
         _so.Open();
@@ -91,7 +91,7 @@ public class UposErrorPrecedenceTests
     }
 
     [Fact]
-    public void StandardLifecycleHandler_DeviceEnabled_ShouldUseCorrectPrecedence()
+    public void StandardLifecycleHandlerDeviceEnabledShouldUseCorrectPrecedence()
     {
         // DeviceEnabled プロパティへのセット時も優先順位が適用されることを確認
         
@@ -122,7 +122,7 @@ public class UposErrorPrecedenceTests
     }
 
     [Fact]
-    public void FileShareNone_ShouldBlockOtherHandlesInSameProcess()
+    public void FileShareNoneShouldBlockOtherHandlesInSameProcess()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "LocalSettings", "test_internal.lock");
         var dir = Path.GetDirectoryName(path);

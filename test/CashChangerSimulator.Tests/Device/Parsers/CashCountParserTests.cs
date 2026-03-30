@@ -45,6 +45,7 @@ public class CashCountParserTests
         result.ShouldContain(c => c.Type == CashCountType.Bill && c.NominalValue == 10000 && c.Count == 2);
     }
 
+    /// <summary>USD 環境でセミコロン区切り形式（硬貨;紙幣）が正しくパースされ、同額の硬貨と紙幣が区別されることを検証します。</summary>
     [Fact]
     public void ParseParsesSemicolonFormatCorrectlyUsdAmbiguityResolved()
     {
@@ -65,6 +66,7 @@ public class CashCountParserTests
         result[1].Count.ShouldBe(10);
     }
 
+    /// <summary>".1" のような小数点省略形式の金種値が正しくパースされることを検証します。</summary>
     [Fact]
     public void ParseSupportsDecimalShorthand()
     {
@@ -78,6 +80,7 @@ public class CashCountParserTests
         result[0].Count.ShouldBe(50);
     }
 
+    /// <summary>セミコロンのない曖昧な形式（同額の硬貨と紙幣が存在する場合）で例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnAmbiguousImplicitFormatWithoutSemicolon()
     {
@@ -88,6 +91,7 @@ public class CashCountParserTests
         exception.Message.ShouldContain("Ambiguous denomination value '1'");
     }
 
+    /// <summary>セクション数が不正（3つ以上）な場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnInvalidSectionCount()
     {
@@ -95,18 +99,21 @@ public class CashCountParserTests
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("1:1;2:2;3:3", _usdKeys, 100));
     }
 
+    /// <summary>コロン区切りが欠落している場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnMissingColon()
     {
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("1000", _jpyKeys, 1));
     }
 
+    /// <summary>金種値が数値でない場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnInvalidNominalValue()
     {
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("ABC:10", _jpyKeys, 1));
     }
 
+    /// <summary>枚数値が不正（数値以外、または負数）な場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnInvalidCountValue()
     {
@@ -114,12 +121,14 @@ public class CashCountParserTests
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("1000:-5", _jpyKeys, 1));
     }
 
+    /// <summary>サポートされていない金種が指定された場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnUnsupportedDenomination()
     {
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("123:10", _jpyKeys, 1));
     }
 
+    /// <summary>金種が正しいセクション（硬貨/紙幣）に配置されていない場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnDenominationInWrongSection()
     {
@@ -127,6 +136,7 @@ public class CashCountParserTests
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("10000:1 ; 500:1", _jpyKeys, 1));
     }
 
+    /// <summary>空の入力に対して空のリストが返されることを検証します。</summary>
     [Fact]
     public void ParseReturnsEmptyOnEmptyInput()
     {
@@ -134,6 +144,7 @@ public class CashCountParserTests
         CashCountParser.Parse("   ", _usdKeys, 100).ShouldBeEmpty();
     }
 
+    /// <summary>余分なスペースや空のセクションが含まれる入力が正しく処理されることを検証します。</summary>
     [Fact]
     public void ParseHandlesExtraSpacesAndEmptySections()
     {
@@ -155,6 +166,7 @@ public class CashCountParserTests
         result3[0].Type.ShouldBe(CashCountType.Coin);
     }
 
+    /// <summary>枚数に 0 が指定された場合も正しくパースされることを検証します。</summary>
     [Fact]
     public void ParseAllowsZeroCount()
     {
@@ -164,6 +176,7 @@ public class CashCountParserTests
         result.All(c => c.Count == 0).ShouldBeTrue();
     }
 
+    /// <summary>コロン区切りの形式自体が不正な場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnInvalidPartFormat()
     {

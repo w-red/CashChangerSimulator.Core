@@ -42,7 +42,7 @@ public class UposComplianceTests
 
     /// <summary>AdjustCashCounts 実行時に「discrepancy」文字列が含まれる場合に不整合フラグが立つことを検証します。</summary>
     [Fact]
-    public void AdjustCashCounts_WithDiscrepancyString_ShouldSetDiscrepancy()
+    public void AdjustCashCountsWithDiscrepancyStringShouldSetDiscrepancy()
     {
         // Arrange
         Inventory.HasDiscrepancy = false;
@@ -59,7 +59,7 @@ public class UposComplianceTests
 
     /// <summary>AdjustCashCounts において、特定の金種カウント形式の文字列が正しく在庫に反映されることを検証します。</summary>
     [Fact]
-    public void AdjustCashCounts_WithCountString_ShouldUpdateInventory()
+    public void AdjustCashCountsWithCountStringShouldUpdateInventory()
     {
         // Arrange
         var currencyCode = "JPY";
@@ -79,7 +79,7 @@ public class UposComplianceTests
 
     /// <summary>ReadCashCounts 実行結果の不整合フラグが、内部在庫の状態を正しく反映していることを検証します。</summary>
     [Fact]
-    public void ReadCashCounts_ShouldReflectDiscrepancyState()
+    public void ReadCashCountsShouldReflectDiscrepancyState()
     {
         // Arrange
         Inventory.HasDiscrepancy = true;

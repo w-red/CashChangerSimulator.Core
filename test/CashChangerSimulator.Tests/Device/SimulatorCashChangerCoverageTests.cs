@@ -10,7 +10,7 @@ public class SimulatorCashChangerCoverageTests
 {
     /// <summary>DispenseCash(CashCount[]) オーバーロードが正常に動作することを検証します。</summary>
     [Fact]
-    public void DispenseCash_ShouldExecuteWithoutError()
+    public void DispenseCashShouldExecuteWithoutError()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -37,7 +37,7 @@ public class SimulatorCashChangerCoverageTests
 
     /// <summary>Dispose を複数回呼び出しても例外が発生しないことを検証します。</summary>
     [Fact]
-    public void Dispose_SafeToCallMultipleTimes()
+    public void DisposeSafeToCallMultipleTimes()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -55,7 +55,7 @@ public class SimulatorCashChangerCoverageTests
 
     /// <summary>ClearError 呼び出しが内部ステータスを正常にリセットすることを検証します。</summary>
     [Fact]
-    public void ClearError_ShouldResetStatus()
+    public void ClearErrorShouldResetStatus()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -75,7 +75,7 @@ public class SimulatorCashChangerCoverageTests
 
     /// <summary>DeviceEnabled プロパティの Get/Set アクセスをカバレッジのために検証します。</summary>
     [Fact]
-    public void DeviceEnabled_GetSet_ShouldCoverProperty()
+    public void DeviceEnabledGetSetShouldCoverProperty()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();

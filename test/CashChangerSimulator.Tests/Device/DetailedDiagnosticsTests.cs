@@ -18,7 +18,7 @@ public class DetailedDiagnosticsTests
 
     /// <summary>CheckHealth(Internal) が詳細な内部状態レポートを返却することを検証します。</summary>
     [Fact]
-    public void CheckHealthInternal_ShouldReturnDetailedReport()
+    public void CheckHealthInternalShouldReturnDetailedReport()
     {
         var simulator = CreateSimulator();
         
@@ -31,7 +31,7 @@ public class DetailedDiagnosticsTests
 
     /// <summary>CheckHealth(External) がハードウェア接続状態を含むレポートを返却することを検証します。</summary>
     [Fact]
-    public void CheckHealthExternal_ShouldReturnHardwareReport()
+    public void CheckHealthExternalShouldReturnHardwareReport()
     {
         var simulator = CreateSimulator();
         
@@ -43,7 +43,7 @@ public class DetailedDiagnosticsTests
 
     /// <summary>デバイス統計情報（Statistics）が正しく集計・提供されることを検証します。</summary>
     [Fact]
-    public void RetrieveStatistics_ShouldReturnOperationCounts()
+    public void RetrieveStatisticsShouldReturnOperationCounts()
     {
         var simulator = CreateSimulator();
         
@@ -60,7 +60,7 @@ public class DetailedDiagnosticsTests
 
     /// <summary>DirectIO(1002) 経由で診断ログが取得できることを検証します。</summary>
     [Fact]
-    public void DirectIO_GetDiagnosticLog_ShouldReturnReport()
+    public void DirectIOGetDiagnosticLogShouldReturnReport()
     {
         var simulator = CreateSimulator();
         simulator.CheckHealth(HealthCheckLevel.Internal);

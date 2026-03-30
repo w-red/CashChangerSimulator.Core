@@ -48,7 +48,7 @@ public class ExhaustiveDeviceTests : IDisposable
     }
 
     [Fact]
-    public async Task DispenseController_Flows()
+    public async Task DispenseControllerFlows()
     {
         var onCompleteCalled = false;
         ErrorCode lastError = ErrorCode.Success;
@@ -85,7 +85,7 @@ public class ExhaustiveDeviceTests : IDisposable
     }
 
     [Fact]
-    public void CashCountParser_Branches()
+    public void CashCountParserBranches()
     {
         var keys = new List<DenominationKey> { 
             new DenominationKey(100, CurrencyCashType.Coin, "JPY"),
@@ -106,7 +106,7 @@ public class ExhaustiveDeviceTests : IDisposable
     }
 
     [Fact]
-    public void UposHelpers_Coverage()
+    public void UposHelpersCoverage()
     {
         UposCurrencyHelper.GetCurrencyFactor("USD").ShouldBe(100);
         UposCurrencyHelper.GetCurrencyFactor("JPY").ShouldBe(1);
@@ -117,7 +117,7 @@ public class ExhaustiveDeviceTests : IDisposable
     }
 
     [Fact]
-    public async Task InternalSimulator_AllMethods()
+    public async Task InternalSimulatorAllMethods()
     {
         using var device = new InternalSimulatorCashChanger();
         device.Open();
@@ -150,7 +150,7 @@ public class ExhaustiveDeviceTests : IDisposable
     }
 
     [Fact]
-    public async Task ScriptCommandHandlers_Coverage()
+    public async Task ScriptCommandHandlersCoverage()
     {
         var logger = new Mock<ILogger>().Object;
         var context = new ScriptExecutionContext();
@@ -182,7 +182,7 @@ public class ExhaustiveDeviceTests : IDisposable
     }
 
     [Fact]
-    public void Mediator_Coverage()
+    public void MediatorCoverage()
     {
         using var device = new InternalSimulatorCashChanger();
         var mediator = device.Context.Mediator;

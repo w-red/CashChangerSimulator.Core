@@ -28,7 +28,7 @@ public class UposCommandTests
 
     /// <summary>BeginDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
-    public void BeginDepositCommand_Execute_ShouldCallController()
+    public void BeginDepositCommandExecuteShouldCallController()
     {
         // Arrange
         var command = new BeginDepositCommand(DepositControllerMock.Object);
@@ -42,7 +42,7 @@ public class UposCommandTests
 
     /// <summary>BeginDepositCommand の検証処理がメディエータを介して行われることを検証します。</summary>
     [Fact]
-    public void BeginDepositCommand_Verify_ShouldCallMediator()
+    public void BeginDepositCommandVerifyShouldCallMediator()
     {
         // Arrange
         var command = new BeginDepositCommand(DepositControllerMock.Object);
@@ -56,7 +56,7 @@ public class UposCommandTests
 
     /// <summary>FixDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
-    public void FixDepositCommand_Execute_ShouldCallController()
+    public void FixDepositCommandExecuteShouldCallController()
     {
         var command = new FixDepositCommand(DepositControllerMock.Object);
         command.Execute();
@@ -65,7 +65,7 @@ public class UposCommandTests
 
     /// <summary>EndDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
-    public void EndDepositCommand_Execute_ShouldCallController()
+    public void EndDepositCommandExecuteShouldCallController()
     {
         var action = CashDepositAction.NoChange;
         var command = new EndDepositCommand(DepositControllerMock.Object, action);
@@ -75,7 +75,7 @@ public class UposCommandTests
 
     /// <summary>PauseDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
-    public void PauseDepositCommand_Execute_ShouldCallController()
+    public void PauseDepositCommandExecuteShouldCallController()
     {
         var control = CashDepositPause.Pause;
         var command = new PauseDepositCommand(DepositControllerMock.Object, control);
@@ -85,7 +85,7 @@ public class UposCommandTests
 
     /// <summary>RepayDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
-    public void RepayDepositCommand_Execute_ShouldCallController()
+    public void RepayDepositCommandExecuteShouldCallController()
     {
         var command = new RepayDepositCommand(DepositControllerMock.Object);
         command.Execute();
@@ -94,7 +94,7 @@ public class UposCommandTests
 
     /// <summary>ReadCashCountsCommand の実行により在庫カウントが取得できることを検証します。</summary>
     [Fact]
-    public void ReadCashCountsCommand_Execute_ShouldReturnCounts()
+    public void ReadCashCountsCommandExecuteShouldReturnCounts()
     {
         var inventory = new Inventory();
         var command = new ReadCashCountsCommand(inventory, "JPY", 1.0m);
@@ -104,7 +104,7 @@ public class UposCommandTests
 
     /// <summary>AdjustCashCountsCommand の実行により在庫の更新が行われることを検証します。</summary>
     [Fact]
-    public void AdjustCashCountsCommand_Execute_ShouldCallInventory()
+    public void AdjustCashCountsCommandExecuteShouldCallInventory()
     {
         var inventoryMock = new Mock<Inventory>();
         var hardwareMock = new Mock<HardwareStatusManager>();
@@ -116,7 +116,7 @@ public class UposCommandTests
 
     /// <summary>PurgeCashCommand の実行がマネージャへ委譲されることを検証します。</summary>
     [Fact]
-    public void PurgeCashCommand_Execute_ShouldCallManager()
+    public void PurgeCashCommandExecuteShouldCallManager()
     {
         var managerMock = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), new ChangeCalculator());
         var command = new PurgeCashCommand(managerMock.Object);
@@ -126,7 +126,7 @@ public class UposCommandTests
 
     /// <summary>CheckHealthCommand の実行により診断レポートが返却されることを検証します。</summary>
     [Fact]
-    public void CheckHealthCommand_Execute_ShouldReturnReport()
+    public void CheckHealthCommandExecuteShouldReturnReport()
     {
         var diagMock = new Mock<DiagnosticController>(new Inventory(), new HardwareStatusManager());
         diagMock.Setup(d => d.GetHealthReport(HealthCheckLevel.Internal)).Returns("OK");
@@ -139,7 +139,7 @@ public class UposCommandTests
 
     /// <summary>RetrieveStatisticsCommand の実行により統計 XML が返却されることを検証します。</summary>
     [Fact]
-    public void RetrieveStatisticsCommand_Execute_ShouldReturnXml()
+    public void RetrieveStatisticsCommandExecuteShouldReturnXml()
     {
         var diagMock = new Mock<DiagnosticController>(new Inventory(), new HardwareStatusManager());
         diagMock.Setup(d => d.RetrieveStatistics(It.IsAny<string[]>())).Returns("<xml/>");
@@ -152,7 +152,7 @@ public class UposCommandTests
 
     /// <summary>UpdateStatisticsCommand の実行が正常に終了することを検証します。</summary>
     [Fact]
-    public void UpdateStatisticsCommand_Execute_ShouldWork()
+    public void UpdateStatisticsCommandExecuteShouldWork()
     {
         var command = new UpdateStatisticsCommand(new Statistic[0]);
         command.Execute(); // Should not throw
@@ -160,7 +160,7 @@ public class UposCommandTests
 
     /// <summary>ResetStatisticsCommand の実行が正常に終了することを検証します。</summary>
     [Fact]
-    public void ResetStatisticsCommand_Execute_ShouldWork()
+    public void ResetStatisticsCommandExecuteShouldWork()
     {
         var command = new ResetStatisticsCommand(new string[0]);
         command.Execute(); // Should not throw
@@ -168,7 +168,7 @@ public class UposCommandTests
 
     /// <summary>DispenseChangeCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
-    public void DispenseChangeCommand_Execute_ShouldCallController()
+    public void DispenseChangeCommandExecuteShouldCallController()
     {
         var manager = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), new ChangeCalculator());
         var hw = new HardwareStatusManager();
@@ -184,7 +184,7 @@ public class UposCommandTests
 
     /// <summary>DispenseCashCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
-    public void DispenseCashCommand_Execute_ShouldCallController()
+    public void DispenseCashCommandExecuteShouldCallController()
     {
         var manager = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), new ChangeCalculator());
         var inv = new Inventory();
@@ -202,7 +202,7 @@ public class UposCommandTests
 
     /// <summary>ClearOutputCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
-    public void ClearOutputCommand_Execute_ShouldCallController()
+    public void ClearOutputCommandExecuteShouldCallController()
     {
         var manager = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), new ChangeCalculator());
         var hw = new HardwareStatusManager();

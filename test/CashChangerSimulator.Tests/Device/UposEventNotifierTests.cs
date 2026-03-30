@@ -18,7 +18,7 @@ public class UposEventNotifierTests
 
     /// <summary>DataEventArgs がキューイングされた際に、適切にイベントシンクへ委譲されることを検証します。</summary>
     [Fact]
-    public void QueueEvent_ShouldCallQueueDataEvent_WhenEventArgsIsDataEventArgs()
+    public void QueueEventShouldCallQueueDataEventWhenEventArgsIsDataEventArgs()
     {
         // Arrange
         var args = new DataEventArgs(12345);
@@ -34,7 +34,7 @@ public class UposEventNotifierTests
 
     /// <summary>StatusUpdateEventArgs がキューイングされた際に、適切にイベントシンクへ委譲されることを検証します。</summary>
     [Fact]
-    public void QueueEvent_ShouldCallQueueStatusUpdateEvent_WhenEventArgsIsStatusUpdateEventArgs()
+    public void QueueEventShouldCallQueueStatusUpdateEventWhenEventArgsIsStatusUpdateEventArgs()
     {
         // Arrange
         var args = new StatusUpdateEventArgs(1);

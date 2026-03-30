@@ -26,7 +26,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を正しく反映することを検証します。</summary>
     [Fact]
-    public void State_ShouldReflectHardwareAndMediator()
+    public void StateShouldReflectHardwareAndMediator()
     {
         // Closed
         _hardware.SetConnected(false);
@@ -44,7 +44,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Closed 状態で DeviceEnabled を設定しようとした際に例外が発生することを検証します。</summary>
     [Fact]
-    public void DeviceEnabled_Setter_ShouldThrowWhenClosed()
+    public void DeviceEnabledSetterShouldThrowWhenClosed()
     {
         _hardware.SetConnected(false);
         Should.Throw<PosControlException>(() => _handler.DeviceEnabled = true)
@@ -53,7 +53,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Unclaimed 状態で DeviceEnabled を設定しようとした際に例外が発生することを検証します。</summary>
     [Fact]
-    public void DeviceEnabled_Setter_ShouldThrowWhenNotClaimed()
+    public void DeviceEnabledSetterShouldThrowWhenNotClaimed()
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(false);
@@ -63,7 +63,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>他者に Claim されている状態で DeviceEnabled を設定しようとした際に例外が発生することを検証します。</summary>
     [Fact]
-    public void DeviceEnabled_Setter_ShouldThrowWhenClaimedByAnother()
+    public void DeviceEnabledSetterShouldThrowWhenClaimedByAnother()
     {
         _hardware.SetConnected(true);
         _hardware.SetClaimedByAnother(true);
@@ -73,7 +73,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Claim されている状態で DeviceEnabled が正常に設定できることを検証します。</summary>
     [Fact]
-    public void DeviceEnabled_Setter_ShouldWorkWhenClaimed()
+    public void DeviceEnabledSetterShouldWorkWhenClaimed()
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(true);
@@ -85,7 +85,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>既に Open されている状態での Open 呼び出しが正常に処理されることを検証します。</summary>
     [Fact]
-    public void Open_ShouldHandleAlreadyOpen()
+    public void OpenShouldHandleAlreadyOpen()
     {
         _hardware.SetConnected(true);
         var baseCalled = false;
@@ -97,7 +97,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Open 処理中の例外発生時に、ハードウェア接続状態が正しく更新されることを検証します。</summary>
     [Fact]
-    public void Open_ShouldHandleBaseException()
+    public void OpenShouldHandleBaseException()
     {
         _hardware.SetConnected(false);
         _handler.Open(() => throw new Exception("Test"));
@@ -108,7 +108,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>既に Closed 状態での Close 呼び出しが正常に処理されることを検証します。</summary>
     [Fact]
-    public void Close_ShouldHandleAlreadyClosed()
+    public void CloseShouldHandleAlreadyClosed()
     {
         _hardware.SetConnected(false);
         var baseCalled = false;
@@ -120,7 +120,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Close 処理中の例外発生時に、暗黙的な Release と Close が行われることを検証します。</summary>
     [Fact]
-    public void Close_ShouldHandleBaseExceptionAndImplicitRelease()
+    public void CloseShouldHandleBaseExceptionAndImplicitRelease()
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(true);
@@ -134,7 +134,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Closed 状態で Claim を試みた際に例外が発生することを検証します。</summary>
     [Fact]
-    public void Claim_ShouldThrowWhenClosed()
+    public void ClaimShouldThrowWhenClosed()
     {
         _hardware.SetConnected(false);
         Should.Throw<PosControlException>(() => _handler.Claim(0, _ => { }))
@@ -143,7 +143,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>既に Claim されている状態での Claim 呼び出しが正常に処理されることを検証します。</summary>
     [Fact]
-    public void Claim_ShouldHandleAlreadyClaimed()
+    public void ClaimShouldHandleAlreadyClaimed()
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(true);
@@ -156,7 +156,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Claim 処理中の例外発生時に、メディエータの状態が正しく更新されることを検証します。</summary>
     [Fact]
-    public void Claim_ShouldHandleBaseException()
+    public void ClaimShouldHandleBaseException()
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(false);
@@ -169,7 +169,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Closed 状態で Release を試みた際に例外が発生することを検証します。</summary>
     [Fact]
-    public void Release_ShouldThrowWhenClosed()
+    public void ReleaseShouldThrowWhenClosed()
     {
         _hardware.SetConnected(false);
         Should.Throw<PosControlException>(() => _handler.Release(() => { }))
@@ -178,7 +178,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Claim されていない状態での Release 呼び出しが正常に処理されることを検証します。</summary>
     [Fact]
-    public void Release_ShouldHandleNotClaimed()
+    public void ReleaseShouldHandleNotClaimed()
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(false);
@@ -191,7 +191,7 @@ public class StandardLifecycleHandlerTests
 
     /// <summary>Release 処理中の例外発生時に、メディエータの状態が正しく更新されることを検証します。</summary>
     [Fact]
-    public void Release_ShouldHandleBaseException()
+    public void ReleaseShouldHandleBaseException()
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(true);

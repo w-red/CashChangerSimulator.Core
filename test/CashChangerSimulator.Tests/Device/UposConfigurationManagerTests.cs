@@ -25,7 +25,7 @@ public class UposConfigurationManagerTests
 
     /// <summary>サポートされていない通貨コードを設定しようとした際に例外が発生することを検証します。</summary>
     [Fact]
-    public void CurrencyCode_ShouldThrowWhenUnsupported()
+    public void CurrencyCodeShouldThrowWhenUnsupported()
     {
         Should.Throw<PosControlException>(() => _manager.CurrencyCode = "INVALID")
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
@@ -33,7 +33,7 @@ public class UposConfigurationManagerTests
 
     /// <summary>正当な通貨コードが正常に設定・取得できることを検証します。</summary>
     [Fact]
-    public void CurrencyCode_ShouldWorkWhenSupported()
+    public void CurrencyCodeShouldWorkWhenSupported()
     {
         _configProvider.Config.Inventory["USD"] = new InventorySettings();
         _manager.CurrencyCode = "USD";
@@ -42,7 +42,7 @@ public class UposConfigurationManagerTests
 
     /// <summary>設定変更時に内部状態（在庫等）が正しくリセットされることを検証します。</summary>
     [Fact]
-    public void ResetState_WhenConfigurationChanges()
+    public void ResetStateWhenConfigurationChanges()
     {
         _stateProvider.Setup(s => s.State).Returns(ControlState.Idle);
         _inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
@@ -55,7 +55,7 @@ public class UposConfigurationManagerTests
 
     /// <summary>手動リロード実行時に内部状態がリセットされることを検証します。</summary>
     [Fact]
-    public void Reload_ShouldManuallyTriggerUpdate()
+    public void ReloadShouldManuallyTriggerUpdate()
     {
         _stateProvider.Setup(s => s.State).Returns(ControlState.Idle);
         _inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
@@ -67,7 +67,7 @@ public class UposConfigurationManagerTests
 
     /// <summary>初期化処理によってアクティブな通貨が正しく設定されることを検証します。</summary>
     [Fact]
-    public void Initialize_ShouldSetActiveCurrency()
+    public void InitializeShouldSetActiveCurrency()
     {
         _configProvider.Config.Inventory.Clear();
         _configProvider.Config.Inventory["EUR"] = new InventorySettings();
@@ -78,7 +78,7 @@ public class UposConfigurationManagerTests
 
     /// <summary>破棄（Dispose）後に設定変更を受け取っても副作用が発生しないことを検証します。</summary>
     [Fact]
-    public void Dispose_ShouldUnsubscribe()
+    public void DisposeShouldUnsubscribe()
     {
         _manager.Dispose();
         // Trigger reload should not cause issues even if manager logic would have
@@ -87,7 +87,7 @@ public class UposConfigurationManagerTests
 
     /// <summary>CurrencyCashList プロパティが UPOS 規定の形式でデータを返却することを検証します。</summary>
     [Fact]
-    public void CurrencyCashList_ShouldReturnUposUnits()
+    public void CurrencyCashListShouldReturnUposUnits()
     {
         var list = _manager.CurrencyCashList;
         // CashUnits is a struct, so it cannot be null.

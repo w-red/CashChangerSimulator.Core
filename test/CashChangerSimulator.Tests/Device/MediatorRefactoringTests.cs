@@ -10,7 +10,7 @@ public class MediatorRefactoringTests
 {
     /// <summary>メディエータが検証スキップフラグ（SkipStateVerification）を正しく保持できることを検証します。</summary>
     [Fact]
-    public void Mediator_ShouldSupportSkipStateVerificationProperty()
+    public void MediatorShouldSupportSkipStateVerificationProperty()
     {
         var so = new Mock<SimulatorCashChanger>(new SimulatorDependencies()).Object;
         var mediator = new UposMediator(so);

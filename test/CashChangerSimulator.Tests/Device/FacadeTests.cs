@@ -45,7 +45,7 @@ public class FacadeTests
 
     /// <summary>DepositFacade.BeginDeposit が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
-    public void DepositFacade_BeginDeposit_ShouldExecuteCommand()
+    public void DepositFacadeBeginDepositShouldExecuteCommand()
     {
         // Arrange
         var facade = new DepositFacade(DepositControllerMock.Object, _mediatorMock.Object);
@@ -59,7 +59,7 @@ public class FacadeTests
 
     /// <summary>InventoryFacade.ReadCashCounts が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
-    public void InventoryFacade_ReadCashCounts_ShouldExecuteCommand()
+    public void InventoryFacadeReadCashCountsShouldExecuteCommand()
     {
         // Arrange
         var facade = new InventoryFacade(InventoryMock.Object, _managerMock.Object, _mediatorMock.Object);
@@ -73,7 +73,7 @@ public class FacadeTests
 
     /// <summary>DiagnosticsFacade.CheckHealth が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
-    public void DiagnosticsFacade_CheckHealth_ShouldExecuteCommand()
+    public void DiagnosticsFacadeCheckHealthShouldExecuteCommand()
     {
         // Arrange
         var facade = new DiagnosticsFacade(_diagnosticControllerMock.Object, _mediatorMock.Object);

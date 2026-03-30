@@ -10,7 +10,7 @@ public class SimulatorCashChangerTests
 {
     /// <summary>インスタンス生成直後の初期状態（Closed, Unclaimed）を検証します。</summary>
     [Fact]
-    public void InitialState_ShouldBeClosed()
+    public void InitialStateShouldBeClosed()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -23,7 +23,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>標準的なライフサイクル（Open -> Claim -> Enable -> Release -> Close）の遷移を検証します。</summary>
     [Fact]
-    public void Lifecycle_OpenClaimEnable_ShouldTransitionStates()
+    public void LifecycleOpenClaimEnableShouldTransitionStates()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -56,7 +56,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>各種 Capability プロパティが設定ファイルの内容を正しく反映していることを検証します。</summary>
     [Fact]
-    public void CapProperties_ShouldReflectConfig()
+    public void CapPropertiesShouldReflectConfig()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -79,7 +79,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>デバイス名、通貨リスト、在庫状況などの各プロパティが内部状態を反映していることを検証します。</summary>
     [Fact]
-    public void Properties_ShouldReflectInternalState()
+    public void PropertiesShouldReflectInternalState()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -111,7 +111,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>DirectIO が内部ハンドラへ正しく委譲され、ResultCode が更新されることを検証します。</summary>
     [Fact]
-    public void DirectIO_ShouldDelegateToHandler()
+    public void DirectIOShouldDelegateToHandler()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -130,7 +130,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>CheckHealth や統計情報の取得・更新・リセットがファサードを介して行われることを検証します。</summary>
     [Fact]
-    public void Diagnostics_ShouldDelegateToFacade()
+    public void DiagnosticsShouldDelegateToFacade()
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
@@ -154,7 +154,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>正常時の DeviceStatus および FullStatus を検証します。</summary>
     [Fact]
-    public void StatusProperties_ShouldReflectState()
+    public void StatusPropertiesShouldReflectState()
     {
         var changer = new InternalSimulatorCashChanger();
         
@@ -173,7 +173,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>利用可能状態での基本操作（回収、出力クリア、入金セッション）で例外が発生しないことを検証します。</summary>
     [Fact]
-    public void CoreOperations_ShouldNotThrowWhenEnabled()
+    public void CoreOperationsShouldNotThrowWhenEnabled()
     {
         var changer = new InternalSimulatorCashChanger();
         changer.Open();
@@ -195,7 +195,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>ResultCode および ResultCodeExtended が外部から設定・取得可能であることを検証します。</summary>
     [Fact]
-    public void ResultCode_ShouldBeSettable()
+    public void ResultCodeShouldBeSettable()
     {
         var changer = new InternalSimulatorCashChanger();
         changer.ResultCode = (int)ErrorCode.Illegal;
@@ -207,7 +207,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>回収口（Exit）に関連するプロパティの動作を検証します。</summary>
     [Fact]
-    public void Exits_ShouldReflectConfig()
+    public void ExitsShouldReflectConfig()
     {
         var changer = new InternalSimulatorCashChanger();
         changer.DeviceExits.ShouldBe(1);
@@ -217,7 +217,7 @@ public class SimulatorCashChangerTests
 
     /// <summary>RealTimeDataEnabled プロパティが設定可能であることを検証します。</summary>
     [Fact]
-    public void RealTimeDataEnabled_ShouldBeSettable()
+    public void RealTimeDataEnabledShouldBeSettable()
     {
         var changer = new InternalSimulatorCashChanger();
         changer.RealTimeDataEnabled = true;

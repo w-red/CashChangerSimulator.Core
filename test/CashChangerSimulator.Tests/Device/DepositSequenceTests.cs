@@ -252,7 +252,7 @@ public class DepositSequenceTests
 
     /// <summary>投入された現金がリアルタイムでエスクロー在庫を更新することを検証します。</summary>
     [Fact]
-    public void TrackDeposit_ShouldUpdateInventoryEscrow()
+    public void TrackDepositShouldUpdateInventoryEscrow()
     {
         var (controller, inventory) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
@@ -267,7 +267,7 @@ public class DepositSequenceTests
 
     /// <summary>釣銭返却アクション（EndDeposit Change）時にエスクロー内の特定金種が優先的に扱われることを検証します。</summary>
     [Fact]
-    public void EndDeposit_Change_ShouldDispenseFromEscrowFirst()
+    public void EndDepositChangeShouldDispenseFromEscrowFirst()
     {
         var (controller, inventory) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
@@ -296,7 +296,7 @@ public class DepositSequenceTests
 
     /// <summary>入金キャンセル（Repay）時にエスクロー在庫がクリアされることを検証します。</summary>
     [Fact]
-    public void EndDeposit_Repay_ShouldClearInventoryEscrow()
+    public void EndDepositRepayShouldClearInventoryEscrow()
     {
         var (controller, inventory) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);

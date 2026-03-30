@@ -21,7 +21,7 @@ public class UposMediatorTests
 
     /// <summary>Closed 状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
-    public void VerifyState_ShouldThrowClosed_WhenClosed()
+    public void VerifyStateShouldThrowClosedWhenClosed()
     {
         // Default state is Closed
         Should.Throw<PosControlException>(() => _mediator.VerifyState())
@@ -30,7 +30,7 @@ public class UposMediatorTests
 
     /// <summary>占有（Claim）されていない状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
-    public void VerifyState_ShouldThrowNotClaimed_WhenNotClaimed()
+    public void VerifyStateShouldThrowNotClaimedWhenNotClaimed()
     {
         _so.Open();
         Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true))
@@ -39,7 +39,7 @@ public class UposMediatorTests
 
     /// <summary>無効（Disabled）状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
-    public void VerifyState_ShouldThrowDisabled_WhenNotEnabled()
+    public void VerifyStateShouldThrowDisabledWhenNotEnabled()
     {
         _so.Open();
         _so.Claim(0);
@@ -49,7 +49,7 @@ public class UposMediatorTests
 
     /// <summary>ビジー状態での状態検証時に例外が発生することを検証します。</summary>
     [Fact]
-    public void VerifyState_ShouldThrowBusy_WhenBusy()
+    public void VerifyStateShouldThrowBusyWhenBusy()
     {
         _so.Open();
         _so.Claim(0);
@@ -62,7 +62,7 @@ public class UposMediatorTests
 
     /// <summary>全ての条件（Open, Claimed, Enabled, NotBusy）を満たす場合に状態検証が成功することを検証します。</summary>
     [Fact]
-    public void VerifyState_ShouldNotThrow_WhenAllConditionsMet()
+    public void VerifyStateShouldNotThrowWhenAllConditionsMet()
     {
         _so.Open();
         _so.Claim(0);
@@ -74,7 +74,7 @@ public class UposMediatorTests
 
     /// <summary>検証スキップフラグが有効な場合に、不正な状態でも検証が成功することを検証します。</summary>
     [Fact]
-    public void VerifyState_ShouldSkip_WhenSkipFlagIsSet()
+    public void VerifyStateShouldSkipWhenSkipFlagIsSet()
     {
         _mediator.SkipStateVerification = true;
         _mediator.VerifyState(); // Should not throw even if Closed
@@ -82,7 +82,7 @@ public class UposMediatorTests
 
     /// <summary>ThrowIfBusy メソッドがビジー判定時に例外をスローすることを検証します。</summary>
     [Fact]
-    public void ThrowIfBusy_ShouldThrow_WhenBusy()
+    public void ThrowIfBusyShouldThrowWhenBusy()
     {
         Should.Throw<PosControlException>(() => UposMediator.ThrowIfBusy(true))
             .ErrorCode.ShouldBe(ErrorCode.Busy);
@@ -90,7 +90,7 @@ public class UposMediatorTests
 
     /// <summary>ThrowIfDepositInProgress メソッドが入金中判定時に例外をスローすることを検証します。</summary>
     [Fact]
-    public void ThrowIfDepositInProgress_ShouldThrow_WhenInProgress()
+    public void ThrowIfDepositInProgressShouldThrowWhenInProgress()
     {
         Should.Throw<PosControlException>(() => UposMediator.ThrowIfDepositInProgress(true))
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
@@ -98,7 +98,7 @@ public class UposMediatorTests
 
     /// <summary>非同期出金処理の結果が正常に内部プロパティへ反映され、完了イベントが発火することを検証します。</summary>
     [Fact]
-    public void HandleDispenseResult_ShouldSetCodesAndFireEvent_WhenAsync()
+    public void HandleDispenseResultShouldSetCodesAndFireEventWhenAsync()
     {
         bool eventFired = false;
         _so.OnEventQueued = (e) => 
@@ -122,7 +122,7 @@ public class UposMediatorTests
 
     /// <summary>同期出金処理の結果が内部プロパティへ反映され、完了イベントが発火しないことを検証します。</summary>
     [Fact]
-    public void HandleDispenseResult_ShouldNotFireEvent_WhenSync()
+    public void HandleDispenseResultShouldNotFireEventWhenSync()
     {
         bool eventFired = false;
         _so.OnEventQueued = (e) => eventFired = true;
@@ -136,7 +136,7 @@ public class UposMediatorTests
 
     /// <summary>SetSuccess および SetFailure により ResultCode 等が正しく更新されることを検証します。</summary>
     [Fact]
-    public void SetSuccessAndFailure_ShouldUpdateProperties()
+    public void SetSuccessAndFailureShouldUpdateProperties()
     {
         _mediator.SetSuccess();
         _mediator.ResultCode.ShouldBe((int)ErrorCode.Success);
@@ -148,7 +148,7 @@ public class UposMediatorTests
 
     /// <summary>コマンド実行中に PosControlException が発生した場合に、ResultCode 等が適切にキャッチ・設定されることを検証します。</summary>
     [Fact]
-    public void Execute_ShouldHandlePosControlException()
+    public void ExecuteShouldHandlePosControlException()
     {
         var mock = new Mock<IUposCommand>();
         mock.Setup(c => c.Verify(It.IsAny<IUposMediator>()));
@@ -163,7 +163,7 @@ public class UposMediatorTests
 
     /// <summary>コマンドの正常実行が成功し、ResultCode が Success になることを検証します。</summary>
     [Fact]
-    public void Execute_ShouldSucceed()
+    public void ExecuteShouldSucceed()
     {
         var mock = new Mock<IUposCommand>();
         _mediator.Execute(mock.Object);

@@ -25,7 +25,7 @@ public class CommandTests
 
     /// <summary>デバイスがジャム状態の時に AdjustCashCountsCommand が E_EXT をスローすることを検証します。</summary>
     [Fact]
-    public void AdjustCashCountsCommand_ShouldThrowWhenJammed()
+    public void AdjustCashCountsCommandShouldThrowWhenJammed()
     {
         var counts = new List<CashCount> { new CashCount(CashCountType.Bill, 1000, 10) };
         var cmd = new AdjustCashCountsCommand(_inventory, counts, "JPY", 1, _hardware);
@@ -37,7 +37,7 @@ public class CommandTests
 
     /// <summary>デバイスがジャム状態の時に DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
     [Fact]
-    public void DispenseCashCommand_Verify_ShouldThrowWhenJammed()
+    public void DispenseCashCommandVerifyShouldThrowWhenJammed()
     {
         var deposit = new DepositController(_inventory, _hardware);
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
@@ -52,7 +52,7 @@ public class CommandTests
 
     /// <summary>入金処理中の際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
     [Fact]
-    public void DispenseCashCommand_Verify_ShouldThrowWhenDepositInProgress()
+    public void DispenseCashCommandVerifyShouldThrowWhenDepositInProgress()
     {
         var deposit = new DepositController(_inventory, _hardware);
         deposit.BeginDeposit(); // Sets IsDepositInProgress to true
@@ -68,7 +68,7 @@ public class CommandTests
 
     /// <summary>未登録の金種が指定された際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
     [Fact]
-    public void DispenseCashCommand_Verify_ShouldThrowWhenDenominationNotRegistered()
+    public void DispenseCashCommandVerifyShouldThrowWhenDenominationNotRegistered()
     {
         var deposit = new DepositController(_inventory, _hardware);
         var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(999, CurrencyCashType.Bill), 1 } };
@@ -80,7 +80,7 @@ public class CommandTests
 
     /// <summary>在庫不足の際、DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
     [Fact]
-    public void DispenseCashCommand_Verify_ShouldThrowWhenInsufficientInventory()
+    public void DispenseCashCommandVerifyShouldThrowWhenInsufficientInventory()
     {
         var deposit = new DepositController(_inventory, _hardware);
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
