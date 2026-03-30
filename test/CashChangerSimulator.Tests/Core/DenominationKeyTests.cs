@@ -11,7 +11,7 @@ public class DenominationKeyTests
     [InlineData("B1000", 1000, CurrencyCashType.Bill, "JPY")]
     [InlineData("C500", 500, CurrencyCashType.Coin, "JPY")]
     [InlineData("b2000", 2000, CurrencyCashType.Bill, "JPY")]
-    public void TryParse_ValidString_ShouldSucceed(string input, decimal expectedValue, CurrencyCashType expectedType, string expectedCurrency)
+    public void TryParseValidStringShouldSucceed(string input, decimal expectedValue, CurrencyCashType expectedType, string expectedCurrency)
     {
         DenominationKey.TryParse(input, out var result).ShouldBeTrue();
         result.ShouldNotBeNull();
@@ -27,7 +27,7 @@ public class DenominationKeyTests
     [InlineData("X100")]
     [InlineData("BABC")]
     [InlineData(null)]
-    public void TryParse_InvalidString_ShouldFail(string? input)
+    public void TryParseInvalidStringShouldFail(string? input)
     {
         DenominationKey.TryParse(input!, out var result).ShouldBeFalse();
         result.ShouldBeNull();
@@ -35,7 +35,7 @@ public class DenominationKeyTests
 
     /// <summary>通貨コードを指定したパースが正しく行われることを検証します。</summary>
     [Fact]
-    public void TryParse_WithCurrencyCode_ShouldSucceed()
+    public void TryParseWithCurrencyCodeShouldSucceed()
     {
         DenominationKey.TryParse("B1", "USD", out var result).ShouldBeTrue();
         result!.CurrencyCode.ShouldBe("USD");
@@ -43,7 +43,7 @@ public class DenominationKeyTests
 
     /// <summary>金種タイプに応じた接頭辞（B/C）が正しく返されることを検証します。</summary>
     [Fact]
-    public void PrefixChar_ShouldBeCorrect()
+    public void PrefixCharShouldBeCorrect()
     {
         new DenominationKey(1, CurrencyCashType.Bill).PrefixChar.ShouldBe('B');
         new DenominationKey(1, CurrencyCashType.Coin).PrefixChar.ShouldBe('C');
@@ -51,7 +51,7 @@ public class DenominationKeyTests
 
     /// <summary>金種キーの文字列表現（例：C10.5）が正しく出力されることを検証します。</summary>
     [Fact]
-    public void ToDenominationString_ShouldBeCorrect()
+    public void ToDenominationStringShouldBeCorrect()
     {
         new DenominationKey(10.5m, CurrencyCashType.Coin).ToDenominationString().ShouldBe("C10.5");
     }

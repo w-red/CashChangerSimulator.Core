@@ -102,8 +102,9 @@ public class ConfigurationLoaderTests : IDisposable
         loaded.Counts["JPY:B1000"].ShouldBe(10);
     }
 
+    /// <summary>設定ファイルが構文エラーなどで破損している場合に、デフォルトの設定が返されることを検証します。</summary>
     [Fact]
-    public void Load_CorruptedFile_ShouldReturnDefault()
+    public void LoadCorruptedFileShouldReturnDefault()
     {
         File.WriteAllText(_testConfigPath, "INVALID TOML [[");
         var config = ConfigurationLoader.Load(_testConfigPath);
@@ -111,8 +112,9 @@ public class ConfigurationLoaderTests : IDisposable
         config.Inventory.ShouldNotBeEmpty();
     }
 
+    /// <summary>カスタムパスを指定して設定を保存および読み込んだ際に、データが正しく保持されることを検証します。</summary>
     [Fact]
-    public void SaveAndLoad_ShouldPreserveData()
+    public void SaveAndLoadShouldPreserveData()
     {
         var path = "custom_config.toml";
         var config = new SimulatorConfiguration();
@@ -124,8 +126,9 @@ public class ConfigurationLoaderTests : IDisposable
         File.Delete(path);
     }
 
+    /// <summary>存在しないパスから在庫状態を読み込もうとした際に、空の状態が返されることを検証します。</summary>
     [Fact]
-    public void LoadInventoryState_NonExistent_ShouldReturnEmpty()
+    public void LoadInventoryStateNonExistentShouldReturnEmpty()
     {
         var path = "non_existent.inv";
         var state = ConfigurationLoader.LoadInventoryState(path);
@@ -133,8 +136,9 @@ public class ConfigurationLoaderTests : IDisposable
         state.Counts.ShouldBeEmpty();
     }
 
+    /// <summary>カスタムパスを指定して在庫状態を保存および読み込んだ際に、データが正しく保持されることを検証します。</summary>
     [Fact]
-    public void SaveAndLoadInventory_ShouldPreserveData()
+    public void SaveAndLoadInventoryShouldPreserveData()
     {
         var path = "custom_inventory.toml";
         var state = new InventoryState();

@@ -18,14 +18,14 @@ public class CapabilitiesFacadeTests
 
     /// <summary>入金機能（CapDeposit）が有効であることを確認します。</summary>
     [Fact]
-    public void CapDeposit_ShouldBeTrue()
+    public void CapDepositShouldBeTrue()
     {
         _sut.CapDeposit.ShouldBeTrue();
     }
 
     /// <summary>フルセンサー機能（CapFullSensor）が有効であることを確認します。</summary>
     [Fact]
-    public void CapFullSensor_ShouldBeTrue()
+    public void CapFullSensorShouldBeTrue()
     {
         _sut.CapFullSensor.ShouldBeTrue();
     }
@@ -34,7 +34,7 @@ public class CapabilitiesFacadeTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void CapRealTimeData_ShouldReflectConfig(bool expected)
+    public void CapRealTimeDataShouldReflectConfig(bool expected)
     {
         _config.Simulation.CapRealTimeData = expected;
         _sut.CapRealTimeData.ShouldBe(expected);
@@ -42,7 +42,7 @@ public class CapabilitiesFacadeTests
 
     /// <summary>統計情報報告機能（CapStatisticsReporting）が有効であることを確認します。</summary>
     [Fact]
-    public void CapStatisticsReporting_ShouldBeTrue()
+    public void CapStatisticsReportingShouldBeTrue()
     {
         _sut.CapStatisticsReporting.ShouldBeTrue();
     }

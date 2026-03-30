@@ -67,8 +67,9 @@ public class ExhaustiveCliTests
     private Inventory GetInventory() => _serviceProvider.GetRequiredService<Inventory>();
     private CliSessionOptions GetOptions() => _serviceProvider.GetRequiredService<CliSessionOptions>();
 
+    /// <summary>ディスパッチャーと各種サービスを組み合わせた正常系の網羅テストを行います。</summary>
     [Fact]
-    public async Task Dispatcher_and_Services_CombinedCoverage()
+    public async Task DispatcherAndServicesCombinedCoverage()
     {
         var dispatcher = GetDispatcher();
         var changer = GetChanger();
@@ -133,8 +134,9 @@ public class ExhaustiveCliTests
         await dispatcher.DispatchAsync("   ");
     }
 
+    /// <summary>CLI サービスにおける例外ハンドリング（POS例外、一般例外）の網羅テストを行います。</summary>
     [Fact]
-    public void CliServices_ExceptionHandling()
+    public void CliServicesExceptionHandling()
     {
         var changer = GetChanger();
         var service = new CliDeviceService(changer, _consoleMock.Object, _localizerMock.Object);
@@ -153,8 +155,9 @@ public class ExhaustiveCliTests
         _consoleMock.Invocations.Count.ShouldBeGreaterThan(0);
     }
 
+    /// <summary>非同期エラー発生時のハンドリング処理の全分岐を網羅テストします。</summary>
     [Fact]
-    public async Task CliCommands_HandleAsyncError_AllBranches()
+    public async Task CliCommandsHandleAsyncErrorAllBranches()
     {
         var commands = GetCommands();
         var changer = GetChanger();
@@ -183,8 +186,9 @@ public class ExhaustiveCliTests
         _consoleMock.Invocations.Count.ShouldBeGreaterThan(0);
     }
 
+    /// <summary>TOML ベースのローカライザーの初期化と動作を検証します。</summary>
     [Fact]
-    public void TomlLocalizer_Coverage()
+    public void TomlLocalizerCoverage()
     {
         var factory = new TomlStringLocalizerFactory();
         var localizer = factory.Create(typeof(CliCommands));
@@ -193,8 +197,9 @@ public class ExhaustiveCliTests
         localizer["non-existent"].Value.ShouldBe("non-existent");
     }
 
+    /// <summary>CLI の DI コンテナの初期化ロジックを検証します。</summary>
     [Fact]
-    public void CliDIContainer_Initialize_Coverage()
+    public void CliDIContainerInitializeCoverage()
     {
         try
         {
