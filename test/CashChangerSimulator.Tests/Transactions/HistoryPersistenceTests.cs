@@ -5,10 +5,12 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Transactions;
 
+/// <summary>取引履歴の件数制限や永続化の整合性を検証するテストクラス。</summary>
 public class HistoryPersistenceTests
 {
+    /// <summary>設定ファイルで指定された最大履歴件数が正しく適用されることを検証します。</summary>
     [Fact]
-    public void TransactionHistory_ShouldRespectMaxEntriesFromConfig()
+    public void TransactionHistoryShouldRespectMaxEntriesFromConfig()
     {
         // Arrange
         var config = new SimulatorConfiguration();
@@ -27,8 +29,9 @@ public class HistoryPersistenceTests
         history.Entries[2].Amount.ShouldBe(200);
     }
 
+    /// <summary>外部状態（HistoryState）からの復元時にも最大履歴件数が維持されることを検証します。</summary>
     [Fact]
-    public void FromState_ShouldRespectMaxEntriesFromConfig()
+    public void FromStateShouldRespectMaxEntriesFromConfig()
     {
         // Arrange
         var config = new SimulatorConfiguration();
