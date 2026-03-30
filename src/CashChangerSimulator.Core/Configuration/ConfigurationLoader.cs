@@ -106,8 +106,4 @@ public static class ConfigurationLoader
 
     public static string GetDefaultHistoryStatePath() => HistoryStatePath;
 
-    private static HistoryState CreateEmptyHistoryState()
-    {
-        return new HistoryState { Entries = [] };
-    }
 }
