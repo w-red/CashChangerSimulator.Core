@@ -3,9 +3,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>
-/// <see cref="CurrencyCashType"/> の基本動作と定義が正しいことを検証するクラス。
-/// </summary>
+/// <summary>CurrencyCashType の基本定義とパース機能を検証するためのテストクラス。</summary>
 public class CurrencyCashTypeTests
 {
     /// <summary>全ての予期される値が定義されていることを確認します。</summary>

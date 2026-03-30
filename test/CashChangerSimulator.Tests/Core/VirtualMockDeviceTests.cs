@@ -8,9 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>
-/// VirtualMockDevice の機能検証テスト。
-/// </summary>
+/// <summary>VirtualMockDevice の機能検証テスト（オープン、クローズ、占有、有効化等）。</summary>
 public class VirtualMockDeviceTests
 {
     private readonly VirtualMockDevice _device1;
@@ -30,11 +28,9 @@ public class VirtualMockDeviceTests
         _device2 = new VirtualMockDevice(manager, inventory, _statusManager, _loggerMock.Object);
     }
 
-    /// <summary>
-    /// 他のプロセス（インスタンス）がデバイスを占有している場合、Claim が失敗することを検証します。
-    /// </summary>
+    /// <summary>他のプロセス（インスタンス）がデバイスを占有している場合、Claim が失敗することを検証します。</summary>
     [Fact]
-    public void ConcurrentClaim_ShouldThrowException()
+    public void ConcurrentClaimShouldThrowException()
     {
         // Arrange
         _device1.Open();
@@ -51,11 +47,9 @@ public class VirtualMockDeviceTests
         ex.Message.ShouldContain("claimed", Case.Insensitive);
     }
 
-    /// <summary>
-    /// Release 後は他のインスタンスが Claim 可能になることを検証します。
-    /// </summary>
+    /// <summary>Release 後は他のインスタンスが Claim 可能になることを検証します。</summary>
     [Fact]
-    public void ClaimAfterRelease_ShouldSucceed()
+    public void ClaimAfterReleaseShouldSucceed()
     {
         // Arrange
         _device1.Open();
@@ -72,7 +66,7 @@ public class VirtualMockDeviceTests
 
     /// <summary>Open メソッドにより接続状態（IsConnected）が有効になることを検証します。</summary>
     [Fact]
-    public void Open_ShouldSetConnected()
+    public void OpenShouldSetConnected()
     {
         _device1.Open();
         _device1.IsConnected.ShouldBeTrue();
@@ -80,7 +74,7 @@ public class VirtualMockDeviceTests
 
     /// <summary>Close メソッドにより、切断状態および非有効化状態に遷移することを検証します。</summary>
     [Fact]
-    public void Close_ShouldSetDisconnectedAndDisabled()
+    public void CloseShouldSetDisconnectedAndDisabled()
     {
         _device1.Open();
         _device1.Claim(100);
@@ -95,7 +89,7 @@ public class VirtualMockDeviceTests
 
     /// <summary>占有（Claim）されている状態で Enable が成功することを検証します。</summary>
     [Fact]
-    public void Enable_ShouldSucceed_WhenClaimed()
+    public void EnableShouldSucceedWhenClaimed()
     {
         _device1.Open();
         _device1.Claim(100);
@@ -105,7 +99,7 @@ public class VirtualMockDeviceTests
 
     /// <summary>占有（Claim）されていない状態で Enable を呼び出すと例外が発生することを検証します。</summary>
     [Fact]
-    public void Enable_ShouldThrow_WhenNotClaimed()
+    public void EnableShouldThrowWhenNotClaimed()
     {
         _device1.Open();
         Should.Throw<InvalidOperationException>(() => _device1.Enable());
@@ -113,7 +107,7 @@ public class VirtualMockDeviceTests
 
     /// <summary>デバイスが有効化（Enable）されていない状態で入金操作を行うと例外が発生することを検証します。</summary>
     [Fact]
-    public void Deposit_ShouldThrow_WhenNotEnabled()
+    public void DepositShouldThrowWhenNotEnabled()
     {
         _device1.Open();
         _device1.Claim(100);
@@ -123,7 +117,7 @@ public class VirtualMockDeviceTests
 
     /// <summary>デバイスが有効化（Enable）されていない状態で出金操作を行うと例外が発生することを検証します。</summary>
     [Fact]
-    public void Dispense_ShouldThrow_WhenNotEnabled()
+    public void DispenseShouldThrowWhenNotEnabled()
     {
         _device1.Open();
         _device1.Claim(100);
@@ -133,7 +127,7 @@ public class VirtualMockDeviceTests
 
     /// <summary>現在の在庫情報を正しく取得できることを検証します。</summary>
     [Fact]
-    public void GetInventory_ShouldReturnCorrectData()
+    public void GetInventoryShouldReturnCorrectData()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         _device1.Open();

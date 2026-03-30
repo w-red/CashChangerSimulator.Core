@@ -20,7 +20,7 @@ public class CurrencyMetadataProviderTests
 
     /// <summary>コンストラクタ実行時にデフォルトの通貨（JPY）で初期化されることを検証します。</summary>
     [Fact]
-    public void Constructor_ShouldInitializeWithDefaultJPY()
+    public void ConstructorShouldInitializeWithDefaultJPY()
     {
         _provider.CurrencyCode.ShouldBe("JPY");
         _provider.Symbol.ShouldBe("¥");
@@ -28,7 +28,7 @@ public class CurrencyMetadataProviderTests
 
     /// <summary>未知の通貨コードが設定された際、適切にデフォルト（JPY）へフォールバックされることを検証します。</summary>
     [Fact]
-    public void Refresh_ShouldHandleUnknownCurrency()
+    public void RefreshShouldHandleUnknownCurrency()
     {
         _configProvider.Config.System.CurrencyCode = "ZZZ";
         _configProvider.Update(_configProvider.Config);
@@ -40,7 +40,7 @@ public class CurrencyMetadataProviderTests
 
     /// <summary>通貨記号が文化圏（Culture）や設定に応じて正しく取得されることを検証します。</summary>
     [Fact]
-    public void Symbol_ShouldHandlePrefixAndSuffix()
+    public void SymbolShouldHandlePrefixAndSuffix()
     {
         // JPY with ja-JP culture
         _configProvider.Config.System.CurrencyCode = "JPY";
@@ -61,7 +61,7 @@ public class CurrencyMetadataProviderTests
 
     /// <summary>様々な文化圏や通貨において、金種名称が正しく生成されることを検証します。</summary>
     [Fact]
-    public void GetDenominationName_ShouldHandleVariousCulturesAndCurrencies()
+    public void GetDenominationNameShouldHandleVariousCulturesAndCurrencies()
     {
         var jpy1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         var usd1 = new DenominationKey(1, CurrencyCashType.Bill, "USD");
@@ -97,7 +97,7 @@ public class CurrencyMetadataProviderTests
 
     /// <summary>設定変更時に通知イベント（Changed）が正しく発火されることを検証します。</summary>
     [Fact]
-    public void Changed_ShouldNotifyOnUpdate()
+    public void ChangedShouldNotifyOnUpdate()
     {
         var called = false;
         _provider.Changed.Subscribe(_ => called = true);
@@ -110,7 +110,7 @@ public class CurrencyMetadataProviderTests
 
     /// <summary>日本円（JPY）において、設定ファイルの DisplayNameJP が優先的に使用されることを検証します。</summary>
     [Fact]
-    public void GetDenominationName_ShouldRespectDisplayNameJPForJPY()
+    public void GetDenominationNameShouldRespectDisplayNameJPForJPY()
     {
         // Arrange
         // (Note: _configProvider is already JPY by default in constructor)

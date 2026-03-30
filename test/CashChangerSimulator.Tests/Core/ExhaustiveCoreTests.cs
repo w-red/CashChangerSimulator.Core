@@ -22,8 +22,9 @@ public class ExhaustiveCoreTests : IDisposable
         LogProvider.Dispose();
     }
 
+    /// <summary>LogProvider の各設定パス（コンソール、ファイル、ログレベル）を網羅的に検証します。</summary>
     [Fact]
-    public void LogProvider_ShouldCoverageAllPaths()
+    public void LogProviderShouldCoverageAllPaths()
     {
         // 1. デフォルト状態 (NullLoggerFactory)
         LogProvider.Factory.ShouldNotBeNull();
@@ -56,8 +57,9 @@ public class ExhaustiveCoreTests : IDisposable
         LogProvider.Dispose();
     }
 
+    /// <summary>DenominationKey の等価性、ハッシュ、文字列変換、パースの網羅的検証を行います。</summary>
     [Fact]
-    public void DenominationKey_ExhaustiveTests()
+    public void DenominationKeyExhaustiveTests()
     {
         var key1 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         
@@ -97,8 +99,9 @@ public class ExhaustiveCoreTests : IDisposable
         key1.CurrencyCode.ShouldBe("JPY");
     }
 
+    /// <summary>Inventory の各種加算メソッド、クリア、辞書からのロード等の網羅的検証を行います。</summary>
     [Fact]
-    public void Inventory_DeepCoverage()
+    public void InventoryDeepCoverage()
     {
         var inventory = new Inventory();
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
@@ -155,8 +158,9 @@ public class ExhaustiveCoreTests : IDisposable
         inventory.Add(key, -999); 
     }
 
+    /// <summary>ConfigurationLoader のロード、保存、異常系（破損ファイル）の網羅的検証を行います。</summary>
     [Fact]
-    public void ConfigurationLoader_Exhaustive()
+    public void ConfigurationLoaderExhaustive()
     {
         var tempConfig = Path.Combine(Path.GetTempPath(), "CCS_Config_" + Guid.NewGuid() + ".toml");
         var tempState = Path.Combine(Path.GetTempPath(), "CCS_State_" + Guid.NewGuid() + ".toml");
@@ -205,8 +209,9 @@ public class ExhaustiveCoreTests : IDisposable
         }
     }
 
+    /// <summary>GlobalLockManager のロック取得、競合、解放、異常系の網羅的検証を行います。</summary>
     [Fact]
-    public void GlobalLockManager_Exhaustive()
+    public void GlobalLockManagerExhaustive()
     {
         var lockFile1 = Path.Combine(Path.GetTempPath(), "CCS_Lock1_" + Guid.NewGuid());
         var lockFile2 = Path.Combine(Path.GetTempPath(), "CCS_Lock2_" + Guid.NewGuid());
@@ -257,8 +262,9 @@ public class ExhaustiveCoreTests : IDisposable
         if (File.Exists(lockFile1)) File.Delete(lockFile1);
     }
 
+    /// <summary>TransactionEntry のプロパティ保持を検証します。</summary>
     [Fact]
-    public void TransactionEntry_Coverage()
+    public void TransactionEntryCoverage()
     {
         var denoms = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
         var entry = new TransactionEntry(DateTimeOffset.Now, TransactionType.Deposit, 1000, denoms);

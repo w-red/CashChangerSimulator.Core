@@ -12,7 +12,7 @@ public class MonitorsProviderTests
 {
     /// <summary>設定（Configuration）の変更が、各モニターのしきい値へ正しく反映されることを検証します。</summary>
     [Fact]
-    public void UpdateThresholdsFromConfig_ShouldUpdateCorrectly()
+    public void UpdateThresholdsFromConfigShouldUpdateCorrectly()
     {
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();
@@ -32,7 +32,7 @@ public class MonitorsProviderTests
 
     /// <summary>非還流金種（IsRecyclable=false）の設定時、モニターの監視が無効化（しきい値-1）されることを検証します。</summary>
     [Fact]
-    public void RefreshMonitors_ShouldHandleNonRecyclable()
+    public void RefreshMonitorsShouldHandleNonRecyclable()
     {
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();
@@ -50,7 +50,7 @@ public class MonitorsProviderTests
 
     /// <summary>通貨個別の設定が見つからない場合に、グローバル設定のしきい値が使用されることを検証します。</summary>
     [Fact]
-    public void RefreshMonitors_ShouldFallbackToGlobal_WhenSpecificCurrencyNotFound()
+    public void RefreshMonitorsShouldFallbackToGlobalWhenSpecificCurrencyNotFound()
     {
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();
@@ -69,7 +69,7 @@ public class MonitorsProviderTests
 
     /// <summary>TriggerChanged 呼び出しにより、変更通知（Changed）が発火されることを検証します。</summary>
     [Fact]
-    public void TriggerChanged_ShouldNotifyObservers()
+    public void TriggerChangedShouldNotifyObservers()
     {
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();
@@ -85,7 +85,7 @@ public class MonitorsProviderTests
 
     /// <summary>Dispose 呼び出しにより、管理対象のモニターがクリアされることを検証します。</summary>
     [Fact]
-    public void Dispose_ShouldClearMonitors()
+    public void DisposeShouldClearMonitors()
     {
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();
@@ -99,7 +99,7 @@ public class MonitorsProviderTests
 
     /// <summary>設定のリロードにより、モニターのしきい値が再読み込みされることを検証します。</summary>
     [Fact]
-    public void Reload_ShouldRefreshMonitors()
+    public void ReloadShouldRefreshMonitors()
     {
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();
@@ -116,7 +116,7 @@ public class MonitorsProviderTests
 
     /// <summary>通貨メタデータの変更に伴い、監視対象の金種キーリストが更新されることを検証します。</summary>
     [Fact]
-    public void MetadataChange_ShouldRefreshMonitors()
+    public void MetadataChangeShouldRefreshMonitors()
     {
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();

@@ -3,6 +3,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
+/// <summary>在庫管理（Inventory）の加算、設定、集計、シリアライズ機能を検証するためのテストクラス。</summary>
 public class InventoryTests
 {
     private readonly Inventory Inventory = new();

@@ -12,7 +12,7 @@ public class DepositOnlyTests
 {
     /// <summary>入金不可（IsDepositable=false）に設定された金種が、入金時に無視されることを検証します。</summary>
     [Fact]
-    public void Deposit_WhenIsDepositableIsFalse_ShouldNotAddAnyCount()
+    public void DepositWhenIsDepositableIsFalseShouldNotAddAnyCount()
     {
         // Arrange
         var inventory = new Inventory();
@@ -36,7 +36,7 @@ public class DepositOnlyTests
 
     /// <summary>入金可能だが非還流（IsRecyclable=false）の設定時、入金分が回収庫へ振り分けられることを検証します。</summary>
     [Fact]
-    public void Deposit_WhenIsRecyclableIsFalseButIsDepositableIsTrue_ShouldGoToCollection()
+    public void DepositWhenIsRecyclableIsFalseButIsDepositableIsTrueShouldGoToCollection()
     {
         // Arrange
         var inventory = new Inventory();

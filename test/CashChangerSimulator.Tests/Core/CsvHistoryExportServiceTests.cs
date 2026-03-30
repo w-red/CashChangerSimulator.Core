@@ -17,7 +17,7 @@ public class CsvHistoryExportServiceTests
 
     /// <summary>取引履歴リストが正しい CSV 文字列（ヘッダーとデータ行）に変換されることを検証します。</summary>
     [Fact]
-    public void Export_ShouldReturnCorrectCsvString()
+    public void ExportShouldReturnCorrectCsvString()
     {
         // Arrange
         var timestamp = new DateTimeOffset(2026, 3, 23, 12, 0, 0, TimeSpan.FromHours(9));
@@ -69,7 +69,7 @@ public class CsvHistoryExportServiceTests
 
     /// <summary>空の取引履歴リストを渡した際に、ヘッダーのみの CSV が生成されることを検証します。</summary>
     [Fact]
-    public void Export_ShouldHandleEmptyList()
+    public void ExportShouldHandleEmptyList()
     {
         // Arrange
         var entries = Enumerable.Empty<TransactionEntry>();
