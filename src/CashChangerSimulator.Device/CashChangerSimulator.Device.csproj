@@ -10,6 +10,7 @@
     <ItemGroup>
         <InternalsVisibleTo Include="CashChangerSimulator.Tests" />
         <InternalsVisibleTo Include="CashChangerSimulator.UI.Tests" />
+        <InternalsVisibleTo Include="CashChangerSimulator.UI.Cli.Tests" />
     </ItemGroup>
 
     <ItemGroup>
