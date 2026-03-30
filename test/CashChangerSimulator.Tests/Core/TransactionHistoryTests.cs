@@ -82,7 +82,6 @@ public class TransactionHistoryTests
         history.Entries.ShouldBeEmpty();
     }
 
-
     /// <summary>FromState で 1000件 を超えるデータがある場合、制限されることを検証する。</summary>
     [Fact]
     public void FromStateWithTooManyEntriesShouldEnforceLimit()

@@ -66,14 +66,14 @@ public class ExhaustiveDeviceTests : IDisposable
         // Async mode
         onCompleteCalled = false;
         await _controller.DispenseChangeAsync(1000, true, onComplete);
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
         onCompleteCalled.ShouldBeTrue();
 
         // Error: Busy
         var tcs = new TaskCompletionSource();
         _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
         var task = _controller.DispenseChangeAsync(1000, false, (e, ex) => {});
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         await Should.ThrowAsync<PosControlException>(async () => await _controller.DispenseChangeAsync(1000, false, (e, ex) => {}));
         tcs.SetResult();
         _controller.ClearOutput();

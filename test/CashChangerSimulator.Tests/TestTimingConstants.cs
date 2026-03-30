@@ -24,5 +24,4 @@ public static class TestTimingConstants
     /// <summary>アプリケーション終了・クリーンアップ待機時間（ミリ秒）。</summary>
     public const int AppCleanupDelayMs = 1000;
 
-
 }

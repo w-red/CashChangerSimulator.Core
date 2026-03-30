@@ -139,7 +139,6 @@ public class Inventory : IReadOnlyInventory
             .Sum(kv => kv.Key.Value * kv.Value);
     }
 
-
     /// <summary>現在の在庫を保存用のデータ形式に変換します。</summary>
     public Dictionary<string, int> ToDictionary()
     {

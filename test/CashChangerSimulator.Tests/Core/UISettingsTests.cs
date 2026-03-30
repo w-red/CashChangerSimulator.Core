@@ -1,6 +1,8 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.UI.Wpf.Services;
 using CashChangerSimulator.UI.Wpf.ViewModels;
+using Moq;
 using R3;
 using Shouldly;
 using Tomlyn;
@@ -159,7 +161,8 @@ public class UISettingsTests
         var meta = new CurrencyMetadataProvider(cp);
         var inventory = new CashChangerSimulator.Core.Models.Inventory();
         var mp = new MonitorsProvider(inventory, cp, meta);
-        return new SettingsViewModel(cp, mp, meta);
+        var mockSettings = new Mock<ISettingsOperationService>();
+        return new SettingsViewModel(cp, mp, mockSettings.Object, meta);
     }
 
     /// <summary>通貨コードやカルチャの変更に伴い、通貨記号や単位が正しく更新されることを検証します。</summary>
