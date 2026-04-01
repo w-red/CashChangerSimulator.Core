@@ -39,7 +39,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\CashChangerSimulator.Core\CashChangerSimulator.Core.csproj" />
+        <ProjectReference Include="..\Core\CashChangerSimulator.Core.csproj" />
     </ItemGroup>
 
 </Project>
