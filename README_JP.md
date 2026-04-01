@@ -53,9 +53,9 @@ UI プロジェクト（WPF, CLI）で利用するために、ローカルな Nu
 
 詳細は `docs/` ディレクトリ内のドキュメントをご参照ください。
 
-- [Architecture Overview](docs/Architecture.md): システム設計概要。
-- [UPOS Compliance Mapping](docs/UposComplianceMapping.md): UPOS インタフェースの実装状況。
-- [OPOS Compliance Mapping](docs/OposComplianceMapping.md): OPOS 動作とエラーコードのマッピング。
+- [Architecture Overview](docs/Architecture_JP.md): システム設計概要。
+- [UPOS Compliance Mapping](docs/UposComplianceMapping_JP.md): UPOS インタフェースの実装状況。
+- [OPOS Compliance Mapping](docs/OposComplianceMapping_JP.md): OPOS 動作とエラーコードのマッピング。
 
 ---
 *英語版は [README.md](README.md) を参照してください。*
