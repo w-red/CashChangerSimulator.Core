@@ -1,5 +1,9 @@
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using CashChangerSimulator.Core.Opos;
 using Moq;
@@ -11,12 +15,12 @@ namespace CashChangerSimulator.Tests.Device;
 public class UposMediatorTests
 {
     private readonly InternalSimulatorCashChanger _so;
-    private readonly UposMediator _mediator;
+    private readonly IUposMediator _mediator;
 
     public UposMediatorTests()
     {
         _so = new InternalSimulatorCashChanger();
-        _mediator = new UposMediator(_so);
+        _mediator = _so.Context.Mediator;
     }
 
     /// <summary>Closed 状態で状態検証を行うと例外が発生することを検証します。</summary>
@@ -158,7 +162,7 @@ public class UposMediatorTests
         
         _mediator.ResultCode.ShouldBe((int)ErrorCode.Illegal);
         _mediator.ResultCodeExtended.ShouldBe(789);
-        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
     /// <summary>コマンドの正常実行が成功し、ResultCode が Success になることを検証します。</summary>

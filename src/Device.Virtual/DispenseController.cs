@@ -1,0 +1,152 @@
+using CashChangerSimulator.Core;
+using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Monitoring;
+using CashChangerSimulator.Core.Services;
+using Microsoft.Extensions.Logging;
+using R3;
+using ZLogger;
+
+namespace CashChangerSimulator.Device.Virtual;
+
+/// <summary>出金（払出）シーケンスを管理するコントローラー（仮想デバイス実装）。</summary>
+/// <remarks>
+/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして出金プロセスをシミュレートします。
+/// </remarks>
+public class DispenseController : IDisposable
+{
+    private readonly CashChangerManager _manager;
+    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly IDeviceSimulator _simulator;
+    private CancellationTokenSource? _dispenseCts;
+    private readonly ILogger<DispenseController> _logger = LogProvider.CreateLogger<DispenseController>();
+    private readonly Subject<Unit> _changed = new();
+    private readonly CompositeDisposable _disposables = [];
+
+    private CashDispenseStatus _status = CashDispenseStatus.Idle;
+    private bool _disposed;
+
+    public DispenseController(
+        CashChangerManager manager,
+        HardwareStatusManager? hardwareStatusManager = null,
+        IDeviceSimulator? simulator = null)
+    {
+        _manager = manager ?? throw new ArgumentNullException(nameof(manager));
+        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+        _simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
+    }
+
+    public virtual Observable<Unit> Changed => _changed;
+    public virtual CashDispenseStatus Status => _status;
+    public virtual bool IsBusy => _status == CashDispenseStatus.Busy;
+
+    public virtual async Task DispenseChangeAsync(int amount, bool asyncMode, Action<DeviceErrorCode, int> onComplete, string? currencyCode = null)
+    {
+        if (IsBusy) throw new DeviceException("Device is busy");
+        if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected");
+
+        _status = CashDispenseStatus.Busy;
+        _changed.OnNext(Unit.Default);
+        await Task.Yield();
+
+        _dispenseCts?.Cancel();
+        _dispenseCts?.Dispose();
+        _dispenseCts = new CancellationTokenSource();
+        var token = _dispenseCts.Token;
+
+        if (asyncMode)
+        {
+            _ = Task.Run(async () =>
+            {
+                try { await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token); }
+                catch (Exception ex) { _logger.ZLogError($"Background dispense error: {ex.Message}"); }
+            }, token);
+        }
+        else
+        {
+            await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token);
+        }
+    }
+
+    public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode, Action<DeviceErrorCode, int> onComplete)
+    {
+        if (IsBusy) throw new DeviceException("Device is busy");
+        _status = CashDispenseStatus.Busy;
+        _changed.OnNext(Unit.Default);
+        await Task.Yield();
+
+        _dispenseCts?.Cancel();
+        _dispenseCts?.Dispose();
+        _dispenseCts = new CancellationTokenSource();
+        var token = _dispenseCts.Token;
+
+        if (asyncMode)
+        {
+            _ = Task.Run(async () =>
+            {
+                try { await ExecuteDispense(() => _manager.Dispense(counts), onComplete, token); }
+                catch (Exception ex) { _logger.ZLogError($"Background dispense error: {ex.Message}"); }
+            }, token);
+        }
+        else
+        {
+            await ExecuteDispense(() => _manager.Dispense(counts), onComplete, token);
+        }
+    }
+
+    private async Task ExecuteDispense(Action action, Action<DeviceErrorCode, int> onComplete, CancellationToken token)
+    {
+        try
+        {
+            await _simulator.SimulateDispenseAsync(token);
+            token.ThrowIfCancellationRequested();
+            action();
+            _status = CashDispenseStatus.Idle;
+            onComplete(0, 0); // Success
+        }
+        catch (OperationCanceledException)
+        {
+            _status = CashDispenseStatus.Idle;
+        }
+        catch (InsufficientCashException ex)
+        {
+            _status = CashDispenseStatus.Error;
+            onComplete(DeviceErrorCode.Extended, 201); // 201 is UPOS ErrorCode.Extended / OverDispense
+            throw new DeviceException(ex.Message, DeviceErrorCode.NoInventory);
+        }
+        catch (Exception ex)
+        {
+            _status = CashDispenseStatus.Error;
+            onComplete(DeviceErrorCode.Failure, 0); // General Error
+            throw new DeviceException(ex.Message, DeviceErrorCode.Failure);
+        }
+        finally
+        {
+            _changed.OnNext(Unit.Default);
+        }
+    }
+
+    public virtual void ClearOutput()
+    {
+        _dispenseCts?.Cancel();
+        if (_status == CashDispenseStatus.Busy)
+        {
+            _status = CashDispenseStatus.Idle;
+            _changed.OnNext(Unit.Default);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _dispenseCts?.Cancel();
+        _dispenseCts?.Dispose();
+        _disposables.Dispose();
+        _changed.OnCompleted();
+        _simulator.Dispose();
+        _disposed = true;
+        GC.SuppressFinalize(this);
+    }
+}

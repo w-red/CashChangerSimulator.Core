@@ -1,9 +1,12 @@
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Coordination;
-using CashChangerSimulator.Device.Facades;
-using CashChangerSimulator.Device.Commands;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device.PosForDotNet.Commands;
 using Microsoft.PointOfService;
 using Moq;
 using CashChangerSimulator.Core.Transactions;
@@ -79,7 +82,7 @@ public class FacadeTests
         var facade = new DiagnosticsFacade(_diagnosticControllerMock.Object, _mediatorMock.Object);
 
         // Act
-        facade.CheckHealth(HealthCheckLevel.Internal);
+        facade.CheckHealth(DeviceHealthCheckLevel.Internal);
 
         // Assert
         _mediatorMock.Verify(m => m.Execute(It.IsAny<CheckHealthCommand>()), Times.Once);

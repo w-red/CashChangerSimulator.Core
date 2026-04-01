@@ -1,0 +1,10 @@
+using CashChangerSimulator.Device.Virtual;
+namespace CashChangerSimulator.Device.Virtual.Services;
+
+/// <summary>
+/// Defines the contract for executing automated scripts in the simulator.
+/// </summary>
+public interface IScriptExecutionService
+{
+    Task ExecuteScriptAsync(string json, Action<string>? onProgress = null);
+}

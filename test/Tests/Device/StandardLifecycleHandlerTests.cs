@@ -1,6 +1,11 @@
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;
 using Moq;
@@ -30,16 +35,16 @@ public class StandardLifecycleHandlerTests
     {
         // Closed
         _hardware.SetConnected(false);
-        _handler.State.ShouldBe(ControlState.Closed);
+        _handler.State.ShouldBe(DeviceControlState.Closed);
 
         // Idle
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.IsBusy).Returns(false);
-        _handler.State.ShouldBe(ControlState.Idle);
+        _handler.State.ShouldBe(DeviceControlState.Idle);
 
         // Busy
         _mediator.Setup(m => m.IsBusy).Returns(true);
-        _handler.State.ShouldBe(ControlState.Busy);
+        _handler.State.ShouldBe(DeviceControlState.Busy);
     }
 
     /// <summary>Closed 状態で DeviceEnabled を設定しようとした際に例外が発生することを検証します。</summary>

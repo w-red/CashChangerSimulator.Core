@@ -1,9 +1,13 @@
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
-using CashChangerSimulator.Device.Commands;
-using CashChangerSimulator.Device.Coordination;
-using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.PosForDotNet.Commands;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Models;
@@ -129,8 +133,8 @@ public class UposCommandTests
     public void CheckHealthCommandExecuteShouldReturnReport()
     {
         var diagMock = new Mock<DiagnosticController>(new Inventory(), new HardwareStatusManager());
-        diagMock.Setup(d => d.GetHealthReport(HealthCheckLevel.Internal)).Returns("OK");
-        var command = new CheckHealthCommand(diagMock.Object, HealthCheckLevel.Internal);
+        diagMock.Setup(d => d.GetHealthReport(DeviceHealthCheckLevel.Internal)).Returns("OK");
+        var command = new CheckHealthCommand(diagMock.Object, DeviceHealthCheckLevel.Internal);
         
         command.Execute();
         
@@ -179,7 +183,7 @@ public class UposCommandTests
         
         command.Execute();
         
-        controllerMock.Verify(c => c.DispenseChangeAsync(1000m, false, It.IsAny<Action<ErrorCode, int>>(), null), Times.Once);
+        controllerMock.Verify(c => c.DispenseChangeAsync((int)1000m, false, It.IsAny<Action<DeviceErrorCode, int>>(), null), Times.Once);
     }
 
     /// <summary>DispenseCashCommand の実行がコントローラへ委譲されることを検証します。</summary>
@@ -197,7 +201,7 @@ public class UposCommandTests
         
         command.Execute();
         
-        controllerMock.Verify(c => c.DispenseCashAsync(counts, false, It.IsAny<Action<ErrorCode, int>>()), Times.Once);
+        controllerMock.Verify(c => c.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false, It.IsAny<Action<DeviceErrorCode, int>>()), Times.Once);
     }
 
     /// <summary>ClearOutputCommand の実行がコントローラへ委譲されることを検証します。</summary>

@@ -1,3 +1,6 @@
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
@@ -5,12 +8,12 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Models;
-using CashChangerSimulator.Device.Services.ScriptCommands;
-using CashChangerSimulator.Device.Services;
-using CashChangerSimulator.Device.Commands;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
+using CashChangerSimulator.Device.PosForDotNet.Services;
+using CashChangerSimulator.Device.PosForDotNet.Commands;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -52,35 +55,35 @@ public class ExhaustiveDeviceTests : IDisposable
     {
         var onCompleteCalled = false;
         ErrorCode lastError = ErrorCode.Success;
-        Action<ErrorCode, int> onComplete = (err, ext) => { onCompleteCalled = true; lastError = err; };
+        Action<DeviceErrorCode, int> onComplete = (err, ext) => { onCompleteCalled = true; lastError = err; };
 
         // Normal path
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         _inventory.SetCount(key, 10);
         _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         
-        await _controller.DispenseChangeAsync(1000, false, onComplete);
+        await _controller.DispenseChangeAsync((int)1000, false, onComplete);
         onCompleteCalled.ShouldBeTrue();
         lastError.ShouldBe(ErrorCode.Success);
 
         // Async mode
         onCompleteCalled = false;
-        await _controller.DispenseChangeAsync(1000, true, onComplete);
+        await _controller.DispenseChangeAsync((int)1000, true, onComplete);
         await Task.Delay(200, TestContext.Current.CancellationToken);
         onCompleteCalled.ShouldBeTrue();
 
         // Error: Busy
         var tcs = new TaskCompletionSource();
         _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
-        var task = _controller.DispenseChangeAsync(1000, false, (e, ex) => {});
+        var task = _controller.DispenseChangeAsync((int)1000, false, (e, ex) => {});
         await Task.Delay(100, TestContext.Current.CancellationToken);
-        await Should.ThrowAsync<PosControlException>(async () => await _controller.DispenseChangeAsync(1000, false, (e, ex) => {}));
+        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false, (e, ex) => {}));
         tcs.SetResult();
         _controller.ClearOutput();
 
         // Error: Disconnected
         _hardwareStatusManager.SetConnected(false);
-        await Should.ThrowAsync<PosControlException>(async () => await _controller.DispenseChangeAsync(1000, false, (e, ex) => {}));
+        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false, (e, ex) => {}));
         _hardwareStatusManager.SetConnected(true);
     }
 
@@ -141,7 +144,7 @@ public class ExhaustiveDeviceTests : IDisposable
 
         // Stats & Health
         device.RetrieveStatistics(new[] { "test" });
-        device.CheckHealth(HealthCheckLevel.Internal);
+        device.CheckHealth(DeviceHealthCheckLevel.Internal);
         device.DirectIO(0, 0, "");
 
         device.DeviceEnabled = false;

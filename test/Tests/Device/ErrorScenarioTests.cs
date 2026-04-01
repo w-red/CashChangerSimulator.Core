@@ -1,11 +1,15 @@
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -120,8 +124,8 @@ public class ErrorScenarioTests
         var (device, _) = CreateDevice();
         // 在庫 0 の状態で払出
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(1000));
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense); // ECHAN_OVERDISPENSE
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCodeExtended.ShouldBe((int)ErrorCode.OverDispense); // ECHAN_OVERDISPENSE
     }
 
     /// <summary>ジャムが発生している際、払出が ErrorCode.Failure で失敗することを検証する。</summary>
@@ -132,8 +136,8 @@ public class ErrorScenarioTests
         hardware.SetJammed(true);
 
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(1000));
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.Jam);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCodeExtended.ShouldBe((int)ErrorCode.Jam);
     }
 
     /// <summary>ジャム発生・復旧時に正しい StatusUpdateEvent が発火することを検証する。</summary>
@@ -207,8 +211,8 @@ public class ErrorScenarioTests
         var counts = new[] { new CashCount(CashCountType.Bill, 1000, 1) };
 
         var ex = Should.Throw<PosControlException>(() => device.DispenseCash(counts));
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense); // ECHAN_OVERDISPENSE
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCodeExtended.ShouldBe((int)ErrorCode.OverDispense); // ECHAN_OVERDISPENSE
     }
 
     /// <summary>在庫の合計金額は足りているが、金種の組み合わせで端数が支払えない（Impossible Change）場合にエラーになることを検証する。</summary>
@@ -221,8 +225,8 @@ public class ErrorScenarioTests
 
         // 500円を要求（在庫金額はあるが、組み合わせがない）
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(500));
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCodeExtended.ShouldBe((int)ErrorCode.OverDispense);
     }
 
     /// <summary>インベントリに登録されていない不正な金種を DispenseCash で要求した際、ErrorCode.Illegal が発生することを検証する。</summary>

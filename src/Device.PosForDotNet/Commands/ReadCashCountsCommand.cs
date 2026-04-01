@@ -1,0 +1,42 @@
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using Microsoft.PointOfService;
+
+namespace CashChangerSimulator.Device.PosForDotNet.Commands;
+
+/// <summary>在庫読み取り操作をカプセル化するコマンド。</summary>
+public class ReadCashCountsCommand : IUposCommand
+{
+    private readonly Inventory _inventory;
+    private readonly string _currencyCode;
+    private readonly decimal _currencyFactor;
+
+    public ReadCashCountsCommand(Inventory inventory, string currencyCode, decimal currencyFactor)
+    {
+        _inventory = inventory;
+        _currencyCode = currencyCode;
+        _currencyFactor = currencyFactor;
+    }
+
+    public CashCounts Result { get; private set; }
+
+    public void Execute()
+    {
+        var sorted = _inventory.AllCounts
+            .Where(kv => kv.Key.CurrencyCode == _currencyCode)
+            .OrderBy(kv => kv.Key.Type)
+            .ThenBy(kv => kv.Key.Value);
+
+        var list = sorted
+            .Select(kv => CashCountAdapter.ToCashCount(kv.Key, kv.Value, _currencyFactor))
+            .ToList();
+
+        Result = new CashCounts([.. list], _inventory.HasDiscrepancy);
+    }
+
+    public void Verify(IUposMediator mediator)
+    {
+        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
+    }
+}

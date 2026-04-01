@@ -1,5 +1,11 @@
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Device.Lifecycle;
+using CashChangerSimulator.Device.PosForDotNet.Lifecycle;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;
 using Shouldly;

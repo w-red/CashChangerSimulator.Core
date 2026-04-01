@@ -1,3 +1,8 @@
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -5,7 +10,7 @@ using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -41,9 +46,9 @@ public class DispenseControllerTests
         _hw.SetConnected(false);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<PosControlException>(() => 
-            _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
-        ex.ErrorCode.ShouldBe(ErrorCode.Closed);
+        var ex = await Should.ThrowAsync<DeviceException>(() => 
+            _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
 
     /// <summary>ハードウェア障害（ジャム）が発生している状態で出金を試みた場合に E_FAILURE がスローされることを検証します。</summary>
@@ -54,9 +59,9 @@ public class DispenseControllerTests
         _hw.SetJammed(true);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<PosControlException>(() => 
-            _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
-        ex.ErrorCode.ShouldBe(ErrorCode.Failure);
+        var ex = await Should.ThrowAsync<DeviceException>(() => 
+            _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Failure);
     }
 
     /// <summary>在庫不足（InsufficientCash）時に E_EXT (OverDispense) が正しく報告されることを検証します。</summary>
@@ -67,21 +72,21 @@ public class DispenseControllerTests
         _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new InsufficientCashException("Shortage"));
 
-        ErrorCode capturedError = ErrorCode.Success;
+        DeviceErrorCode capturedError = DeviceErrorCode.Success;
         int capturedExtended = 0;
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<PosControlException>(() => 
-            _controller.DispenseChangeAsync(100, false, (e, ext) => 
+        var ex = await Should.ThrowAsync<DeviceException>(() => 
+            _controller.DispenseChangeAsync((int)100, false, (e, ext) => 
             {
                 capturedError = e;
                 capturedExtended = ext;
             }));
 
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCodeExtended.ShouldBe((int)ErrorCode.OverDispense);
         
-        capturedError.ShouldBe(ErrorCode.Extended);
+        capturedError.ShouldBe(DeviceErrorCode.Extended);
         capturedExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
     }
@@ -99,7 +104,7 @@ public class DispenseControllerTests
         bool completed = false;
         
         // Act
-        await _controller.DispenseCashAsync(counts, false, (e, ext) => 
+        await _controller.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false, (e, ext) => 
         {
             e.ShouldBe(ErrorCode.Success);
             completed = true;
@@ -120,13 +125,13 @@ public class DispenseControllerTests
         _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
             .Returns(async (CancellationToken t) => await Task.Delay(1000, t));
 
-        _ = _controller.DispenseChangeAsync(100, true, (e, ex) => { });
+        _ = _controller.DispenseChangeAsync((int)100, true, (e, ex) => { });
         await Task.Delay(50, TestContext.Current.CancellationToken); // Give it a bit of time to start
 
         // Act & Assert
         _controller.IsBusy.ShouldBeTrue();
-        await Should.ThrowAsync<PosControlException>(() => 
-            _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
+        await Should.ThrowAsync<DeviceException>(() => 
+            _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
     }
 
     /// <summary>オーバーラップ処理中に新たな出金要求が来た場合に E_FAILURE がスローされることを検証します。</summary>
@@ -137,9 +142,9 @@ public class DispenseControllerTests
         _hw.SetOverlapped(true);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<PosControlException>(() => 
-            _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
-        ex.ErrorCode.ShouldBe(ErrorCode.Failure);
+        var ex = await Should.ThrowAsync<DeviceException>(() => 
+            _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Failure);
     }
 
     /// <summary>ClearOutput 呼び出しにより、実行中の出金処理がキャンセルされることを検証します。</summary>
@@ -158,7 +163,7 @@ public class DispenseControllerTests
                 catch (OperationCanceledException) { wasCanceled = true; throw; }
             });
 
-        _ = _controller.DispenseChangeAsync(100, true, (e, ex) => { });
+        _ = _controller.DispenseChangeAsync((int)100, true, (e, ex) => { });
         
         // Wait until we are inside the simulator method
         await tcs.Task;
@@ -182,13 +187,13 @@ public class DispenseControllerTests
         _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new InvalidOperationException("Unexpected"));
 
-        ErrorCode capturedError = ErrorCode.Success;
+        DeviceErrorCode capturedError = DeviceErrorCode.Success;
 
         // Act & Assert
-        await Should.ThrowAsync<PosControlException>(() => 
-            _controller.DispenseChangeAsync(100, false, (e, ext) => capturedError = e));
+        await Should.ThrowAsync<DeviceException>(() => 
+            _controller.DispenseChangeAsync((int)100, false, (e, ext) => capturedError = e));
         
-        capturedError.ShouldBe(ErrorCode.Failure);
+        capturedError.ShouldBe(DeviceErrorCode.Failure);
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
     }
 
@@ -200,7 +205,7 @@ public class DispenseControllerTests
         _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new Exception("Fail"));
 
-        await Should.ThrowAsync<PosControlException>(() => _controller.DispenseChangeAsync(100, false, (e, ex) => { }));
+        await Should.ThrowAsync<DeviceException>(() => _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
 
         // Act
@@ -218,20 +223,20 @@ public class DispenseControllerTests
         _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new PosControlException("Explicit error", ErrorCode.Illegal, 123));
 
-        ErrorCode capturedError = ErrorCode.Success;
+        DeviceErrorCode capturedError = DeviceErrorCode.Success;
         int capturedExtended = 0;
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<PosControlException>(() => 
-            _controller.DispenseChangeAsync(100, false, (e, ext) => 
+        var ex = await Should.ThrowAsync<DeviceException>(() => 
+            _controller.DispenseChangeAsync((int)100, false, (e, ext) => 
             {
                 capturedError = e;
                 capturedExtended = ext;
             }));
         
-        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
         ex.ErrorCodeExtended.ShouldBe(123);
-        capturedError.ShouldBe(ErrorCode.Illegal);
+        capturedError.ShouldBe(DeviceErrorCode.Illegal);
         capturedExtended.ShouldBe(123);
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
     }

@@ -1,10 +1,14 @@
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -70,7 +74,7 @@ public class UposLifecycleTests
     {
         var cc = CreateCashChanger();
         var ex = Should.Throw<PosControlException>(() => cc.BeginDeposit());
-        ex.ErrorCode.ShouldBe(ErrorCode.Closed);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
 
     /// <summary>占有されていない状態で ReadCashCounts を呼び出すと例外がスローされることを検証する。</summary>
@@ -79,7 +83,7 @@ public class UposLifecycleTests
     {
         var cc = CreateCashChanger();
         var ex = Should.Throw<PosControlException>(() => cc.ReadCashCounts());
-        ex.ErrorCode.ShouldBe(ErrorCode.Closed);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
 
     /// <summary>デバイスがオープンされる前に占有（Claim）を試みると例外がスローされることを検証する。</summary>
@@ -88,7 +92,7 @@ public class UposLifecycleTests
     {
         var cc = CreateCashChanger();
         var ex = Should.Throw<PosControlException>(() => cc.Claim(1000));
-        ex.ErrorCode.ShouldBe(ErrorCode.Closed);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
 
     /// <summary>正常な Open/Claim シーケンスがエラーなく完了することを検証する。</summary>
@@ -105,7 +109,7 @@ public class UposLifecycleTests
     public void CheckHealthShouldReturnOk()
     {
         var cc = CreateCashChanger();
-        cc.CheckHealth(HealthCheckLevel.Internal).ShouldContain("OK");
+        cc.CheckHealth(DeviceHealthCheckLevel.Internal).ShouldContain("OK");
     }
 
     /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する（NRE回避の確認）。</summary>

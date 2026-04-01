@@ -1,5 +1,9 @@
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 using System;
@@ -46,7 +50,7 @@ public class UposErrorPrecedenceTests
         // Mediator の Claimed, DeviceEnabled は初期値 false
 
         var ex = Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
-        ex.ErrorCode.ShouldBe(ErrorCode.Closed);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
 
     [Fact]
@@ -64,7 +68,7 @@ public class UposErrorPrecedenceTests
         // 自インスタンスでは Claim していない状態
 
         var ex = Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
-        ex.ErrorCode.ShouldBe(ErrorCode.Claimed);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Claimed);
     }
 
     [Fact]
@@ -75,7 +79,7 @@ public class UposErrorPrecedenceTests
         _so.HardwareStatusManager.SetClaimedByAnother(false);
 
         var ex = Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
-        ex.ErrorCode.ShouldBe(ErrorCode.NotClaimed);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.NotClaimed);
     }
 
     [Fact]
@@ -87,7 +91,7 @@ public class UposErrorPrecedenceTests
         _so.DeviceEnabled = false;
 
         var ex = Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
-        ex.ErrorCode.ShouldBe(ErrorCode.Disabled);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Disabled);
     }
 
     [Fact]

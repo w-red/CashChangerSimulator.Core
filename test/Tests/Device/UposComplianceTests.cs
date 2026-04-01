@@ -1,7 +1,11 @@
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device.Coordination;
-using CashChangerSimulator.Device.Facades;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
 using Moq;
 using Shouldly;
 using CashChangerSimulator.Core.Transactions;

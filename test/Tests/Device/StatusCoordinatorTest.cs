@@ -1,11 +1,15 @@
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 
@@ -32,8 +36,8 @@ public class StatusCoordinatorTest
         var calculator = new ChangeCalculator();
         var manager = new CashChangerManager(inventory, history, calculator);
 
-        DepositController = new DepositController(inventory);
-        _dispenseController = new DispenseController(manager);
+        DepositController = new DepositController(inventory, HardwareStatusManager, manager);
+        _dispenseController = new DispenseController(manager, HardwareStatusManager);
     }
 
     /// <summary>ジャム状態が変化した際に適切なステータス更新イベントが発生することを確認します。</summary>

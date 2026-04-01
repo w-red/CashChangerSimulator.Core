@@ -1,6 +1,10 @@
-using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -49,7 +53,7 @@ public class RepayDepositTests
         simulator.DepositAmount.ShouldBe(1000);
 
         simulator.FixDeposit();
-        simulator.EndDeposit(CashDepositAction.Repay);
+        simulator.EndDeposit(DepositAction.Repay);
 
         // Verify state after Repay
         simulator.DepositAmount.ShouldBe(0);

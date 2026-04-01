@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="Microsoft.PointOfService">
+            <HintPath>..\..\libs\POSforNET\Microsoft.PointOfService.dll</HintPath>
+        </Reference>
+        <Reference Include="Microsoft.PointOfService.ControlBase">
+            <HintPath>..\..\libs\POSforNET\Microsoft.PointOfService.ControlBase.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Core\CashChangerSimulator.Core.csproj" />
+        <ProjectReference Include="..\Device\CashChangerSimulator.Device.csproj" />
+        <ProjectReference Include="..\Device.Virtual\CashChangerSimulator.Device.Virtual.csproj" />
+    </ItemGroup>
+
+</Project>

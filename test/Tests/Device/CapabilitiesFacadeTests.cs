@@ -1,5 +1,10 @@
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Device.Facades;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;

@@ -1,8 +1,12 @@
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Commands;
-using CashChangerSimulator.Device.Coordination;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet.Commands;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -32,7 +36,7 @@ public class CommandTests
         
         _hardware.SetJammed(true);
         var ex = Should.Throw<PosControlException>(() => cmd.Execute());
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
     }
 
     /// <summary>デバイスがジャム状態の時に DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
@@ -47,7 +51,7 @@ public class CommandTests
 
         _hardware.SetJammed(true);
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
     }
 
     /// <summary>入金処理中の際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
@@ -63,7 +67,7 @@ public class CommandTests
         var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
-        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
     /// <summary>未登録の金種が指定された際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
@@ -75,7 +79,7 @@ public class CommandTests
         var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
-        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
     /// <summary>在庫不足の際、DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
@@ -89,6 +93,6 @@ public class CommandTests
         var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
     }
 }

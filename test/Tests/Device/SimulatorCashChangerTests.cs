@@ -1,4 +1,9 @@
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -16,7 +21,7 @@ public class SimulatorCashChangerTests
         var changer = new InternalSimulatorCashChanger();
         
         // Assert
-        changer.State.ShouldBe(ControlState.Closed);
+        changer.State.ShouldBe(DeviceControlState.Closed);
         changer.Claimed.ShouldBeFalse();
         changer.DeviceEnabled.ShouldBeFalse();
     }
@@ -31,7 +36,7 @@ public class SimulatorCashChangerTests
 
         // Act & Assert: Open
         changer.Open();
-        changer.State.ShouldBe(ControlState.Idle);
+        changer.State.ShouldBe(DeviceControlState.Idle);
 
         // Act & Assert: Claim
         changer.Claim(1000);
@@ -51,7 +56,7 @@ public class SimulatorCashChangerTests
 
         // Act & Assert: Close
         changer.Close();
-        changer.State.ShouldBe(ControlState.Closed);
+        changer.State.ShouldBe(DeviceControlState.Closed);
     }
 
     /// <summary>各種 Capability プロパティが設定ファイルの内容を正しく反映していることを検証します。</summary>
@@ -139,7 +144,7 @@ public class SimulatorCashChangerTests
         changer.DeviceEnabled = true;
 
         // Act & Assert: CheckHealth
-        var health = changer.CheckHealth(HealthCheckLevel.Internal);
+        var health = changer.CheckHealth(DeviceHealthCheckLevel.Internal);
         health.ShouldContain("Internal Health Check Report");
         health.ShouldContain("Status: OK");
         changer.CheckHealthText.ShouldBe(health);

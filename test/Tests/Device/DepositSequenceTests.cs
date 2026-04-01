@@ -1,9 +1,14 @@
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
+using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using R3;
 using Shouldly;
@@ -87,7 +92,7 @@ public class DepositSequenceTests
         controller.FixDeposit();
 
         // Repay: 入金された現金を全額返却
-        controller.EndDeposit(CashDepositAction.Repay);
+        controller.EndDeposit(DepositAction.Repay);
 
         controller.DepositStatus.ShouldBe(CashDepositStatus.End);
         inventory.GetCount(b1000).ShouldBe(0); // 在庫から消える（返却）
@@ -137,7 +142,7 @@ public class DepositSequenceTests
 
         var ex = Should.Throw<PosControlException>(() =>
             controller.EndDeposit(CashDepositAction.NoChange));
-        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
     /// <summary>beginDepositを呼ばずにfixDepositを実行した際にErrorCode.Illegalがスローされることを検証する。</summary>
@@ -148,7 +153,7 @@ public class DepositSequenceTests
 
         var ex = Should.Throw<PosControlException>(() =>
             controller.FixDeposit());
-        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
     /// <summary>入金シーケンスの各段階でIsDepositInProgressフラグが正しく更新されることを検証する。</summary>
@@ -222,7 +227,7 @@ public class DepositSequenceTests
 
         // Act & Assert
         var ex = Should.Throw<PosControlException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)));
-        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
     }
 
     /// <summary>入金中にリジェクトイベント（SimulateReject）が発生した際、リジェクト金額が加算され、Changedイベントが発火することを検証する。</summary>
@@ -304,7 +309,7 @@ public class DepositSequenceTests
         controller.BeginDeposit();
         controller.TrackDeposit(b1000);
         controller.FixDeposit();
-        controller.EndDeposit(CashDepositAction.Repay);
+        controller.EndDeposit(DepositAction.Repay);
 
         inventory.GetCount(b1000).ShouldBe(0);
         inventory.EscrowCounts.ShouldBeEmpty();

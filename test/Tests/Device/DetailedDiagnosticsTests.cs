@@ -1,4 +1,9 @@
+using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -22,7 +27,7 @@ public class DetailedDiagnosticsTests
     {
         var simulator = CreateSimulator();
         
-        var report = simulator.CheckHealth(HealthCheckLevel.Internal);
+        var report = simulator.CheckHealth(DeviceHealthCheckLevel.Internal);
         
         report.ShouldContain("Internal Health Check");
         report.ShouldContain("Inventory: OK");
@@ -35,7 +40,7 @@ public class DetailedDiagnosticsTests
     {
         var simulator = CreateSimulator();
         
-        var report = simulator.CheckHealth(HealthCheckLevel.External);
+        var report = simulator.CheckHealth(DeviceHealthCheckLevel.External);
         
         report.ShouldContain("External Health Check");
         report.ShouldContain("Hardware: Connected");
@@ -63,7 +68,7 @@ public class DetailedDiagnosticsTests
     public void DirectIOGetDiagnosticLogShouldReturnReport()
     {
         var simulator = CreateSimulator();
-        simulator.CheckHealth(HealthCheckLevel.Internal);
+        simulator.CheckHealth(DeviceHealthCheckLevel.Internal);
         
         var result = simulator.DirectIO(1002, 0, "");
         
