@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Core/CashChangerSimulator.Core.csproj" />
+    <Project Path="src/Device/CashChangerSimulator.Device.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Tests/CashChangerSimulator.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="config.toml" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>
