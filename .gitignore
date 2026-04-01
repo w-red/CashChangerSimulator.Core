@@ -482,6 +482,7 @@ $RECYCLE.BIN/
 *.swp
 coveragereport/
 .antigravity/
+.gemini/
 LocalSettings/
 AGENTS.md
 .agent/

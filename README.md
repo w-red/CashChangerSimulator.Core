@@ -1,49 +1,52 @@
-# CashChanger Simulator
+# CashChanger Simulator - Core
 
-A WPF-based cash changer simulator that emulates UnifiedPOS (UPOS) standard operations. Designed to support testing and debugging of POS applications.
+This repository contains the core logic and hardware device emulation for the CashChanger Simulator. It is designed as a modular foundational component that powers various user interfaces.
 
-## 🚀 Live Demo / Simulator URL
+## 📦 Repositories in this Project
 
-The Virtual Cash Changer API is now available on Google Cloud Run for testing without local setup:
+This project is split into several modular repositories:
+
+- **[CashChangerSimulator.Core](https://github.com/w-red/CashChangerSimulator.Core)** (This Repo): Core business logic, UPOS/OPOS emulation, and hardware-backed services.
+- **[CashChangerSimulator.UI.Wpf](https://github.com/w-red/CashChangerSimulator.UI.Wpf)**: Modern WPF-based graphical user interface.
+- **[CashChangerSimulator.UI.Cli](https://github.com/w-red/CashChangerSimulator.UI.Cli)**: Command-line interface for automation and lightweight monitoring.
+
+---
+
+## 🚀 Live Demo / Simulator API
+
+The Virtual Cash Changer API is available on Google Cloud Run for testing without local setup:
 
 - **Base URL**: [https://cash-changer-api-904915502524.asia-northeast1.run.app](https://cash-changer-api-904915502524.asia-northeast1.run.app)
 - **Interactive Documentation (Scalar)**: [View API Reference](https://cash-changer-api-904915502524.asia-northeast1.run.app/scalar/v1)
 
 ---
 
-## Key Features
+## Key Features (Core logic)
 
 - **UPOS Compliant Behavior**: Emulates `DispenseChange`, `DispenseCash`, and the full deposit cycle (`BeginDeposit` to `EndDeposit`).
 - **Multi-Currency Support**: Configurable denominations for various currencies (e.g., JPY, USD).
-- **Real-Time Feed**: Provides immediate visual feedback for all cash events, status changes, and errors.
-- **Discrepancy Simulation**: Explicitly simulate inventory discrepancy states for robust exception handling testing.
-- **Scripted Automation**: Execute complex scenarios via JSON-based automation scripts.
+- **Service Object Implementation**: Includes a POS for .NET compatible Service Object for the simulator.
+- **Inventory & Transaction Logic**: Robust state management for cash inventory and deposit tracking.
 
 ## Setup
 
 ### Prerequisites
 
 - .NET 10.0 SDK
-- Windows OS (Required for WPF)
 
-### Build and Run
-
-1. Clone or download the repository.
-2. Open a terminal in the root directory and run:
+### Build
 
 ```powershell
-# Build the project
+# Build the core library and device simulator
 dotnet build
-
-# Run the simulator UI
-dotnet run --project src/CashChangerSimulator.UI.Wpf/CashChangerSimulator.UI.Wpf.csproj
 ```
 
-### Running Tests
+### Publishing for Local Use (NuGet)
+
+To use these libraries in your UI projects, pack and publish them to a local NuGet source:
 
 ```powershell
-# Run all unit, integration, and UI tests
-dotnet test
+./scripts/publish_local.ps1
 ```
 
 ## Documentation
@@ -53,9 +56,6 @@ For more detailed information, please refer to the documents in the `docs/` dire
 - [Architecture Overview](docs/Architecture.md): High-level system design.
 - [UPOS Compliance Mapping](docs/UposComplianceMapping.md): Status of UPOS interface implementation.
 - [OPOS Compliance Mapping](docs/OposComplianceMapping.md): Mapping of OPOS error codes and result codes.
-- [Operating Instructions (GUI)](docs/ApplicationOperatingInstructions.md): Guide for manual GUI operations.
-- [Operating Instructions (CLI)](docs/CliOperatingInstructions.md)
-- [POS Mode Operation Guide](docs/PosModeApplicationOperatingInstructions.md): Guide for POS integration and error scenario testing.
 
 ---
 *For the Japanese version, see [README_JP.md](README_JP.md).*
