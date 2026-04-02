@@ -18,6 +18,7 @@ public class Inventory : IReadOnlyInventory
     private readonly Dictionary<DenominationKey, int> _rejectCounts = [];
     private readonly Dictionary<DenominationKey, int> _escrowCounts = [];
     private readonly Subject<DenominationKey> _changed = new();
+    private readonly object _lock = new();
 
     /// <inheritdoc/>
     public virtual Observable<DenominationKey> Changed => _changed;
@@ -28,21 +29,21 @@ public class Inventory : IReadOnlyInventory
     /// <remarks>通常、回収庫またはリジェクト庫に現金がある場合に不一致と見なされます。手動での設定も可能です。</remarks>
     public virtual bool HasDiscrepancy
     {
-        get => _isForcedDiscrepancy || _collectionCounts.Values.Any(v => v > 0) || _rejectCounts.Values.Any(v => v > 0);
-        set => _isForcedDiscrepancy = value;
+        get { lock (_lock) return _isForcedDiscrepancy || _collectionCounts.Values.Any(v => v > 0) || _rejectCounts.Values.Any(v => v > 0); }
+        set { lock (_lock) _isForcedDiscrepancy = value; }
     }
 
     /// <summary>通常庫（リサイクル可能）の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => _counts;
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts { get { lock (_lock) return _counts.ToArray(); } }
 
     /// <summary>回収庫（オーバーフロー等）の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts => _collectionCounts;
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts { get { lock (_lock) return _collectionCounts.ToArray(); } }
 
     /// <summary>リジェクト庫（汚損等）の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts => _rejectCounts;
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts { get { lock (_lock) return _rejectCounts.ToArray(); } }
     
     /// <summary>入金トレイ（エスクロー）の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts => _escrowCounts;
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts { get { lock (_lock) return _escrowCounts.ToArray(); } }
 
     /// <summary>指定された金種の枚数を追加します。</summary>
     /// <remarks>
@@ -68,7 +69,10 @@ public class Inventory : IReadOnlyInventory
             _logger.ZLogWarning($"Inventory.SetCount: Ignoring negative count {count} for {key}");
             return;
         }
-        _counts[key] = count;
+        lock (_lock)
+        {
+            _counts[key] = count;
+        }
         _changed.OnNext(key);
     }
 
@@ -93,8 +97,12 @@ public class Inventory : IReadOnlyInventory
     /// <summary>入金トレイ（エスクロー）をクリアします。</summary>
     public virtual void ClearEscrow()
     {
-        var keys = _escrowCounts.Keys.ToList();
-        _escrowCounts.Clear();
+        List<DenominationKey> keys;
+        lock (_lock)
+        {
+            keys = _escrowCounts.Keys.ToList();
+            _escrowCounts.Clear();
+        }
         foreach (var key in keys)
         {
             _changed.OnNext(key);
@@ -106,7 +114,10 @@ public class Inventory : IReadOnlyInventory
     public virtual int GetCount(DenominationKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        return _counts.GetValueOrDefault(NormalizeKey(key));
+        lock (_lock)
+        {
+            return _counts.GetValueOrDefault(NormalizeKey(key));
+        }
     }
 
     /// <summary>全庫（還流・回収・リジェクト）の合計枚数を取得します。</summary>
@@ -114,47 +125,59 @@ public class Inventory : IReadOnlyInventory
     {
         ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
-        return _counts.GetValueOrDefault(key, 0) +
-               _collectionCounts.GetValueOrDefault(key, 0) +
-               _rejectCounts.GetValueOrDefault(key, 0) +
-               _escrowCounts.GetValueOrDefault(key, 0);
+        lock (_lock)
+        {
+            return _counts.GetValueOrDefault(key, 0) +
+                   _collectionCounts.GetValueOrDefault(key, 0) +
+                   _rejectCounts.GetValueOrDefault(key, 0) +
+                   _escrowCounts.GetValueOrDefault(key, 0);
+        }
     }
 
     /// <summary>在庫をすべてクリアします。</summary>
     public void Clear()
     {
-        _counts.Clear();
-        _collectionCounts.Clear();
-        _rejectCounts.Clear();
-        _escrowCounts.Clear();
+        lock (_lock)
+        {
+            _counts.Clear();
+            _collectionCounts.Clear();
+            _rejectCounts.Clear();
+            _escrowCounts.Clear();
+        }
     }
 
     /// <summary>現在の在庫の合計金額を計算します。</summary>
     /// <remarks>通常庫、回収庫、リジェクト庫のすべての合計を計算します。</remarks>
     public virtual decimal CalculateTotal(string? currencyCode = null)
     {
-        return new[] { _counts, _collectionCounts, _rejectCounts, _escrowCounts }
-            .SelectMany(d => d)
-            .Where(kv => currencyCode == null || kv.Key.CurrencyCode == currencyCode)
-            .Sum(kv => kv.Key.Value * kv.Value);
+        lock (_lock)
+        {
+            return new[] { _counts, _collectionCounts, _rejectCounts, _escrowCounts }
+                .SelectMany(d => d)
+                .Where(kv => currencyCode == null || kv.Key.CurrencyCode == currencyCode)
+                .Sum(kv => kv.Key.Value * kv.Value);
+        }
     }
 
     /// <summary>現在の在庫を保存用のデータ形式に変換します。</summary>
     public Dictionary<string, int> ToDictionary()
     {
-        var result = _counts.ToDictionary(
-            kv => $"{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}",
-            kv => kv.Value
-        );
-        foreach (var kv in _collectionCounts)
+        lock (_lock)
         {
-            result[$"COL:{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}"] = kv.Value;
+            var result = _counts.ToDictionary(
+                kv => $"{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}",
+                kv => kv.Value
+            );
+            foreach (var kv in _collectionCounts)
+            {
+                result[$"COL:{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}"] = kv.Value;
+            }
+            foreach (var kv in _rejectCounts)
+            {
+                result[$"REJ:{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}"] = kv.Value;
+            }
+            return result;
         }
-        foreach (var kv in _rejectCounts)
-        {
-            result[$"REJ:{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}"] = kv.Value;
-        }
-        return result;
     }
 
     /// <summary>文字列キーのディクショナリから在庫を復元します。</summary>
@@ -219,20 +242,24 @@ public class Inventory : IReadOnlyInventory
         key = NormalizeKey(key);
         if (count == 0) return;
 
-        var current = bucket.GetValueOrDefault(key, 0);
-        var next = Math.Max(0, current + count);
-        if (current + count < 0)
+        int next;
+        lock (_lock)
         {
-            _logger.ZLogWarning($"{methodName}: Resulting count for {key} is negative ({current + count}). Setting to 0.");
-        }
+            var current = bucket.GetValueOrDefault(key, 0);
+            next = Math.Max(0, current + count);
+            if (current + count < 0)
+            {
+                _logger.ZLogWarning($"{methodName}: Resulting count for {key} is negative ({current + count}). Setting to 0.");
+            }
 
-        bucket[key] = next;
+            bucket[key] = next;
+        }
         _changed.OnNext(key);
         _logger.ZLogDebug($"{methodName} finished. New Total: {CalculateTotal()}");
     }
 
     private static DenominationKey NormalizeKey(DenominationKey key) =>
-        string.IsNullOrEmpty(key.CurrencyCode)
+        (key.CurrencyCode == null || key.CurrencyCode == string.Empty)
             ? key with { CurrencyCode = DenominationKey.DefaultCurrencyCode }
             : key;
 }

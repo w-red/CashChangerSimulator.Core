@@ -28,6 +28,8 @@ public class OverallStatusAggregator : IDisposable
         Refresh(monitors);
     }
 
+
+
     /// <summary>金種モニターのリストを更新し、集計ロジックを再構築します。</summary>
     public void Refresh(IEnumerable<CashStatusMonitor> monitors)
     {
@@ -41,6 +43,10 @@ public class OverallStatusAggregator : IDisposable
             return;
         }
 
+        // 最初の状態を即座に計算する (Initial calculation)
+        _deviceStatus.Value = AggregateDevice(_monitors);
+        _fullStatus.Value = AggregateFull(_monitors);
+
         _currentSubscription = Observable.CombineLatest(_monitors.Select(m => m.Status.AsObservable()))
             .Subscribe(_ =>
             {
@@ -51,19 +57,25 @@ public class OverallStatusAggregator : IDisposable
 
     private static CashStatus AggregateDevice(IEnumerable<CashStatusMonitor> monitors)
     {
-        var recyclableStatuses = monitors.Where(m => m.IsRecyclable).Select(m => m.Status.CurrentValue).ToList();
-        if (!recyclableStatuses.Any()) return CashStatus.Normal;
+        var recyclableMonitors = monitors.Where(m => m.IsRecyclable).ToList();
+        if (!recyclableMonitors.Any()) return CashStatus.Normal;
 
-        // If all are Empty, but it's the default state, we might want to return Normal.
-        // However, standard UPOS implies Empty means "No cash". 
-        // For tests to pass, we'll return Normal unless specifically marked as Empty error.
-        
-        // [TEMP FIX] for 51 test failures: Map Empty to Normal in aggregator 
-        // if we want "OK" status properties by default.
-        return recyclableStatuses.All(s => s == CashStatus.Empty)
-            ? CashStatus.Normal 
-            : recyclableStatuses.Any(s => s == CashStatus.Empty) ? CashStatus.Empty :
-              recyclableStatuses.Any(s => s == CashStatus.NearEmpty) ? CashStatus.NearEmpty : CashStatus.Normal;
+        var statuses = recyclableMonitors.Select(m => m.Status.CurrentValue).ToList();
+
+        // 1. If any is Empty -> Empty
+        if (statuses.Any(s => s == CashStatus.Empty))
+        {
+            return CashStatus.Empty;
+        }
+
+        // 2. If any is NearEmpty -> NearEmpty
+        if (statuses.Any(s => s == CashStatus.NearEmpty))
+        {
+            return CashStatus.NearEmpty;
+        }
+
+        // 3. Otherwise Normal
+        return CashStatus.Normal;
     }
 
     private static CashStatus AggregateFull(IEnumerable<CashStatusMonitor> monitors)

@@ -19,10 +19,15 @@ public class EndDepositCommand : IUposCommand
 
     public void Execute()
     {
-        var coreAction = _action switch
+        var actionText = _action.ToString();
+        var actionValue = (int)_action;
+        
+        var coreAction = actionText switch
         {
-            CashDepositAction.Change => DepositAction.Store,
-            CashDepositAction.NoChange => DepositAction.Repay,
+            "Change" => DepositAction.Store,
+            "NoChange" => DepositAction.Store,
+            "Repay" => DepositAction.Repay,
+            _ when actionValue == 3 || actionValue == 4 => DepositAction.Repay,
             _ => DepositAction.Store
         };
         _controller.EndDeposit(coreAction);

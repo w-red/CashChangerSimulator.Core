@@ -79,7 +79,13 @@ public class DepositFacade(
     }
 
     /// <summary>現在の入金処理の状態を取得します。</summary>
-    public CashDepositStatus DepositStatus => (CashDepositStatus)depositController.DepositStatus;
+    public CashDepositStatus DepositStatus => depositController.DepositStatus switch
+    {
+        DeviceDepositStatus.Counting => (CashDepositStatus)1, // STATUS_DEPOSIT_COUNTING
+        DeviceDepositStatus.Validation => (CashDepositStatus)3, // Specific to this simulator
+        DeviceDepositStatus.End => (CashDepositStatus)2, // STATUS_DEPOSIT_END
+        _ => CashDepositStatus.None // 0 (None)
+    };
 
     /// <summary>入金処理が進行中かどうかを取得します。</summary>
     public bool IsDepositInProgress => depositController.IsDepositInProgress;

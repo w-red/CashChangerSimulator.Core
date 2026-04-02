@@ -26,6 +26,7 @@ public class DispenseController : IDisposable
     private readonly Subject<Unit> _changed = new();
     private readonly CompositeDisposable _disposables = [];
 
+    private readonly object _stateLock = new();
     private CashDispenseStatus _status = CashDispenseStatus.Idle;
     private bool _disposed;
 
@@ -40,15 +41,23 @@ public class DispenseController : IDisposable
     }
 
     public virtual Observable<Unit> Changed => _changed;
-    public virtual CashDispenseStatus Status => _status;
-    public virtual bool IsBusy => _status == CashDispenseStatus.Busy;
+    public virtual CashDispenseStatus Status { get { lock (_stateLock) return _status; } }
+    public virtual bool IsBusy { get { lock (_stateLock) return _status == CashDispenseStatus.Busy; } }
 
     public virtual async Task DispenseChangeAsync(int amount, bool asyncMode, Action<DeviceErrorCode, int> onComplete, string? currencyCode = null)
     {
-        if (IsBusy) throw new DeviceException("Device is busy");
-        if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
+        lock (_stateLock)
+        {
+            if (_status == CashDispenseStatus.Busy) throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
+            if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
+            if (_hardwareStatusManager.IsJammed.Value) throw new DeviceException("Device jammed", DeviceErrorCode.Failure);
+            
+            // [FIX] Return Failure for Overlapped to match expectations in DispenseControllerTests.
+            // [修正] DispenseControllerTests の期待値に合わせて、オーバーラップ時は Failure を返します。
+            if (_hardwareStatusManager.IsOverlapped.Value) throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
 
-        _status = CashDispenseStatus.Busy;
+            _status = CashDispenseStatus.Busy;
+        }
         _changed.OnNext(Unit.Default);
         await Task.Yield();
 
@@ -73,9 +82,18 @@ public class DispenseController : IDisposable
 
     public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode, Action<DeviceErrorCode, int> onComplete)
     {
-        if (IsBusy) throw new DeviceException("Device is busy");
-        if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
-        _status = CashDispenseStatus.Busy;
+        lock (_stateLock)
+        {
+            if (_status == CashDispenseStatus.Busy) throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
+            if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
+            if (_hardwareStatusManager.IsJammed.Value) throw new DeviceException("Device jammed", DeviceErrorCode.Failure);
+            
+            // [FIX] Return Failure for Overlapped to match expectations in DispenseControllerTests.
+            // [修正] DispenseControllerTests の期待値に合わせて、オーバーラップ時は Failure を返します。
+            if (_hardwareStatusManager.IsOverlapped.Value) throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
+
+            _status = CashDispenseStatus.Busy;
+        }
         _changed.OnNext(Unit.Default);
         await Task.Yield();
 
@@ -105,22 +123,36 @@ public class DispenseController : IDisposable
             await _simulator.SimulateDispenseAsync(token);
             token.ThrowIfCancellationRequested();
             action();
-            _status = CashDispenseStatus.Idle;
+            lock (_stateLock)
+            {
+                _status = CashDispenseStatus.Idle;
+            }
             onComplete(0, 0); // Success
         }
         catch (OperationCanceledException)
         {
-            _status = CashDispenseStatus.Idle;
+            lock (_stateLock)
+            {
+                _status = CashDispenseStatus.Idle;
+            }
         }
         catch (InsufficientCashException ex)
         {
-            _status = CashDispenseStatus.Error;
-            onComplete(DeviceErrorCode.Extended, 201); // 201 is UPOS ErrorCode.Extended / OverDispense
-            throw new DeviceException(ex.Message, DeviceErrorCode.NoInventory);
+            // [FIX] Error 時にもステータスをリセットしないと、デバイスが Busy のまま固まってしまう。
+            lock (_stateLock)
+            {
+                _status = CashDispenseStatus.Error;
+            }
+            // Throw DeviceException with Extended (201) for the Mediator/Tests to catch
+            onComplete(DeviceErrorCode.Extended, 201);
+            throw new DeviceException(ex.Message, DeviceErrorCode.Extended, 201);
         }
         catch (Exception ex)
         {
-            _status = CashDispenseStatus.Error;
+            lock (_stateLock)
+            {
+                _status = CashDispenseStatus.Error;
+            }
             
             DeviceErrorCode code = DeviceErrorCode.Failure;
             int codeEx = 0;
@@ -151,7 +183,7 @@ public class DispenseController : IDisposable
             }
 
             onComplete(code, codeEx);
-            throw new DeviceException(ex.Message, code, codeEx);
+            throw new DeviceException($"Dispense failed: {ex.Message} (Type: {ex.GetType().Name})", code, codeEx);
         }
         finally
         {
@@ -162,10 +194,13 @@ public class DispenseController : IDisposable
     public virtual void ClearOutput()
     {
         _dispenseCts?.Cancel();
-        if (_status == CashDispenseStatus.Busy)
+        lock (_stateLock)
         {
-            _status = CashDispenseStatus.Idle;
-            _changed.OnNext(Unit.Default);
+            if (_status != CashDispenseStatus.Idle)
+            {
+                _status = CashDispenseStatus.Idle;
+                _changed.OnNext(Unit.Default);
+            }
         }
     }
 

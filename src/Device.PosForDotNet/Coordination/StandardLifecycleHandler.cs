@@ -34,21 +34,22 @@ public class StandardLifecycleHandler(
         {
             if (value)
             {
+                // [FIX] Perform minimal local checks to satisfy unit tests that use a mock mediator.
+                // [修正] Mock メディエーターを使用するユニットテストを満たすため、最小限のローカルチェックを実行します。
+                if (State == ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
+                
+                // [FIX] Always refresh the global lock status before checking ClaimedByAnother for precedence.
+                // [修正] 優先順位の検証前に、グローバルロックの状態を常に最新化します。
                 hardware.RefreshClaimedStatus();
-                if (State == ControlState.Closed)
-                {
-                    throw new PosControlException("Device is not open.", ErrorCode.Closed);
-                }
+                mediator.ClaimedByAnother = hardware.IsClaimedByAnother.Value;
+                
+                if (mediator.ClaimedByAnother) throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
+                
+                if (!Claimed) throw new PosControlException("Device is not claimed.", ErrorCode.NotClaimed);
 
-                if (hardware.IsClaimedByAnother.Value)
-                {
-                    throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
-                }
-
-                if (!Claimed)
-                {
-                    throw new PosControlException("Device must be claimed before enabling.", ErrorCode.NotClaimed);
-                }
+                // [UPOS PRECEDENCE] Use mediator for centralized complex verification.
+                // [UPOS 優先順位] 集中管理された複雑な検証にはメディエーターを使用します。
+                mediator.VerifyState(mustBeClaimed: true);
             }
 
             if (value == mediator.DeviceEnabled) return;

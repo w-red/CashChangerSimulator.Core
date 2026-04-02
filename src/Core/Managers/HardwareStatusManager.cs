@@ -100,7 +100,9 @@ public class HardwareStatusManager : IDisposable
     public bool RefreshClaimedStatus()
     {
         if (_disposed) return false;
-        var heldByAnother = _globalLockManager?.IsLockHeldByAnother() ?? false;
+        if (_globalLockManager == null) return _isClaimedByAnother.Value;
+
+        var heldByAnother = _globalLockManager.IsLockHeldByAnother();
         _isClaimedByAnother.Value = heldByAnother;
         return heldByAnother;
     }
@@ -166,8 +168,10 @@ public class HardwareStatusManager : IDisposable
             _isDeviceError.Dispose();
             _isConnected.Dispose();
             _isCollectionBoxRemoved.Dispose();
+            _isClaimedByAnother.Dispose();
             _currentErrorCode.Dispose();
             _currentErrorCodeExtended.Dispose();
+            _globalLockManager?.Dispose();
         }
         _disposed = true;
     }
