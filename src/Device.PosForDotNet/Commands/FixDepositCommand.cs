@@ -26,32 +26,6 @@ public class FixDepositCommand : IUposCommand
     /// </remarks>
     public void Execute()
     {
-        // When RealTimeData is disabled, multiple DataEvents might be queued for buffered updates.
-        // We observe the controller changes during FixDeposit to replicate legacy behavior.
-        // Ensure _mediator is not null and capture it for closure safety.
-        var mediator = _mediator;
-        if (mediator == null)
-        {
-            _controller.FixDeposit();
-            return;
-        }
-
-        var sink = mediator.EventSink;
-        if (sink == null)
-        {
-            _controller.FixDeposit();
-            return;
-        }
-
-        using var subscription = sink.DepositChanged
-            .Subscribe(_ => 
-            {
-                if (sink.DataEventEnabled)
-                {
-                    sink.NotifyEvent(new DataEventArgs(0));
-                }
-            });
-
         _controller.FixDeposit();
     }
 
