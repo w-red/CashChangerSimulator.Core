@@ -43,6 +43,9 @@ public interface IUposMediator
     /// <summary>デバイスが占有（Claim）されているかどうか。</summary>
     bool Claimed { get; set; }
     
+    /// <summary>他者によってデバイスが占有されているかどうか。</summary>
+    bool ClaimedByAnother { get; set; }
+    
     /// <summary>状態検証（VerifyState）をスキップするかどうか。</summary>
     bool SkipStateVerification { get; set; }
 

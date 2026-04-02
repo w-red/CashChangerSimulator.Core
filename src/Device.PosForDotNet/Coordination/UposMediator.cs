@@ -14,7 +14,13 @@ namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 /// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。</summary>
 public class UposMediator : IUposMediator
 {
+    private readonly object _stateLock = new();
     private bool _isBusy;
+    private int _resultCode;
+    private int _resultCodeExtended;
+    private int _asyncResultCode;
+    private int _asyncResultCodeExtended;
+
     private ICashChangerStatusSink? _sink;
     private ILogger? _logger;
     private StatusCoordinator? _coordinator;
@@ -34,77 +40,115 @@ public class UposMediator : IUposMediator
         _hardwareStatusManager = hardwareStatusManager;
     }
 
-    public int ResultCode { get; private set; }
-    public int ResultCodeExtended { get; private set; }
+    public int ResultCode
+    {
+        get { lock (_stateLock) return _resultCode; }
+        private set 
+        { 
+            lock (_stateLock) _resultCode = value; 
+        }
+    }
+
+    public int ResultCodeExtended
+    {
+        get { lock (_stateLock) return _resultCodeExtended; }
+        private set 
+        { 
+            lock (_stateLock) _resultCodeExtended = value; 
+        }
+    }
 
     public bool DeviceEnabled { get; set; }
     public bool DataEventEnabled { get; set; }
     public bool Claimed { get; set; }
+    public bool ClaimedByAnother
+    {
+        get => _sink?.ClaimedByAnother ?? false;
+        set { if (_sink != null) _sink.ClaimedByAnother = value; }
+    }
     public bool IsBusy
     {
-        get => _isBusy;
+        get { lock (_stateLock) return _isBusy; }
         set
         {
-            _isBusy = value;
-            if (_isBusy)
+            lock (_stateLock)
             {
-                ResultCode = (int)ErrorCode.Busy;
-            }
-            else
-            {
-                // When busy is cleared, we assume back to success unless explicitly failed
-                ResultCode = (int)ErrorCode.Success;
+                _isBusy = value;
+                if (_isBusy)
+                {
+                    _resultCode = (int)ErrorCode.Busy;
+                }
+                else
+                {
+                    // When busy is cleared, we assume back to success unless explicitly failed
+                    _resultCode = (int)ErrorCode.Success;
+                }
             }
             _sink?.SetAsyncProcessing(value);
         }
     }
-    public int AsyncResultCode { get; set; }
-    public int AsyncResultCodeExtended { get; set; }
+    public int AsyncResultCode
+    {
+        get { lock (_stateLock) return _asyncResultCode; }
+        set { lock (_stateLock) _asyncResultCode = value; }
+    }
+    public int AsyncResultCodeExtended
+    {
+        get { lock (_stateLock) return _asyncResultCodeExtended; }
+        set { lock (_stateLock) _asyncResultCodeExtended = value; }
+    }
     public bool SkipStateVerification { get; set; }
 
     public IUposEventSink? EventSink => _sink as IUposEventSink;
 
-    /// <inheritdoc/>
+    /// <summary>検証規則に基づき、現在の状態をチェックします。</summary>
+    /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。</remarks>
+    /// <param name="mustBeClaimed">排他占有（Claim）が必要かどうか。</param>
+    /// <param name="mustBeEnabled">デバイス有効化（Enabled）が必要かどうか。</param>
+    /// <param name="mustNotBeBusy">ビジー状態であってはならないかどうか。</param>
     public void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false)
     {
         if (SkipStateVerification) return;
         if (_sink == null) throw new InvalidOperationException("Mediator not initialized.");
 
-        // NOTE: We assume the sink provides the necessary state information.
-        // In this implementation, we use the SO's state if available via cast.
-        if (_sink is not CashChangerBasic so)
+        // [UPOS PRECEDENCE] Mandatory priority: Closed > NotClaimed > Claimed > Disabled > Busy
+        // [UPOS 優先順位] 強制的な優先順位: Closed > NotClaimed > Claimed > Disabled > Busy
+
+        // 1. Closed Check (ErrorCode.Closed)
+        if (_sink.State == ControlState.Closed)
         {
-             // Fallback or simplified check if not a full SO
-             return;
+            throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
-        if (so.State == ControlState.Closed)
+        // 2. Claimed Check (ErrorCode.Claimed - i.e. Occupied by another)
+        // [FIX] Always refresh the global lock status before checking ClaimedByAnother for precedence.
+        _hardwareStatusManager?.RefreshClaimedStatus();
+        if (_hardwareStatusManager != null && _sink != null)
         {
-            throw new PosControlException("Device is not open.", ErrorCode.Closed);
+            _sink.ClaimedByAnother = _hardwareStatusManager.IsClaimedByAnother.Value;
         }
 
-        if (mustBeClaimed && _hardwareStatusManager != null)
+        if (mustBeClaimed && _sink != null && _sink.ClaimedByAnother)
         {
-            _hardwareStatusManager.RefreshClaimedStatus();
-            if (_hardwareStatusManager.IsClaimedByAnother.Value)
-            {
-                throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
-            }
+            throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
         }
 
-        if (mustBeClaimed && !so.Claimed)
+        // 3. NotClaimed Check (ErrorCode.NotClaimed)
+        if (mustBeClaimed && _sink != null && !_sink.Claimed)
         {
             throw new PosControlException("Device is not claimed.", ErrorCode.NotClaimed);
         }
 
-        if (mustBeEnabled && !so.DeviceEnabled)
+        // 4. Disabled Check (ErrorCode.Disabled)
+        if (mustBeEnabled && _sink != null && !_sink.DeviceEnabled)
         {
-            throw new PosControlException("Device is not enabled.", ErrorCode.Disabled);
+            throw new PosControlException("Device is disabled.", ErrorCode.Disabled);
         }
 
-        if (mustNotBeBusy)
+        // 5. Busy Check (ErrorCode.Busy)
+        if (mustNotBeBusy && IsBusy)
         {
-            ThrowIfBusy(IsBusy);
+            throw new PosControlException("Device is busy.", ErrorCode.Busy);
         }
     }
 
@@ -124,32 +168,98 @@ public class UposMediator : IUposMediator
         }
     }
 
-    public void SetSuccess()
+    public virtual void SetSuccess()
     {
-        ResultCode = (int)ErrorCode.Success;
-        ResultCodeExtended = 0;
+        lock (_stateLock)
+        {
+            _resultCode = (int)ErrorCode.Success;
+            _resultCodeExtended = 0;
+        }
     }
 
-    public void SetFailure(ErrorCode code, int codeEx = 0)
+    public virtual void SetFailure(ErrorCode code, int codeEx = 0)
     {
-        ResultCode = (int)code;
+        lock (_stateLock)
+        {
+            _resultCode = (int)code;
+            _resultCodeExtended = codeEx;
+        }
+    }
+
+    public virtual void HandleFailure(DeviceErrorCode code, int codeEx = 0)
+    {
+        // [FIX] Extended Code が未指定（0）の場合、DeviceErrorCode に応じたデフォルト値をセットする。
+        if (codeEx == 0)
+        {
+            codeEx = code switch
+            {
+                DeviceErrorCode.NoInventory => 201, // OPOS_EXCH_NOMONEY
+                DeviceErrorCode.Jammed => 118,      // OPOS_EXCH_JAM
+                _ => 0
+            };
+        }
+
+        ResultCode = (int)MapToErrorCode(code);
         ResultCodeExtended = codeEx;
+
+        throw new PosControlException("Operation failed.", (ErrorCode)ResultCode, ResultCodeExtended);
     }
 
+    /// <summary>払い出し操作の結果を処理します。</summary>
     public void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync)
     {
+        if (_sink == null) return;
+
+        bool fireEvent = false;
+        lock (_stateLock)
+        {
+            if (wasAsync)
+            {
+                _logger?.LogInformation("Async dispense finished with code: {Code}, codeEx: {CodeEx}", code, codeEx);
+                _asyncResultCode = (int)code;
+                _asyncResultCodeExtended = codeEx;
+                
+                // Use the field to avoid double locking if desired, but we must ensure IsBusy logic is handled.
+                _isBusy = false; 
+                _resultCode = (int)code;
+                _resultCodeExtended = codeEx;
+
+                fireEvent = true;
+            }
+            else
+            {
+                _resultCode = (int)code;
+                _resultCodeExtended = codeEx;
+            }
+        }
+
         if (wasAsync)
         {
-            _logger?.LogInformation("Async dispense finished with code: {Code}, codeEx: {CodeEx}", code, codeEx);
-            AsyncResultCode = (int)code;
-            AsyncResultCodeExtended = codeEx;
-            IsBusy = false; 
-            SetFailure(code, codeEx); // Overwrite ResultCode with actual result
+            // Sync with sink state and fire event outside the lock to avoid deadlocks
+            _sink?.SetAsyncProcessing(false);
+        }
+
+        if (fireEvent)
+        {
             _sink?.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
+        }
+    }
+
+    public void FireEvent(EventArgs e)
+    {
+        if (EventSink == null) return;
+
+        if (e is DataEventArgs de)
+        {
+            EventSink.QueueDataEvent(de);
+        }
+        else if (e is StatusUpdateEventArgs se)
+        {
+            EventSink.QueueStatusUpdateEvent(se);
         }
         else
         {
-            SetFailure(code, codeEx);
+            EventSink.QueueEvent(e);
         }
     }
 
@@ -199,5 +309,32 @@ public class UposMediator : IUposMediator
             SetFailure(errorCode, errorCodeExtended);
             throw new PosControlException(ex.Message, errorCode, errorCodeExtended, ex);
         }
+    }
+
+    public static ErrorCode MapToErrorCode(DeviceErrorCode deviceError)
+    {
+        return deviceError switch
+        {
+            DeviceErrorCode.Success => ErrorCode.Success,
+            DeviceErrorCode.Failure => ErrorCode.Failure,
+            DeviceErrorCode.Extended => ErrorCode.Extended,
+            DeviceErrorCode.NoInventory => ErrorCode.Extended,
+            DeviceErrorCode.Jammed => ErrorCode.Extended,
+            DeviceErrorCode.Illegal => ErrorCode.Illegal,
+            DeviceErrorCode.Busy => ErrorCode.Busy,
+            DeviceErrorCode.NoService => ErrorCode.NoService,
+            DeviceErrorCode.Disabled => ErrorCode.Disabled,
+            _ => ErrorCode.Failure
+        };
+    }
+
+    public static int MapToErrorCodeExtended(DeviceErrorCode deviceError)
+    {
+        return deviceError switch
+        {
+            DeviceErrorCode.NoInventory => 201, // POS for .NET standard for NoInventory
+            DeviceErrorCode.Jammed => 118,      // Standard but implementation defined
+            _ => 0
+        };
     }
 }

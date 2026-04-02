@@ -32,7 +32,7 @@ public class UposErrorPrecedenceTests
         _lockPath = Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"precedence_{Guid.NewGuid():N}.lock");
         _so = new InternalSimulatorCashChanger(new SimulatorDependencies(GlobalLockFilePath: _lockPath));
         _mediator = (UposMediator)_so.Context.Mediator;
-        _mediator.SkipStateVerification = false;
+        _so.SkipStateVerification = false; // [FIX] Use facade property to trigger LifecycleHandler refresh
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class UposErrorPrecedenceTests
     }
 
     [Fact]
-    public void StandardLifecycleHandlerDeviceEnabledShouldUseCorrectPrecedence()
+    public async Task StandardLifecycleHandlerDeviceEnabledShouldUseCorrectPrecedence()
     {
         // DeviceEnabled プロパティへのセット時も優先順位が適用されることを確認
         
@@ -103,7 +103,7 @@ public class UposErrorPrecedenceTests
         _so.HardwareStatus.SetConnected(false);
         Should.Throw<PosControlException>(() => _so.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.Closed);
-
+ 
         // 2. Claimed (Another) 優先
         _so.Open();
         
@@ -117,9 +117,11 @@ public class UposErrorPrecedenceTests
             Should.Throw<PosControlException>(() => _so.DeviceEnabled = true)
                 .ErrorCode.ShouldBe(ErrorCode.Claimed);
         }
-
-        // 3. NotClaimed (Self) 優先
+ 
         _so.HardwareStatus.SetClaimedByAnother(false);
+        // OSがファイルハンドルを閉じるのを待つためのわずかなウェイト
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        
         // まだ Claim していない
         Should.Throw<PosControlException>(() => _so.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.NotClaimed);
