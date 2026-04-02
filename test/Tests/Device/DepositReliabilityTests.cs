@@ -1,21 +1,8 @@
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Core;
-using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
-using Moq;
 using Shouldly;
 using System.Collections.Concurrent;
-using System.Threading;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -27,7 +14,7 @@ public class DepositReliabilityTests
         public ConcurrentBag<EventArgs> EventHistory { get; } = [];
         public int DataEventCount => EventHistory.Count(e => e is DataEventArgs);
 
-        public DepositReliabilityChanger() : base() 
+        public DepositReliabilityChanger() : base()
         {
             // [STABILITY] Disable POS.NET internal event queueing to prevent duplicate NotifyEvent calls in headless environments.
             DisableUposEventQueuing = true;
@@ -46,8 +33,10 @@ public class DepositReliabilityTests
     public async Task DataEvent_Consistency_Under_Concurrent_Track_And_Fix()
     {
         // Arrange
-        var changer = new DepositReliabilityChanger();
-        changer.SkipStateVerification = true;
+        var changer = new DepositReliabilityChanger
+        {
+            SkipStateVerification = true
+        };
         changer.Open();
         changer.Claim(1000);
         changer.DeviceEnabled = true;
@@ -60,7 +49,7 @@ public class DepositReliabilityTests
         // Act: Background insertions
         var cts = new CancellationTokenSource();
         var ct = TestContext.Current.CancellationToken;
-        
+
         var insertionTask = Task.Run(async () =>
         {
             for (int i = 0; i < 5; i++)
@@ -75,16 +64,16 @@ public class DepositReliabilityTests
         await Task.Delay(10, ct);
         changer.FixDeposit();
         cts.Cancel();
-        
+
         try { await Task.WhenAny(insertionTask, Task.Delay(500, ct)); } catch (OperationCanceledException) { }
 
         // Assert
         var events = changer.EventHistory.ToList();
         var dataEvents = events.OfType<DataEventArgs>().ToList();
-        
+
         dataEvents.Count.ShouldBe(1, $"Expected exactly 1 DataEvent on Fix, but found {dataEvents.Count}. Events: {string.Join(", ", events.Select(e => e.GetType().Name))}");
         changer.DepositAmount.ShouldBeGreaterThan(0);
-        
+
         changer.Close();
     }
 
@@ -93,8 +82,10 @@ public class DepositReliabilityTests
     public async Task Rapid_Session_Lifecycle_Reliability()
     {
         // Arrange
-        var changer = new DepositReliabilityChanger();
-        changer.SkipStateVerification = true;
+        var changer = new DepositReliabilityChanger
+        {
+            SkipStateVerification = true
+        };
         changer.Open();
         changer.Claim(1000);
         changer.DeviceEnabled = true;
@@ -108,7 +99,7 @@ public class DepositReliabilityTests
         for (int i = 0; i < 100; i++)
         {
             if (ct.IsCancellationRequested) break;
-            
+
             changer.EventHistory.Clear();
             changer.BeginDeposit();
             changer.DepositController.TrackDeposit(key);
@@ -130,8 +121,10 @@ public class DepositReliabilityTests
     public async Task Pause_Resume_Race_Condition()
     {
         // Arrange
-        var changer = new DepositReliabilityChanger();
-        changer.SkipStateVerification = true;
+        var changer = new DepositReliabilityChanger
+        {
+            SkipStateVerification = true
+        };
         changer.Open();
         changer.Claim(1000);
         changer.DeviceEnabled = true;
@@ -154,11 +147,11 @@ public class DepositReliabilityTests
         for (int i = 0; i < 10; i++)
         {
             if (ct.IsCancellationRequested) break;
-            
+
             changer.PauseDeposit(CashDepositPause.Pause);
             await Task.Delay(5, ct);
             var pausedAmount = changer.DepositAmount;
-            
+
             await Task.Delay(10, ct);
             changer.DepositAmount.ShouldBe(pausedAmount, $"Amount should not increase while paused (Iteration {i}).");
 
@@ -168,7 +161,7 @@ public class DepositReliabilityTests
 
         cts.Cancel();
         try { await Task.WhenAny(task, Task.Delay(500, ct)); } catch (OperationCanceledException) { }
-        
+
         changer.FixDeposit();
         changer.Close();
     }

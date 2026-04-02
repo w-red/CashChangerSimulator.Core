@@ -7,7 +7,6 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
@@ -81,7 +80,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     {
         // ViewModels から呼び出された際の履歴を記録（テスト検証用）
         OposHistory.Add("DispenseCash (Triggered)");
-        
+
         if (SimulateDispenseException)
         {
             throw new PosControlException("Simulated dispense exception", ErrorCode.Failure);
