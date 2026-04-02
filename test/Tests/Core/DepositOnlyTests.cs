@@ -18,10 +18,10 @@ public class DepositOnlyTests
         var inventory = new Inventory();
         var configProvider = new ConfigurationProvider();
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
-        
+
         // IsDepositable = false に設定
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsDepositable = false;
-        
+
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
         var counts = new Dictionary<DenominationKey, int> { { b2000, 1 } };
 
@@ -42,7 +42,7 @@ public class DepositOnlyTests
         var inventory = new Inventory();
         var configProvider = new ConfigurationProvider();
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
-        
+
         // 非還流だが入金は可能
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsDepositable = true;

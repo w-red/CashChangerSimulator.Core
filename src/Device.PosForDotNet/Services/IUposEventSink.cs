@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 using R3;
 using Microsoft.PointOfService;
 

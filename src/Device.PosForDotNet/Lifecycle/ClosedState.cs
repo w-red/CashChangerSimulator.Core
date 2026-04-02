@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using ZLogger;
 

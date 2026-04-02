@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
@@ -56,7 +55,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
     public void Claim(int timeout, Action<int> baseClaim)
     {
         ArgumentNullException.ThrowIfNull(baseClaim);
-        
+
         if (State == ControlState.Closed)
         {
             throw new PosControlException("Device is closed.", ErrorCode.Closed);

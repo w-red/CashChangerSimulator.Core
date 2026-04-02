@@ -96,8 +96,10 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.Provider = provider;
 
         // InternalSimulatorCashChanger default constructor should pick up from SimulatorServices
-        var cc = new InternalSimulatorCashChanger();
-        cc.SkipStateVerification = false;
+        var cc = new InternalSimulatorCashChanger
+        {
+            SkipStateVerification = false
+        };
 
         // Verify via ReadCashCounts (which uses Inventory internally)
         var ex = Should.Throw<Microsoft.PointOfService.PosControlException>(

@@ -79,9 +79,9 @@ public class VirtualMockDeviceTests
         _device1.Open();
         _device1.Claim(100);
         _device1.Enable();
-        
+
         _device1.Close();
-        
+
         _device1.IsConnected.ShouldBeFalse();
         _device1.DeviceEnabled.ShouldBeFalse();
         _device1.Claimed.ShouldBeFalse();

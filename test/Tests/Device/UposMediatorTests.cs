@@ -1,7 +1,4 @@
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
@@ -60,7 +57,7 @@ public class UposMediatorTests
         _so.Claim(0);
         _so.DeviceEnabled = true;
         _mediator.IsBusy = true;
-        
+
         Should.Throw<PosControlException>(() => _mediator.VerifyState(mustNotBeBusy: true))
             .ErrorCode.ShouldBe(ErrorCode.Busy);
     }
@@ -106,7 +103,7 @@ public class UposMediatorTests
     public void HandleDispenseResultShouldSetCodesAndFireEventWhenAsync()
     {
         bool eventFired = false;
-        _so.OnEventQueued = (e) => 
+        _so.OnEventQueued = (e) =>
         {
             if (e is StatusUpdateEventArgs se && se.Status == (int)UposCashChangerStatusUpdateCode.AsyncFinished)
             {
@@ -160,7 +157,7 @@ public class UposMediatorTests
         mock.Setup(c => c.Execute()).Throws(new PosControlException("Pos error", ErrorCode.Illegal, 789));
 
         var ex = Should.Throw<PosControlException>(() => _mediator.Execute(mock.Object));
-        
+
         _mediator.ResultCode.ShouldBe((int)ErrorCode.Illegal);
         _mediator.ResultCodeExtended.ShouldBe(789);
         ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Illegal);

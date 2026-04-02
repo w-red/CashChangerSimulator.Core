@@ -1,10 +1,6 @@
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -79,7 +75,7 @@ public class RepayDepositTests
 
         // Sequence: Begin -> Track -> RepayDeposit
         simulator.BeginDeposit();
-        
+
         var controller = simulator.DepositController;
 
         controller.TrackDeposit(b1000);
@@ -91,7 +87,7 @@ public class RepayDepositTests
         // Verify state after Repay
         simulator.DepositAmount.ShouldBe(0);
         simulator.DepositStatus.ShouldBe(CashDepositStatus.End);
-        
+
         simulator.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 }

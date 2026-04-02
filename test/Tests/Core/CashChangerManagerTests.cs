@@ -137,9 +137,9 @@ public class CashChangerManagerTests
         var configProvider = new ConfigurationProvider();
         // 2000円札を非リサイクルとして明示的に設定
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
-        
+
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
-        
+
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
         var counts = new Dictionary<DenominationKey, int> { { b2000, 3 } };
 
@@ -160,15 +160,15 @@ public class CashChangerManagerTests
         var inventory = new Inventory();
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         // 2000円札（非リサイクル）と1000円札（リサイクル）を在庫に入れる
         inventory.SetCount(b2000, 10);
         inventory.SetCount(b1000, 10);
-        
+
         var configProvider = new ConfigurationProvider();
         // 2000円札を非リサイクルとして明示的に設定
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
-        
+
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
 
         // Act: 2000円を出金
@@ -186,11 +186,11 @@ public class CashChangerManagerTests
         // Arrange
         var inventory = new Inventory();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         // 1000円札の Full しきい値はデフォルトで 100 枚とする
         // 現状の在庫を 90 枚にする
         inventory.SetCount(b1000, 90);
-        
+
         var configProvider = new ConfigurationProvider();
         var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
         var counts = new Dictionary<DenominationKey, int> { { b1000, 20 } };

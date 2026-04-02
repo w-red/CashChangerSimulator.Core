@@ -1,5 +1,3 @@
-using CashChangerSimulator.Device;
-
 namespace CashChangerSimulator.Device.Virtual.Services;
 
 /// <summary>デバイスの現在の状態を提供するインターフェース。</summary>

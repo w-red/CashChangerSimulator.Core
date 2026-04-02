@@ -23,7 +23,7 @@ public class CsvHistoryExportServiceTests
         var timestamp = new DateTimeOffset(2026, 3, 23, 12, 0, 0, TimeSpan.FromHours(9));
         var entries = new List<TransactionEntry>
         {
-            new TransactionEntry(
+            new(
                 timestamp,
                 TransactionType.Deposit,
                 1500,
@@ -33,7 +33,7 @@ public class CsvHistoryExportServiceTests
                     { new DenominationKey(500, CurrencyCashType.Coin, "JPY"), 1 }
                 }
             ),
-            new TransactionEntry(
+            new(
                 timestamp.AddMinutes(5),
                 TransactionType.Dispense,
                 -200,
@@ -50,7 +50,7 @@ public class CsvHistoryExportServiceTests
         // Assert
         var lines = csv.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
         lines.Length.ShouldBe(3); // Header + 2 entries
-        
+
         // Header verification
         lines[0].ShouldBe("Timestamp,Type,Amount,Details");
 

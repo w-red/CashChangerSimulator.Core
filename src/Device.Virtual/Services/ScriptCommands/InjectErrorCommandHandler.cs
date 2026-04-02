@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;

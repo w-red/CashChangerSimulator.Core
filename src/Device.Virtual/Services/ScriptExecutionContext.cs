@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.Virtual.Services;
 
 /// <summary>スクリプト実行中の変数コンテキスト。</summary>

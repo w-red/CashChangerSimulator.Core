@@ -23,7 +23,7 @@ public class DiagnosticsFacade(DiagnosticController diagnosticController, IUposM
         mediator.Execute(command);
         return command.Result;
     }
- 
+
     /// <summary>統計情報を取得します。</summary>
     /// <remarks>
     /// 指定された統計情報カテゴリを XML 形式で取得します。
@@ -34,19 +34,19 @@ public class DiagnosticsFacade(DiagnosticController diagnosticController, IUposM
         mediator.Execute(command);
         return command.Result;
     }
- 
+
     /// <summary>統計情報を更新します。</summary>
     public void UpdateStatistics(Statistic[] statistics)
     {
         mediator.Execute(new UpdateStatisticsCommand(statistics));
     }
- 
+
     /// <summary>統計情報をリセットします。</summary>
     public void ResetStatistics(string[] statistics)
     {
         mediator.Execute(new ResetStatisticsCommand(statistics));
     }
- 
+
     /// <summary>成功した出金操作の数を増加させます。</summary>
     public void IncrementSuccessfulDepletion()
     {

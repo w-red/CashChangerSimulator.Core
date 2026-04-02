@@ -1,23 +1,16 @@
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Services;
-using CashChangerSimulator.Device.PosForDotNet.Commands;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
-using R3;
 using Microsoft.Extensions.Logging;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -40,7 +33,7 @@ public class ExhaustiveDeviceTests : IDisposable
         _hardwareStatusManager = new HardwareStatusManager();
         _simulatorMock = new Mock<IDeviceSimulator>();
         _controller = new DispenseController(_manager, _hardwareStatusManager, _simulatorMock.Object);
-        
+
         _hardwareStatusManager.SetConnected(true);
     }
 
@@ -61,7 +54,7 @@ public class ExhaustiveDeviceTests : IDisposable
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         _inventory.SetCount(key, 10);
         _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        
+
         await _controller.DispenseChangeAsync((int)1000, false, onComplete);
         onCompleteCalled.ShouldBeTrue();
         lastError.ShouldBe(ErrorCode.Success);
@@ -75,35 +68,35 @@ public class ExhaustiveDeviceTests : IDisposable
         // Error: Busy
         var tcs = new TaskCompletionSource();
         _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
-        var task = _controller.DispenseChangeAsync((int)1000, false, (e, ex) => {});
+        var task = _controller.DispenseChangeAsync((int)1000, false, (e, ex) => { });
         await Task.Delay(100, TestContext.Current.CancellationToken);
-        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false, (e, ex) => {}));
+        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false, (e, ex) => { }));
         tcs.SetResult();
         _controller.ClearOutput();
 
         // Error: Disconnected
         _hardwareStatusManager.SetConnected(false);
-        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false, (e, ex) => {}));
+        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false, (e, ex) => { }));
         _hardwareStatusManager.SetConnected(true);
     }
 
     [Fact]
     public void CashCountParserBranches()
     {
-        var keys = new List<DenominationKey> { 
-            new DenominationKey(100, CurrencyCashType.Coin, "JPY"),
-            new DenominationKey(1000, CurrencyCashType.Bill, "JPY")
+        var keys = new List<DenominationKey> {
+            new(100, CurrencyCashType.Coin, "JPY"),
+            new(1000, CurrencyCashType.Bill, "JPY")
         };
         CashCountParser.Parse("100:10", keys, 1).Count().ShouldBe(1);
         CashCountParser.Parse("100:10;1000:5", keys, 1).Count().ShouldBe(2);
         CashCountParser.Parse(" ", keys, 1).ShouldBeEmpty();
-        
+
         // Error cases
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("100:10;1000:5;2000:1", keys, 1)); // Too many sections
-        
+
         var ambiguousKeys = new List<DenominationKey> {
-            new DenominationKey(100, CurrencyCashType.Coin, "JPY"),
-            new DenominationKey(100, CurrencyCashType.Bill, "JPY")
+            new(100, CurrencyCashType.Coin, "JPY"),
+            new(100, CurrencyCashType.Bill, "JPY")
         };
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("100:1", ambiguousKeys, 1)); // Ambiguous
     }
@@ -143,7 +136,7 @@ public class ExhaustiveDeviceTests : IDisposable
         ccStr.ShouldContain("1000:10");
 
         // Stats & Health
-        device.RetrieveStatistics(new[] { "test" });
+        device.RetrieveStatistics(["test"]);
         device.CheckHealth(HealthCheckLevel.Internal);
         device.DirectIO(0, 0, "");
 
@@ -167,18 +160,18 @@ public class ExhaustiveDeviceTests : IDisposable
         var injectHandler = new InjectErrorCommandHandler(_hardwareStatusManager);
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "overlap" }, context, logger, null);
         _hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
-        
+
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "device", ErrorCode = 1, ErrorCodeExtended = 2 }, context, logger, null);
-        
+
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "reset" }, context, logger, null);
         _hardwareStatusManager.IsOverlapped.Value.ShouldBeFalse();
-        
+
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "jam", Location = "Entrance" }, context, logger, null);
         _hardwareStatusManager.IsJammed.Value.ShouldBeTrue();
 
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "unknown" }, context, logger, null);
         _hardwareStatusManager.IsJammed.Value.ShouldBeFalse();
-        
+
         // Open (already connected in constructor, but call again)
         var openHandler = new OpenCommandHandler(_hardwareStatusManager);
         await openHandler.ExecuteAsync(new ScriptCommand { Op = "open" }, context, logger, null);
@@ -191,12 +184,12 @@ public class ExhaustiveDeviceTests : IDisposable
         var mediator = device.Context.Mediator;
         mediator.SetSuccess();
         mediator.ResultCode.ShouldBe((int)ErrorCode.Success);
-        
+
         mediator.SetFailure(ErrorCode.Illegal, 100);
         mediator.ResultCode.ShouldBe((int)ErrorCode.Illegal);
         mediator.ResultCodeExtended.ShouldBe(100);
 
         mediator.SkipStateVerification = true;
-        mediator.VerifyState(true, true, true); 
+        mediator.VerifyState(true, true, true);
     }
 }

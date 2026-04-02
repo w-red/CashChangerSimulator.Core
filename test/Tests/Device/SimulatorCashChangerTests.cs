@@ -1,9 +1,4 @@
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Models;
 using Microsoft.PointOfService;
 using Shouldly;
@@ -20,7 +15,7 @@ public class SimulatorCashChangerTests
     {
         // Arrange
         var changer = new InternalSimulatorCashChanger();
-        
+
         // Assert
         changer.State.ShouldBe(ControlState.Closed);
         changer.Claimed.ShouldBeFalse();
@@ -32,8 +27,10 @@ public class SimulatorCashChangerTests
     public void LifecycleOpenClaimEnableShouldTransitionStates()
     {
         // Arrange
-        var changer = new InternalSimulatorCashChanger();
-        changer.SkipStateVerification = false; // Test standard behavior
+        var changer = new InternalSimulatorCashChanger
+        {
+            SkipStateVerification = false // Test standard behavior
+        };
 
         // Act & Assert: Open
         changer.Open();
@@ -153,7 +150,7 @@ public class SimulatorCashChangerTests
         // Act & Assert: Statistics
         var stats = changer.RetrieveStatistics(["*"]);
         stats.ShouldNotBeNull();
-        
+
         changer.UpdateStatistics([new Statistic("Test", 1)]); // Should not throw
         changer.ResetStatistics(["*"]); // Should not throw
     }
@@ -163,7 +160,7 @@ public class SimulatorCashChangerTests
     public void StatusPropertiesShouldReflectState()
     {
         var changer = new InternalSimulatorCashChanger();
-        
+
         // When closed
         changer.DeviceStatus.ShouldBe(CashChangerStatus.OK);
         changer.FullStatus.ShouldBe(CashChangerFullStatus.OK);
@@ -198,7 +195,7 @@ public class SimulatorCashChangerTests
         // These should delegate and not throw in simple cases
         changer.PurgeCash();
         changer.ClearOutput();
-        
+
         // Deposit related must be inside a session
         changer.BeginDeposit();
         changer.FixDeposit();
@@ -212,10 +209,12 @@ public class SimulatorCashChangerTests
     [Fact]
     public void ResultCodeShouldBeSettable()
     {
-        var changer = new InternalSimulatorCashChanger();
-        changer.ResultCode = (int)ErrorCode.Illegal;
+        var changer = new InternalSimulatorCashChanger
+        {
+            ResultCode = (int)ErrorCode.Illegal
+        };
         changer.ResultCode.ShouldBe((int)ErrorCode.Illegal);
-        
+
         changer.ResultCodeExtended = 999;
         changer.ResultCodeExtended.ShouldBe(999);
     }
@@ -234,8 +233,10 @@ public class SimulatorCashChangerTests
     [Fact]
     public void RealTimeDataEnabledShouldBeSettable()
     {
-        var changer = new InternalSimulatorCashChanger();
-        changer.RealTimeDataEnabled = true;
+        var changer = new InternalSimulatorCashChanger
+        {
+            RealTimeDataEnabled = true
+        };
         changer.RealTimeDataEnabled.ShouldBeTrue();
     }
 }

@@ -10,87 +10,76 @@ namespace CashChangerSimulator.Core.Managers;
 public class HardwareStatusManager : IDisposable
 {
     private GlobalLockManager? _globalLockManager;
-    private readonly BindableReactiveProperty<bool> _isJammed = new(false);
-    private readonly BindableReactiveProperty<Models.JamLocation> _jamLocation = new(Models.JamLocation.None);
-    private readonly BindableReactiveProperty<bool> _isOverlapped = new(false);
-    private readonly BindableReactiveProperty<bool> _isDeviceError = new(false);
-    private readonly BindableReactiveProperty<bool> _isConnected = new(false); // Default is disconnected (COLD start baseline)
-    private readonly BindableReactiveProperty<bool> _isCollectionBoxRemoved = new(false);
-    private readonly BindableReactiveProperty<bool> _isClaimedByAnother = new(false);
-    private readonly BindableReactiveProperty<int?> _currentErrorCode = new(null);
-    private readonly BindableReactiveProperty<int> _currentErrorCodeExtended = new(0);
 
-    public BindableReactiveProperty<bool> IsClaimedByAnother => _isClaimedByAnother;
+    public BindableReactiveProperty<bool> IsClaimedByAnother { get; } = new(false);
 
     /// <summary>ジャムが発生しているかどうか。</summary>
-    public BindableReactiveProperty<bool> IsJammed => _isJammed;
+    public BindableReactiveProperty<bool> IsJammed { get; } = new(false);
 
     /// <summary>ジャムが発生している具体的な箇所。</summary>
-    public BindableReactiveProperty<Models.JamLocation> JamLocation => _jamLocation;
+    public BindableReactiveProperty<Models.JamLocation> JamLocation { get; } = new(Models.JamLocation.None);
 
     /// <summary>紙幣などの重なり（バリデーションエラー）が発生しているかどうか。</summary>
-    public BindableReactiveProperty<bool> IsOverlapped => _isOverlapped;
+    public BindableReactiveProperty<bool> IsOverlapped { get; } = new(false);
 
     /// <summary>個別の特定可能なエラー（ジャムなど）以外の、一般的なデバイスエラーが発生しているかどうか。</summary>
-    public BindableReactiveProperty<bool> IsDeviceError => _isDeviceError;
+    public BindableReactiveProperty<bool> IsDeviceError { get; } = new(false);
 
     /// <summary>デバイスが論理的に接続（Open）されているかどうか。</summary>
-    public BindableReactiveProperty<bool> IsConnected => _isConnected;
+    public BindableReactiveProperty<bool> IsConnected { get; } = new(false);
 
     /// <summary>回収庫が取り外されているかどうか。</summary>
-    public BindableReactiveProperty<bool> IsCollectionBoxRemoved => _isCollectionBoxRemoved;
+    public BindableReactiveProperty<bool> IsCollectionBoxRemoved { get; } = new(false);
 
     /// <summary>現在発生中のデバイスエラーの ErrorCode 値 (Nullable)。</summary>
-    public BindableReactiveProperty<int?> CurrentErrorCode => _currentErrorCode;
+    public BindableReactiveProperty<int?> CurrentErrorCode { get; } = new(null);
 
     /// <summary>現在発生中のデバイスエラーの ErrorCodeExtended 値。</summary>
-    public BindableReactiveProperty<int> CurrentErrorCodeExtended => _currentErrorCodeExtended;
-
-    private bool _disposed;
+    public BindableReactiveProperty<int> CurrentErrorCodeExtended { get; } = new(0);
 
     /// <summary>このインスタンスが破棄されているかどうかを取得します。</summary>
-    public bool IsDisposed => _disposed;
+    public bool IsDisposed { get; private set; }
 
     /// <summary>ジャム状態を切り替えます。箇所を指定することも可能です。</summary>
     public void SetJammed(bool jammed, Models.JamLocation location = Models.JamLocation.None)
     {
-        if (_disposed) return;
-        _isJammed.Value = jammed;
-        _jamLocation.Value = jammed ? location : Models.JamLocation.None;
+        if (IsDisposed) return;
+        IsJammed.Value = jammed;
+        JamLocation.Value = jammed ? location : Models.JamLocation.None;
     }
 
     /// <summary>重なり状態を切り替えます。</summary>
     public void SetOverlapped(bool overlapped)
     {
-        if (_disposed) return;
-        _isOverlapped.Value = overlapped;
+        if (IsDisposed) return;
+        IsOverlapped.Value = overlapped;
     }
 
     /// <summary>接続状態を切り替えます。</summary>
     public void SetConnected(bool connected)
     {
-        if (_disposed) return;
-        _isConnected.Value = connected;
+        if (IsDisposed) return;
+        IsConnected.Value = connected;
     }
 
     /// <summary>回収庫の取り外し状態を設定します。</summary>
     public void SetCollectionBoxRemoved(bool removed)
     {
-        if (_disposed) return;
-        _isCollectionBoxRemoved.Value = removed;
+        if (IsDisposed) return;
+        IsCollectionBoxRemoved.Value = removed;
     }
 
     /// <summary>他者による占有（Claim）状態を設定します。</summary>
     public void SetClaimedByAnother(bool claimed)
     {
-        if (_disposed) return;
-        _isClaimedByAnother.Value = claimed;
+        if (IsDisposed) return;
+        IsClaimedByAnother.Value = claimed;
     }
 
     /// <summary>グローバルロックマネージャーを設定します。</summary>
     public void SetGlobalLockManager(GlobalLockManager manager)
     {
-        if (_disposed) return;
+        if (IsDisposed) return;
         _globalLockManager = manager;
     }
 
@@ -99,11 +88,11 @@ public class HardwareStatusManager : IDisposable
     /// </summary>
     public bool RefreshClaimedStatus()
     {
-        if (_disposed) return false;
-        if (_globalLockManager == null) return _isClaimedByAnother.Value;
+        if (IsDisposed) return false;
+        if (_globalLockManager == null) return IsClaimedByAnother.Value;
 
         var heldByAnother = _globalLockManager.IsLockHeldByAnother();
-        _isClaimedByAnother.Value = heldByAnother;
+        IsClaimedByAnother.Value = heldByAnother;
         return heldByAnother;
     }
 
@@ -113,11 +102,11 @@ public class HardwareStatusManager : IDisposable
         var result = _globalLockManager?.TryAcquire() ?? true;
         if (result)
         {
-            _isClaimedByAnother.Value = false;
+            IsClaimedByAnother.Value = false;
         }
         else
         {
-            _isClaimedByAnother.Value = true;
+            IsClaimedByAnother.Value = true;
         }
         return result;
     }
@@ -130,23 +119,23 @@ public class HardwareStatusManager : IDisposable
     /// <param name="errorCodeExtended">追加の詳細エラーコード</param>
     public void SetDeviceError(int errorCode, int errorCodeExtended = 0)
     {
-        if (_disposed) return;
-        _currentErrorCode.Value = errorCode;
-        _currentErrorCodeExtended.Value = errorCodeExtended;
-        _isDeviceError.Value = true;
+        if (IsDisposed) return;
+        CurrentErrorCode.Value = errorCode;
+        CurrentErrorCodeExtended.Value = errorCodeExtended;
+        IsDeviceError.Value = true;
     }
 
     /// <summary>すべてのエラー状態を解除します。</summary>
     public void ResetError()
     {
-        if (_disposed) return;
-        _isJammed.Value = false;
-        _jamLocation.Value = Models.JamLocation.None;
-        _isOverlapped.Value = false;
-        _isDeviceError.Value = false;
-        _isCollectionBoxRemoved.Value = false;
-        _currentErrorCode.Value = null;
-        _currentErrorCodeExtended.Value = 0;
+        if (IsDisposed) return;
+        IsJammed.Value = false;
+        JamLocation.Value = Models.JamLocation.None;
+        IsOverlapped.Value = false;
+        IsDeviceError.Value = false;
+        IsCollectionBoxRemoved.Value = false;
+        CurrentErrorCode.Value = null;
+        CurrentErrorCodeExtended.Value = 0;
         _globalLockManager?.Release();
     }
 
@@ -159,20 +148,20 @@ public class HardwareStatusManager : IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (_disposed) return;
+        if (IsDisposed) return;
         if (disposing)
         {
-            _isJammed.Dispose();
-            _jamLocation.Dispose();
-            _isOverlapped.Dispose();
-            _isDeviceError.Dispose();
-            _isConnected.Dispose();
-            _isCollectionBoxRemoved.Dispose();
-            _isClaimedByAnother.Dispose();
-            _currentErrorCode.Dispose();
-            _currentErrorCodeExtended.Dispose();
+            IsJammed.Dispose();
+            JamLocation.Dispose();
+            IsOverlapped.Dispose();
+            IsDeviceError.Dispose();
+            IsConnected.Dispose();
+            IsCollectionBoxRemoved.Dispose();
+            IsClaimedByAnother.Dispose();
+            CurrentErrorCode.Dispose();
+            CurrentErrorCodeExtended.Dispose();
             _globalLockManager?.Dispose();
         }
-        _disposed = true;
+        IsDisposed = true;
     }
 }

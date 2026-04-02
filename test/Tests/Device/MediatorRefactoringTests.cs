@@ -1,8 +1,5 @@
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Moq;
 using Shouldly;
@@ -17,9 +14,10 @@ public class MediatorRefactoringTests
     public void MediatorShouldSupportSkipStateVerificationProperty()
     {
         var so = new Mock<SimulatorCashChanger>(new SimulatorDependencies()).Object;
-        var mediator = new UposMediator();
-
-        mediator.SkipStateVerification = true;
+        var mediator = new UposMediator
+        {
+            SkipStateVerification = true
+        };
         mediator.SkipStateVerification.ShouldBeTrue();
     }
 
@@ -32,7 +30,7 @@ public class MediatorRefactoringTests
         var commandMock = new Mock<IUposCommand>();
 
         mediator.SkipStateVerification = true;
-        
+
         mediator.Execute(commandMock.Object);
 
         commandMock.Verify(c => c.Verify(mediator), Times.Once);

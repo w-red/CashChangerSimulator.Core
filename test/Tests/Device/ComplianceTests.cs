@@ -1,12 +1,9 @@
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -37,10 +34,11 @@ public class ComplianceTests
                 null,
                 hardwareStatusManager);
         var changer =
-            new InternalSimulatorCashChanger(deps);
-
-        changer.DisableUposEventQueuing = true; // Avoid NRE in POS.NET internals
-        changer.SkipStateVerification = true;
+            new InternalSimulatorCashChanger(deps)
+            {
+                DisableUposEventQueuing = true, // Avoid NRE in POS.NET internals
+                SkipStateVerification = true
+            };
         changer.Open();
         changer.Claim(0);
         changer.DeviceEnabled = true;

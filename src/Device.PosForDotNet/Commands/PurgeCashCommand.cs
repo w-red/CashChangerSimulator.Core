@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 

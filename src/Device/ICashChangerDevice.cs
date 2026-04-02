@@ -16,7 +16,7 @@ public interface ICashChangerDevice : IDisposable
     Task EndDepositAsync(DepositAction action);
     Task DispenseAsync(int amount);
     Task DispenseAsync(IEnumerable<CashDenominationCount> counts);
-    
+
     // Inventory
     Task<Inventory> ReadInventoryAsync();
     Task AdjustInventoryAsync(IEnumerable<CashDenominationCount> counts);

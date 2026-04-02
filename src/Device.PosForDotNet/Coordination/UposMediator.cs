@@ -1,11 +1,7 @@
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
-using Microsoft.PointOfService.BasicServiceObjects;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.Extensions.Logging;
-using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Exceptions;
 
@@ -43,18 +39,18 @@ public class UposMediator : IUposMediator
     public int ResultCode
     {
         get { lock (_stateLock) return _resultCode; }
-        private set 
-        { 
-            lock (_stateLock) _resultCode = value; 
+        private set
+        {
+            lock (_stateLock) _resultCode = value;
         }
     }
 
     public int ResultCodeExtended
     {
         get { lock (_stateLock) return _resultCodeExtended; }
-        private set 
-        { 
-            lock (_stateLock) _resultCodeExtended = value; 
+        private set
+        {
+            lock (_stateLock) _resultCodeExtended = value;
         }
     }
 
@@ -218,9 +214,9 @@ public class UposMediator : IUposMediator
                 _logger?.LogInformation("Async dispense finished with code: {Code}, codeEx: {CodeEx}", code, codeEx);
                 _asyncResultCode = (int)code;
                 _asyncResultCodeExtended = codeEx;
-                
+
                 // Use the field to avoid double locking if desired, but we must ensure IsBusy logic is handled.
-                _isBusy = false; 
+                _isBusy = false;
                 _resultCode = (int)code;
                 _resultCodeExtended = codeEx;
 
@@ -270,7 +266,7 @@ public class UposMediator : IUposMediator
         {
             command.Verify(this);
             command.Execute();
-            
+
             // For asynchronous commands, IsBusy will be set to true inside Execute().
             // In that case, we should NOT call SetSuccess() immediately as the method return value
             // is SUCCESS but the device state is BUSY.

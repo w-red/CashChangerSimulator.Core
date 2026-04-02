@@ -1,6 +1,3 @@
-using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
@@ -27,21 +24,21 @@ public class FacadeTests
     public FacadeTests()
     {
         _mediatorMock = new Mock<IUposMediator>();
-        
+
         var inventory = new Inventory();
         var hardwareStatusManager = new HardwareStatusManager();
-        
+
         // Mocking classes with dependencies, providing real objects for required parameters
         DepositControllerMock = new Mock<DepositController>(
-            inventory, 
-            hardwareStatusManager, 
+            inventory,
+            hardwareStatusManager,
             _managerMock?.Object ?? new Mock<CashChangerManager>(inventory, new Mock<TransactionHistory>().Object, new ChangeCalculator(), new ConfigurationProvider()).Object,
             new ConfigurationProvider());
         InventoryMock = new Mock<Inventory>();
         _managerMock = new Mock<CashChangerManager>(
-            inventory, 
-            new Mock<TransactionHistory>().Object, 
-            new ChangeCalculator(), 
+            inventory,
+            new Mock<TransactionHistory>().Object,
+            new ChangeCalculator(),
             new ConfigurationProvider());
         _diagnosticControllerMock = new Mock<DiagnosticController>(inventory, hardwareStatusManager);
     }

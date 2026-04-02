@@ -1,6 +1,5 @@
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;

@@ -25,11 +25,11 @@ public class DispenseChangeCommand : IUposCommand
     /// <param name="async">非同期実行するかどうか。</param>
     /// <param name="onComplete">完了時に実行されるコールバック。</param>
     public DispenseChangeCommand(
-        DispenseController controller, 
+        DispenseController controller,
         HardwareStatusManager hardwareStatusManager,
         DepositController depositController,
-        decimal amount, 
-        bool async, 
+        decimal amount,
+        bool async,
         Action<ErrorCode, int> onComplete)
     {
         _controller = controller;
@@ -68,7 +68,7 @@ public class DispenseChangeCommand : IUposCommand
                 "Device is jammed. Cannot dispense.",
                 ErrorCode.Extended,
                 (int)UposCashChangerErrorCodeExtended.Jam);
-                
+
         if (_depositController.IsDepositInProgress)
             throw new PosControlException(
                 "Cash cannot be dispensed because cash acceptance is in progress.",

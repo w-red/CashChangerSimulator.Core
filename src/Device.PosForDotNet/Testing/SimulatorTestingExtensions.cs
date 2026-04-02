@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.PosForDotNet.Testing;
 
 /// <summary>SimulatorCashChanger のテスト用拡張を提供します。</summary>

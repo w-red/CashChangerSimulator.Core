@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.PosForDotNet.Services;
 
 /// <summary>UPOS デバイスからのイベント通知を管理・抽象化するインターフェース。</summary>

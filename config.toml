@@ -1,7 +1,6 @@
 [System]
 CurrencyCode = "JPY"
 CultureCode = "en-US"
-UIMode = "Standard"
 BaseTheme = "Dark"
 
 [Inventory.JPY.Denominations.B10000]

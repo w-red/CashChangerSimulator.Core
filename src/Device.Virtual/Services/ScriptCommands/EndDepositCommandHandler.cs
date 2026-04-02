@@ -1,5 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device;
 using Microsoft.Extensions.Logging;
 using ZLogger;
 

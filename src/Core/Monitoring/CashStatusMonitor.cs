@@ -7,20 +7,15 @@ namespace CashChangerSimulator.Core.Monitoring;
 public class CashStatusMonitor : IDisposable
 {
     private readonly IReadOnlyInventory _inventory;
-    private readonly DenominationKey _key;
-    private readonly bool _isRecyclable;
-    private int _nearEmptyThreshold;
-    private int _nearFullThreshold;
-    private int _fullThreshold;
 
     /// <summary>この金種がリサイクル可能かどうか。</summary>
-    public bool IsRecyclable => _isRecyclable;
+    public bool IsRecyclable { get; }
     /// <summary>ニアエンプティしきい値。</summary>
-    public int NearEmptyThreshold => _nearEmptyThreshold;
+    public int NearEmptyThreshold { get; private set; }
     /// <summary>ニアフルしきい値。</summary>
-    public int NearFullThreshold => _nearFullThreshold;
+    public int NearFullThreshold { get; private set; }
     /// <summary>フルしきい値。</summary>
-    public int FullThreshold => _fullThreshold;
+    public int FullThreshold { get; private set; }
 
     private readonly ReactiveProperty<CashStatus> _status = new(CashStatus.Unknown);
     private readonly IDisposable _subscription;
@@ -29,7 +24,7 @@ public class CashStatusMonitor : IDisposable
     public ReadOnlyReactiveProperty<CashStatus> Status => _status;
 
     /// <summary>監視する金種キー。</summary>
-    public DenominationKey Key => _key;
+    public DenominationKey Key { get; }
 
     /// <summary>在庫、金種キー、各種しきい値を指定してインスタンスを初期化する。</summary>
     public CashStatusMonitor(IReadOnlyInventory inventory, DenominationKey key, int nearEmptyThreshold, int nearFullThreshold, int fullThreshold, bool isRecyclable = true)
@@ -38,49 +33,49 @@ public class CashStatusMonitor : IDisposable
         ArgumentNullException.ThrowIfNull(key);
 
         _inventory = inventory;
-        _key = key;
-        _isRecyclable = isRecyclable;
-        _nearEmptyThreshold = nearEmptyThreshold;
-        _nearFullThreshold = nearFullThreshold;
-        _fullThreshold = fullThreshold;
+        Key = key;
+        IsRecyclable = isRecyclable;
+        NearEmptyThreshold = nearEmptyThreshold;
+        NearFullThreshold = nearFullThreshold;
+        FullThreshold = fullThreshold;
 
         // 初回計算
         UpdateStatus();
 
         // 在庫変更時の再計算
         _subscription = _inventory.Changed
-            .Where(k => k == _key)
+            .Where(k => k == Key)
             .Subscribe(_ => UpdateStatus());
     }
 
     private void UpdateStatus()
     {
-        var count = _inventory.GetCount(_key);
+        var count = _inventory.GetCount(Key);
 
-        if (_nearEmptyThreshold != -1 && count == 0)
+        if (NearEmptyThreshold != -1 && count == 0)
         {
             _status.Value = CashStatus.Empty;
         }
-        else if (_nearEmptyThreshold != -1 && count < _nearEmptyThreshold)
+        else if (NearEmptyThreshold != -1 && count < NearEmptyThreshold)
         {
             _status.Value = CashStatus.NearEmpty;
         }
-        else if (_fullThreshold != -1 && count >= _fullThreshold)
+        else if (FullThreshold != -1 && count >= FullThreshold)
         {
             _status.Value = CashStatus.Full;
         }
         else
         {
-            _status.Value = _nearFullThreshold != -1 && count >= _nearFullThreshold ? CashStatus.NearFull : CashStatus.Normal;
+            _status.Value = NearFullThreshold != -1 && count >= NearFullThreshold ? CashStatus.NearFull : CashStatus.Normal;
         }
     }
 
     /// <summary>しきい値を動的に更新し、状態を再計算します。</summary>
     public void UpdateThresholds(int nearEmpty, int nearFull, int full)
     {
-        _nearEmptyThreshold = nearEmpty;
-        _nearFullThreshold = nearFull;
-        _fullThreshold = full;
+        NearEmptyThreshold = nearEmpty;
+        NearFullThreshold = nearFull;
+        FullThreshold = full;
         UpdateStatus();
     }
 

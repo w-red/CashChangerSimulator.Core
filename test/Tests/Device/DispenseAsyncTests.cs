@@ -1,6 +1,5 @@
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
@@ -8,7 +7,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -77,8 +75,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
             AsyncMode = true,
+            SkipStateVerification = false
         };
-        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);
@@ -120,8 +118,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
             AsyncMode = true,
+            SkipStateVerification = false
         };
-        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);
@@ -153,8 +151,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager)
         {
             AsyncMode = true,
+            SkipStateVerification = false
         };
-        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);
@@ -181,11 +179,11 @@ public class DispenseAsyncTests
         var inventory = new Inventory();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
-        
+
         // Mock simulator that we can block and that respects the token
         var mockSimulator = new Mock<IDeviceSimulator>();
         var hardwareSimulatedSignal = new ManualResetEventSlim(false);
-        
+
         mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
             .Returns(async (CancellationToken ct) =>
             {
@@ -204,8 +202,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager, mockSimulator.Object)
         {
             AsyncMode = true,
+            SkipStateVerification = false
         };
-        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);
@@ -213,23 +211,23 @@ public class DispenseAsyncTests
 
         // Act: Start dispense
         changer.DispenseChange(100);
-        
+
         // Wait until it enters the simulator
         hardwareSimulatedSignal.Wait(2000, TestContext.Current.CancellationToken).ShouldBeTrue("Hardware simulation did not start");
-        
+
         // Assert: It should be busy
         var exBusy = Should.Throw<PosControlException>(() => changer.DispenseChange(50));
         exBusy.ErrorCode.ShouldBe(ErrorCode.Busy);
 
         // Act: Clear Output
         changer.ClearOutput();
-        
+
         // Assert: Should be Idle again
         changer.ReadCashCounts(); // Should NO LONGER throw Busy
-        
+
         // Wait a bit for the async task to propagate the cancellation catch
         await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken);
-        
+
         // Verify no AsyncFinished event fired
         lock (changer.QueuedEvents)
         {
@@ -245,7 +243,7 @@ public class DispenseAsyncTests
         var inventory = new Inventory();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
-        
+
         var mockSimulator = new Mock<IDeviceSimulator>();
         mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new PosControlException("Hardware simulated error", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam));
@@ -253,8 +251,8 @@ public class DispenseAsyncTests
         var changer = new TestSimulatorCashChanger(inventory, manager, mockSimulator.Object)
         {
             AsyncMode = true,
+            SkipStateVerification = false
         };
-        changer.SkipStateVerification = false;
 
         changer.Open();
         changer.Claim(1000);

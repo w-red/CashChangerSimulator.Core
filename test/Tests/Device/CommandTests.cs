@@ -1,7 +1,3 @@
-using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
@@ -31,9 +27,9 @@ public class CommandTests
     [Fact]
     public void AdjustCashCountsCommandShouldThrowWhenJammed()
     {
-        var counts = new List<CashCount> { new CashCount(CashCountType.Bill, 1000, 10) };
+        var counts = new List<CashCount> { new(CashCountType.Bill, 1000, 10) };
         var cmd = new AdjustCashCountsCommand(_inventory, counts, "JPY", 1, _hardware);
-        
+
         _hardware.SetJammed(true);
         var ex = Should.Throw<PosControlException>(() => cmd.Execute());
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
@@ -60,7 +56,7 @@ public class CommandTests
     {
         var deposit = new DepositController(_inventory, _hardware);
         deposit.BeginDeposit(); // Sets IsDepositInProgress to true
-        
+
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         _inventory.SetCount(key, 10);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };

@@ -1,11 +1,6 @@
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.PosForDotNet.Strategies;
 using Shouldly;
 
@@ -19,8 +14,10 @@ public class DirectIOStrategyTest
     public DirectIOStrategyTest()
     {
         // InternalSimulatorCashChanger を初期化（SkipStateVerification = true にして OPOS API の制約を回避）
-        _device = new InternalSimulatorCashChanger();
-        _device.SkipStateVerification = true;
+        _device = new InternalSimulatorCashChanger
+        {
+            SkipStateVerification = true
+        };
         _device.Open();
         _device.Claim(0);
     }

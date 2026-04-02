@@ -1,8 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -76,10 +71,10 @@ public class SkipVerificationLifecycleHandlerTests
     public void ClaimAndReleaseShouldThrowWhenClosed()
     {
         _hardware.SetConnected(false);
-        
+
         Should.Throw<PosControlException>(() => _handler.Claim(0, _ => { }))
             .ErrorCode.ShouldBe(ErrorCode.Closed);
-            
+
         Should.Throw<PosControlException>(() => _handler.Release(() => { }))
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
@@ -90,7 +85,7 @@ public class SkipVerificationLifecycleHandlerTests
     {
         _hardware.SetConnected(true);
         _handler.Release(() => { });
-        
+
         _mediator.VerifySet(m => m.Claimed = false);
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
     }

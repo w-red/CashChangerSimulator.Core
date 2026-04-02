@@ -1,8 +1,4 @@
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -10,7 +6,6 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.PointOfService;
 using R3;
 using Shouldly;
 
@@ -188,7 +183,7 @@ public class DepositSequenceTests
         var hw = new HardwareStatusManager();
         hw.SetConnected(true);
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         var config = new SimulatorConfiguration();
         config.Inventory[b1000.CurrencyCode] = new InventorySettings
         {
@@ -222,7 +217,7 @@ public class DepositSequenceTests
         var (controller, _) = CreateController();
         var hwField = typeof(DepositController).GetField("_hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
         var hw = (HardwareStatusManager)hwField.GetValue(controller)!;
-        
+
         controller.BeginDeposit();
         hw.SetJammed(true);
 
@@ -283,7 +278,7 @@ public class DepositSequenceTests
         controller.RequiredAmount = 1050; // New property
 
         controller.BeginDeposit();
-        
+
         // Input: 5x1000 bills, 7x10 coins = 5070
         for (int i = 0; i < 5; i++) controller.TrackDeposit(b1000);
         for (int i = 0; i < 7; i++) controller.TrackDeposit(c10);

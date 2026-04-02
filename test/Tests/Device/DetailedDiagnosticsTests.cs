@@ -1,9 +1,3 @@
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.Virtual.Services;
-using CashChangerSimulator.Device.PosForDotNet.Services;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
@@ -30,7 +24,7 @@ public class DetailedDiagnosticsTests
         var simulator = CreateSimulator();
         // Act
         var report = simulator.CheckHealth((HealthCheckLevel)DeviceHealthCheckLevel.Internal);
-        
+
         report.ShouldContain("Internal Health Check");
         report.ShouldContain("Inventory: OK");
         report.ShouldContain("Status: OK");
@@ -43,7 +37,7 @@ public class DetailedDiagnosticsTests
         var simulator = CreateSimulator();
         // Act
         var report = simulator.CheckHealth((HealthCheckLevel)DeviceHealthCheckLevel.External);
-        
+
         report.ShouldContain("External Health Check");
         report.ShouldContain("Hardware: Connected");
     }
@@ -53,15 +47,15 @@ public class DetailedDiagnosticsTests
     public void RetrieveStatisticsShouldReturnOperationCounts()
     {
         var simulator = CreateSimulator();
-        
+
         // Perform some operations
         simulator.BeginDeposit();
         simulator.FixDeposit();
         simulator.EndDeposit(CashDepositAction.NoChange);
-        
+
         string[] stats = ["*"];
         var result = simulator.RetrieveStatistics(stats);
-        
+
         result.ShouldContain("SuccessfulDepletionCount");
     }
 
@@ -71,9 +65,9 @@ public class DetailedDiagnosticsTests
     {
         var simulator = CreateSimulator();
         simulator.CheckHealth((HealthCheckLevel)DeviceHealthCheckLevel.Internal);
-        
+
         var result = simulator.DirectIO(1002, 0, "");
-        
+
         result.Object.ShouldNotBeNull();
         result.Object.ToString()!.ShouldContain("Internal Health Check");
     }

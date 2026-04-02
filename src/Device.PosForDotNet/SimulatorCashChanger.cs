@@ -1,13 +1,10 @@
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using R3;
 using Microsoft.Extensions.Logging;
@@ -145,7 +142,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         ArgumentNullException.ThrowIfNull(statistics);
         _diagnosticsFacade.ResetStatistics(statistics);
     }
-    
+
     // ICashChangerStatusSink Implementation
     bool ICashChangerStatusSink.Claimed { get => _ctx.Mediator.Claimed; set => _ctx.Mediator.Claimed = value; }
     bool ICashChangerStatusSink.ClaimedByAnother { get => _ctx.HardwareStatusManager.IsClaimedByAnother.Value; set { /* No-op: Mediator uses this to sync back to sink if needed, but here we prioritize hardware */ } }
@@ -172,7 +169,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     // Properties
     public override CashChangerStatus DeviceStatus => _ctx.LifecycleManager.State == ControlState.Closed ? CashChangerStatus.OK : _ctx.StatusCoordinator.LastCashChangerStatus;
     public override CashChangerFullStatus FullStatus => _ctx.LifecycleManager.State == ControlState.Closed ? CashChangerFullStatus.OK : _ctx.StatusCoordinator.LastFullStatus;
-    
+
     public int ResultCode { get => _ctx.Mediator.ResultCode; set => _ctx.Mediator.SetFailure((ErrorCode)value); }
     public int ResultCodeExtended { get => _ctx.Mediator.ResultCodeExtended; set => _ctx.Mediator.SetFailure((ErrorCode)ResultCode, value); }
 
@@ -204,7 +201,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override CashDepositStatus DepositStatus => _depositFacade.DepositStatus;
     public override int CurrentExit { get => _capFacade.CurrentExit; set => _capFacade.CurrentExit = value; }
     public override int DeviceExits => _capFacade.DeviceExits;
-    
+
     /// <summary>入金の要求額を取得または設定します。</summary>
     public decimal RequiredAmount { get => DepositController.RequiredAmount; set => DepositController.RequiredAmount = value; }
 
@@ -224,7 +221,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     void IUposEventSink.NotifyEvent(EventArgs e)
     {
         if (_disposedValue) return;
-        
+
         // [FIX] In unit tests, POS.NET's internal event queue might be null.
         // We first notify the local hooks (e.g. TestSimulatorCashChanger.QueuedEvents)
         NotifyEvent(e);
@@ -266,7 +263,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     // Infrastructure
     public override string DeviceName => "SimulatorCashChanger";
     public override string DeviceDescription => "Virtual Cash Changer Simulator";
-    
+
     // Explicit IDeviceStateProvider implementation
     DeviceControlState IDeviceStateProvider.State => State switch
     {

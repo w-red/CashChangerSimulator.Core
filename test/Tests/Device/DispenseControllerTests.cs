@@ -1,10 +1,4 @@
 using CashChangerSimulator.Device;
-
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-
-using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -35,7 +29,7 @@ public class DispenseControllerTests
         _mockManager = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), new ChangeCalculator());
         _mockSimulator = new Mock<IDeviceSimulator>();
         _controller = new DispenseController(_mockManager.Object, _hw, _mockSimulator.Object);
-        
+
         // Default connected state
         _hw.SetConnected(true);
     }
@@ -48,7 +42,7 @@ public class DispenseControllerTests
         _hw.SetConnected(false);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => 
+        var ex = await Should.ThrowAsync<DeviceException>(() =>
             _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
@@ -61,7 +55,7 @@ public class DispenseControllerTests
         _hw.SetJammed(true);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => 
+        var ex = await Should.ThrowAsync<DeviceException>(() =>
             _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Failure);
     }
@@ -78,8 +72,8 @@ public class DispenseControllerTests
         int capturedExtended = 0;
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => 
-            _controller.DispenseChangeAsync((int)100, false, (e, ext) => 
+        var ex = await Should.ThrowAsync<DeviceException>(() =>
+            _controller.DispenseChangeAsync((int)100, false, (e, ext) =>
             {
                 capturedError = e;
                 capturedExtended = ext;
@@ -87,7 +81,7 @@ public class DispenseControllerTests
 
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
         ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
-        
+
         capturedError.ShouldBe(DeviceErrorCode.Extended);
         capturedExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
@@ -98,15 +92,15 @@ public class DispenseControllerTests
     public async Task DispenseCashAsyncShouldSucceedWithValidCounts()
     {
         // Arrange
-        var counts = new Dictionary<DenominationKey, int> 
-        { 
-            { new DenominationKey(100, CurrencyCashType.Coin), 1 } 
+        var counts = new Dictionary<DenominationKey, int>
+        {
+            { new DenominationKey(100, CurrencyCashType.Coin), 1 }
         };
 
         bool completed = false;
-        
+
         // Act
-        await _controller.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false, (e, ext) => 
+        await _controller.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false, (e, ext) =>
         {
             e.ShouldBe(DeviceErrorCode.Success);
             completed = true;
@@ -132,7 +126,7 @@ public class DispenseControllerTests
 
         // Act & Assert
         _controller.IsBusy.ShouldBeTrue();
-        await Should.ThrowAsync<DeviceException>(() => 
+        await Should.ThrowAsync<DeviceException>(() =>
             _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
     }
 
@@ -144,7 +138,7 @@ public class DispenseControllerTests
         _hw.SetOverlapped(true);
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => 
+        var ex = await Should.ThrowAsync<DeviceException>(() =>
             _controller.DispenseChangeAsync((int)100, false, (e, ex) => { }));
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Failure);
     }
@@ -158,7 +152,7 @@ public class DispenseControllerTests
         var tcs = new TaskCompletionSource<bool>();
 
         _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
-            .Returns(async (CancellationToken t) => 
+            .Returns(async (CancellationToken t) =>
             {
                 tcs.SetResult(true); // Signal that we have entered the mock
                 try { await Task.Delay(5000, t); }
@@ -166,13 +160,13 @@ public class DispenseControllerTests
             });
 
         _ = _controller.DispenseChangeAsync((int)100, true, (e, ex) => { });
-        
+
         // Wait until we are inside the simulator method
         await tcs.Task;
-        
+
         // Act
         _controller.ClearOutput();
-        
+
         // Wait a bit for the task to react to cancellation
         await Task.Delay(100, TestContext.Current.CancellationToken);
 
@@ -192,9 +186,9 @@ public class DispenseControllerTests
         DeviceErrorCode capturedError = DeviceErrorCode.Success;
 
         // Act & Assert
-        await Should.ThrowAsync<DeviceException>(() => 
+        await Should.ThrowAsync<DeviceException>(() =>
             _controller.DispenseChangeAsync((int)100, false, (e, ext) => capturedError = e));
-        
+
         capturedError.ShouldBe(DeviceErrorCode.Failure);
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
     }
@@ -229,13 +223,13 @@ public class DispenseControllerTests
         int capturedExtended = 0;
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => 
-            _controller.DispenseChangeAsync((int)100, false, (e, ext) => 
+        var ex = await Should.ThrowAsync<DeviceException>(() =>
+            _controller.DispenseChangeAsync((int)100, false, (e, ext) =>
             {
                 capturedError = e;
                 capturedExtended = ext;
             }));
-        
+
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
         ex.ErrorCodeExtended.ShouldBe(123);
         capturedError.ShouldBe(DeviceErrorCode.Illegal);

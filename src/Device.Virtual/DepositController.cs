@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Managers;
@@ -76,7 +75,7 @@ public class DepositController : IDisposable
     public virtual decimal RejectAmount => _rejectAmount;
     public virtual IReadOnlyDictionary<DenominationKey, int> DepositCounts => _depositCounts;
     public virtual DeviceDepositStatus DepositStatus => _depositStatus;
-    
+
     public virtual bool IsDepositInProgress =>
         _depositStatus is DeviceDepositStatus.Start or DeviceDepositStatus.Counting or DeviceDepositStatus.Validation;
 
@@ -171,8 +170,8 @@ public class DepositController : IDisposable
                     }
                 }
                 _inventory.ClearEscrow();
-                foreach(var kv in storeCounts) if (kv.Value > 0) _inventory.AddEscrow(kv.Key, kv.Value);
-                
+                foreach (var kv in storeCounts) if (kv.Value > 0) _inventory.AddEscrow(kv.Key, kv.Value);
+
                 if (remainingChange > 0 && _manager != null)
                 {
                     _manager.Dispense(remainingChange);
@@ -201,7 +200,7 @@ public class DepositController : IDisposable
         _depositStatus = DeviceDepositStatus.End;
         _depositPaused = false;
         _depositFixed = false;
-        
+
         // [FIX] UPOS standard requires DepositAmount to be reset if the deposit is repaid.
         // [修正] UPOS 標準では、入金が返却（Repay）された場合、DepositAmount をリセットする必要があります。
         if (action == DepositAction.Repay)
@@ -256,7 +255,7 @@ public class DepositController : IDisposable
         {
             if (count <= 0) continue;
             var setting = _configProvider.Config.GetDenominationSetting(key);
-            
+
             if (setting.IsRecyclable)
             {
                 var currentTotal = _inventory.GetCount(key) + _depositCounts.GetValueOrDefault(key, 0) + count;

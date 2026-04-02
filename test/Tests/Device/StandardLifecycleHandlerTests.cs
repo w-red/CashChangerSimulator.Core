@@ -1,8 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -96,7 +91,7 @@ public class StandardLifecycleHandlerTests
         _hardware.SetConnected(true);
         var baseCalled = false;
         _handler.Open(() => baseCalled = true);
-        
+
         baseCalled.ShouldBeFalse();
         _mediator.Verify(m => m.SetSuccess(), Times.Once);
     }
@@ -107,7 +102,7 @@ public class StandardLifecycleHandlerTests
     {
         _hardware.SetConnected(false);
         _handler.Open(() => throw new Exception("Test"));
-        
+
         _hardware.IsConnected.Value.ShouldBeTrue();
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Open);
     }
@@ -119,7 +114,7 @@ public class StandardLifecycleHandlerTests
         _hardware.SetConnected(false);
         var baseCalled = false;
         _handler.Close(() => baseCalled = true);
-        
+
         baseCalled.ShouldBeFalse();
         _mediator.Verify(m => m.SetSuccess(), Times.Once);
     }
@@ -130,9 +125,9 @@ public class StandardLifecycleHandlerTests
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(true);
-        
+
         _handler.Close(() => throw new Exception("Test"));
-        
+
         _hardware.IsConnected.Value.ShouldBeFalse();
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Close);
@@ -153,10 +148,10 @@ public class StandardLifecycleHandlerTests
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(true);
-        
+
         var baseCalled = false;
         _handler.Claim(0, _ => baseCalled = true);
-        
+
         baseCalled.ShouldBeFalse();
     }
 
@@ -166,9 +161,9 @@ public class StandardLifecycleHandlerTests
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(false);
-        
+
         _handler.Claim(0, _ => throw new Exception("Test"));
-        
+
         _mediator.VerifySet(m => m.Claimed = true);
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Claim);
     }
@@ -188,10 +183,10 @@ public class StandardLifecycleHandlerTests
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(false);
-        
+
         var baseCalled = false;
         _handler.Release(() => baseCalled = true);
-        
+
         baseCalled.ShouldBeFalse();
     }
 
@@ -201,9 +196,9 @@ public class StandardLifecycleHandlerTests
     {
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.Claimed).Returns(true);
-        
+
         _handler.Release(() => throw new Exception("Test"));
-        
+
         _mediator.VerifySet(m => m.Claimed = false);
         _history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
     }

@@ -52,7 +52,7 @@ public class VirtualMockDevice : ICashChangerDevice
     public void Claim(int timeout)
     {
         if (!IsConnected) throw new InvalidOperationException("Device not opened.");
-        
+
         try
         {
             // Mutex によるプロセス間/インスタンス間排他
@@ -61,7 +61,7 @@ public class VirtualMockDevice : ICashChangerDevice
             {
                 throw new Exception("The device is already claimed by another process or instance.");
             }
-            
+
             Claimed = true;
             _logger.ZLogInformation($"VirtualMockDevice Claimed.");
         }
@@ -81,7 +81,7 @@ public class VirtualMockDevice : ICashChangerDevice
             _deviceMutex.ReleaseMutex();
             _hasMutex = false;
         }
-        
+
         Claimed = false;
         _logger.ZLogInformation($"VirtualMockDevice Released.");
     }

@@ -1,7 +1,4 @@
 using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -53,7 +50,8 @@ public class UposDispenseFacadeTest
     private void SetupMediatorToThrow()
     {
         _mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
-            .Callback<IUposCommand>(cmd => {
+            .Callback<IUposCommand>(cmd =>
+            {
                 cmd.Verify(_mediatorMock.Object);
                 cmd.Execute();
             });
@@ -65,7 +63,7 @@ public class UposDispenseFacadeTest
     {
         DepositController.BeginDeposit();
         SetupMediatorToThrow();
- 
+
         Should.Throw<PosControlException>(() =>
             _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
     }
@@ -76,7 +74,7 @@ public class UposDispenseFacadeTest
     {
         HardwareStatusManager.SetJammed(true);
         SetupMediatorToThrow();
- 
+
         Should.Throw<PosControlException>(() =>
             _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
     }
@@ -105,7 +103,7 @@ public class UposDispenseFacadeTest
     {
         var cashCounts = new[] { new CashCount(CashCountType.Bill, 1000, 999) };
         SetupMediatorToThrow();
- 
+
         Should.Throw<PosControlException>(() =>
             _facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false, (_, _, _) => { }));
     }

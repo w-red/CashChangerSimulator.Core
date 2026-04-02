@@ -31,7 +31,7 @@ public class MonitorsProvider
         _inventory = inventory;
         _configProvider = configProvider;
         _metadataProvider = metadataProvider;
-        
+
         RefreshMonitors();
 
         // 構成変更時またはメタデータ変更時（通貨変更時など）にモニターリストも更新する

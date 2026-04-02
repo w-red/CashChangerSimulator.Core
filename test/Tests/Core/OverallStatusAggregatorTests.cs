@@ -109,20 +109,20 @@ public class OverallStatusAggregatorTests
         var inventory = new Inventory();
         var k1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         var k5000 = new DenominationKey(5000, CurrencyCashType.Bill);
-        
+
         inventory.SetCount(k1000, 5); // Normal
         inventory.SetCount(k5000, 0); // Empty
-        
+
         var monitor1000 = new CashStatusMonitor(inventory, k1000, 2, 8, 10);
         var aggregator = new OverallStatusAggregator([monitor1000]);
-        
+
         // 初期状態: 1000円しか監視していないので Normal
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);
-        
+
         // Act: 5000円のモニターを追加して Refresh
         var monitor5000 = new CashStatusMonitor(inventory, k5000, 2, 8, 10);
         aggregator.Refresh([monitor1000, monitor5000]);
-        
+
         // Assert: 5000円が Empty なので集約結果も Empty になるはず
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
     }
@@ -135,23 +135,23 @@ public class OverallStatusAggregatorTests
         var inventory = new Inventory();
         var kRecyclable = new DenominationKey(1000, CurrencyCashType.Bill);
         var kNonRecyclable = new DenominationKey(2000, CurrencyCashType.Bill);
-        
+
         inventory.SetCount(kRecyclable, 5);    // Normal
         inventory.SetCount(kNonRecyclable, 0); // Empty but should be ignored
 
         var monitorRecyclable = new CashStatusMonitor(inventory, kRecyclable, 2, 8, 10, isRecyclable: true);
         var monitorNonRecyclable = new CashStatusMonitor(inventory, kNonRecyclable, 2, 8, 10, isRecyclable: false);
-        
+
         var aggregator = new OverallStatusAggregator([monitorRecyclable, monitorNonRecyclable]);
 
         // Assert: 2000円札が Empty だが、非リサイクルなので DeviceStatus は Normal のはず
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);
-        
+
         // Act: リサイクル金種を Empty にする
         inventory.SetCount(kRecyclable, 0);
         // Assert: リサイクル金種が Empty なので集約結果も Empty
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
-        
+
         // Act: 非リサイクル金種を Full にする
         inventory.SetCount(kNonRecyclable, 100);
         // Assert: 非リサイクルなので FullStatus は Normal のまま

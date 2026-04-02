@@ -1,6 +1,5 @@
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
@@ -21,7 +20,7 @@ public class EndDepositCommand : IUposCommand
     {
         var actionText = _action.ToString();
         var actionValue = (int)_action;
-        
+
         var coreAction = actionText switch
         {
             "Change" => DepositAction.Store,

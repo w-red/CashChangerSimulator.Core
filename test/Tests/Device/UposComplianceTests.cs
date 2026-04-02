@@ -1,7 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -36,9 +32,9 @@ public class UposComplianceTests
             .Callback<IUposCommand>((cmd) => cmd.Execute());
 
         _managerMock = new Mock<CashChangerManager>(
-            Inventory, 
-            new Mock<TransactionHistory>().Object, 
-            new ChangeCalculator(), 
+            Inventory,
+            new Mock<TransactionHistory>().Object,
+            new ChangeCalculator(),
             new ConfigurationProvider());
         HardwareStatusManager = new HardwareStatusManager();
         _facade = new InventoryFacade(Inventory, _managerMock.Object, _mediatorMock.Object);
@@ -69,7 +65,7 @@ public class UposComplianceTests
         var currencyCode = "JPY";
         var factor = 1.0m;
         // Format: "Denom:Count,Denom:Count"
-        var countsStr = "1000:5,5000:2"; 
+        var countsStr = "1000:5,5000:2";
 
         // Act
         _facade.AdjustCashCounts(countsStr, currencyCode, factor, HardwareStatusManager);
@@ -90,10 +86,10 @@ public class UposComplianceTests
 
         // Act
         var result = _facade.ReadCashCounts("JPY", 1.0m);
- 
+
         // Assert
         result.Discrepancy.ShouldBeTrue();
- 
+
         // Clear discrepancy
         Inventory.HasDiscrepancy = false;
         result = _facade.ReadCashCounts("JPY", 1.0m);

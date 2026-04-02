@@ -42,7 +42,7 @@ public class CoreCoverageTests
 
         // Act
         history.Dispose();
-        
+
         // Assert - just ensuring coverage of Dispose
         // In a real scenario, we might check if event subscriptions are cleared if possible.
     }
@@ -70,7 +70,7 @@ public class CoreCoverageTests
         var config = new CashChangerSimulator.Core.Configuration.ConfigurationProvider();
         // 設定を直接書き換える（本来はファイルから読み込むが、テスト用にメンバにアクセスできるか確認）
         config.Config.System.CurrencyCode = "USD";
-        
+
         var provider = new CashChangerSimulator.Core.Services.CurrencyMetadataProvider(config);
 
         // Act

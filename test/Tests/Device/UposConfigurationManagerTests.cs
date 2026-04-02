@@ -1,8 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
@@ -52,10 +47,10 @@ public class UposConfigurationManagerTests
     {
         _stateProvider.Setup(s => s.State).Returns(DeviceControlState.Idle);
         _inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
-        
+
         // Trigger reload
         _configProvider.Update(new SimulatorConfiguration());
-        
+
         _inventory.AllCounts.ShouldBeEmpty();
     }
 
@@ -65,9 +60,9 @@ public class UposConfigurationManagerTests
     {
         _stateProvider.Setup(s => s.State).Returns(CashChangerSimulator.Device.DeviceControlState.Idle);
         _inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
-        
+
         _manager.Reload();
-        
+
         _inventory.AllCounts.ShouldBeEmpty();
     }
 
@@ -77,7 +72,7 @@ public class UposConfigurationManagerTests
     {
         _configProvider.Config.Inventory.Clear();
         _configProvider.Config.Inventory["EUR"] = new InventorySettings();
-        
+
         _manager.Initialize();
         _manager.CurrencyCode.ShouldBe("EUR");
     }

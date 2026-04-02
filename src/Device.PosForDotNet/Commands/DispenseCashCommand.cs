@@ -28,12 +28,12 @@ public class DispenseCashCommand : IUposCommand
     /// <param name="async">非同期実行するかどうか。</param>
     /// <param name="onComplete">完了時に実行されるコールバック。</param>
     public DispenseCashCommand(
-        DispenseController controller, 
-        Inventory inventory, 
+        DispenseController controller,
+        Inventory inventory,
         HardwareStatusManager hardwareStatusManager,
         DepositController depositController,
-        IReadOnlyDictionary<DenominationKey, int> counts, 
-        bool async, 
+        IReadOnlyDictionary<DenominationKey, int> counts,
+        bool async,
         Action<ErrorCode, int> onComplete)
     {
         _controller = controller;

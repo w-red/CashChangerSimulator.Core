@@ -1,10 +1,5 @@
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -50,7 +45,7 @@ public class SimulatorCashChangerCoverageTests
 
         // Act
         changer.Dispose();
-        
+
         // Second call should not throw
         Action act = () => changer.Dispose();
 
@@ -65,15 +60,15 @@ public class SimulatorCashChangerCoverageTests
         // Arrange
         var changer = new InternalSimulatorCashChanger();
         var controller = changer.Context.DispenseController;
-        
+
         // Force error state via reflection or internal if needed, 
         // but DispenseController has internal status.
         // For testing purpose, we can use the Public ClearError if we can trigger Error.
-        
+
         // Let's use a mock or just verify the logic if status is Error.
         // Since we want to cover the code path:
         controller.ClearOutput(); // Should work even if not in error
-        
+
         // Assert - just ensuring no throw and coverage
         controller.Status.ShouldNotBe(CashChangerSimulator.Core.Monitoring.CashDispenseStatus.Error);
     }

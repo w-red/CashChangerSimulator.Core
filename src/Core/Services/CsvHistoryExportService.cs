@@ -21,7 +21,7 @@ public class CsvHistoryExportService : IHistoryExportService
         foreach (var entry in entries)
         {
             var details = string.Join("|", entry.Counts.Select(c => $"{c.Key.CurrencyCode}-{c.Key.ToDenominationString()}:{c.Value}"));
-            
+
             sb.Append(entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")).Append(",");
             sb.Append(entry.Type).Append(",");
             sb.Append(entry.Amount).Append(",");

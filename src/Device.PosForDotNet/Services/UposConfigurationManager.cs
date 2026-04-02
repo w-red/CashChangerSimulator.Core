@@ -1,11 +1,8 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using CashChangerSimulator.Core;
-using CashChangerSimulator.Device;
 using R3;
 using ZLogger;
 
@@ -83,14 +80,14 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         {
             _activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
         }
-        
+
         // Clear inventory to avoid cross-currency pollution
         // ONLY if device is open, to avoid interference with startup sequence
         if (_stateProvider.State != DeviceControlState.Closed)
         {
             _inventory.Clear();
         }
-        
+
         _logger.ZLogInformation($"Simulator state updated. Active Currency: {_activeCurrencyCode}");
     }
 

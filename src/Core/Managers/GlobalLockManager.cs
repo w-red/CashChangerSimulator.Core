@@ -1,4 +1,3 @@
-using System.IO;
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
@@ -20,7 +19,7 @@ public sealed class GlobalLockManager : IDisposable
     {
         _lockFilePath = lockFilePath;
         _logger = logger;
-        
+
         // Ensure directory exists
         var dir = Path.GetDirectoryName(_lockFilePath);
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))

@@ -25,7 +25,7 @@ public class MonitorsProviderTests
         var newConfig = new SimulatorConfiguration();
         // Specific setting overrides global Thresholds
         newConfig.Inventory["JPY"].Denominations["B1000"].NearEmpty = 99;
-        
+
         provider.UpdateThresholdsFromConfig(newConfig);
         monitor.NearEmptyThreshold.ShouldBe(99);
     }
@@ -37,13 +37,13 @@ public class MonitorsProviderTests
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();
         var metadata = new CurrencyMetadataProvider(configProvider);
-        
+
         // Disable recycling for 2000 Yen in config
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
-        
+
         var provider = new MonitorsProvider(inv, configProvider, metadata);
         var monitor2000 = provider.Monitors.First(m => m.Key.Value == 2000);
-        
+
         monitor2000.NearEmptyThreshold.ShouldBe(-1);
         monitor2000.FullThreshold.ShouldBe(-1);
     }
@@ -55,14 +55,14 @@ public class MonitorsProviderTests
         var inv = new Inventory();
         var configProvider = new ConfigurationProvider();
         var metadata = new CurrencyMetadataProvider(configProvider);
-        
+
         // Set an unknown currency
         configProvider.Config.System.CurrencyCode = "USD";
         configProvider.Config.Thresholds.NearEmpty = 123;
-        
+
         var provider = new MonitorsProvider(inv, configProvider, metadata);
         var monitor = provider.Monitors.First(m => m.Key.Value == 1000);
-        
+
         // Should use global threshold since "USD" isn't in config.Inventory
         monitor.NearEmptyThreshold.ShouldBe(123);
     }
@@ -76,10 +76,10 @@ public class MonitorsProviderTests
         var metadata = new CurrencyMetadataProvider(configProvider);
         var provider = new MonitorsProvider(inv, configProvider, metadata);
         var called = false;
-        
+
         provider.Changed.Subscribe(_ => called = true);
         provider.TriggerChanged();
-        
+
         called.ShouldBeTrue();
     }
 
@@ -91,7 +91,7 @@ public class MonitorsProviderTests
         var configProvider = new ConfigurationProvider();
         var metadata = new CurrencyMetadataProvider(configProvider);
         var provider = new MonitorsProvider(inv, configProvider, metadata);
-        
+
         provider.Monitors.ShouldNotBeEmpty();
         provider.Dispose();
         provider.Monitors.ShouldBeEmpty();
@@ -105,12 +105,12 @@ public class MonitorsProviderTests
         var configProvider = new ConfigurationProvider();
         var metadata = new CurrencyMetadataProvider(configProvider);
         var provider = new MonitorsProvider(inv, configProvider, metadata);
-        
+
         var newConfig = new SimulatorConfiguration();
         newConfig.Inventory.Clear(); // Clear defaults to ensure fallback to global Thresholds
         newConfig.Thresholds.NearEmpty = 555;
         configProvider.Update(newConfig);
-        
+
         provider.Monitors.First(m => m.Key.Value == 1000).NearEmptyThreshold.ShouldBe(555);
     }
 
@@ -123,7 +123,7 @@ public class MonitorsProviderTests
         var metadata = new Mock<ICurrencyMetadataProvider>();
         metadata.Setup(m => m.SupportedDenominations).Returns([new DenominationKey(100, CurrencyCashType.Coin)]);
         metadata.Setup(m => m.Changed).Returns(new Subject<Unit>());
-        
+
         var provider = new MonitorsProvider(inv, configProvider, metadata.Object);
         provider.Monitors.Count.ShouldBe(1);
 

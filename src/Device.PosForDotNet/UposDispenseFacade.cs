@@ -57,7 +57,7 @@ public class UposDispenseFacade
         ArgumentNullException.ThrowIfNull(onResult);
         if (amount <= 0)
             throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
- 
+
         var decimalAmount = amount / factor;
         var command = new DispenseChangeCommand(
             _dispenseController,
@@ -66,10 +66,10 @@ public class UposDispenseFacade
             decimalAmount,
             asyncMode,
             (code, codeEx) => onResult(code, codeEx, asyncMode));
- 
+
         _mediator.Execute(command);
     }
- 
+
     public void DispenseByCashCounts(
         CashCount[] cashCounts,
         string currencyCode,

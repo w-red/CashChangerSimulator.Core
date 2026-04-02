@@ -137,7 +137,7 @@ public class CashChangerManager
     {
         var keys = _inventory.AllCounts.Select(kv => kv.Key).ToList();
         var counts = new Dictionary<DenominationKey, int>();
-        
+
         foreach (var key in keys)
         {
             var count = _inventory.GetCount(key);

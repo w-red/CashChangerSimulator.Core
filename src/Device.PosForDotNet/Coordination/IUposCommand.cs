@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
 /// <summary>

@@ -1,14 +1,8 @@
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Shouldly;
-using System;
-using System.IO;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -40,7 +34,7 @@ public class UposErrorPrecedenceTests
     {
         // 状態: Closed, ClaimedByAnother: true, NotClaimed, Disabled
         _so.HardwareStatus.SetConnected(false); // Closed
-        
+
         // 他のインスタンスで占有をシミュレート
         using var competitor = new InternalSimulatorCashChanger(new SimulatorDependencies(GlobalLockFilePath: _lockPath));
         competitor.SkipStateVerification = false;
@@ -58,7 +52,7 @@ public class UposErrorPrecedenceTests
     {
         // 状態: Open, ClaimedByAnother: true, NotClaimed, Disabled
         _so.Open();
-        
+
         // 他のインスタンスで占有をシミュレート
         using var competitor = new InternalSimulatorCashChanger(new SimulatorDependencies(GlobalLockFilePath: _lockPath));
         competitor.SkipStateVerification = false;
@@ -98,30 +92,30 @@ public class UposErrorPrecedenceTests
     public async Task StandardLifecycleHandlerDeviceEnabledShouldUseCorrectPrecedence()
     {
         // DeviceEnabled プロパティへのセット時も優先順位が適用されることを確認
-        
+
         // 1. Closed 優先
         _so.HardwareStatus.SetConnected(false);
         Should.Throw<PosControlException>(() => _so.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.Closed);
- 
+
         // 2. Claimed (Another) 優先
         _so.Open();
-        
+
         // 他のインスタンスで占有をシミュレート
         using (var competitor = new InternalSimulatorCashChanger(new SimulatorDependencies(GlobalLockFilePath: _lockPath)))
         {
             competitor.SkipStateVerification = false;
             competitor.Open();
             competitor.Claim(0);
-            
+
             Should.Throw<PosControlException>(() => _so.DeviceEnabled = true)
                 .ErrorCode.ShouldBe(ErrorCode.Claimed);
         }
- 
+
         _so.HardwareStatus.SetClaimedByAnother(false);
         // OSがファイルハンドルを閉じるのを待つためのわずかなウェイト
         await Task.Delay(100, TestContext.Current.CancellationToken);
-        
+
         // まだ Claim していない
         Should.Throw<PosControlException>(() => _so.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.NotClaimed);
@@ -138,7 +132,7 @@ public class UposErrorPrecedenceTests
         using (var streamA = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
         {
             // 同じプロセス内でも、FileShare.None で開かれたファイルは他から開けないはず
-            Should.Throw<IOException>(() => 
+            Should.Throw<IOException>(() =>
                 new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite)
             );
         }

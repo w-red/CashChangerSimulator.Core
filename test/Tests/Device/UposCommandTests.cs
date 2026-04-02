@@ -1,6 +1,3 @@
-using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
 using Microsoft.PointOfService;
 using Moq;
@@ -135,9 +132,9 @@ public class UposCommandTests
         var diagMock = new Mock<DiagnosticController>(new Inventory(), new HardwareStatusManager());
         diagMock.Setup(d => d.GetHealthReport(DeviceHealthCheckLevel.Internal)).Returns("OK");
         var command = new CheckHealthCommand(diagMock.Object, HealthCheckLevel.Internal);
-        
+
         command.Execute();
-        
+
         command.Result.ShouldBe("OK");
     }
 
@@ -147,10 +144,10 @@ public class UposCommandTests
     {
         var diagMock = new Mock<DiagnosticController>(new Inventory(), new HardwareStatusManager());
         diagMock.Setup(d => d.RetrieveStatistics(It.IsAny<string[]>())).Returns("<xml/>");
-        var command = new RetrieveStatisticsCommand(diagMock.Object, new[] { "*" });
-        
+        var command = new RetrieveStatisticsCommand(diagMock.Object, ["*"]);
+
         command.Execute();
-        
+
         command.Result.ShouldBe("<xml/>");
     }
 
@@ -158,7 +155,7 @@ public class UposCommandTests
     [Fact]
     public void UpdateStatisticsCommandExecuteShouldWork()
     {
-        var command = new UpdateStatisticsCommand(new Statistic[0]);
+        var command = new UpdateStatisticsCommand([]);
         command.Execute(); // Should not throw
     }
 
@@ -166,7 +163,7 @@ public class UposCommandTests
     [Fact]
     public void ResetStatisticsCommandExecuteShouldWork()
     {
-        var command = new ResetStatisticsCommand(new string[0]);
+        var command = new ResetStatisticsCommand([]);
         command.Execute(); // Should not throw
     }
 
@@ -180,9 +177,9 @@ public class UposCommandTests
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
         var command = new DispenseChangeCommand(controllerMock.Object, hw, deposit.Object, 1000m, false, (e, ex) => { });
-        
+
         command.Execute();
-        
+
         controllerMock.Verify(c => c.DispenseChangeAsync((int)1000m, false, It.IsAny<Action<DeviceErrorCode, int>>(), null), Times.Once);
     }
 
@@ -198,9 +195,9 @@ public class UposCommandTests
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
         var counts = new Dictionary<DenominationKey, int>();
         var command = new DispenseCashCommand(controllerMock.Object, inv, hw, deposit.Object, counts, false, (e, ex) => { });
-        
+
         command.Execute();
-        
+
         controllerMock.Verify(c => c.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false, It.IsAny<Action<DeviceErrorCode, int>>()), Times.Once);
     }
 
@@ -213,9 +210,9 @@ public class UposCommandTests
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
         var command = new ClearOutputCommand(controllerMock.Object);
-        
+
         command.Execute();
-        
+
         controllerMock.Verify(c => c.ClearOutput(), Times.Once);
     }
 }

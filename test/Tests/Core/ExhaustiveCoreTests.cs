@@ -37,20 +37,20 @@ public class ExhaustiveCoreTests : IDisposable
 
         // 3. SetLogLevel - Invalid level (should fallback to Information)
         LogProvider.SetLogLevel("INVALID_LEVEL");
-        
+
         // 4. Initialize - File Enable (including directory creation)
         var logDir = Path.Combine(Path.GetTempPath(), "CCS_Logs_" + Guid.NewGuid());
-        var fileSettings = new LoggingSettings 
-        { 
-            LogLevel = "Information", 
-            EnableConsole = false, 
+        var fileSettings = new LoggingSettings
+        {
+            LogLevel = "Information",
+            EnableConsole = false,
             EnableFile = true,
             LogDirectory = logDir,
             LogFileName = "test.log"
         };
         LogProvider.Initialize(fileSettings);
         LogProvider.CreateLogger<ExhaustiveCoreTests>().LogInformation("Test file log");
-        
+
         File.Exists(Path.Combine(logDir, "test.log")).ShouldBeTrue();
 
         // 5. Dispose
@@ -62,11 +62,11 @@ public class ExhaustiveCoreTests : IDisposable
     public void DenominationKeyExhaustiveTests()
     {
         var key1 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        
+
         // 1. Equality and Hashing
         var key2 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         var key3 = new DenominationKey(500, CurrencyCashType.Coin, "JPY");
-        
+
         key1.ShouldBe(key2);
         key1.GetHashCode().ShouldBe(key2.GetHashCode());
         key1.ShouldNotBe(key3);
@@ -82,8 +82,8 @@ public class ExhaustiveCoreTests : IDisposable
         // 4. TryParse - Failure cases
         DenominationKey.TryParse(null!, out _).ShouldBeFalse();
         DenominationKey.TryParse("", out _).ShouldBeFalse();
-        DenominationKey.TryParse("X", out _).ShouldBeFalse(); 
-        DenominationKey.TryParse("X100", out _).ShouldBeFalse(); 
+        DenominationKey.TryParse("X", out _).ShouldBeFalse();
+        DenominationKey.TryParse("X100", out _).ShouldBeFalse();
         DenominationKey.TryParse("BABC", out _).ShouldBeFalse();
         DenominationKey.TryParse("B100:Extra", out _).ShouldBeFalse(); // Invalid format (handled by LoadFromDictionary's TryParseKey)
 
@@ -92,7 +92,7 @@ public class ExhaustiveCoreTests : IDisposable
         parsed!.CurrencyCode.ShouldBe("USD");
         parsed.Value.ShouldBe(100);
         parsed.Type.ShouldBe(CurrencyCashType.Coin);
-        
+
         // 6. Record properties access (for coverage of generated code if any)
         key1.Value.ShouldBe(1000);
         key1.Type.ShouldBe(CurrencyCashType.Bill);
@@ -151,11 +151,11 @@ public class ExhaustiveCoreTests : IDisposable
         };
         // Trigger the TryParseKey return false
         malformedDict["INVALID:KEY:FORMAT"] = 1;
-        
+
         inventory.LoadFromDictionary(malformedDict);
 
         // 9. UpdateBucket negative sum (already tested, but making sure)
-        inventory.Add(key, -999); 
+        inventory.Add(key, -999);
     }
 
     /// <summary>ConfigurationLoader のロード、保存、異常系（破損ファイル）の網羅的検証を行います。</summary>
@@ -216,7 +216,7 @@ public class ExhaustiveCoreTests : IDisposable
         var lockFile1 = Path.Combine(Path.GetTempPath(), "CCS_Lock1_" + Guid.NewGuid());
         var lockFile2 = Path.Combine(Path.GetTempPath(), "CCS_Lock2_" + Guid.NewGuid());
         var logger = LogProvider.CreateLogger<GlobalLockManager>();
-        
+
         {
             using var manager1 = new GlobalLockManager(lockFile1, logger);
             using var manager2 = new GlobalLockManager(lockFile1, logger);
@@ -227,7 +227,7 @@ public class ExhaustiveCoreTests : IDisposable
             // 1. Basic acquire/release
             manager1.TryAcquire().ShouldBeTrue();
             manager1.IsLockHeldByAnother().ShouldBeFalse(); // 自分が持っているので another ではない
-            
+
             // 2. Contention
             manager2.TryAcquire().ShouldBeFalse();
             manager2.IsLockHeldByAnother().ShouldBeTrue(); // manager1 が持っている
@@ -250,7 +250,7 @@ public class ExhaustiveCoreTests : IDisposable
         var dirPath = Path.Combine(Path.GetTempPath(), "CCS_DirLock_" + Guid.NewGuid());
         Directory.CreateDirectory(dirPath);
         var lockInDir = Path.Combine(dirPath, "lock.txt"); // Not the issue, the ISSUE is if we use dirPath as lockFile
-        
+
         using (var managerError = new GlobalLockManager(dirPath, logger))
         {
             managerError.TryAcquire().ShouldBeFalse(); // Access denied to directory as file

@@ -41,7 +41,7 @@ public class Inventory : IReadOnlyInventory
 
     /// <summary>リジェクト庫（汚損等）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts { get { lock (_lock) return _rejectCounts.ToArray(); } }
-    
+
     /// <summary>入金トレイ（エスクロー）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts { get { lock (_lock) return _escrowCounts.ToArray(); } }
 

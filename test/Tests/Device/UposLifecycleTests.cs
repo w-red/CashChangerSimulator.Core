@@ -1,5 +1,4 @@
 using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Configuration;
@@ -8,7 +7,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -48,13 +46,15 @@ public class UposLifecycleTests
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
 
         var deps = new SimulatorDependencies(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw);
-        
+
         var logger = new CustomLogger<SimulatorCashChanger>();
         // Note: SimulatorCashChanger uses LogProvider internally, but custom DI would be needed to inject this logger properly.
         // For this test, we might need to rely on the fact that LifecycleManager and Handlers use the logger passed to them.
-        
-        var changer = new InternalSimulatorCashChanger(deps);
-        changer.SkipStateVerification = false;
+
+        var changer = new InternalSimulatorCashChanger(deps)
+        {
+            SkipStateVerification = false
+        };
         return (changer, logger);
     }
 
@@ -118,14 +118,14 @@ public class UposLifecycleTests
     {
         var cc = CreateCashChanger();
         cc.SkipStateVerification = true;
-        
+
         // Open() が UpdateHandler を呼び出すことを検証
         cc.Open();
-        
+
         // SkipVerificationLifecycleHandler が使用されていれば、
         // base.Claim() を呼ばずに成功するはず
         cc.Claim(1000);
-        
+
         cc.Claimed.ShouldBeTrue();
     }
 
@@ -135,7 +135,7 @@ public class UposLifecycleTests
     {
         var cc = CreateCashChanger();
         cc.Open();
-        
+
         // Skip に切り替え
         cc.SkipStateVerification = true;
         cc.Claim(1000);

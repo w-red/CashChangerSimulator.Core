@@ -1,8 +1,6 @@
-using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.Extensions.Logging;
-using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Core.Managers;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -33,7 +31,7 @@ public interface IUposMediator
     /// <summary>現在のデバイス状態が操作可能か検証します。</summary>
     /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。</remarks>
     void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false);
-    
+
     /// <summary>デバイスが有効（Enable）かどうか。</summary>
     bool DeviceEnabled { get; set; }
 
@@ -42,10 +40,10 @@ public interface IUposMediator
 
     /// <summary>デバイスが占有（Claim）されているかどうか。</summary>
     bool Claimed { get; set; }
-    
+
     /// <summary>他者によってデバイスが占有されているかどうか。</summary>
     bool ClaimedByAnother { get; set; }
-    
+
     /// <summary>状態検証（VerifyState）をスキップするかどうか。</summary>
     bool SkipStateVerification { get; set; }
 
@@ -60,7 +58,7 @@ public interface IUposMediator
 
     /// <summary>イベント通知の送り先となるシンク。</summary>
     IUposEventSink? EventSink { get; }
-    
+
     // 他のコンポーネントからの通知
     /// <summary>払い出し操作の結果を処理します。</summary>
     /// <remarks>成功・失敗の記録と、必要に応じてイベントのトリガーを行います。</remarks>

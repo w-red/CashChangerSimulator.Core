@@ -101,10 +101,10 @@ public class CurrencyMetadataProviderTests
     {
         var called = false;
         _provider.Changed.Subscribe(_ => called = true);
-        
+
         _configProvider.Config.System.CurrencyCode = "USD";
         _configProvider.Update(_configProvider.Config);
-        
+
         called.ShouldBeTrue();
     }
 
@@ -115,12 +115,12 @@ public class CurrencyMetadataProviderTests
         // Arrange
         // (Note: _configProvider is already JPY by default in constructor)
         _configProvider.Config.System.CultureCode = "ja-JP";
-        
+
         // 2000 Yen Bill setting
         var key = new DenominationKey(2000, CurrencyCashType.Bill, "JPY");
         _configProvider.Config.Inventory["JPY"].Denominations["B2000"].DisplayNameJP = "二千円札";
         _configProvider.Update(_configProvider.Config);
-        
+
         // Act
         var name = _provider.GetDenominationName(key);
 

@@ -202,13 +202,13 @@ public class InventoryTests
         Inventory.HasDiscrepancy = true;
         Inventory.HasDiscrepancy.ShouldBeTrue();
     }
-    
+
     /// <summary>エスクロー（投入中）の数量を増加させることができることを検証する。</summary>
     [Fact]
     public void AddEscrowShouldIncreaseEscrowCount()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        Inventory.AddEscrow(key, 5); 
+        Inventory.AddEscrow(key, 5);
         Inventory.EscrowCounts.ShouldContain(kv => kv.Key == key && kv.Value == 5);
     }
 

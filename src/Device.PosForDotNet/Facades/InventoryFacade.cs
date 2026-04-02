@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Commands;
@@ -26,7 +25,7 @@ public class InventoryFacade(Inventory inventory, CashChangerManager manager, IU
         mediator.Execute(command);
         return command.Result;
     }
-    
+
     /// <summary>現在の現金在庫数を手動で調整します。</summary>
     /// <remarks>指定された金種の枚数で現在の在庫を上書きします。</remarks>
     public void AdjustCashCounts(
@@ -41,7 +40,7 @@ public class InventoryFacade(Inventory inventory, CashChangerManager manager, IU
             currencyCode,
             currencyFactor,
             hardwareStatusManager);
-    
+
         mediator.Execute(command);
     }
 
@@ -61,13 +60,13 @@ public class InventoryFacade(Inventory inventory, CashChangerManager manager, IU
         var parsedCounts = CashCountAdapter.ParseCashCounts(cashCounts, currencyCode, currencyFactor, AllDenominationKeys);
         AdjustCashCounts(parsedCounts, currencyCode, currencyFactor, hardwareStatusManager);
     }
-    
+
     /// <summary>リサイクル在庫をすべて回収庫へ移動します。</summary>
     public void PurgeCash()
     {
         mediator.Execute(new PurgeCashCommand(manager));
     }
-    
+
     /// <summary>指定された通貨の現在庫リストを UPOS 形式で構築します。</summary>
     public CashUnits GetCashList(string currencyCode) =>
         UposCurrencyHelper.BuildCashUnits(inventory, currencyCode);

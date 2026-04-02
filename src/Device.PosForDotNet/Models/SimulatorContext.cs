@@ -1,5 +1,4 @@
 using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -42,24 +41,24 @@ public class SimulatorContext : IDisposable
         History = deps.History ?? new TransactionHistory();
         HardwareStatusManager = deps.HardwareStatusManager ?? new HardwareStatusManager();
         DiagnosticController = deps.DiagnosticController ?? new DiagnosticController(Inventory, HardwareStatusManager);
-        
+
         var metadataProvider = new CurrencyMetadataProvider(ConfigProvider);
         MonitorsProvider = new MonitorsProvider(Inventory, ConfigProvider, metadataProvider);
-        
+
         // Use the monitors from the MonitorsProvider for aggregation
         Aggregator = new OverallStatusAggregator(MonitorsProvider.Monitors);
-        
+
         var calculator = new ChangeCalculator();
         Manager = deps.Manager ?? new CashChangerManager(Inventory, History, calculator, ConfigProvider);
         DepositController = deps.DepositController ?? new DepositController(Inventory, HardwareStatusManager, Manager, ConfigProvider);
         DispenseController = deps.DispenseController ?? new DispenseController(Manager, HardwareStatusManager, new HardwareSimulator(ConfigProvider));
-        
+
         Mediator = deps.Mediator ?? new UposMediator();
         EventNotifier = deps.EventNotifier ?? new UposEventNotifier();
-        
+
         LifecycleManager = new LifecycleManager(HardwareStatusManager, Mediator, History, logger);
         StatusCoordinator = new StatusCoordinator(sink, Aggregator, HardwareStatusManager, DepositController, DispenseController);
-        
+
         // 排他制御の設定
         if (!string.IsNullOrEmpty(deps.GlobalLockFilePath))
         {

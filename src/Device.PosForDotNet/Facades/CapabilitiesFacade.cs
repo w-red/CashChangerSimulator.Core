@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Facades;

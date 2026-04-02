@@ -1,9 +1,4 @@
-using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Device.PosForDotNet.Coordination;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -14,8 +9,10 @@ public class AdjustCashCountsTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
     {
-        var simulator = new InternalSimulatorCashChanger();
-        simulator.SkipStateVerification = true;
+        var simulator = new InternalSimulatorCashChanger
+        {
+            SkipStateVerification = true
+        };
         simulator.Open();
         simulator.Claim(0);
         return simulator;
@@ -57,10 +54,10 @@ public class AdjustCashCountsTests
         simulator.SkipStateVerification = true;
 
         // JPY is default
-        var cashCounts = new CashCounts(new[]
-        {
+        var cashCounts = new CashCounts(
+        [
             new CashCount(CashCountType.Bill, 5000, 3)
-        }, false);
+        ], false);
 
         simulator.AdjustCashCounts(cashCounts.Counts);
 

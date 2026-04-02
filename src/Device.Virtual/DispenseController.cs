@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
@@ -51,7 +50,7 @@ public class DispenseController : IDisposable
             if (_status == CashDispenseStatus.Busy) throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
             if (_hardwareStatusManager.IsJammed.Value) throw new DeviceException("Device jammed", DeviceErrorCode.Failure);
-            
+
             // [FIX] Return Failure for Overlapped to match expectations in DispenseControllerTests.
             // [修正] DispenseControllerTests の期待値に合わせて、オーバーラップ時は Failure を返します。
             if (_hardwareStatusManager.IsOverlapped.Value) throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
@@ -87,7 +86,7 @@ public class DispenseController : IDisposable
             if (_status == CashDispenseStatus.Busy) throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
             if (_hardwareStatusManager.IsJammed.Value) throw new DeviceException("Device jammed", DeviceErrorCode.Failure);
-            
+
             // [FIX] Return Failure for Overlapped to match expectations in DispenseControllerTests.
             // [修正] DispenseControllerTests の期待値に合わせて、オーバーラップ時は Failure を返します。
             if (_hardwareStatusManager.IsOverlapped.Value) throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
@@ -153,7 +152,7 @@ public class DispenseController : IDisposable
             {
                 _status = CashDispenseStatus.Error;
             }
-            
+
             DeviceErrorCode code = DeviceErrorCode.Failure;
             int codeEx = 0;
 

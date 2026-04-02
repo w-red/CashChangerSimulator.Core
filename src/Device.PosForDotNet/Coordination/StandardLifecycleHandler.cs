@@ -1,4 +1,3 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
@@ -37,14 +36,14 @@ public class StandardLifecycleHandler(
                 // [FIX] Perform minimal local checks to satisfy unit tests that use a mock mediator.
                 // [修正] Mock メディエーターを使用するユニットテストを満たすため、最小限のローカルチェックを実行します。
                 if (State == ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
-                
+
                 // [FIX] Always refresh the global lock status before checking ClaimedByAnother for precedence.
                 // [修正] 優先順位の検証前に、グローバルロックの状態を常に最新化します。
                 hardware.RefreshClaimedStatus();
                 mediator.ClaimedByAnother = hardware.IsClaimedByAnother.Value;
-                
+
                 if (mediator.ClaimedByAnother) throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
-                
+
                 if (!Claimed) throw new PosControlException("Device is not claimed.", ErrorCode.NotClaimed);
 
                 // [UPOS PRECEDENCE] Use mediator for centralized complex verification.

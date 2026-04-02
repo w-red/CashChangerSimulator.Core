@@ -65,7 +65,7 @@ public class HistoryPersistenceServiceTests : IDisposable
 
         // Act
         _history.Add(entry);
-        
+
         // Give it a moment to save
         await Task.Delay(200, TestContext.Current.CancellationToken);
 

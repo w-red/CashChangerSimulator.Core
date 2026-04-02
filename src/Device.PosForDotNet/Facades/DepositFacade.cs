@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Commands;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
-using CashChangerSimulator.Device;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 
@@ -25,31 +24,31 @@ public class DepositFacade(
     {
         mediator.Execute(new BeginDepositCommand(depositController));
     }
- 
+
     /// <summary>入金処理を終了します。</summary>
     public void EndDeposit(CashDepositAction action)
     {
         mediator.Execute(new EndDepositCommand(depositController, action));
-        
+
         // Increment successful depletion if not repaying
         if (action != CashDepositAction.NoChange) // Note: Renamed from Cleanup in previous step
         {
             diagnosticController?.IncrementSuccessfulDepletion();
         }
     }
- 
+
     /// <summary>投入された現金の計数を確定します。</summary>
     public void FixDeposit()
     {
         mediator.Execute(new FixDepositCommand(depositController));
     }
- 
+
     /// <summary>入金処理を一時停止または再開します。</summary>
     public void PauseDeposit(CashDepositPause control)
     {
         mediator.Execute(new PauseDepositCommand(depositController, control));
     }
- 
+
     /// <summary>入金セッション中に投入された現金を返却します。</summary>
     public void RepayDeposit()
     {
