@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using Microsoft.PointOfService;
-using CashChangerSimulator.Device;
 using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -18,17 +17,15 @@ public class StatusCoordinator(
     DispenseController dispenseController) : IDisposable
 {
     private readonly CompositeDisposable _disposables = [];
-    private CashChangerStatus _lastCashChangerStatus = CashChangerStatus.OK;
-    private CashChangerFullStatus _lastFullStatus = CashChangerFullStatus.OK;
     private bool _disposed;
     private bool _isStarted;
     private bool _wasFixed;
 
     /// <summary>現在のデバイスステータス。</summary>
-    public CashChangerStatus LastCashChangerStatus => _lastCashChangerStatus;
+    public CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerStatus.OK;
 
     /// <summary>現在のフルステータス。</summary>
-    public CashChangerFullStatus LastFullStatus => _lastFullStatus;
+    public CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerFullStatus.OK;
 
     public void Start()
     {
@@ -36,13 +33,13 @@ public class StatusCoordinator(
         _isStarted = true;
 
         // Initialize with current values
-        _lastFullStatus = statusAggregator.FullStatus.CurrentValue switch
+        LastFullStatus = statusAggregator.FullStatus.CurrentValue switch
         {
             CashStatus.Full => CashChangerFullStatus.Full,
             CashStatus.NearFull => CashChangerFullStatus.NearFull,
             _ => CashChangerFullStatus.OK
         };
-        _lastCashChangerStatus = statusAggregator.DeviceStatus.CurrentValue switch
+        LastCashChangerStatus = statusAggregator.DeviceStatus.CurrentValue switch
         {
             CashStatus.Empty => CashChangerStatus.Empty,
             CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
@@ -60,10 +57,10 @@ public class StatusCoordinator(
                 _ => CashChangerStatus.OK
             };
 
-            if (newDeviceStatus != _lastCashChangerStatus)
+            if (newDeviceStatus != LastCashChangerStatus)
             {
-                var previousStatus = _lastCashChangerStatus;
-                _lastCashChangerStatus = newDeviceStatus;
+                var previousStatus = LastCashChangerStatus;
+                LastCashChangerStatus = newDeviceStatus;
 
                 if (newDeviceStatus == CashChangerStatus.OK &&
                     previousStatus is CashChangerStatus.Empty or CashChangerStatus.NearEmpty)
@@ -93,10 +90,10 @@ public class StatusCoordinator(
                 _ => CashChangerFullStatus.OK
             };
 
-            if (newFullStatus != _lastFullStatus)
+            if (newFullStatus != LastFullStatus)
             {
-                var previousFullStatus = _lastFullStatus;
-                _lastFullStatus = newFullStatus;
+                var previousFullStatus = LastFullStatus;
+                LastFullStatus = newFullStatus;
 
                 if (newFullStatus == CashChangerFullStatus.OK &&
                     previousFullStatus is CashChangerFullStatus.Full or CashChangerFullStatus.NearFull)
@@ -135,14 +132,14 @@ public class StatusCoordinator(
             {
                 // Re-evaluate from aggregator when jam is cleared
                 var currentAggregatedStatus = statusAggregator.DeviceStatus.CurrentValue;
-                _lastCashChangerStatus = currentAggregatedStatus switch
+                LastCashChangerStatus = currentAggregatedStatus switch
                 {
                     CashStatus.Empty => CashChangerStatus.Empty,
                     CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
                     _ => CashChangerStatus.OK
                 };
                 sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
-                
+
                 // If it was still Empty/NearEmpty, fire those too? 
                 // Actually, UPOS Ok event often implies clearing of error state.
             }
@@ -155,7 +152,7 @@ public class StatusCoordinator(
             .Subscribe(state =>
         {
             if (_disposed) return;
-            
+
             bool isFixed = state.IsFixed;
             bool isPaused = state.IsPaused;
             var currentStatus = state.DepositStatus;
@@ -168,7 +165,7 @@ public class StatusCoordinator(
             }
 
             // [UPOS] Check if we should fire DataEvent
-            bool eligibleForDataEvent = (currentStatus == DeviceDepositStatus.Counting || currentStatus == DeviceDepositStatus.Validation) 
+            bool eligibleForDataEvent = (currentStatus == DeviceDepositStatus.Counting || currentStatus == DeviceDepositStatus.Validation)
                 && !isPaused && sink.DataEventEnabled;
 
             if (eligibleForDataEvent)
@@ -181,11 +178,11 @@ public class StatusCoordinator(
                 else if (isFixed && !_wasFixed)
                 {
                     // [BUFFERED] Fire exactly once when FixDeposit is called.
-                    _wasFixed = true; 
+                    _wasFixed = true;
                     sink.FireEvent(new DataEventArgs(0));
                 }
             }
-            
+
             // [LIFECYCLE] Ensure _wasFixed is reset if we leave the active state (e.g. End)
             if (currentStatus == DeviceDepositStatus.End || currentStatus == DeviceDepositStatus.None)
             {
