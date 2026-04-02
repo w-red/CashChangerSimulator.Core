@@ -151,6 +151,7 @@ public class StatusCoordinator(
         // Handle deposit state changes and event firing
         _disposables.Add(depositController.Changed
             .Select(_ => (depositController.IsFixed, depositController.DepositStatus, depositController.IsPaused, depositController.DepositAmount))
+            .DistinctUntilChanged() // [FIX] Prevent multiple events for the same state transition
             .Subscribe(state =>
         {
             if (_disposed) return;
@@ -163,7 +164,7 @@ public class StatusCoordinator(
             if (currentStatus == DeviceDepositStatus.Start)
             {
                 _wasFixed = false;
-                return; // No events to fire during Start transition itself
+                return;
             }
 
             // [UPOS] Check if we should fire DataEvent
@@ -183,6 +184,12 @@ public class StatusCoordinator(
                     _wasFixed = true; 
                     sink.FireEvent(new DataEventArgs(0));
                 }
+            }
+            
+            // [LIFECYCLE] Ensure _wasFixed is reset if we leave the active state (e.g. End)
+            if (currentStatus == DeviceDepositStatus.End || currentStatus == DeviceDepositStatus.None)
+            {
+                _wasFixed = false;
             }
         }));
 
