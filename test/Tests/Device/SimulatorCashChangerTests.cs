@@ -4,6 +4,7 @@ using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Core.Models;
 using Microsoft.PointOfService;
 using Shouldly;
 
@@ -166,6 +167,15 @@ public class SimulatorCashChangerTests
         // When closed
         changer.DeviceStatus.ShouldBe(CashChangerStatus.OK);
         changer.FullStatus.ShouldBe(CashChangerFullStatus.OK);
+
+        // Seeding some cash for ALL common denominations so it's not Empty/NearEmpty
+        foreach (var ccy in new[] { "JPY", "USD" })
+        {
+            foreach (int val in new[] { 10000, 5000, 2000, 1000 })
+                changer.Inventory.SetCount(new DenominationKey(val, CurrencyCashType.Bill, ccy), 10);
+            foreach (int val in new[] { 500, 100, 50, 10, 5, 1 })
+                changer.Inventory.SetCount(new DenominationKey(val, CurrencyCashType.Coin, ccy), 10);
+        }
 
         changer.Open();
         changer.Claim(0);

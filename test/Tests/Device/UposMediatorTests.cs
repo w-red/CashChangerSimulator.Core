@@ -21,6 +21,7 @@ public class UposMediatorTests
     {
         _so = new InternalSimulatorCashChanger();
         _mediator = _so.Context.Mediator;
+        _mediator.SkipStateVerification = false;
     }
 
     /// <summary>Closed 状態で状態検証を行うと例外が発生することを検証します。</summary>

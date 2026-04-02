@@ -39,6 +39,7 @@ public class ComplianceTests
         var changer =
             new InternalSimulatorCashChanger(deps);
 
+        changer.DisableUposEventQueuing = true; // Avoid NRE in POS.NET internals
         changer.SkipStateVerification = true;
         changer.Open();
         changer.Claim(0);
@@ -73,7 +74,8 @@ public class ComplianceTests
         var (changer, controller, _, _, _) = CreateChanger();
         changer.RealTimeDataEnabled = false;
         int eventCount = 0;
-        changer.OnEventQueued += (e) => { if (e is DataEventArgs) eventCount++; };
+        changer.OnEventQueued +=
+            (e) => { if (e is DataEventArgs) eventCount++; };
 
         // Act
         changer.BeginDeposit();

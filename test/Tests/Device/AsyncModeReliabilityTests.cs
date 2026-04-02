@@ -14,6 +14,7 @@ using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
+using System.Threading;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -30,10 +31,11 @@ public class AsyncModeReliabilityTests
         public CashDispenseStatus StatusAtEvent { get; private set; }
         public int ResultCodeAtEvent { get; private set; }
         public ManualResetEventSlim CompletionSignal { get; } = new(false);
+        public Exception? BackgroundException { get; private set; }
 
         private readonly List<EventArgs> _eventHistory = [];
-        private readonly object _lock = new();
- 
+        private readonly Lock _lock = new();
+
         protected override void NotifyEvent(EventArgs e)
         {
             lock (_lock)
@@ -48,8 +50,9 @@ public class AsyncModeReliabilityTests
                     CompletionSignal.Set();
                 }
             }
-            base.NotifyEvent(e);
         }
+
+        public void SetBackgroundException(Exception ex) => BackgroundException = ex;
 
         public bool WaitForEvent(int timeoutMs) => CompletionSignal.Wait(timeoutMs);
     }
@@ -65,17 +68,17 @@ public class AsyncModeReliabilityTests
 
         var inventory = new Inventory();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin, "JPY"), 10);
-        
+
         var manager = new MockCashChangerManager(inventory, configProvider); // This mock uses base.Dispense
         var hardwareStatus = new HardwareStatusManager();
-        
+
         var hardwareSim = new Mock<IDeviceSimulator>();
         hardwareSim.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
                    .Returns(Task.CompletedTask);
 
         var controller = new DispenseController(manager, hardwareStatus, hardwareSim.Object);
         var changer = new ReliabilityTestChanger(inventory, manager, controller, hardwareStatus);
-        
+
         changer.SkipStateVerification = true;
 
         // Act
@@ -84,12 +87,18 @@ public class AsyncModeReliabilityTests
         changer.DeviceEnabled = true;
         changer.AsyncMode = true;
 
-        changer.DispenseChange(100);
+        // Capture background exceptions properly for diagnostic output
+        Func<Task> act = async () =>
+        {
+            try { changer.DispenseChange(100); }
+            catch (Exception ex) { changer.SetBackgroundException(ex); }
+        };
+        await Task.Run(act, TestContext.Current.CancellationToken);
 
         // Assert: Ensure it's busy immediately
         changer.DispenseController.IsBusy.ShouldBeTrue("Dispense operation should be busy.");
 
-        // Let it finish
+        // Allow the dispense to complete
         manager.DispenseFinishSignal.Set();
 
         // Wait for event capture with a generous timeout
@@ -97,7 +106,11 @@ public class AsyncModeReliabilityTests
 
         // Assert consistency AT EVENT RECEIPT
         eventFired.ShouldBeTrue("Completion event was not fired within 5 seconds.");
+
+        changer.BackgroundException.ShouldBeNull($"Background execution should not throw but threw: {changer.BackgroundException?.Message} (Type: {changer.BackgroundException?.GetType().Name})");
+
         changer.StatusAtEvent.ShouldBe(CashDispenseStatus.Idle, $"Internal status should be Idle when AsyncFinished event is fired, but was {changer.StatusAtEvent}.");
-        changer.ResultCodeAtEvent.ShouldBe((int)ErrorCode.Success, $"AsyncResultCode should be Success when event is fired, but was {changer.ResultCodeAtEvent}.");
+        changer.ResultCodeAtEvent.ShouldBe((int)ErrorCode.Success, $"AsyncResultCode should be Success (0) when event is fired, but was {changer.ResultCodeAtEvent} (Error? {(ErrorCode)changer.ResultCodeAtEvent}).\n" +
+            $"Capture Details: StatusAtEvent={changer.StatusAtEvent}, ResultCodeAtEvent={changer.ResultCodeAtEvent}, IsBusyNow={changer.DispenseController.IsBusy}");
     }
 }

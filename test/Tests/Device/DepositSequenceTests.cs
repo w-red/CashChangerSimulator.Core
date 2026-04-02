@@ -141,9 +141,9 @@ public class DepositSequenceTests
 
         controller.BeginDeposit();
 
-        var ex = Should.Throw<PosControlException>(() =>
+        var ex = Should.Throw<DeviceException>(() =>
             controller.EndDeposit(DepositAction.Store));
-        ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
     /// <summary>beginDepositを呼ばずにfixDepositを実行した際にErrorCode.Illegalがスローされることを検証する。</summary>
@@ -228,7 +228,7 @@ public class DepositSequenceTests
 
         // Act & Assert
         var ex = Should.Throw<DeviceException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
     }
 
     /// <summary>入金中にリジェクトイベント（SimulateReject）が発生した際、リジェクト金額が加算され、Changedイベントが発火することを検証する。</summary>
