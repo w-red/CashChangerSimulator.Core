@@ -1,112 +1,84 @@
 # CashChanger Simulator - アーキテクチャ概要
 
-このドキュメントでは、CashChanger Simulator アプリケーションのアーキテクチャ構成について説明します。本シミュレーターは、信頼性が高く拡張性に優れた、WPFベースの釣銭機デバイス（UPOS 準拠の自動預け払い機など）のシミュレーション環境を提供することを目的としています。
+このドキュメントでは、CashChanger Simulator アプリケーションのアーキテクチャ構成について説明します。本シミュレーターは、Windows (UPOS) への依存を最小限に抑え、マルチプラットフォーム展開が可能なモジュール化された構造を採用しています。
 
-## ハイレベル・アーキテクチャ
+## 3層構造によるデカップリング
 
-シミュレーターは、ユーザーインターフェース、デバイスシミュレーション、およびコアビジネスロジックを分離した、複数のモジュール層で構成されています。
+シミュレーターは、ビジネスロジック、仮想デバイス制御、および外部インターフェース（UPOS アダプター）の 3 つの主要なプロジェクトに分離されています。
 
 ```mermaid
 graph TD
     %% Define Styles
-    classDef uiLayer fill:#eef2ff,stroke:#6366f1,stroke-width:2px;
     classDef coreLayer fill:#f0fdf4,stroke:#22c55e,stroke-width:2px;
-    classDef deviceLayer fill:#fffbeb,stroke:#f59e0b,stroke-width:2px;
-    classDef infraLayer fill:#f8fafc,stroke:#94a3b8,stroke-width:2px;
+    classDef virtualLayer fill:#eef2ff,stroke:#6366f1,stroke-width:2px;
+    classDef adapterLayer fill:#fffbeb,stroke:#f59e0b,stroke-width:2px;
     
-    %% UI Layer
-    subgraph UI ["プレゼンテーション層 (WPF)"]
-        MainWindow["MainWindow"]
-        DepositView["Deposit View / ViewModel"]
-        DispenseView["Dispense View / ViewModel"]
-        PosView["POS Transaction ViewModel"]
-        AdvancedSim["高度なシミュレーション (Script, Events)"]
-        ActivityFeed["アクティビティフィード (リアルタイムイベント)"]
-    end
-    class MainWindow,DepositView,DispenseView,PosView,AdvancedSim,ActivityFeed uiLayer
-
-    %% Device/Service Layer
-    subgraph Device ["デバイス層"]
-        DepositController["DepositController"]
-        DispenseController["DispenseController"]
-        SimCashChanger["SimulatorCashChanger (ハードウェア互換)"]
-        CashCountParser["CashCountParser (UPOS 文字列パーサ)"]
-        ScriptService["ScriptExecutionService"]
-    end
-    class DepositController,DispenseController,SimCashChanger,CashCountParser,ScriptService deviceLayer
-
-    %% Core Layer
-    subgraph Core ["コアビジネスロジック"]
+    %% Core Layer (CashChangerSimulator.Core)
+    subgraph Core ["1. コア層 (プラットフォーム非依存)"]
         Manager["CashChangerManager"]
-        Inventory["在庫管理"]
+        Inventory["在庫管理 (Inventory)"]
         History["取引履歴"]
         Calc["釣銭計算アルゴリズム"]
-        OposCode["UPOS/OPOS エラー定義"]
+        DeviceEnums["共通 Enum / Exception"]
     end
-    class Manager,Inventory,History,Calc,OposCode coreLayer
+    class Manager,Inventory,History,Calc,DeviceEnums coreLayer
 
-    %% Infrastructure
-    subgraph Infrastructure ["基盤 / インフラ"]
-        Logger["ZLogger (高スループット構造化ログ)"]
-        Config["シミュレーション設定 (TOML)"]
+    %% Virtual Device Layer (Device.Virtual)
+    subgraph Virtual ["2. 仮想デバイス層 (シミュレーション論理)"]
+        DepositController["DepositController (入金制御)"]
+        DispenseController["DispenseController (出金制御)"]
+        HardwareStatus["ハードウェア状態管理"]
     end
-    class Logger,Config infraLayer
+    class DepositController,DispenseController,HardwareStatus virtualLayer
+
+    %% Adapter Layer (Device.PosForDotNet)
+    subgraph Adapter ["3. アダプター層 (Windows / UPOS 連携)"]
+        SO["SimulatorCashChanger (UPOS SO)"]
+        Mediator["UposMediator (状態同期)"]
+        PosAdapter["POS for .NET Bridge"]
+    end
+    class SO,Mediator,PosAdapter adapterLayer
 
     %% Relationships
-    MainWindow --> DepositView
-    MainWindow --> DispenseView
-    MainWindow --> PosView
-    MainWindow --> AdvancedSim
-    MainWindow --> ActivityFeed
-
-    DepositView --> DepositController
-    DispenseView --> DispenseController
-    AdvancedSim --> ScriptService
-    AdvancedSim --> SimCashChanger
-
-    DepositController --> Manager
-    DepositController --> SimCashChanger
-    
-    DispenseController --> Manager
-    DispenseController --> SimCashChanger
-    
-    ScriptService --> SimCashChanger
-    
-    SimCashChanger --> CashCountParser
-    SimCashChanger --> OposCode
-    
-    Manager --> Inventory
-    Manager --> Calc
-    Manager --> History
-    
-    SimCashChanger --> Logger
-    Manager --> Logger
-    ActivityFeed --> History
+    Virtual --> Core
+    Adapter --> Virtual
+    Adapter --> Core
 ```
 
 ## 主要コンポーネント
 
-1. **プレゼンテーション層 (`CashChangerSimulator.UI.Wpf`)**
-    - **WPF (Windows Presentation Foundation)** と **MaterialDesignThemes** を使用して構築されています。
-    - **R3** (Reactive Extensions) を活用し、応答性の高い View-ViewModel バインディングを実現しています。
-    - **アクティビティフィード**: `TransactionHistory` と直接連携し、`RealTimeDataEnabled` が有効な場合の `DataEvent` や `StatusUpdateEvent` をリアルタイムに表示します。
-    - `AdvancedSimulationWindow` などのコンポーネントにより、JSON スクリプトによる高度なストレス・シナリオテストが可能です。
+### 1. コア層 (`CashChangerSimulator.Core`)
 
-2. **デバイス層 (`CashChangerSimulator.Device`)**
-    - ビジネスロジックと仮想ハードウェア間の調整を行います。
-    - **`SimulatorCashChanger`**: UPOS サービスオブジェクトの本体です。`DirectIO` による独自拡張（一括在庫調整、不一致シミュレーション等）や、非同期処理の状態管理を担当します。
-    - **`CashCountParser`**: UPOS 標準のセミコロン区切り形式（例：`Coins;Bills`）を解析する専用パーサです。通貨係数によるスケーリングや、小数の省略形式（例：`.5`）に対応しています。
-    - `DepositController` および `DispenseController` は、物理的なモータ遅延やカセットの状態をシミュレートした上で、コアロジックを呼び出します。
+- **役割**: ハードウェアや UI に依存しない、釣銭機の基本的なデータ構造とビジネスロジックを保持します。
+- **プラットフォーム非依存**: `Microsoft.PointOfService` への依存を一切持たず、純粋な .NET ライブラリとして動作します。
+- **共通定義**: デバイスの状態を表す `DeviceControlState` や、結果コード `DeviceErrorCode` などを定義し、全プロジェクトの共通言語となります。
 
-3. **コア層 (`CashChangerSimulator.Core`)**
-    - UI やインフラストラクチャに依存しない独立した層です。
-    - `CashChangerManager` が在庫の総計やログ履歴などの不変条件を保持します。
-    - **エラー処理**: `UposCashChangerErrorCodeExtended` を通じてエラー定義を標準化し、OPOS/UPOS の拡張ResultCode（`OverDispense` 等）への準拠を保証しています。
-    - `ChangeCalculator` アルゴリズムが、現在の在庫構成に基づいた最適な金種組み合わせを計算します。
+### 2. 仮想デバイス層 (`CashChangerSimulator.Device.Virtual`)
 
-4. **インフラストラクチャ層**
-    - **ZLogger** を使用し、UI スレッドをブロックすることなく大量のイベントログを高速に出力します。
-    - 設定管理には **TOML** ファイルを採用しており、通貨や金種の定義を容易にカスタマイズ可能です。
+- **役割**: 物理的なデバイスの振る舞いをソフトウェア上でシミュレートします。
+- **論理制御**: 入金シーケンスのライフサイクルや、出金時のタイミング、エラーシミュレーション（ジャム等）の論理を担当します。
+- **コントローラー**: `DepositController` および `DispenseController` はこの層に属し、コア層の `Inventory` を操作します。
+
+### 3. アダプター層 (`CashChangerSimulator.Device.PosForDotNet`)
+
+- **役割**: 仮想デバイスの機能を Windows 標準の **POS for .NET (UPOS)** インターフェースに適合させます。
+- **Adapter パターン**: `UposMediator` が仲介役となり、仮想デバイスからの非同期イベントを UPOS の `DataEvent` や `StatusUpdateEvent` に変換して通知します。
+- **限定的な依存**: このプロジェクトだけが `Microsoft.PointOfService` DLL に依存しており、他のプラットフォーム（Linux 等）へ移行する際は、この層を差し替えるだけで対応可能です。
+
+## 設計のメリット
+
+1. **ポータビリティ**: コアロジックとシミュレーション論理が Windows SDK から分離されているため、Web API や Linux 上の CLI 等でも同じ動作を保証できます。
+2. **テスト容易性**: `Device.Virtual` 単体でテストが可能であり、高価なハードウェアや Windows SDK 環境がなくてもシミュレーションの正当性を検証できます。
+3. **柔軟な拡張**: 新しい通信方式（gRPC, Web Serial 等）が必要になった場合、新しいアダプタープロジェクトを追加するだけで済みます。
+
+## 信頼性と同期ハードニング
+
+本プロジェクトでは、特に非同期操作（出金など）における信頼性を重視しています。
+
+- **確定的な状態遷移**: `DispenseController` は内部状態を更新した直後にコールバックを呼び出し、`UposMediator` がイベントを発火する前にすべてのプロパティ（`AsyncResultCode` 等）を確定させます。
+- **レースコンディションの排除**: イベント通知のタイミングとプロパティの読み取りが原子的に行われるよう同期を強化しており、高負荷なテスト環境下でも安定した動作を実現しています。
+- **UPOS 準拠のエラーマッピング**: `DeviceErrorCode` は UPOS/OPOS 標準の整数値に厳密に準拠しており、外部サービスオブジェクト（SO）としての互換性を最大化しています。
 
 ---
+
 *英語版については、[Architecture.md](Architecture.md) を参照してください。*

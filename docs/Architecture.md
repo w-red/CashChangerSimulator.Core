@@ -1,112 +1,83 @@
 # CashChanger Simulator - Architecture Overview
 
-This document provides a high-level overview of the architectural components within the CashChanger Simulator application. The simulator aims to provide a reliable, modular, and WPF-based simulated environment for cash changer devices (such as UPOS automated teller machines).
+This document describes the architectural design of the CashChanger Simulator application. The simulator adopts a modular structure that minimizes dependency on Windows (UPOS) and enables multi-platform deployment.
 
-## High-Level Architecture
+## 3-Tier Decoupling
 
-The simulator is structured into several modular layers, separating the user interface, device simulation, and core business logic.
+The simulator is separated into three primary projects: business logic, virtual device control, and an external interface (UPOS adapter).
 
 ```mermaid
 graph TD
     %% Define Styles
-    classDef uiLayer fill:#eef2ff,stroke:#6366f1,stroke-width:2px;
     classDef coreLayer fill:#f0fdf4,stroke:#22c55e,stroke-width:2px;
-    classDef deviceLayer fill:#fffbeb,stroke:#f59e0b,stroke-width:2px;
-    classDef infraLayer fill:#f8fafc,stroke:#94a3b8,stroke-width:2px;
+    classDef virtualLayer fill:#eef2ff,stroke:#6366f1,stroke-width:2px;
+    classDef adapterLayer fill:#fffbeb,stroke:#f59e0b,stroke-width:2px;
     
-    %% UI Layer
-    subgraph UI ["Presentation Layer (WPF)"]
-        MainWindow["MainWindow"]
-        DepositView["Deposit View / ViewModel"]
-        DispenseView["Dispense View / ViewModel"]
-        PosView["POS Transaction ViewModel"]
-        AdvancedSim["Advanced Simulation (Script, Events)"]
-        ActivityFeed["Activity Feed (Real-time Events)"]
-    end
-    class MainWindow,DepositView,DispenseView,PosView,AdvancedSim,ActivityFeed uiLayer
-
-    %% Device/Service Layer
-    subgraph Device ["Device Layer"]
-        DepositController["DepositController"]
-        DispenseController["DispenseController"]
-        SimCashChanger["SimulatorCashChanger (Hardware facade)"]
-        CashCountParser["CashCountParser (UPOS String Parser)"]
-        ScriptService["ScriptExecutionService"]
-    end
-    class DepositController,DispenseController,SimCashChanger,CashCountParser,ScriptService deviceLayer
-
-    %% Core Layer
-    subgraph Core ["Core Business Logic"]
+    %% Core Layer (CashChangerSimulator.Core)
+    subgraph Core ["1. Core Layer (Platform Independent)"]
         Manager["CashChangerManager"]
         Inventory["Inventory Management"]
         History["Transaction History"]
-        Calc["ChangeCalculator"]
-        OposCode["UPOS/OPOS Error Definitions"]
+        Calc["Change Calculation Algorithm"]
+        DeviceEnums["Common Enums / Exceptions"]
     end
-    class Manager,Inventory,History,Calc,OposCode coreLayer
+    class Manager,Inventory,History,Calc,DeviceEnums coreLayer
 
-    %% Infrastructure
-    subgraph Infrastructure ["Cross-Cutting / Infrastructure"]
-        Logger["ZLogger (High-perf structured logging)"]
-        Config["SimulationSettings (TOML)"]
+    %% Virtual Device Layer (Device.Virtual)
+    subgraph Virtual ["2. Virtual Device Layer (Simulation Logic)"]
+        DepositController["DepositController"]
+        DispenseController["DispenseController"]
+        HardwareStatus["Hardware Status Management"]
     end
-    class Logger,Config infraLayer
+    class DepositController,DispenseController,HardwareStatus virtualLayer
+
+    %% Adapter Layer (Device.PosForDotNet)
+    subgraph Adapter ["3. Adapter Layer (Windows / UPOS Integration)"]
+        SO["SimulatorCashChanger (UPOS SO)"]
+        Mediator["UposMediator (State Sync)"]
+        PosAdapter["POS for .NET Bridge"]
+    end
+    class SO,Mediator,PosAdapter adapterLayer
 
     %% Relationships
-    MainWindow --> DepositView
-    MainWindow --> DispenseView
-    MainWindow --> PosView
-    MainWindow --> AdvancedSim
-    MainWindow --> ActivityFeed
-
-    DepositView --> DepositController
-    DispenseView --> DispenseController
-    AdvancedSim --> ScriptService
-    AdvancedSim --> SimCashChanger
-
-    DepositController --> Manager
-    DepositController --> SimCashChanger
-    
-    DispenseController --> Manager
-    DispenseController --> SimCashChanger
-    
-    ScriptService --> SimCashChanger
-    
-    SimCashChanger --> CashCountParser
-    SimCashChanger --> OposCode
-    
-    Manager --> Inventory
-    Manager --> Calc
-    Manager --> History
-    
-    SimCashChanger --> Logger
-    Manager --> Logger
-    ActivityFeed --> History
+    Virtual --> Core
+    Adapter --> Virtual
+    Adapter --> Core
 ```
 
 ## Key Components
 
-1. **Presentation Layer (`CashChangerSimulator.UI.Wpf`)**
-    - Built using **WPF (Windows Presentation Foundation)** with **MaterialDesignThemes**.
-    - Utilizes **R3** (Reactive Extensions) for highly responsive and declarative View-ViewModel binding interactions.
-    - **Activity Feed**: Integrates directly with `TransactionHistory` to show real-time `DataEvent` and `StatusUpdateEvent` notifications, especially useful when `RealTimeDataEnabled` is active.
-    - Components such as `AdvancedSimulationWindow` provide deep manipulation and stress-testing functionality via JSON script automation.
+### 1. Core Layer (`CashChangerSimulator.Core`)
 
-2. **Device Layer (`CashChangerSimulator.Device`)**
-    - Coordinates between high-level business operations and simulated hardware.
-    - **`SimulatorCashChanger`**: The primary UPOS service object facade. It handles `DirectIO` extensions (e.g., bulk adjustment, discrepancy simulation) and manages asynchronous task states.
-    - **`CashCountParser`**: A specialized parser for UPOS-standard semicolon-separated strings (e.g., `Coins;Bills`). Supports currency factor scaling and decimal shorthands (e.g., `.5`).
-    - `DepositController` and `DispenseController` orchestrate operations by simulating real-world physics and timings before invoking the actual business counts.
+- **Role**: Maintains fundamental cash changer data structures and business logic independent of hardware or UI.
+- **Platform Independence**: Operates as a pure .NET library with zero dependency on `Microsoft.PointOfService`.
+- **Common Definitions**: Defines standard types like `DeviceControlState` and `DeviceErrorCode`, serving as the common language for all projects.
 
-3. **Core Layer (`CashChangerSimulator.Core`)**
-    - Independent of UI and infrastructure.
-    - Holds the `CashChangerManager` containing invariants such as absolute inventory totals and log histories.
-    - **Error Handling**: Standardized via `UposCashChangerErrorCodeExtended` to ensure compliance with OPOS/UPOS extended result codes (e.g., `OverDispense`).
-    - `ChangeCalculator` algorithms compute optimal denominations for dispensing operations based on the current available inventory structure.
+### 2. Virtual Device Layer (`CashChangerSimulator.Device.Virtual`)
 
-4. **Infrastructure Layer**
-    - Uses **ZLogger** mapped dynamically at runtime to handle massive throughput of UPOS events without freezing the presentation thread.
-    - Configuration is managed via **TOML** files, allowing for easy customization of currencies and denominations.
+- **Role**: Simulates the behavior of physical devices in software.
+- **Logic Control**: Manages the lifecycle of deposit sequences, dispense timing, and simulation of errors (e.g., jams).
+- **Controllers**: `DepositController` and `DispenseController` reside in this layer and interact with the Core `Inventory`.
+
+### 3. Adapter Layer (`CashChangerSimulator.Device.PosForDotNet`)
+
+- **Role**: Adapts virtual device functionality to the standard Windows **POS for .NET (UPOS)** interface.
+- **Adapter Pattern**: `UposMediator` acts as a bridge, converting asynchronous events from the virtual device into UPOS `DataEvent` or `StatusUpdateEvent` notifications.
+- **Isolated Dependency**: Only this project depends on the `Microsoft.PointOfService` DLL, allowing for easy migration to other platforms (e.g., Linux) by simply replacing this layer.
+
+## Benefits of the Design
+
+1. **Portability**: Since the core logic and simulation are decoupled from Windows SDKs, consistent behavior can be guaranteed on Web APIs or Linux CLIs.
+2. **Testability**: `Device.Virtual` can be tested in isolation, allowing verification of simulation logic without expensive hardware or Windows SDK environments.
+3. **Extensibility**: Adding new communication methods (e.g., gRPC, Web Serial) only requires adding a new adapter project.
+
+## Reliability & Synchronization Hardening
+
+The project prioritizes reliability, especially during asynchronous operations like cash dispensing.
+
+- **Deterministic State Transitions**: `DispenseController` ensures that internal state updates occur precisely before invoking completion callbacks, allowing `UposMediator` to finalize all properties (e.g., `AsyncResultCode`) before firing events.
+- **Race Condition Elimination**: Synchronization mechanisms have been hardened to ensure that event notifications and property reads occur atomically, maintaining stability even under high-load testing environments.
+- **UPOS-Compliant Error Mapping**: `DeviceErrorCode` strictly adheres to UPOS/OPOS standard integer values, maximizing compatibility as an external Service Object (SO).
 
 ---
 *For the Japanese version, see [Architecture_JP.md](Architecture_JP.md).*

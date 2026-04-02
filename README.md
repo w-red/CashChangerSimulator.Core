@@ -6,9 +6,9 @@ This repository contains the core logic and hardware device emulation for the Ca
 
 This project is split into several modular repositories:
 
-- **[CashChangerSimulator.Core](https://github.com/w-red/CashChangerSimulator.Core)** (This Repo): Core business logic, UPOS/OPOS emulation, and hardware-backed services.
-- **[CashChangerSimulator.UI.Wpf](https://github.com/w-red/CashChangerSimulator.UI.Wpf)**: Modern WPF-based graphical user interface.
-- **[CashChangerSimulator.UI.Cli](https://github.com/w-red/CashChangerSimulator.UI.Cli)**: Command-line interface for automation and lightweight monitoring.
+- **[CashChangerSimulator.Core](https://github.com/w-red/CashChangerSimulator.Core)**: Platform-independent core logic, managers, and shared models.
+- **[CashChangerSimulator.Device.Virtual](https://github.com/w-red/CashChangerSimulator.Core/tree/main/src/Device.Virtual)**: Platform-independent device simulation logic and controllers.
+- **[CashChangerSimulator.Device.PosForDotNet](https://github.com/w-red/CashChangerSimulator.Core/tree/main/src/Device.PosForDotNet)**: Windows-specific POS for .NET (UPOS) adapter layer.
 
 ---
 
@@ -21,12 +21,12 @@ The Virtual Cash Changer API is available on Google Cloud Run for testing withou
 
 ---
 
-## Key Features (Core logic)
+## Key Features (Platform-Independent Core)
 
-- **UPOS Compliant Behavior**: Emulates `DispenseChange`, `DispenseCash`, and the full deposit cycle (`BeginDeposit` to `EndDeposit`).
-- **Multi-Currency Support**: Configurable denominations for various currencies (e.g., JPY, USD).
-- **Service Object Implementation**: Includes a POS for .NET compatible Service Object for the simulator.
-- **Inventory & Transaction Logic**: Robust state management for cash inventory and deposit tracking.
+- **Decoupled Architecture**: Strictly separates business logic (`Core`), simulation logic (`Device.Virtual`), and hardware interface adapters (`Device.PosForDotNet`).
+- **UPOS Compliant Behavior**: Emulates `DispenseChange`, `DispenseCash`, and the full deposit cycle through a virtual device layer.
+- **Multi-Platform Ready**: The Core and Virtual Device projects have zero dependency on Windows-specific libraries, enabling use in Web APIs, CLIs, or Linux environments.
+- **Inventory & Transaction Logic**: Robust state management for cash inventory and deposit tracking using platform-independent types.
 
 ## Setup
 
