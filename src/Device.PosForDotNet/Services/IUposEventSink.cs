@@ -10,6 +10,18 @@ namespace CashChangerSimulator.Device.PosForDotNet.Services;
 /// </remarks>
 public interface IUposEventSink
 {
+    /// <summary>デバイスの状態（POS for .NET 標準）。</summary>
+    ControlState State { get; }
+
+    /// <summary>デバイスが占有されているかどうか。</summary>
+    bool Claimed { get; set; }
+
+    /// <summary>他プロセスで占有されているかどうか。</summary>
+    bool ClaimedByAnother { get; set; }
+
+    /// <summary>デバイスが有効化されているかどうか。</summary>
+    bool DeviceEnabled { get; set; }
+
     /// <summary>DataEvent が有効かどうか。</summary>
     bool DataEventEnabled { get; }
 
@@ -21,6 +33,9 @@ public interface IUposEventSink
 
     /// <summary>リアルタイムデータ通知が有効かどうか。</summary>
     bool RealTimeDataEnabled { get; }
+
+    /// <summary>POS.NET の内部イベントキューイングを無効化するかどうかを取得します。</summary>
+    bool DisableUposEventQueuing { get; }
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">イベント引数。</param>

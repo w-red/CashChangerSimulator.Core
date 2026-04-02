@@ -1,5 +1,6 @@
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.PosForDotNet;
+using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Services;
 
@@ -38,9 +39,24 @@ public class UposEventNotifier : IUposEventNotifier
     }
 
     /// <inheritdoc/>
-    public void QueueEvent(EventArgs e)
+    public void QueueEvent(EventArgs args)
     {
-        _sink?.QueueEvent(e);
+        if (args is StatusUpdateEventArgs statusArgs)
+        {
+            // [FIX] Specific queueing for StatusUpdateEventArgs (required by coordinator/notifier tests)
+            // [修正] コーディネーター/通知テストで必要な StatusUpdateEventArgs 用の特定のキューイング
+            _sink?.QueueStatusUpdateEvent(statusArgs);
+        }
+        else if (args is DataEventArgs dataArgs)
+        {
+            // [FIX] Specific queueing for DataEventArgs
+            // [修正] DataEventArgs 用の特定のキューイング
+            _sink?.QueueDataEvent(dataArgs);
+        }
+        else
+        {
+            _sink?.QueueEvent(args);
+        }
     }
 
     /// <inheritdoc/>
@@ -50,8 +66,23 @@ public class UposEventNotifier : IUposEventNotifier
     }
 
     /// <inheritdoc/>
+    public ControlState State => _sink?.State ?? ControlState.Closed;
+
+    /// <inheritdoc/>
+    public bool DeviceEnabled { get => _sink?.DeviceEnabled ?? false; set { if (_sink != null) _sink.DeviceEnabled = value; } }
+
+    /// <inheritdoc/>
+    public bool Claimed { get => _sink?.Claimed ?? false; set { if (_sink != null) _sink.Claimed = value; } }
+
+    /// <inheritdoc/>
+    public bool ClaimedByAnother { get => _sink?.ClaimedByAnother ?? false; set { if (_sink != null) _sink.ClaimedByAnother = value; } }
+
+    /// <inheritdoc/>
     public bool DataEventEnabled => _sink?.DataEventEnabled ?? false;
 
     /// <inheritdoc/>
     public bool RealTimeDataEnabled => _sink?.RealTimeDataEnabled ?? false;
+
+    /// <inheritdoc/>
+    public bool DisableUposEventQueuing => _sink?.DisableUposEventQueuing ?? false;
 }

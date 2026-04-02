@@ -147,6 +147,9 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     }
     
     // ICashChangerStatusSink Implementation
+    bool ICashChangerStatusSink.Claimed { get => _ctx.Mediator.Claimed; set => _ctx.Mediator.Claimed = value; }
+    bool ICashChangerStatusSink.ClaimedByAnother { get => _ctx.HardwareStatusManager.IsClaimedByAnother.Value; set { /* No-op: Mediator uses this to sync back to sink if needed, but here we prioritize hardware */ } }
+    bool ICashChangerStatusSink.DeviceEnabled { get => _ctx.Mediator.DeviceEnabled; set => _ctx.Mediator.DeviceEnabled = value; }
     void ICashChangerStatusSink.FireEvent(EventArgs e)
     {
         if (_disposedValue) return;
@@ -221,9 +224,18 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     void IUposEventSink.NotifyEvent(EventArgs e)
     {
         if (_disposedValue) return;
-        if (e is DataEventArgs de) QueueEvent(de);
-        else if (e is StatusUpdateEventArgs se) QueueEvent(se);
-        else if (e is DirectIOEventArgs die) QueueEvent(die);
+        
+        // [FIX] In unit tests, POS.NET's internal event queue might be null.
+        // We first notify the local hooks (e.g. TestSimulatorCashChanger.QueuedEvents)
+        NotifyEvent(e);
+
+        // Standard POS.NET queuing is bypassed if DisableUposEventQueuing is true.
+        if (!SkipStateVerification && !_ctx.EventNotifier.DisableUposEventQueuing)
+        {
+            if (e is DataEventArgs de) QueueEvent(de);
+            else if (e is StatusUpdateEventArgs se) QueueEvent(se);
+            else if (e is DirectIOEventArgs die) QueueEvent(die);
+        }
     }
 
     void IUposEventSink.QueueEvent(EventArgs e)
@@ -240,12 +252,16 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     protected virtual void NotifyEvent(EventArgs e)
     {
         if (_disposedValue) return;
-        _eventNotifier?.NotifyEvent(e);
+        // The event notifier is primarily used for external parties to notify the device.
+        // We do not call it here to avoid recursion with IUposEventSink.NotifyEvent.
     }
-    bool IUposEventSink.DataEventEnabled => DataEventEnabled;
-    bool IUposEventSink.CapDepositDataEvent => CapDepositDataEvent;
-    bool IUposEventSink.SkipStateVerification => SkipStateVerification;
-    bool IUposEventSink.RealTimeDataEnabled => RealTimeDataEnabled;
+    // IUposEventSink Implementation
+    ControlState IUposEventSink.State => State;
+    bool IUposEventSink.DeviceEnabled { get => _ctx.Mediator.DeviceEnabled; set => _ctx.Mediator.DeviceEnabled = value; }
+    bool IUposEventSink.Claimed { get => _ctx.Mediator.Claimed; set => _ctx.Mediator.Claimed = value; }
+    bool IUposEventSink.ClaimedByAnother { get => _ctx.HardwareStatusManager.IsClaimedByAnother.Value; set { /* No-op */ } }
+    bool IUposEventSink.DataEventEnabled => _ctx.Mediator.DataEventEnabled;
+    bool IUposEventSink.DisableUposEventQueuing => SkipStateVerification; // [TEST HOOK] SkipStateVerification implies bypass for headless
 
     // Infrastructure
     public override string DeviceName => "SimulatorCashChanger";

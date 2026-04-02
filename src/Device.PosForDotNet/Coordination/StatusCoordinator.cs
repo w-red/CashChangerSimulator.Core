@@ -21,6 +21,8 @@ public class StatusCoordinator(
     private CashChangerStatus _lastCashChangerStatus = CashChangerStatus.OK;
     private CashChangerFullStatus _lastFullStatus = CashChangerFullStatus.OK;
     private bool _disposed;
+    private bool _isStarted;
+    private bool _wasFixed;
 
     /// <summary>現在のデバイスステータス。</summary>
     public CashChangerStatus LastCashChangerStatus => _lastCashChangerStatus;
@@ -28,10 +30,25 @@ public class StatusCoordinator(
     /// <summary>現在のフルステータス。</summary>
     public CashChangerFullStatus LastFullStatus => _lastFullStatus;
 
-    /// <summary>全ステータスの購読を開始します。</summary>
     public void Start()
     {
-        if (_disposed) return;
+        if (_disposed || _isStarted) return;
+        _isStarted = true;
+
+        // Initialize with current values
+        _lastFullStatus = statusAggregator.FullStatus.CurrentValue switch
+        {
+            CashStatus.Full => CashChangerFullStatus.Full,
+            CashStatus.NearFull => CashChangerFullStatus.NearFull,
+            _ => CashChangerFullStatus.OK
+        };
+        _lastCashChangerStatus = statusAggregator.DeviceStatus.CurrentValue switch
+        {
+            CashStatus.Empty => CashChangerStatus.Empty,
+            CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
+            _ => CashChangerStatus.OK
+        };
+
         _disposables.Add(statusAggregator.DeviceStatus.Subscribe(status =>
         {
             if (_disposed) return;
@@ -39,6 +56,7 @@ public class StatusCoordinator(
             {
                 CashStatus.Empty => CashChangerStatus.Empty,
                 CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
+                CashStatus.Normal => CashChangerStatus.OK, // Explicitly map Normal to OK
                 _ => CashChangerStatus.OK
             };
 
@@ -130,13 +148,39 @@ public class StatusCoordinator(
             }
         }));
 
-        _disposables.Add(depositController.Changed.Subscribe(_ =>
+        // Handle deposit state changes and event firing
+        _disposables.Add(depositController.Changed
+            .Select(_ => (depositController.IsFixed, depositController.DepositStatus, depositController.IsPaused, depositController.DepositAmount))
+            .Subscribe(state =>
         {
             if (_disposed) return;
-            if (depositController.DepositStatus == DeviceDepositStatus.Counting && !depositController.IsPaused && sink.DataEventEnabled)
+            
+            bool isFixed = state.IsFixed;
+            bool isPaused = state.IsPaused;
+            var currentStatus = state.DepositStatus;
+
+            // [LIFECYCLE] Reset wasFixed flag at the start of a deposit session.
+            if (currentStatus == DeviceDepositStatus.Start)
             {
-                if (sink.RealTimeDataEnabled || depositController.IsFixed)
+                _wasFixed = false;
+                return; // No events to fire during Start transition itself
+            }
+
+            // [UPOS] Check if we should fire DataEvent
+            bool eligibleForDataEvent = (currentStatus == DeviceDepositStatus.Counting || currentStatus == DeviceDepositStatus.Validation) 
+                && !isPaused && sink.DataEventEnabled;
+
+            if (eligibleForDataEvent)
+            {
+                if (sink.RealTimeDataEnabled)
                 {
+                    // [REAL-TIME] Fire on every change (tracked money)
+                    sink.FireEvent(new DataEventArgs(0));
+                }
+                else if (isFixed && !_wasFixed)
+                {
+                    // [BUFFERED] Fire exactly once when FixDeposit is called.
+                    _wasFixed = true; 
                     sink.FireEvent(new DataEventArgs(0));
                 }
             }

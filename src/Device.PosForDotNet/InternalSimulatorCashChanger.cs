@@ -46,6 +46,9 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     /// <summary>テスト用：出金時に例外をシミュレートするかどうかを制御します。</summary>
     public bool SimulateDispenseException { get; set; }
 
+    /// <summary>テスト用：POS.NET のイベントキューイングを無効にするかどうか（NRE回避用）。</summary>
+    public bool DisableUposEventQueuing { get; set; }
+
     /// <summary>テスト用：OPOS コールの履歴を保持します。</summary>
     public List<string> OposHistory { get; } = [];
 
@@ -156,6 +159,14 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         try
         {
             OnEventQueued?.Invoke(e);
+
+            // POS.NET の内部キューイングを完全にバイパスするためのチェック。
+            // ヘッドレス環境での NullReferenceException を回避するために重要。
+            if (DisableUposEventQueuing)
+            {
+                return;
+            }
+
             base.NotifyEvent(e);
         }
         finally

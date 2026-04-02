@@ -22,4 +22,7 @@ public interface IUposEventNotifier : ICashChangerStatusSink
     /// <summary>イベントを適切なキューに追加します。</summary>
     /// <param name="e">イベント引数。</param>
     void QueueEvent(EventArgs e);
+
+    /// <summary>POS.NET の内部イベントキューイングを無効化するかどうかを取得します（テスト用）。</summary>
+    bool DisableUposEventQueuing { get; }
 }
