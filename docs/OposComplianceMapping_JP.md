@@ -6,13 +6,25 @@
 
 本シミュレーターがスローする `PosControlException` は、以下の `ErrorCode` にマッピングされます。
 
-| ErrorCode          | OPOS 定数 (OPOS_E_*) | 発生条件                                                |
-| :----------------- | :------------------- | :------------------------------------------------------ |
-| **Success** (0)    | SUCCESS              | 正常終了。                                              |
-| **Illegal** (106)  | ILLEGAL              | 不正なパラメータ、順序、またはサポートされない引数.     |
-| **Failure** (111)  | FAILURE              | メカニカルトラブル（Jam等）が発生している状態での操作。 |
-| **Extended** (114) | EXTENDED             | デバイス固有の拡張エラー（在庫不足など）。              |
-| **Busy** (113)     | BUSY                 | 非同期処理実行中の二重呼び出し。                        |
+| ErrorCode             | OPOS 定数 (OPOS_E_*) | 発生条件                                                |
+| :-------------------- | :------------------- | :------------------------------------------------------ |
+| **Success** (0)       | SUCCESS              | 正常終了。                                              |
+| **Closed** (101)      | CLOSED               | デバイスが閉じている（Openされていない）。              |
+| **NotClaimed** (102)  | NOTCLAIMED           | デバイスが他から占有されている。                        |
+| **NotOpen** (103)     | NOTOPEN              | デバイスがオープンされていない。                        |
+| **Disabled** (104)    | DISABLED             | デバイスが有効化されていない。                          |
+| **Illegal** (106)     | ILLEGAL              | 不正なパラメータ、順序、またはサポートされない引数。    |
+| **NoHardware** (107)  | NOHARDWARE           | 物理的なハードウェアが見つからない、または未接続。      |
+| **Offline** (108)     | OFFLINE              | デバイスがオフライン状態。                              |
+| **NoService** (109)   | NOSERVICE            | 制御サービスが利用できない。                            |
+| **Failure** (111)     | FAILURE              | 致命的な失敗（メカニカルトラブル等）。                  |
+| **Timeout** (112)     | TIMEOUT              | デバイスからの応答タイムアウト。                        |
+| **Busy** (113)        | BUSY                 | 処理の実行中（ビジー状態）。                            |
+| **Extended** (114)    | EXTENDED             | デバイス固有の拡張エラー。                              |
+| **NoInventory** (118) | (Custom)             | 在庫不足（シミュレータ固有）。                          |
+| **Unimplemented** (119)| (Custom)            | 未実装の機能へのアクセス。                              |
+| **Jammed** (300)      | (Custom)             | ハードウェア・ジャムが発生。                            |
+| **Overlapped** (301)  | (Custom)             | 処理が重複している。                                    |
 
 ## ResultCodeExtended Mapping
 
