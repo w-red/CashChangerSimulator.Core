@@ -8,6 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="CashChangerSimulator.Tests" />
+        <InternalsVisibleTo Include="CashChangerSimulator.UI.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Reference Include="Microsoft.PointOfService">
             <HintPath>..\..\libs\POSforNET\Microsoft.PointOfService.dll</HintPath>
         </Reference>

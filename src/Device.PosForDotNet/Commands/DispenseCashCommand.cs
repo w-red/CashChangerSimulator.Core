@@ -17,6 +17,7 @@ public class DispenseCashCommand : IUposCommand
     private readonly IReadOnlyDictionary<DenominationKey, int> _counts;
     private readonly bool _async;
     private readonly Action<ErrorCode, int> _onComplete;
+    private IUposMediator? _mediator;
 
     /// <summary>金種指定出金コマンドのインスタンスを初期化します。</summary>
     /// <param name="controller">出金制御を司るコントローラー。</param>
@@ -47,6 +48,11 @@ public class DispenseCashCommand : IUposCommand
     /// <summary>金種指定出金操作を実行します。</summary>
     public void Execute()
     {
+        if (_async && _mediator != null)
+        {
+            _mediator.IsBusy = true;
+        }
+
         var task = _controller.DispenseCashAsync(_counts, _async, (code, codeEx) => _onComplete((ErrorCode)code, codeEx));
         if (!_async)
         {
@@ -58,6 +64,7 @@ public class DispenseCashCommand : IUposCommand
     /// <param name="mediator">検証に使用するメディエーター。</param>
     public void Verify(IUposMediator mediator)
     {
+        _mediator = mediator;
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
 
         // Pre-condition checks previously in Facade

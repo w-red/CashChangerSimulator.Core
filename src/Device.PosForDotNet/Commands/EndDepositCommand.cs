@@ -17,7 +17,16 @@ public class EndDepositCommand : IUposCommand
         _action = action;
     }
 
-    public void Execute() => _controller.EndDeposit((DepositAction)_action);
+    public void Execute()
+    {
+        var coreAction = _action switch
+        {
+            CashDepositAction.Change => DepositAction.Store,
+            CashDepositAction.NoChange => DepositAction.Repay,
+            _ => DepositAction.Store
+        };
+        _controller.EndDeposit(coreAction);
+    }
 
     public void Verify(IUposMediator mediator)
     {

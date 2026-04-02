@@ -34,6 +34,7 @@ public class StandardLifecycleHandler(
         {
             if (value)
             {
+                hardware.RefreshClaimedStatus();
                 if (State == ControlState.Closed)
                 {
                     throw new PosControlException("Device is not open.", ErrorCode.Closed);

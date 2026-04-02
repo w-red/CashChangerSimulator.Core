@@ -36,12 +36,19 @@ public class FixDepositCommand : IUposCommand
             return;
         }
 
-        using var subscription = mediator.EventSink.DepositChanged
+        var sink = mediator.EventSink;
+        if (sink == null)
+        {
+            _controller.FixDeposit();
+            return;
+        }
+
+        using var subscription = sink.DepositChanged
             .Subscribe(_ => 
             {
-                if (mediator.EventSink.DataEventEnabled)
+                if (sink.DataEventEnabled)
                 {
-                    mediator.EventSink.NotifyEvent(new DataEventArgs(0));
+                    sink.NotifyEvent(new DataEventArgs(0));
                 }
             });
 

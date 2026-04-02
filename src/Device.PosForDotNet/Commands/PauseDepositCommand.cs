@@ -9,8 +9,6 @@ namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 public class PauseDepositCommand : IUposCommand
 {
     private readonly DepositController _controller;
-    private readonly CashDepositPause _control;
-
     private readonly CashDepositPause _pause;
 
     public PauseDepositCommand(DepositController controller, CashDepositPause pause)
@@ -21,7 +19,7 @@ public class PauseDepositCommand : IUposCommand
 
     public void Execute()
     {
-        _controller.PauseAsync(_pause == CashDepositPause.Pause ? DeviceDepositPause.Pause : DeviceDepositPause.Restart);
+        _controller.PauseDeposit(_pause == CashDepositPause.Pause ? DeviceDepositPause.Pause : DeviceDepositPause.Resume);
     }
 
     public void Verify(IUposMediator mediator)
