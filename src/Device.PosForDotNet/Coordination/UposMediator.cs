@@ -1,3 +1,4 @@
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
@@ -6,12 +7,14 @@ using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.Extensions.Logging;
 using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Exceptions;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
 /// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。</summary>
 public class UposMediator : IUposMediator
 {
+    private bool _isBusy;
     private ICashChangerStatusSink? _sink;
     private ILogger? _logger;
     private StatusCoordinator? _coordinator;
@@ -37,7 +40,24 @@ public class UposMediator : IUposMediator
     public bool DeviceEnabled { get; set; }
     public bool DataEventEnabled { get; set; }
     public bool Claimed { get; set; }
-    public bool IsBusy { get; set; }
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set
+        {
+            _isBusy = value;
+            if (_isBusy)
+            {
+                ResultCode = (int)ErrorCode.Busy;
+            }
+            else
+            {
+                // When busy is cleared, we assume back to success unless explicitly failed
+                ResultCode = (int)ErrorCode.Success;
+            }
+            _sink?.SetAsyncProcessing(value);
+        }
+    }
     public int AsyncResultCode { get; set; }
     public int AsyncResultCodeExtended { get; set; }
     public bool SkipStateVerification { get; set; }
@@ -63,9 +83,13 @@ public class UposMediator : IUposMediator
             throw new PosControlException("Device is not open.", ErrorCode.Closed);
         }
 
-        if (mustBeClaimed && _hardwareStatusManager?.IsClaimedByAnother.Value == true)
+        if (mustBeClaimed && _hardwareStatusManager != null)
         {
-            throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
+            _hardwareStatusManager.RefreshClaimedStatus();
+            if (_hardwareStatusManager.IsClaimedByAnother.Value)
+            {
+                throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
+            }
         }
 
         if (mustBeClaimed && !so.Claimed)
@@ -114,13 +138,18 @@ public class UposMediator : IUposMediator
 
     public void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync)
     {
-        SetFailure(code, codeEx);
         if (wasAsync)
         {
+            _logger?.LogInformation("Async dispense finished with code: {Code}, codeEx: {CodeEx}", code, codeEx);
             AsyncResultCode = (int)code;
             AsyncResultCodeExtended = codeEx;
-            IsBusy = false;
+            IsBusy = false; 
+            SetFailure(code, codeEx); // Overwrite ResultCode with actual result
             _sink?.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
+        }
+        else
+        {
+            SetFailure(code, codeEx);
         }
     }
 
@@ -131,18 +160,44 @@ public class UposMediator : IUposMediator
         {
             command.Verify(this);
             command.Execute();
-            SetSuccess();
+            
+            // For asynchronous commands, IsBusy will be set to true inside Execute().
+            // In that case, we should NOT call SetSuccess() immediately as the method return value
+            // is SUCCESS but the device state is BUSY.
+            if (!IsBusy)
+            {
+                SetSuccess();
+            }
         }
         catch (PosControlException ex)
         {
             SetFailure(ex.ErrorCode, ex.ErrorCodeExtended);
             throw;
         }
+        catch (DeviceException ex)
+        {
+            SetFailure((ErrorCode)ex.ErrorCode, ex.ErrorCodeExtended);
+            throw new PosControlException(ex.Message, (ErrorCode)ex.ErrorCode, ex.ErrorCodeExtended, ex);
+        }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Unexpected error during command execution.");
-            SetFailure(ErrorCode.Failure);
-            throw;
+
+            // Extract ErrorCode from Exception if it has a property or is a known type
+            var errorCode = ErrorCode.Failure;
+            var errorCodeExtended = 0;
+
+            if (ex.GetType().GetProperty("ErrorCode")?.GetValue(ex) is int codeAsInt)
+            {
+                errorCode = (ErrorCode)codeAsInt;
+            }
+            if (ex.GetType().GetProperty("ErrorCodeExtended")?.GetValue(ex) is int codeExAsInt)
+            {
+                errorCodeExtended = codeExAsInt;
+            }
+
+            SetFailure(errorCode, errorCodeExtended);
+            throw new PosControlException(ex.Message, errorCode, errorCodeExtended, ex);
         }
     }
 }

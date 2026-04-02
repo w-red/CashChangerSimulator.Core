@@ -1,3 +1,5 @@
+using CashChangerSimulator.Device;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -218,10 +220,24 @@ public class DepositController : IDisposable
         _changed.OnNext(Unit.Default);
     }
 
+    public void TrackDeposit(DenominationKey key, int count = 1)
+    {
+        TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });
+    }
+
     public void TrackBulkDeposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         ArgumentNullException.ThrowIfNull(counts);
         if (_depositStatus != DeviceDepositStatus.Counting || _depositPaused) return;
+
+        if (_hardwareStatusManager.IsJammed.Value)
+        {
+            throw new DeviceException("Device is jammed during tracking.", DeviceErrorCode.Jammed);
+        }
+        if (_hardwareStatusManager.IsOverlapped.Value)
+        {
+            throw new DeviceException("Device has overlapped cash during tracking.", DeviceErrorCode.Overlapped);
+        }
 
         foreach (var (key, count) in counts)
         {
@@ -246,6 +262,14 @@ public class DepositController : IDisposable
                 for (int i = 0; i < count; i++) _depositedSerials.Add($"S{key.Value}-{Guid.NewGuid():N}");
             }
         }
+        _changed.OnNext(Unit.Default);
+    }
+
+    /// <summary>リジェクトされた現金額をシミュレートします（テスト・シミュレーション用）。</summary>
+    public void SimulateReject(decimal amount)
+    {
+        if (!IsDepositInProgress || _depositPaused) return;
+        _rejectAmount += amount;
         _changed.OnNext(Unit.Default);
     }
 

@@ -1,3 +1,4 @@
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
@@ -45,7 +46,7 @@ public class DispenseController : IDisposable
     public virtual async Task DispenseChangeAsync(int amount, bool asyncMode, Action<DeviceErrorCode, int> onComplete, string? currencyCode = null)
     {
         if (IsBusy) throw new DeviceException("Device is busy");
-        if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected");
+        if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
 
         _status = CashDispenseStatus.Busy;
         _changed.OnNext(Unit.Default);
@@ -73,6 +74,7 @@ public class DispenseController : IDisposable
     public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode, Action<DeviceErrorCode, int> onComplete)
     {
         if (IsBusy) throw new DeviceException("Device is busy");
+        if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
         _status = CashDispenseStatus.Busy;
         _changed.OnNext(Unit.Default);
         await Task.Yield();
@@ -119,8 +121,37 @@ public class DispenseController : IDisposable
         catch (Exception ex)
         {
             _status = CashDispenseStatus.Error;
-            onComplete(DeviceErrorCode.Failure, 0); // General Error
-            throw new DeviceException(ex.Message, DeviceErrorCode.Failure);
+            
+            DeviceErrorCode code = DeviceErrorCode.Failure;
+            int codeEx = 0;
+
+            if (ex is DeviceException dex)
+            {
+                code = dex.ErrorCode;
+                codeEx = dex.ErrorCodeExtended;
+            }
+            else
+            {
+                // Attempt to extract error codes from external exceptions (e.g. PosControlException in tests)
+                // without adding a direct dependency on POS.NET in this virtual layer.
+                var type = ex.GetType();
+                var pCode = type.GetProperty("ErrorCode");
+                var pCodeEx = type.GetProperty("ErrorCodeExtended");
+
+                if (pCode != null)
+                {
+                    var val = pCode.GetValue(ex);
+                    if (val != null) code = (DeviceErrorCode)Convert.ToInt32(val);
+                }
+                if (pCodeEx != null)
+                {
+                    var valEx = pCodeEx.GetValue(ex);
+                    if (valEx != null) codeEx = Convert.ToInt32(valEx);
+                }
+            }
+
+            onComplete(code, codeEx);
+            throw new DeviceException(ex.Message, code, codeEx);
         }
         finally
         {

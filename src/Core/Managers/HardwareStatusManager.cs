@@ -20,18 +20,7 @@ public class HardwareStatusManager : IDisposable
     private readonly BindableReactiveProperty<int?> _currentErrorCode = new(null);
     private readonly BindableReactiveProperty<int> _currentErrorCodeExtended = new(0);
 
-    /// <summary>他のアプリケーションによって占有（Claim）されているかどうか。</summary>
-    public BindableReactiveProperty<bool> IsClaimedByAnother
-    {
-        get
-        {
-            if (_globalLockManager != null)
-            {
-                _isClaimedByAnother.Value = _globalLockManager.IsLockHeldByAnother();
-            }
-            return _isClaimedByAnother;
-        }
-    }
+    public BindableReactiveProperty<bool> IsClaimedByAnother => _isClaimedByAnother;
 
     /// <summary>ジャムが発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsJammed => _isJammed;
@@ -105,8 +94,31 @@ public class HardwareStatusManager : IDisposable
         _globalLockManager = manager;
     }
 
+    /// <summary>
+    /// 他者による占有状態をグローバルロックマネージャーから最新化した上で取得します。
+    /// </summary>
+    public bool RefreshClaimedStatus()
+    {
+        if (_disposed) return false;
+        var heldByAnother = _globalLockManager?.IsLockHeldByAnother() ?? false;
+        _isClaimedByAnother.Value = heldByAnother;
+        return heldByAnother;
+    }
+
     /// <summary>グローバルロックの取得を試みます。</summary>
-    public bool TryAcquireGlobalLock() => _globalLockManager?.TryAcquire() ?? true;
+    public bool TryAcquireGlobalLock()
+    {
+        var result = _globalLockManager?.TryAcquire() ?? true;
+        if (result)
+        {
+            _isClaimedByAnother.Value = false;
+        }
+        else
+        {
+            _isClaimedByAnother.Value = true;
+        }
+        return result;
+    }
 
     /// <summary>グローバルロックを解放します。</summary>
     public void ReleaseGlobalLock() => _globalLockManager?.Release();

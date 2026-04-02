@@ -17,6 +17,12 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Internal Simulator Cash Changer", 1, 14)]
 public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulator
 {
+    // テスト用に内部コンポーネントを公開
+    public new Inventory Inventory => base.Inventory;
+    public new HardwareStatusManager HardwareStatusManager => base.HardwareStatusManager;
+    public new DepositController DepositController => base.DepositController;
+    public DispenseController DispenseController => Context.DispenseController;
+
     // Nullable に変更：LogProvider が null を返す可能性や、テスト環境での変動に対応
     private readonly ILogger<InternalSimulatorCashChanger>? _internalLogger;
 
@@ -140,10 +146,21 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
+    private bool _isHandlingEvent;
+
     /// <summary>イベント通知をオーバーライドし、OnEventQueued フックを実行します。</summary>
     protected override void NotifyEvent(EventArgs e)
     {
-        OnEventQueued?.Invoke(e);
-        base.NotifyEvent(e);
+        if (_isHandlingEvent) return;
+        _isHandlingEvent = true;
+        try
+        {
+            OnEventQueued?.Invoke(e);
+            base.NotifyEvent(e);
+        }
+        finally
+        {
+            _isHandlingEvent = false;
+        }
     }
 }

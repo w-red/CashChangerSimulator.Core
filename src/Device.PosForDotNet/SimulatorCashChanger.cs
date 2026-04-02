@@ -1,6 +1,6 @@
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -41,7 +41,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     internal HardwareStatusManager HardwareStatusManager => _ctx.HardwareStatusManager;
     public HardwareStatusManager HardwareStatus => HardwareStatusManager;
     internal DepositController DepositController => _ctx.DepositController;
-    public new SimulatorContext Context => _ctx;
+    public SimulatorContext Context => _ctx;
 
     /// <summary>シミュレータの依存関係を注入して初期化します。</summary>
     /// <remarks>各種マネージャーやコントローラーが未指定の場合は、デフォルトの実装を生成して使用します。</remarks>
@@ -147,7 +147,23 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     }
     
     // ICashChangerStatusSink Implementation
-    void ICashChangerStatusSink.FireEvent(EventArgs e) => NotifyEvent(e);
+    void ICashChangerStatusSink.FireEvent(EventArgs e)
+    {
+        if (_disposedValue) return;
+
+        // [TEST HOOK] In unit tests, POS.NET's internal event thread might not be running.
+        // We fire NotifyEvent directly to reach test overrides (e.g. TestSimulatorCashChanger.QueuedEvents).
+        // While SkipStateVerification is the usual indicator, some tests turn it off to verify full logic
+        // but still need the event hook for verification.
+        NotifyEvent(e);
+
+        if (!SkipStateVerification)
+        {
+            if (e is DataEventArgs de) QueueEvent(de);
+            else if (e is StatusUpdateEventArgs se) QueueEvent(se);
+            else if (e is DirectIOEventArgs die) QueueEvent(die);
+        }
+    }
     void ICashChangerStatusSink.SetAsyncProcessing(bool isBusy) => _eventNotifier.SetAsyncProcessing(isBusy);
 
     // Properties
@@ -205,7 +221,9 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     void IUposEventSink.NotifyEvent(EventArgs e)
     {
         if (_disposedValue) return;
-        _eventNotifier.NotifyEvent(e);
+        if (e is DataEventArgs de) QueueEvent(de);
+        else if (e is StatusUpdateEventArgs se) QueueEvent(se);
+        else if (e is DirectIOEventArgs die) QueueEvent(die);
     }
 
     void IUposEventSink.QueueEvent(EventArgs e)
