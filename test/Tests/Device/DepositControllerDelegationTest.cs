@@ -38,11 +38,12 @@ public class DepositControllerDelegationTest
         controller.BeginDeposit();
         // Simulate adding cash
         var key = new DenominationKey(1000m, CurrencyCashType.Bill, "JPY");
+        controller.RequiredAmount = 2000m;
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, 2 } });
         controller.FixDeposit();
 
         // Act
-        controller.EndDeposit(CashDepositAction.NoChange);
+        controller.EndDeposit(DepositAction.Store);
 
         // Assert
         managerMock.Verify(m => m.Deposit(It.Is<IReadOnlyDictionary<DenominationKey, int>>(

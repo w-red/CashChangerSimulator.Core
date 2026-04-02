@@ -123,7 +123,7 @@ public class ResultCodeVerificationTests
         changer.ResultCode = -1;
 
         // Act
-        changer.AdjustCashCounts([]);
+        changer.AdjustCashCounts("");
 
         // Assert
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);

@@ -8,6 +8,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Moq;
 using Shouldly;
@@ -46,6 +47,7 @@ public class AdvancedScriptingTests
         ]";
 
         // Act
+        controller.RequiredAmount = 10000; // Ensure everything is stored
         await service.ExecuteScriptAsync(json);
 
         // Assert
@@ -79,6 +81,7 @@ public class AdvancedScriptingTests
         ]";
 
         // Act
+        controller.RequiredAmount = 10000; // Ensure everything is stored
         await service.ExecuteScriptAsync(json);
 
         // Assert
@@ -108,8 +111,8 @@ public class AdvancedScriptingTests
         ]";
 
         // Act & Assert
-        // BeginDeposit はハードウェアエラー状態（Jammed）なので PosControlException を投げるべき
-        await Should.ThrowAsync<Microsoft.PointOfService.PosControlException>(async () => await service.ExecuteScriptAsync(json));
+        // BeginDeposit はハードウェアエラー状態（Jammed）なので DeviceException を投げるべき
+        await Should.ThrowAsync<CashChangerSimulator.Core.Exceptions.DeviceException>(async () => await service.ExecuteScriptAsync(json));
         hardware.IsJammed.Value.ShouldBeTrue();
     }
 
@@ -137,6 +140,7 @@ public class AdvancedScriptingTests
         ]";
 
         // Act
+        controller.RequiredAmount = 1000;
         await service.ExecuteScriptAsync(json);
 
         // Assert (スクリプト内で Assert が通れば例外は出ない)

@@ -73,6 +73,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Core\CashChangerSimulator.Core.csproj" />
     <ProjectReference Include="..\..\src\Device\CashChangerSimulator.Device.csproj" />
+    <ProjectReference Include="..\..\src\Device.Virtual\CashChangerSimulator.Device.Virtual.csproj" />
+    <ProjectReference Include="..\..\src\Device.PosForDotNet\CashChangerSimulator.Device.PosForDotNet.csproj" />
   </ItemGroup>
 
   <ItemGroup>

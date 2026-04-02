@@ -4,7 +4,8 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device.PosForDotNet;
 using Moq;
 using Shouldly;
 

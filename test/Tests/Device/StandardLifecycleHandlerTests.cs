@@ -35,16 +35,16 @@ public class StandardLifecycleHandlerTests
     {
         // Closed
         _hardware.SetConnected(false);
-        _handler.State.ShouldBe(DeviceControlState.Closed);
+        _handler.State.ShouldBe(ControlState.Closed);
 
         // Idle
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.IsBusy).Returns(false);
-        _handler.State.ShouldBe(DeviceControlState.Idle);
+        _handler.State.ShouldBe(ControlState.Idle);
 
         // Busy
         _mediator.Setup(m => m.IsBusy).Returns(true);
-        _handler.State.ShouldBe(DeviceControlState.Busy);
+        _handler.State.ShouldBe(ControlState.Busy);
     }
 
     /// <summary>Closed 状態で DeviceEnabled を設定しようとした際に例外が発生することを検証します。</summary>

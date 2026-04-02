@@ -31,7 +31,7 @@ public class DirectIOTests
         var result = simulator.DirectIO(10, 1, null!);
         result.Data.ShouldBe(1);
 
-        var hardwareStatusManager = simulator.HardwareStatusManager;
+        var hardwareStatusManager = simulator.HardwareStatus;
 
         hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue("DirectIO 10 with data=1 should set Overlap to true.");
 
@@ -46,7 +46,7 @@ public class DirectIOTests
     {
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
-        var hardwareStatusManager = simulator.HardwareStatusManager;
+        var hardwareStatusManager = simulator.HardwareStatus;
 
         // Force Jam ON
         simulator.DirectIO(11, 1, null!);

@@ -17,7 +17,7 @@ public class MediatorRefactoringTests
     public void MediatorShouldSupportSkipStateVerificationProperty()
     {
         var so = new Mock<SimulatorCashChanger>(new SimulatorDependencies()).Object;
-        var mediator = new UposMediator(so);
+        var mediator = new UposMediator();
 
         mediator.SkipStateVerification = true;
         mediator.SkipStateVerification.ShouldBeTrue();
@@ -28,7 +28,7 @@ public class MediatorRefactoringTests
     public void Execute_ShouldUseInternalSkipFlag()
     {
         var so = new Mock<SimulatorCashChanger>(new SimulatorDependencies()).Object;
-        var mediator = new UposMediator(so);
+        var mediator = new UposMediator();
         var commandMock = new Mock<IUposCommand>();
 
         mediator.SkipStateVerification = true;

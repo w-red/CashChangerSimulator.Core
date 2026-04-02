@@ -36,7 +36,7 @@ public class CommandTests
         
         _hardware.SetJammed(true);
         var ex = Should.Throw<PosControlException>(() => cmd.Execute());
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 
     /// <summary>デバイスがジャム状態の時に DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
@@ -51,7 +51,7 @@ public class CommandTests
 
         _hardware.SetJammed(true);
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 
     /// <summary>入金処理中の際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
@@ -67,7 +67,7 @@ public class CommandTests
         var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
     /// <summary>未登録の金種が指定された際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
@@ -79,7 +79,7 @@ public class CommandTests
         var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
     /// <summary>在庫不足の際、DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
@@ -93,6 +93,6 @@ public class CommandTests
         var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
+        ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 }

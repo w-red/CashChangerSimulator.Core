@@ -1,7 +1,9 @@
+using CashChangerSimulator.Device;
+
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.PosForDotNet.Facades;
-using CashChangerSimulator.Device;
+
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
@@ -84,7 +86,7 @@ public class DispenseControllerTests
             }));
 
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)ErrorCode.OverDispense);
+        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
         
         capturedError.ShouldBe(DeviceErrorCode.Extended);
         capturedExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
@@ -106,7 +108,7 @@ public class DispenseControllerTests
         // Act
         await _controller.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false, (e, ext) => 
         {
-            e.ShouldBe(ErrorCode.Success);
+            e.ShouldBe(DeviceErrorCode.Success);
             completed = true;
         });
 
@@ -197,9 +199,9 @@ public class DispenseControllerTests
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
     }
 
-    /// <summary>エラー状態から ClearError により Idle 状態に復帰できることを検証します。</summary>
+    /// <summary>エラー状態から ClearOutput により Idle 状態に復帰できることを検証します。</summary>
     [Fact]
-    public async Task ClearErrorShouldResetStatusFromErrorToIdle()
+    public async Task ClearOutputShouldResetStatus()
     {
         // Arrange
         _mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
@@ -209,7 +211,7 @@ public class DispenseControllerTests
         _controller.Status.ShouldBe(CashDispenseStatus.Error);
 
         // Act
-        _controller.ClearError();
+        _controller.ClearOutput();
 
         // Assert
         _controller.Status.ShouldBe(CashDispenseStatus.Idle);

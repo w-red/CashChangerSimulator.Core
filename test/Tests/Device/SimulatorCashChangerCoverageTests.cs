@@ -72,7 +72,7 @@ public class SimulatorCashChangerCoverageTests
         
         // Let's use a mock or just verify the logic if status is Error.
         // Since we want to cover the code path:
-        controller.ClearError(); // Should work even if not in error
+        controller.ClearOutput(); // Should work even if not in error
         
         // Assert - just ensuring no throw and coverage
         controller.Status.ShouldNotBe(CashChangerSimulator.Core.Monitoring.CashDispenseStatus.Error);

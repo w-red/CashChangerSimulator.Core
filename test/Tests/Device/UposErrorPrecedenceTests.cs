@@ -39,7 +39,7 @@ public class UposErrorPrecedenceTests
     public void VerifyStateShouldPrioritizeClosedWhenMultipleErrorsExist()
     {
         // 状態: Closed, ClaimedByAnother: true, NotClaimed, Disabled
-        _so.HardwareStatusManager.SetConnected(false); // Closed
+        _so.HardwareStatus.SetConnected(false); // Closed
         
         // 他のインスタンスで占有をシミュレート
         using var competitor = new InternalSimulatorCashChanger(new SimulatorDependencies(GlobalLockFilePath: _lockPath));
@@ -50,7 +50,7 @@ public class UposErrorPrecedenceTests
         // Mediator の Claimed, DeviceEnabled は初期値 false
 
         var ex = Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
+        ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class UposErrorPrecedenceTests
         // 自インスタンスでは Claim していない状態
 
         var ex = Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Claimed);
+        ex.ErrorCode.ShouldBe(ErrorCode.Claimed);
     }
 
     [Fact]
@@ -76,10 +76,10 @@ public class UposErrorPrecedenceTests
     {
         // 状態: Open, ClaimedByAnother: false, NotClaimed by self, Disabled
         _so.Open();
-        _so.HardwareStatusManager.SetClaimedByAnother(false);
+        _so.HardwareStatus.SetClaimedByAnother(false);
 
         var ex = Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.NotClaimed);
+        ex.ErrorCode.ShouldBe(ErrorCode.NotClaimed);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class UposErrorPrecedenceTests
         _so.DeviceEnabled = false;
 
         var ex = Should.Throw<PosControlException>(() => _mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Disabled);
+        ex.ErrorCode.ShouldBe(ErrorCode.Disabled);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class UposErrorPrecedenceTests
         // DeviceEnabled プロパティへのセット時も優先順位が適用されることを確認
         
         // 1. Closed 優先
-        _so.HardwareStatusManager.SetConnected(false);
+        _so.HardwareStatus.SetConnected(false);
         Should.Throw<PosControlException>(() => _so.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.Closed);
 
@@ -119,7 +119,7 @@ public class UposErrorPrecedenceTests
         }
 
         // 3. NotClaimed (Self) 優先
-        _so.HardwareStatusManager.SetClaimedByAnother(false);
+        _so.HardwareStatus.SetClaimedByAnother(false);
         // まだ Claim していない
         Should.Throw<PosControlException>(() => _so.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.NotClaimed);

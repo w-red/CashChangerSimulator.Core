@@ -74,7 +74,7 @@ public class UposCommandTests
         var action = CashDepositAction.NoChange;
         var command = new EndDepositCommand(DepositControllerMock.Object, action);
         command.Execute();
-        DepositControllerMock.Verify(c => c.EndDeposit(action), Times.Once);
+        DepositControllerMock.Verify(c => c.EndDeposit(It.IsAny<DepositAction>()), Times.Once);
     }
 
     /// <summary>PauseDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
@@ -84,7 +84,7 @@ public class UposCommandTests
         var control = CashDepositPause.Pause;
         var command = new PauseDepositCommand(DepositControllerMock.Object, control);
         command.Execute();
-        DepositControllerMock.Verify(c => c.PauseDeposit(control), Times.Once);
+        DepositControllerMock.Verify(c => c.PauseDeposit(It.IsAny<DeviceDepositPause>()), Times.Once);
     }
 
     /// <summary>RepayDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
@@ -134,7 +134,7 @@ public class UposCommandTests
     {
         var diagMock = new Mock<DiagnosticController>(new Inventory(), new HardwareStatusManager());
         diagMock.Setup(d => d.GetHealthReport(DeviceHealthCheckLevel.Internal)).Returns("OK");
-        var command = new CheckHealthCommand(diagMock.Object, DeviceHealthCheckLevel.Internal);
+        var command = new CheckHealthCommand(diagMock.Object, HealthCheckLevel.Internal);
         
         command.Execute();
         

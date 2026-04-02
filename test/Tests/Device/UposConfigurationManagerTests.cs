@@ -63,7 +63,7 @@ public class UposConfigurationManagerTests
     [Fact]
     public void ReloadShouldManuallyTriggerUpdate()
     {
-        _stateProvider.Setup(s => s.State).Returns(DeviceControlState.Idle);
+        _stateProvider.Setup(s => s.State).Returns(CashChangerSimulator.Device.DeviceControlState.Idle);
         _inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
         
         _manager.Reload();

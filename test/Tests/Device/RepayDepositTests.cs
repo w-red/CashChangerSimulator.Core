@@ -49,11 +49,11 @@ public class RepayDepositTests
         // normally triggered by hardware/UI)
         var controller = simulator.DepositController;
 
-        controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
+        controller.TrackDeposit(b1000);
         simulator.DepositAmount.ShouldBe(1000);
 
         simulator.FixDeposit();
-        simulator.EndDeposit(DepositAction.Repay);
+        simulator.EndDeposit(CashDepositAction.Repay);
 
         // Verify state after Repay
         simulator.DepositAmount.ShouldBe(0);
@@ -82,7 +82,7 @@ public class RepayDepositTests
         
         var controller = simulator.DepositController;
 
-        controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { b1000, 1 } });
+        controller.TrackDeposit(b1000);
         simulator.DepositAmount.ShouldBe(1000);
 
         // Call the specific RepayDeposit method

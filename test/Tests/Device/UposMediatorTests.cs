@@ -162,7 +162,7 @@ public class UposMediatorTests
         
         _mediator.ResultCode.ShouldBe((int)ErrorCode.Illegal);
         _mediator.ResultCodeExtended.ShouldBe(789);
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
+        ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Illegal);
     }
 
     /// <summary>コマンドの正常実行が成功し、ResultCode が Success になることを検証します。</summary>

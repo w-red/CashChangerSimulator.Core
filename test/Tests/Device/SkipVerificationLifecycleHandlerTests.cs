@@ -35,16 +35,16 @@ public class SkipVerificationLifecycleHandlerTests
     {
         // Closed
         _hardware.SetConnected(false);
-        _handler.State.ShouldBe(DeviceControlState.Closed);
+        _handler.State.ShouldBe(ControlState.Closed);
 
         // Busy
         _hardware.SetConnected(true);
         _mediator.Setup(m => m.IsBusy).Returns(true);
-        _handler.State.ShouldBe(DeviceControlState.Busy);
+        _handler.State.ShouldBe(ControlState.Busy);
 
         // Idle
         _mediator.Setup(m => m.IsBusy).Returns(false);
-        _handler.State.ShouldBe(DeviceControlState.Idle);
+        _handler.State.ShouldBe(ControlState.Idle);
     }
 
     /// <summary>Open, Claim, Close の各ライフサイクル操作がハードウェアおよび履歴に正しく反映されることを検証します。</summary>

@@ -1,5 +1,4 @@
 using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
@@ -9,8 +8,9 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Device.Virtual;
-using CashChangerSimulator.Device.PosForDotNet.Models;
+using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
+using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using CashChangerSimulator.Device.PosForDotNet.Commands;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -55,7 +55,7 @@ public class ExhaustiveDeviceTests : IDisposable
     {
         var onCompleteCalled = false;
         ErrorCode lastError = ErrorCode.Success;
-        Action<DeviceErrorCode, int> onComplete = (err, ext) => { onCompleteCalled = true; lastError = err; };
+        Action<DeviceErrorCode, int> onComplete = (err, ext) => { onCompleteCalled = true; lastError = (ErrorCode)err; };
 
         // Normal path
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
@@ -144,7 +144,7 @@ public class ExhaustiveDeviceTests : IDisposable
 
         // Stats & Health
         device.RetrieveStatistics(new[] { "test" });
-        device.CheckHealth(DeviceHealthCheckLevel.Internal);
+        device.CheckHealth(HealthCheckLevel.Internal);
         device.DirectIO(0, 0, "");
 
         device.DeviceEnabled = false;

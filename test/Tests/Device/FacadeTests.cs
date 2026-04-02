@@ -82,7 +82,7 @@ public class FacadeTests
         var facade = new DiagnosticsFacade(_diagnosticControllerMock.Object, _mediatorMock.Object);
 
         // Act
-        facade.CheckHealth(DeviceHealthCheckLevel.Internal);
+        facade.CheckHealth(HealthCheckLevel.Internal);
 
         // Assert
         _mediatorMock.Verify(m => m.Execute(It.IsAny<CheckHealthCommand>()), Times.Once);

@@ -21,7 +21,7 @@ public class SimulatorCashChangerTests
         var changer = new InternalSimulatorCashChanger();
         
         // Assert
-        changer.State.ShouldBe(DeviceControlState.Closed);
+        changer.State.ShouldBe(ControlState.Closed);
         changer.Claimed.ShouldBeFalse();
         changer.DeviceEnabled.ShouldBeFalse();
     }
@@ -36,7 +36,7 @@ public class SimulatorCashChangerTests
 
         // Act & Assert: Open
         changer.Open();
-        changer.State.ShouldBe(DeviceControlState.Idle);
+        changer.State.ShouldBe(ControlState.Idle);
 
         // Act & Assert: Claim
         changer.Claim(1000);
@@ -56,7 +56,7 @@ public class SimulatorCashChangerTests
 
         // Act & Assert: Close
         changer.Close();
-        changer.State.ShouldBe(DeviceControlState.Closed);
+        changer.State.ShouldBe(ControlState.Closed);
     }
 
     /// <summary>各種 Capability プロパティが設定ファイルの内容を正しく反映していることを検証します。</summary>
@@ -144,7 +144,7 @@ public class SimulatorCashChangerTests
         changer.DeviceEnabled = true;
 
         // Act & Assert: CheckHealth
-        var health = changer.CheckHealth(DeviceHealthCheckLevel.Internal);
+        var health = changer.CheckHealth(HealthCheckLevel.Internal);
         health.ShouldContain("Internal Health Check Report");
         health.ShouldContain("Status: OK");
         changer.CheckHealthText.ShouldBe(health);
