@@ -1,7 +1,8 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device;
-using Microsoft.PointOfService;
+using CashChangerSimulator.Core.Exceptions;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests;
@@ -34,10 +35,10 @@ public class OverlapSimulationTest
         controller.IsFixed.ShouldBeTrue();
 
         // EndDeposit(NoChange) should throw if overlapped
-        Should.Throw<PosControlException>(() => controller.EndDeposit(CashDepositAction.NoChange));
+        Should.Throw<DeviceException>(() => controller.EndDeposit(DepositAction.Store));
 
         // EndDeposit(Repay) should succeed, but does not auto-clear hardware overlap
-        controller.EndDeposit(CashDepositAction.Repay);
+        controller.EndDeposit(DepositAction.Repay);
         hardwareManager.IsOverlapped.Value.ShouldBeTrue();
     }
 
@@ -54,6 +55,6 @@ public class OverlapSimulationTest
 
         hardwareManager.SetConnected(true);
         // Act & Assert
-        Should.Throw<PosControlException>(() => controller.BeginDeposit());
+        Should.Throw<DeviceException>(() => controller.BeginDeposit());
     }
 }

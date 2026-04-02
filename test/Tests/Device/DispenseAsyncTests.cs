@@ -18,7 +18,8 @@ namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>テスト用のモックキャッシュチェンジャーマネージャー。</summary>
 /// <param name="inv">在庫オブジェクト。</param>
-public class MockCashChangerManager(Inventory inv) : CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator())
+/// <param name="config">設定プロバイダー。</param>
+public class MockCashChangerManager(Inventory inv, ConfigurationProvider? config = null) : CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator(), config)
 {
     public ManualResetEventSlim DispenseStartSignal { get; } = new(false);
     public ManualResetEventSlim DispenseFinishSignal { get; } = new(false);
@@ -134,7 +135,7 @@ public class DispenseAsyncTests
 
         // Assert: While busy, another dispense should throw E_BUSY
         var ex = Should.Throw<PosControlException>(() => changer.DispenseChange(50));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Busy);
+        ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Busy);
 
         // Cleanup
         manager.DispenseFinishSignal.Set();
@@ -165,7 +166,7 @@ public class DispenseAsyncTests
 
         // Assert: While busy, ReadCashCounts should throw E_BUSY
         var ex = Should.Throw<PosControlException>(() => changer.ReadCashCounts());
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Busy);
+        ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Busy);
 
         // Cleanup
         manager.DispenseFinishSignal.Set();

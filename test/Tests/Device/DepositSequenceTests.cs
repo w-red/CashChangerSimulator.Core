@@ -8,6 +8,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using R3;
@@ -42,7 +43,7 @@ public class DepositSequenceTests
 
         // beginDeposit: 入金受付開始
         controller.BeginDeposit();
-        controller.DepositStatus.ShouldBe(CashDepositStatus.Count);
+        controller.DepositStatus.ShouldBe(DeviceDepositStatus.Counting);
 
         // 入金シミュレーション
         controller.TrackDeposit(b1000);
@@ -52,12 +53,12 @@ public class DepositSequenceTests
 
         // fixDeposit: 入金確定
         controller.FixDeposit();
-        controller.DepositStatus.ShouldBe(CashDepositStatus.Count);
+        controller.DepositStatus.ShouldBe(DeviceDepositStatus.Counting);
 
         // endDeposit(Change): 釣銭分を払い出す
         // ここでは入金分1000円すべてを釣銭対象として想定（manager.Dispenseが呼ばれる）
-        controller.EndDeposit(CashDepositAction.Change);
-        controller.DepositStatus.ShouldBe(CashDepositStatus.End);
+        controller.EndDeposit(DepositAction.Store);
+        controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
     }
 
     /// <summary>beginDepositから釣銭なしendDepositまでの正常な一連のシーケンスを検証する。</summary>
@@ -73,8 +74,8 @@ public class DepositSequenceTests
 
         controller.FixDeposit();
 
-        controller.EndDeposit(CashDepositAction.NoChange);
-        controller.DepositStatus.ShouldBe(CashDepositStatus.End);
+        controller.EndDeposit(DepositAction.Store);
+        controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
         inventory.GetCount(b1000).ShouldBe(1); // 在庫に残る
     }
 
@@ -94,7 +95,7 @@ public class DepositSequenceTests
         // Repay: 入金された現金を全額返却
         controller.EndDeposit(DepositAction.Repay);
 
-        controller.DepositStatus.ShouldBe(CashDepositStatus.End);
+        controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
         inventory.GetCount(b1000).ShouldBe(0); // 在庫から消える（返却）
     }
 
@@ -108,7 +109,7 @@ public class DepositSequenceTests
         controller.BeginDeposit();
 
         // Pause
-        controller.PauseDeposit(CashDepositPause.Pause);
+        controller.PauseDeposit(DeviceDepositPause.Pause);
         controller.IsPaused.ShouldBeTrue();
 
         // Pause中に在庫が増えてもTrackDepositは無視するはず
@@ -116,7 +117,7 @@ public class DepositSequenceTests
         controller.DepositAmount.ShouldBe(0);
 
         // Restart
-        controller.PauseDeposit(CashDepositPause.Restart);
+        controller.PauseDeposit(DeviceDepositPause.Resume);
         controller.IsPaused.ShouldBeFalse();
 
         // 再開後に入金
@@ -124,8 +125,8 @@ public class DepositSequenceTests
         controller.DepositAmount.ShouldBe(1000);
 
         controller.FixDeposit();
-        controller.EndDeposit(CashDepositAction.NoChange);
-        controller.DepositStatus.ShouldBe(CashDepositStatus.End);
+        controller.EndDeposit(DepositAction.Store);
+        controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
     }
 
     // =====================================================
@@ -141,8 +142,8 @@ public class DepositSequenceTests
         controller.BeginDeposit();
 
         var ex = Should.Throw<PosControlException>(() =>
-            controller.EndDeposit(CashDepositAction.NoChange));
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
+            controller.EndDeposit(DepositAction.Store));
+        ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Illegal);
     }
 
     /// <summary>beginDepositを呼ばずにfixDepositを実行した際にErrorCode.Illegalがスローされることを検証する。</summary>
@@ -151,7 +152,7 @@ public class DepositSequenceTests
     {
         var (controller, _) = CreateController();
 
-        var ex = Should.Throw<PosControlException>(() =>
+        var ex = Should.Throw<DeviceException>(() =>
             controller.FixDeposit());
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
@@ -170,7 +171,7 @@ public class DepositSequenceTests
         controller.FixDeposit();
         controller.IsDepositInProgress.ShouldBeTrue();
 
-        controller.EndDeposit(CashDepositAction.NoChange);
+        controller.EndDeposit(DepositAction.Store);
         controller.IsDepositInProgress.ShouldBeFalse();
     }
 
@@ -226,7 +227,7 @@ public class DepositSequenceTests
         hw.SetJammed(true);
 
         // Act & Assert
-        var ex = Should.Throw<PosControlException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)));
+        var ex = Should.Throw<DeviceException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)));
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Extended);
     }
 
@@ -292,7 +293,7 @@ public class DepositSequenceTests
         // Total: 5070, Required: 1050 -> Change: 4020
         // Escrow-First Return: 4x1000 bills, 2x10 coins should be returned (stay out of inventory)
         // 1x1000 bill, 5x10 coins should go to inventory
-        controller.EndDeposit(CashDepositAction.Change);
+        controller.EndDeposit(DepositAction.Store);
 
         inventory.GetCount(b1000).ShouldBe(1);
         inventory.GetCount(c10).ShouldBe(5);

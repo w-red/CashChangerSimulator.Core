@@ -3,6 +3,7 @@ using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
+using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -24,35 +25,33 @@ namespace CashChangerSimulator.Tests.Device;
 public class AsyncModeReliabilityTests
 {
     private class ReliabilityTestChanger(Inventory inv, CashChangerManager manager, DispenseController controller, HardwareStatusManager hw) : InternalSimulatorCashChanger(
-        new ConfigurationProvider(),
-        inv,
-        new TransactionHistory(),
-        manager,
-        new DepositController(inv, hw),
-        controller,
-        new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))),
-        hw)
+        inventory: inv, manager: manager, dispenseController: controller, hardwareStatusManager: hw)
     {
         public CashDispenseStatus StatusAtEvent { get; private set; }
         public int ResultCodeAtEvent { get; private set; }
-        public bool EventCaptured { get; private set; }
+        public ManualResetEventSlim CompletionSignal { get; } = new(false);
 
-        private readonly DispenseController _controller = controller;
         private readonly List<EventArgs> _eventHistory = [];
+        private readonly object _lock = new();
  
         protected override void NotifyEvent(EventArgs e)
         {
-            _eventHistory.Add(e);
-            base.NotifyEvent(e);
-            if (e is StatusUpdateEventArgs se && se.Status == 91)
+            lock (_lock)
             {
-                // Capture internal state AT THE MOMENT of event notification
-                StatusAtEvent = _controller.Status;
-                ResultCodeAtEvent = AsyncResultCode;
-                EventCaptured = true;
+                _eventHistory.Add(e);
+                if (e is StatusUpdateEventArgs se && se.Status == 91)
+                {
+                    // [IMPORTANT] Capture internal state AT THE MOMENT of event notification.
+                    // Access through the mediator's context to avoid any instance mismatch.
+                    StatusAtEvent = DispenseController.Status;
+                    ResultCodeAtEvent = (int)AsyncResultCode;
+                    CompletionSignal.Set();
+                }
             }
-            // base.NotifyEvent(e); // Avoid framework event queueing
+            base.NotifyEvent(e);
         }
+
+        public bool WaitForEvent(int timeoutMs) => CompletionSignal.Wait(timeoutMs);
     }
 
     /// <summary>非同期出金処理において、完了イベント通知時の内部状態が正しいことを検証します。</summary>
@@ -60,42 +59,45 @@ public class AsyncModeReliabilityTests
     public async Task AsyncDispenseShouldHaveCorrectStateWhenEventFires()
     {
         // Arrange
+        var configProvider = new ConfigurationProvider();
+        var config = new SimulatorConfiguration(); // Use default in-memory config
+        configProvider.Update(config);
+
         var inventory = new Inventory();
-        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
-        var manager = new MockCashChangerManager(inventory);
-        var hardware = new HardwareStatusManager();
-        var controller = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
-        var changer = new ReliabilityTestChanger(inventory, manager, controller, hardware)
-        {
-            AsyncMode = true,
-            // SkipStateVerification = true
-        };
+        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin, "JPY"), 10);
+        
+        var manager = new MockCashChangerManager(inventory, configProvider); // This mock uses base.Dispense
+        var hardwareStatus = new HardwareStatusManager();
+        
+        var hardwareSim = new Mock<IDeviceSimulator>();
+        hardwareSim.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+                   .Returns(Task.CompletedTask);
+
+        var controller = new DispenseController(manager, hardwareStatus, hardwareSim.Object);
+        var changer = new ReliabilityTestChanger(inventory, manager, controller, hardwareStatus);
+        
         changer.SkipStateVerification = true;
 
         // Act
         changer.Open();
         changer.Claim(1000);
         changer.DeviceEnabled = true;
+        changer.AsyncMode = true;
 
         changer.DispenseChange(100);
 
-        // Assert: Capture whatever the state is during operation
-        controller.IsBusy.ShouldBeTrue("Dispense operation should be busy.");
+        // Assert: Ensure it's busy immediately
+        changer.DispenseController.IsBusy.ShouldBeTrue("Dispense operation should be busy.");
 
         // Let it finish
         manager.DispenseFinishSignal.Set();
 
-        // Wait for event capture
-        int timeout = 0;
-        while (!changer.EventCaptured && timeout < 50)
-        {
-            await Task.Delay(TestTimingConstants.EventPropagationDelayMs, TestContext.Current.CancellationToken);
-            timeout++;
-        }
+        // Wait for event capture with a generous timeout
+        bool eventFired = changer.WaitForEvent(5000);
 
         // Assert consistency AT EVENT RECEIPT
-        changer.EventCaptured.ShouldBeTrue("Completion event was not fired.");
-        changer.StatusAtEvent.ShouldBe(CashDispenseStatus.Idle, "Internal status should be Idle when AsyncFinished event is fired.");
-        changer.ResultCodeAtEvent.ShouldBe((int)ErrorCode.Success, "AsyncResultCode should be Success when event is fired.");
+        eventFired.ShouldBeTrue("Completion event was not fired within 5 seconds.");
+        changer.StatusAtEvent.ShouldBe(CashDispenseStatus.Idle, $"Internal status should be Idle when AsyncFinished event is fired, but was {changer.StatusAtEvent}.");
+        changer.ResultCodeAtEvent.ShouldBe((int)ErrorCode.Success, $"AsyncResultCode should be Success when event is fired, but was {changer.ResultCodeAtEvent}.");
     }
 }
