@@ -7,12 +7,14 @@ public enum DeviceErrorCode
     Success = 0,
     /// <summary>デバイスが閉じている。 (OPOS_E_CLOSED)</summary>
     Closed = 101,
-    /// <summary>デバイスが他から占有されている。 (OPOS_E_NOTCLAIMED)</summary>
-    NotClaimed = 102,
+    /// <summary>デバイスが他から占有されている。 (OPOS_E_CLAIMED)</summary>
+    Claimed = 102,
     /// <summary>デバイスがオープンされていない。 (OPOS_E_NOTOPEN)</summary>
     NotOpen = 103,
     /// <summary>デバイスが無効状態。 (OPOS_E_DISABLED)</summary>
     Disabled = 104,
+    /// <summary>デバイスがオープンされているが、占有されていない。 (OPOS_E_NOTCLAIMED)</summary>
+    NotClaimed = 105,
     /// <summary>不正なパラメータまたは状態での呼び出し。 (OPOS_E_ILLEGAL)</summary>
     Illegal = 106,
     /// <summary>物理的なハードウェアが見つからない。 (OPOS_E_NOHARDWARE)</summary>
@@ -50,8 +52,10 @@ public enum DeviceDepositStatus
     Start = 1,
     /// <summary>計数中。</summary>
     Counting = 2,
-    /// <summary>受付終了。</summary>
-    End = 3
+    /// <summary>受付終了・確定待ち。</summary>
+    Validation = 3,
+    /// <summary>入金完了。</summary>
+    End = 4
 }
 
 /// <summary>出金・払い出し状態を表す列挙型。</summary>

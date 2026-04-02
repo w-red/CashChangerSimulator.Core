@@ -24,7 +24,7 @@ jobs:
         run: dotnet restore CashChangerSimulator.Core.slnx
 
       - name: Build
-        run: dotnet build CashChangerSimulator.Core.slnx --configuration Release --no-restore
+        run: dotnet build CashChangerSimulator.Core.slnx --configuration Release --no-restore --warnaserror
 
       - name: Test
         run: dotnet test test/Tests/CashChangerSimulator.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test_results.trx"

@@ -20,7 +20,7 @@ dotnet_diagnostic.IDE0055.severity = warning
 #### .NET Coding Conventions ####
 
 # Organize usings
-dotnet_separate_import_directive_groups = true
+dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = true
 file_header_template = unset
 
@@ -373,6 +373,8 @@ dotnet_naming_style.s_camelcase.required_prefix = s_
 dotnet_naming_style.s_camelcase.required_suffix = 
 dotnet_naming_style.s_camelcase.word_separator = 
 dotnet_naming_style.s_camelcase.capitalization = camel_case
+
+max_line_length = 80
 
 #### [追加] 非コードファイルの設定 ####
 

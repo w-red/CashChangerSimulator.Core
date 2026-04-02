@@ -1,14 +1,15 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Core/CashChangerSimulator.Core.csproj" />
-    <Project Path="src/Device/CashChangerSimulator.Device.csproj" />
-    <Project Path="src/Device.Virtual/CashChangerSimulator.Device.Virtual.csproj" />
     <Project Path="src/Device.PosForDotNet/CashChangerSimulator.Device.PosForDotNet.csproj" />
+    <Project Path="src/Device.Virtual/CashChangerSimulator.Device.Virtual.csproj" />
+    <Project Path="src/Device/CashChangerSimulator.Device.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Tests/CashChangerSimulator.Tests.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
     <File Path="config.toml" />
     <File Path="LICENSE" />
     <File Path="README.md" />

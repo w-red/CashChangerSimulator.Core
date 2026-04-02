@@ -34,23 +34,30 @@ public sealed class GlobalLockManager : IDisposable
     {
         if (_lockStream != null) return false; // 自分が保持している
 
-        try
+        // プロセス終了直後や破棄直後にファイルハンドルがOSによって完全に解放されるまで、
+        // わずかな時間がかかる場合があるため、リトライループを設ける。
+        for (int i = 0; i < 3; i++)
         {
-            // Try to open with shared access. 
-            // If someone else has it with FileShare.None, this will fail with IOException (Sharing Violation).
-            using var stream = new FileStream(_lockFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-            return false;
+            try
+            {
+                // Try to open with shared access. 
+                // If someone else has it with FileShare.None, this will fail with IOException (Sharing Violation).
+                using var stream = new FileStream(_lockFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                return false;
+            }
+            catch (IOException)
+            {
+                // Sharing violation usually means another process has the file open with FileShare.None
+                if (i == 2) return true;
+                System.Threading.Thread.Sleep(20);
+            }
+            catch (Exception ex)
+            {
+                _logger.ZLogWarning($"Unexpected error checking global lock: {ex.Message}");
+                return false;
+            }
         }
-        catch (IOException)
-        {
-            // Sharing violation usually means another process has the file open with FileShare.None
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.ZLogWarning($"Unexpected error checking global lock: {ex.Message}");
-            return false;
-        }
+        return false;
     }
 
     /// <summary>排他的なロックを取得しようと試みます。</summary>

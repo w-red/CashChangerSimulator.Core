@@ -3,6 +3,9 @@ using MemoryPack;
 namespace CashChangerSimulator.Core.Models;
 
 /// <summary>金種を一意に識別するための複合キー。</summary>
+/// <param name="Value">金種の額面（例: 1000, 500, 0.25）。</param>
+/// <param name="Type">金種の種別（紙幣または硬貨）。</param>
+/// <param name="CurrencyCode">通貨コード（例: "JPY"）。</param>
 /// <remarks>
 /// 通貨コード（JPY等）、額面（1000等）、および硬貨/紙幣の種別を組み合わせたイミュータブルなキー。
 /// 在庫管理や金額計算の最小単位として、ディクショナリのキー等に使用されます。

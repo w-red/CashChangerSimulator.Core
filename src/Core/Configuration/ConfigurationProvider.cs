@@ -12,7 +12,7 @@ public class ConfigurationProvider : IDisposable
     private readonly Subject<Unit> _reloaded = new();
     private FileSystemWatcher? _watcher;
     private DateTime _lastRead = DateTime.MinValue;
-    
+
     /// <summary>設定が再読み込みされたときに通知されるストリーム。</summary>
     public Observable<Unit> Reloaded => _reloaded;
 
@@ -60,7 +60,7 @@ public class ConfigurationProvider : IDisposable
     private void SetupWatcher(string path)
     {
         _watcher?.Dispose();
-        
+
         var fullPath = Path.GetFullPath(path);
         var directory = Path.GetDirectoryName(fullPath);
         var fileName = Path.GetFileName(fullPath);
