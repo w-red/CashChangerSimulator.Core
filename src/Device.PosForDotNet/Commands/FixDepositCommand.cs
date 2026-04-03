@@ -22,9 +22,12 @@ public class FixDepositCommand : IUposCommand
     /// RealTimeData無効時にバッファリングされた通知を再現するため、
     /// コントローラーの状態変化を監視し、必要に応じて DataEvent を発行します。
     /// </remarks>
-    public void Execute()
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
     {
         _controller.FixDeposit();
+        return Task.CompletedTask;
     }
 
     /// <summary>コマンド実行前の状態を検証します。</summary>

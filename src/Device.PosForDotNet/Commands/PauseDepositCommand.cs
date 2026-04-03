@@ -16,9 +16,12 @@ public class PauseDepositCommand : IUposCommand
         _pause = pause;
     }
 
-    public void Execute()
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
     {
         _controller.PauseDeposit(_pause == CashDepositPause.Pause ? DeviceDepositPause.Pause : DeviceDepositPause.Resume);
+        return Task.CompletedTask;
     }
 
     public void Verify(IUposMediator mediator)

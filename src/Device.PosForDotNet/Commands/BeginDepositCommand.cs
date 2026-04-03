@@ -13,9 +13,12 @@ public class BeginDepositCommand : IUposCommand
         _controller = controller;
     }
 
-    public void Execute()
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
     {
         _controller.BeginDeposit();
+        return Task.CompletedTask;
     }
 
     public void Verify(IUposMediator mediator)

@@ -12,9 +12,12 @@ public class ResetStatisticsCommand : IUposCommand
         _statistics = statistics;
     }
 
-    public void Execute()
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
     {
         // Reset logic can be added if needed
+        return Task.CompletedTask;
     }
 
     public void Verify(IUposMediator mediator)

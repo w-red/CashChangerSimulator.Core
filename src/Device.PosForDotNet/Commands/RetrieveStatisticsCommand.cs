@@ -18,9 +18,12 @@ public class RetrieveStatisticsCommand : IUposCommand
 
     public string Result { get; private set; }
 
-    public void Execute()
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
     {
         Result = _controller.RetrieveStatistics(_statistics);
+        return Task.CompletedTask;
     }
 
     public void Verify(IUposMediator mediator)

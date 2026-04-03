@@ -13,9 +13,12 @@ public class UpdateStatisticsCommand : IUposCommand
         _statistics = statistics;
     }
 
-    public void Execute()
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
     {
         // Simulator doesn't support external update, but follows UPOS protocol
+        return Task.CompletedTask;
     }
 
     public void Verify(IUposMediator mediator)

@@ -29,7 +29,9 @@ public class AdjustCashCountsCommand : IUposCommand
         _hardwareStatusManager = hardwareStatusManager;
     }
 
-    public void Execute()
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
     {
         if (_hardwareStatusManager.IsJammed.Value)
         {
@@ -44,6 +46,7 @@ public class AdjustCashCountsCommand : IUposCommand
         {
             _inventory.SetCount(key, count);
         }
+        return Task.CompletedTask;
     }
 
     public void Verify(IUposMediator mediator)

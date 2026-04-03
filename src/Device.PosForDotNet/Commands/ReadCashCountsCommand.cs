@@ -20,7 +20,9 @@ public class ReadCashCountsCommand : IUposCommand
 
     public CashCounts Result { get; private set; }
 
-    public void Execute()
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
     {
         var sorted = _inventory.AllCounts
             .Where(kv => kv.Key.CurrencyCode == _currencyCode)
@@ -32,6 +34,7 @@ public class ReadCashCountsCommand : IUposCommand
             .ToList();
 
         Result = new CashCounts([.. list], _inventory.HasDiscrepancy);
+        return Task.CompletedTask;
     }
 
     public void Verify(IUposMediator mediator)

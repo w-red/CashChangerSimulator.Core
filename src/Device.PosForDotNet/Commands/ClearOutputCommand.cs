@@ -13,7 +13,13 @@ public class ClearOutputCommand : IUposCommand
         _controller = controller;
     }
 
-    public void Execute() => _controller.ClearOutput();
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
+    {
+        _controller.ClearOutput();
+        return Task.CompletedTask;
+    }
 
     public void Verify(IUposMediator mediator)
     {

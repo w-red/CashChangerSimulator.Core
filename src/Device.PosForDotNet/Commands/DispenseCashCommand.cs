@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -16,7 +17,6 @@ public class DispenseCashCommand : IUposCommand
     private readonly DepositController _depositController;
     private readonly IReadOnlyDictionary<DenominationKey, int> _counts;
     private readonly bool _async;
-    private readonly Action<ErrorCode, int> _onComplete;
     private IUposMediator? _mediator;
 
     /// <summary>金種指定出金コマンドのインスタンスを初期化します。</summary>
@@ -26,15 +26,13 @@ public class DispenseCashCommand : IUposCommand
     /// <param name="depositController">入金状態を確認するためのコントローラー。</param>
     /// <param name="counts">出金する金種と枚数のセット。</param>
     /// <param name="async">非同期実行するかどうか。</param>
-    /// <param name="onComplete">完了時に実行されるコールバック。</param>
     public DispenseCashCommand(
         DispenseController controller,
         Inventory inventory,
         HardwareStatusManager hardwareStatusManager,
         DepositController depositController,
         IReadOnlyDictionary<DenominationKey, int> counts,
-        bool async,
-        Action<ErrorCode, int> onComplete)
+        bool async)
     {
         _controller = controller;
         _inventory = inventory;
@@ -42,22 +40,27 @@ public class DispenseCashCommand : IUposCommand
         _depositController = depositController;
         _counts = counts;
         _async = async;
-        _onComplete = onComplete;
     }
 
     /// <summary>金種指定出金操作を実行します。</summary>
     public void Execute()
+    {
+        ExecuteAsync().GetAwaiter().GetResult();
+        if (_controller.LastErrorCode != DeviceErrorCode.Success)
+        {
+            throw new DeviceException("DispenseCash failed", _controller.LastErrorCode, _controller.LastErrorCodeExtended);
+        }
+    }
+
+    /// <summary>金種指定出金操作を非同期で実行します。</summary>
+    public async Task ExecuteAsync()
     {
         if (_async && _mediator != null)
         {
             _mediator.IsBusy = true;
         }
 
-        var task = _controller.DispenseCashAsync(_counts, _async, (code, codeEx) => _onComplete((ErrorCode)code, codeEx));
-        if (!_async)
-        {
-            task.GetAwaiter().GetResult();
-        }
+        await _controller.DispenseCashAsync(_counts, _async);
     }
 
     /// <summary>コマンド実行前の状態および事前条件（在庫やハードウェア状態）を検証します。</summary>

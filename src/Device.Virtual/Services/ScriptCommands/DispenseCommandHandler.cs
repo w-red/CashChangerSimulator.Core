@@ -14,6 +14,6 @@ public class DispenseCommandHandler(DispenseController dispenseController) : ISc
     {
         var dispenseValue = ScriptExecutionService.ResolveValue(cmd.Value, context);
         logger.ZLogDebug($"Dispense: {dispenseValue}");
-        await dispenseController.DispenseChangeAsync(dispenseValue, false, (c, ex) => { });
+        await dispenseController.DispenseChangeAsync(dispenseValue, false);
     }
 }

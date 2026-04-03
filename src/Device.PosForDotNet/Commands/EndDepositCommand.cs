@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
@@ -9,6 +10,7 @@ public class EndDepositCommand : IUposCommand
 {
     private readonly DepositController _controller;
     private readonly CashDepositAction _action;
+    private IUposMediator? _mediator;
 
     public EndDepositCommand(DepositController controller, CashDepositAction action)
     {
@@ -17,6 +19,15 @@ public class EndDepositCommand : IUposCommand
     }
 
     public void Execute()
+    {
+        ExecuteAsync().GetAwaiter().GetResult();
+        if (_controller.LastErrorCode != DeviceErrorCode.Success)
+        {
+            throw new DeviceException("EndDeposit failed", _controller.LastErrorCode, _controller.LastErrorCodeExtended);
+        }
+    }
+
+    public async Task ExecuteAsync()
     {
         var actionText = _action.ToString();
         var actionValue = (int)_action;
@@ -29,11 +40,12 @@ public class EndDepositCommand : IUposCommand
             _ when actionValue == 3 || actionValue == 4 => DepositAction.Repay,
             _ => DepositAction.Store
         };
-        _controller.EndDeposit(coreAction);
+        await _controller.EndDepositAsync(coreAction);
     }
 
     public void Verify(IUposMediator mediator)
     {
+        _mediator = mediator;
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

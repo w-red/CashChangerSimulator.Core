@@ -13,7 +13,13 @@ public class PurgeCashCommand : IUposCommand
         _manager = manager;
     }
 
-    public void Execute() => _manager.PurgeCash();
+    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+
+    public Task ExecuteAsync()
+    {
+        _manager.PurgeCash();
+        return Task.CompletedTask;
+    }
 
     public void Verify(IUposMediator mediator)
     {

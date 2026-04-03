@@ -10,7 +10,7 @@ public class EndDepositCommandHandler(DepositController depositController) : ISc
     public string OpName => "enddeposit";
 
     /// <summary>スクリプトコマンドを実行します。</summary>
-    public Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
+    public async Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
     {
         var action = cmd.Action?.ToLower() switch
         {
@@ -18,7 +18,6 @@ public class EndDepositCommandHandler(DepositController depositController) : ISc
             _ => DepositAction.Store
         };
         logger.ZLogDebug($"EndDeposit Action: {action}");
-        depositController.EndDeposit(action);
-        return Task.CompletedTask;
+        await depositController.EndDepositAsync(action);
     }
 }
