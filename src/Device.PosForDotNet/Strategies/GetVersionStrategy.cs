@@ -1,6 +1,6 @@
+using System.Reflection;
 using CashChangerSimulator.Core.Opos;
 using Microsoft.PointOfService;
-using System.Reflection;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 

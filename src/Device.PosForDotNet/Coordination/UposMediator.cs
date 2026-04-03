@@ -1,10 +1,10 @@
 using System.Threading;
-using Microsoft.PointOfService;
+using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.Extensions.Logging;
-using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Exceptions;
+using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 

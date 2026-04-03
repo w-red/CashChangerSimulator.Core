@@ -1,5 +1,5 @@
-using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.PosForDotNet;
 using Microsoft.PointOfService;
 using Shouldly;
 

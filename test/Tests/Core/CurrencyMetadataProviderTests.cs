@@ -1,8 +1,8 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
-using Shouldly;
 using R3;
+using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 

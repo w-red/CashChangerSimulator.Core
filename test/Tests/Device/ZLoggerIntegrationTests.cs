@@ -57,15 +57,15 @@ public class ZLoggerIntegrationTests : IDisposable
         File.Exists(logPath).ShouldBeTrue();
 
         var logContent = File.ReadAllText(logPath);
-        
+
         // メッセージが含まれているか
         logContent.ShouldContain("Caught async error");
         logContent.ShouldContain(exceptionMessage);
-        
+
         // スタックトレース（メソッド名など）が含まれているか
         logContent.ShouldContain("ThrowNestedException");
         logContent.ShouldContain("ZLoggerIntegrationTests.cs");
-        
+
         // ZLogger v2 の構造化ログにより Exception 型名が含まれているか
         logContent.ShouldContain("System.InvalidOperationException");
     }

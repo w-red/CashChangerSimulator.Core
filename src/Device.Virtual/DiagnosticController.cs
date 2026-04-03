@@ -1,6 +1,6 @@
-using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Managers;
 using System.Text;
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Device.Virtual;
 

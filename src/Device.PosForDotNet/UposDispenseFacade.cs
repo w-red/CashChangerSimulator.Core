@@ -1,8 +1,8 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Commands;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 

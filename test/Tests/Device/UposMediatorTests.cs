@@ -1,8 +1,8 @@
+using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
-using CashChangerSimulator.Core.Opos;
 using Moq;
 using Shouldly;
 

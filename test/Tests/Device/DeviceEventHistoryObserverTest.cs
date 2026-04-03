@@ -1,6 +1,6 @@
+using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
-using CashChangerSimulator.Core.Transactions;
 using Microsoft.PointOfService;
 using Shouldly;
 

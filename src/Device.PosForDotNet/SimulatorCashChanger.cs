@@ -1,15 +1,15 @@
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device.PosForDotNet.Services;
 using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device.PosForDotNet.Models;
-using R3;
+using CashChangerSimulator.Device.PosForDotNet.Services;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
+using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
 
@@ -165,26 +165,26 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         }
     }
     void ICashChangerStatusSink.SetAsyncProcessing(bool isBusy) => _eventNotifier.SetAsyncProcessing(isBusy);
-    int ICashChangerStatusSink.AsyncResultCode 
-    { 
-        get => _ctx.Mediator.AsyncResultCode; 
-        set => _ctx.Mediator.AsyncResultCode = value; 
+    int ICashChangerStatusSink.AsyncResultCode
+    {
+        get => _ctx.Mediator.AsyncResultCode;
+        set => _ctx.Mediator.AsyncResultCode = value;
     }
-    int ICashChangerStatusSink.AsyncResultCodeExtended 
-    { 
-        get => _ctx.Mediator.AsyncResultCodeExtended; 
-        set => _ctx.Mediator.AsyncResultCodeExtended = value; 
+    int ICashChangerStatusSink.AsyncResultCodeExtended
+    {
+        get => _ctx.Mediator.AsyncResultCodeExtended;
+        set => _ctx.Mediator.AsyncResultCodeExtended = value;
     }
 
-    int IUposEventSink.AsyncResultCode 
-    { 
-        get => _ctx.Mediator.AsyncResultCode; 
-        set => _ctx.Mediator.AsyncResultCode = value; 
+    int IUposEventSink.AsyncResultCode
+    {
+        get => _ctx.Mediator.AsyncResultCode;
+        set => _ctx.Mediator.AsyncResultCode = value;
     }
-    int IUposEventSink.AsyncResultCodeExtended 
-    { 
-        get => _ctx.Mediator.AsyncResultCodeExtended; 
-        set => _ctx.Mediator.AsyncResultCodeExtended = value; 
+    int IUposEventSink.AsyncResultCodeExtended
+    {
+        get => _ctx.Mediator.AsyncResultCodeExtended;
+        set => _ctx.Mediator.AsyncResultCodeExtended = value;
     }
 
     // Properties

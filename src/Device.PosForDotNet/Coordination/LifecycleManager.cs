@@ -1,8 +1,8 @@
 using CashChangerSimulator.Core.Managers;
-using ZLogger;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
+using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 

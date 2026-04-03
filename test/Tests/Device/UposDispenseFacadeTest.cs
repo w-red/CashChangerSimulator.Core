@@ -1,15 +1,15 @@
-using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Device;
+using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
-using CashChangerSimulator.Device;
 
 namespace CashChangerSimulator.Tests.Device;
 

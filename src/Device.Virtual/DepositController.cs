@@ -1,12 +1,12 @@
 using System.Threading;
-using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core;
+using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
-using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Device.Virtual;
 
@@ -82,13 +82,13 @@ public class DepositController : IDisposable
     public virtual IReadOnlyDictionary<DenominationKey, int> DepositCounts { get { lock (_stateLock) return new Dictionary<DenominationKey, int>(_depositCounts); } }
     public virtual DeviceDepositStatus DepositStatus { get { lock (_stateLock) return _depositStatus; } }
 
-    public virtual bool IsDepositInProgress 
-    { 
-        get 
-        { 
-            lock (_stateLock) 
-                return _depositStatus is DeviceDepositStatus.Start or DeviceDepositStatus.Counting or DeviceDepositStatus.Validation; 
-        } 
+    public virtual bool IsDepositInProgress
+    {
+        get
+        {
+            lock (_stateLock)
+                return _depositStatus is DeviceDepositStatus.Start or DeviceDepositStatus.Counting or DeviceDepositStatus.Validation;
+        }
     }
 
     public virtual bool IsPaused { get { lock (_stateLock) return _depositPaused; } }

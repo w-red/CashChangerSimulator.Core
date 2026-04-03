@@ -1,6 +1,6 @@
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Core.Transactions;
 using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet;

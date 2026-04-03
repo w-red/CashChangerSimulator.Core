@@ -1,5 +1,5 @@
-using R3;
 using Microsoft.PointOfService;
+using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Services;
 

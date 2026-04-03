@@ -1,10 +1,10 @@
-using CashChangerSimulator.Device;
+using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
 using R3;
 using Shouldly;

@@ -1,5 +1,5 @@
-using Microsoft.PointOfService;
 using CashChangerSimulator.Device.PosForDotNet.Services;
+using Microsoft.PointOfService;
 using Moq;
 
 namespace CashChangerSimulator.Tests.Device;

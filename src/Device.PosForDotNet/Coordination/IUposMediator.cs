@@ -1,7 +1,7 @@
-using Microsoft.PointOfService;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.Extensions.Logging;
-using CashChangerSimulator.Core.Managers;
+using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 

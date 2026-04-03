@@ -1,6 +1,6 @@
-using CashChangerSimulator.Device.PosForDotNet;
-using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Strategies;
 using Shouldly;
 
