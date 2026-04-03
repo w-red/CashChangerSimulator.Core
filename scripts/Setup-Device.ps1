@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    SimulatorCashChanger を POS for .NET システムに登録するスクリプト。
+    CashChanger Simulator を POS for .NET システムに登録するスクリプト。
 .DESCRIPTION
     1. POS for .NET の Service Object 検索パスにビルド済みの DLL フォルダを追加します。
     2. 論理名 (Logical Name) を登録し、サービスオブジェクト名にマッピングします。
@@ -13,21 +13,32 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-# リポジトリのルートパスを取得（スクリプトの場所から推測）
+# リポジトリのルートパスを取得
 $repoRoot = Resolve-Path "$PSScriptRoot\.."
 
-# DLL の場所を特定（net10.0 を優先、なければ net9.0）
-$dllDir = Join-Path $repoRoot "src\Device\bin\Debug\net10.0"
-if (!(Test-Path $dllDir)) {
-    $dllDir = Join-Path $repoRoot "src\Device\bin\Debug\net9.0"
+# 探索対象のビルドパス (Release 優先、Debug フォールバック)
+$searchPaths = @(
+    "src\Device.PosForDotNet\bin\Release\net10.0-windows",
+    "src\Device.PosForDotNet\bin\Debug\net10.0-windows",
+    "src\Device.PosForDotNet\bin\Release\net9.0-windows",
+    "src\Device.PosForDotNet\bin\Debug\net9.0-windows"
+)
+
+$dllDir = $null
+foreach ($p in $searchPaths) {
+    $target = Join-Path $repoRoot $p
+    if (Test-Path $target) {
+        $dllDir = $target
+        break
+    }
 }
 
-if (!(Test-Path $dllDir)) {
-    Write-Error "ビルド済みの DLL が見つかりません。先に dotnet build を実行してください。"
+if ($null -eq $dllDir) {
+    Write-Error "ビルド済みの DLL が見つかりません。先に dotnet build -c Release (または Debug) を実行してください。"
     return
 }
 
-Write-Host "レジストリ登録を開始します..." -ForegroundColor Cyan
+Write-Host "レジストリ登録を開始します (探索パス: $dllDir)..." -ForegroundColor Cyan
 
 # 1. POS for .NET 設定キーの作成
 $regPath = "HKLM:\SOFTWARE\Microsoft\PointOfService\Configuration"
