@@ -98,44 +98,6 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>非同期出金処理の結果が正常に内部プロパティへ反映され、完了イベントが発火することを検証します。</summary>
-    [Fact]
-    public void HandleDispenseResultShouldSetCodesAndFireEventWhenAsync()
-    {
-        bool eventFired = false;
-        _so.OnEventQueued = (e) =>
-        {
-            if (e is StatusUpdateEventArgs se && se.Status == (int)UposCashChangerStatusUpdateCode.AsyncFinished)
-            {
-                eventFired = true;
-            }
-        };
-
-        _mediator.IsBusy = true;
-        _mediator.HandleDispenseResult(ErrorCode.Extended, 123, true);
-
-        _mediator.ResultCode.ShouldBe((int)ErrorCode.Extended);
-        _mediator.ResultCodeExtended.ShouldBe(123);
-        _mediator.AsyncResultCode.ShouldBe((int)ErrorCode.Extended);
-        _mediator.AsyncResultCodeExtended.ShouldBe(123);
-        _mediator.IsBusy.ShouldBeFalse();
-        eventFired.ShouldBeTrue();
-    }
-
-    /// <summary>同期出金処理の結果が内部プロパティへ反映され、完了イベントが発火しないことを検証します。</summary>
-    [Fact]
-    public void HandleDispenseResultShouldNotFireEventWhenSync()
-    {
-        bool eventFired = false;
-        _so.OnEventQueued = (e) => eventFired = true;
-
-        _mediator.HandleDispenseResult(ErrorCode.Success, 0, false);
-
-        _mediator.ResultCode.ShouldBe((int)ErrorCode.Success);
-        _mediator.IsBusy.ShouldBeFalse();
-        eventFired.ShouldBeFalse();
-    }
-
     /// <summary>SetSuccess および SetFailure により ResultCode 等が正しく更新されることを検証します。</summary>
     [Fact]
     public void SetSuccessAndFailureShouldUpdateProperties()

@@ -60,10 +60,6 @@ public interface IUposMediator
     IUposEventSink? EventSink { get; }
 
     // 他のコンポーネントからの通知
-    /// <summary>払い出し操作の結果を処理します。</summary>
-    /// <remarks>成功・失敗の記録と、必要に応じてイベントのトリガーを行います。</remarks>
-    void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync);
-
     /// <summary>コマンドを実行し、結果を反映します。</summary>
     void Execute(IUposCommand command);
 }

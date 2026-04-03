@@ -28,4 +28,10 @@ public interface ICashChangerStatusSink
 
     /// <summary>リアルタイムデータ通知が有効かどうか。</summary>
     bool RealTimeDataEnabled { get; }
+
+    /// <summary>非同期処理の実行結果。</summary>
+    int AsyncResultCode { get; set; }
+
+    /// <summary>非同期処理の拡張エラーコード。</summary>
+    int AsyncResultCodeExtended { get; set; }
 }

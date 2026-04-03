@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
@@ -18,7 +19,7 @@ public class Inventory : IReadOnlyInventory
     private readonly Dictionary<DenominationKey, int> _rejectCounts = [];
     private readonly Dictionary<DenominationKey, int> _escrowCounts = [];
     private readonly Subject<DenominationKey> _changed = new();
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
 
     /// <inheritdoc/>
     public virtual Observable<DenominationKey> Changed => _changed;

@@ -46,37 +46,31 @@ public class ExhaustiveDeviceTests : IDisposable
     [Fact]
     public async Task DispenseControllerFlows()
     {
-        var onCompleteCalled = false;
-        ErrorCode lastError = ErrorCode.Success;
-        Action<DeviceErrorCode, int> onComplete = (err, ext) => { onCompleteCalled = true; lastError = (ErrorCode)err; };
-
         // Normal path
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         _inventory.SetCount(key, 10);
         _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await _controller.DispenseChangeAsync((int)1000, false, onComplete);
-        onCompleteCalled.ShouldBeTrue();
-        lastError.ShouldBe(ErrorCode.Success);
+        await _controller.DispenseChangeAsync((int)1000, false);
+        _controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
 
         // Async mode
-        onCompleteCalled = false;
-        await _controller.DispenseChangeAsync((int)1000, true, onComplete);
+        await _controller.DispenseChangeAsync((int)1000, true);
         await Task.Delay(200, TestContext.Current.CancellationToken);
-        onCompleteCalled.ShouldBeTrue();
+        _controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
 
         // Error: Busy
         var tcs = new TaskCompletionSource();
         _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
-        var task = _controller.DispenseChangeAsync((int)1000, false, (e, ex) => { });
+        var task = _controller.DispenseChangeAsync((int)1000, false);
         await Task.Delay(100, TestContext.Current.CancellationToken);
-        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false, (e, ex) => { }));
+        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false));
         tcs.SetResult();
         _controller.ClearOutput();
 
         // Error: Disconnected
         _hardwareStatusManager.SetConnected(false);
-        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false, (e, ex) => { }));
+        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false));
         _hardwareStatusManager.SetConnected(true);
     }
 

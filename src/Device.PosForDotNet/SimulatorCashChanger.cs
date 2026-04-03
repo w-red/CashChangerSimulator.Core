@@ -102,8 +102,8 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override void FixDeposit() => _depositFacade.FixDeposit();
     public override void PauseDeposit(CashDepositPause control) => _depositFacade.PauseDeposit(control);
     public virtual void RepayDeposit() => _depositFacade.RepayDeposit();
-    public override void DispenseChange(int amount) => _dispenseFacade.DispenseByAmount(amount, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, _ctx.Mediator.HandleDispenseResult);
-    public override void DispenseCash(CashCount[] cashCounts) => _dispenseFacade.DispenseByCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode, _ctx.Mediator.HandleDispenseResult);
+    public override void DispenseChange(int amount) => _dispenseFacade.DispenseByAmount(amount, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode);
+    public override void DispenseCash(CashCount[] cashCounts) => _dispenseFacade.DispenseByCashCounts(cashCounts, _configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(_configManager.CurrencyCode), AsyncMode);
     public virtual void ClearOutput() => _dispenseFacade.ClearOutput();
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts)
     {
@@ -165,6 +165,27 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         }
     }
     void ICashChangerStatusSink.SetAsyncProcessing(bool isBusy) => _eventNotifier.SetAsyncProcessing(isBusy);
+    int ICashChangerStatusSink.AsyncResultCode 
+    { 
+        get => _ctx.Mediator.AsyncResultCode; 
+        set => _ctx.Mediator.AsyncResultCode = value; 
+    }
+    int ICashChangerStatusSink.AsyncResultCodeExtended 
+    { 
+        get => _ctx.Mediator.AsyncResultCodeExtended; 
+        set => _ctx.Mediator.AsyncResultCodeExtended = value; 
+    }
+
+    int IUposEventSink.AsyncResultCode 
+    { 
+        get => _ctx.Mediator.AsyncResultCode; 
+        set => _ctx.Mediator.AsyncResultCode = value; 
+    }
+    int IUposEventSink.AsyncResultCodeExtended 
+    { 
+        get => _ctx.Mediator.AsyncResultCodeExtended; 
+        set => _ctx.Mediator.AsyncResultCodeExtended = value; 
+    }
 
     // Properties
     public override CashChangerStatus DeviceStatus => _ctx.LifecycleManager.State == ControlState.Closed ? CashChangerStatus.OK : _ctx.StatusCoordinator.LastCashChangerStatus;

@@ -71,7 +71,7 @@ public class UposCommandTests
         var action = CashDepositAction.NoChange;
         var command = new EndDepositCommand(DepositControllerMock.Object, action);
         command.Execute();
-        DepositControllerMock.Verify(c => c.EndDeposit(It.IsAny<DepositAction>()), Times.Once);
+        DepositControllerMock.Verify(c => c.EndDepositAsync(It.IsAny<DepositAction>()), Times.Once);
     }
 
     /// <summary>PauseDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
@@ -90,7 +90,7 @@ public class UposCommandTests
     {
         var command = new RepayDepositCommand(DepositControllerMock.Object);
         command.Execute();
-        DepositControllerMock.Verify(c => c.RepayDeposit(), Times.Once);
+        DepositControllerMock.Verify(c => c.RepayDepositAsync(), Times.Once);
     }
 
     /// <summary>ReadCashCountsCommand の実行により在庫カウントが取得できることを検証します。</summary>
@@ -176,11 +176,11 @@ public class UposCommandTests
         var deposit = new Mock<DepositController>(new Inventory(), hw, null!, null!);
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
-        var command = new DispenseChangeCommand(controllerMock.Object, hw, deposit.Object, 1000m, false, (e, ex) => { });
+        var command = new DispenseChangeCommand(controllerMock.Object, hw, deposit.Object, 1000m, false);
 
         command.Execute();
 
-        controllerMock.Verify(c => c.DispenseChangeAsync((int)1000m, false, It.IsAny<Action<DeviceErrorCode, int>>(), null), Times.Once);
+        controllerMock.Verify(c => c.DispenseChangeAsync((int)1000m, false, null), Times.Once);
     }
 
     /// <summary>DispenseCashCommand の実行がコントローラへ委譲されることを検証します。</summary>
@@ -194,11 +194,11 @@ public class UposCommandTests
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
         var counts = new Dictionary<DenominationKey, int>();
-        var command = new DispenseCashCommand(controllerMock.Object, inv, hw, deposit.Object, counts, false, (e, ex) => { });
+        var command = new DispenseCashCommand(controllerMock.Object, inv, hw, deposit.Object, counts, false);
 
         command.Execute();
 
-        controllerMock.Verify(c => c.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false, It.IsAny<Action<DeviceErrorCode, int>>()), Times.Once);
+        controllerMock.Verify(c => c.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false), Times.Once);
     }
 
     /// <summary>ClearOutputCommand の実行がコントローラへ委譲されることを検証します。</summary>

@@ -190,11 +190,38 @@ public class StatusCoordinator(
             }
         }));
 
-        _disposables.Add(dispenseController.Changed.Subscribe(_ =>
-        {
-            if (_disposed) return;
-            sink.SetAsyncProcessing(dispenseController.IsBusy);
-        }));
+        _disposables.Add(dispenseController.Changed
+            .Select(_ => dispenseController.IsBusy)
+            .DistinctUntilChanged()
+            .Pairwise()
+            .Subscribe(x =>
+            {
+                bool wasBusy = x.Previous;
+                bool isBusy = x.Current;
+
+                sink.SetAsyncProcessing(isBusy);
+
+                // Transition to Idle (isBusy: true -> false)
+                if (wasBusy && !isBusy)
+                {
+                    // Check if it was naturally completed or cancelled
+                    if (dispenseController.LastErrorCode != DeviceErrorCode.Cancelled)
+                    {
+                        // Update async result properties in the sink
+                        sink.AsyncResultCode = (int)dispenseController.LastErrorCode;
+                        sink.AsyncResultCodeExtended = dispenseController.LastErrorCodeExtended;
+
+                        // [COMPAT] Fire AsyncFinished (91) for tests and UI compatibility
+                        sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
+
+                        // Result-specific event
+                        if (dispenseController.LastErrorCode == DeviceErrorCode.Success)
+                        {
+                            sink.FireEvent(new OutputCompleteEventArgs(0));
+                        }
+                    }
+                }
+            }));
     }
 
     /// <inheritdoc/>

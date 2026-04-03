@@ -43,7 +43,7 @@ public class CommandTests
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         _inventory.SetCount(key, 10);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
-        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
+        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false);
 
         _hardware.SetJammed(true);
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
@@ -60,7 +60,7 @@ public class CommandTests
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         _inventory.SetCount(key, 10);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
-        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
+        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
         ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
@@ -72,7 +72,7 @@ public class CommandTests
     {
         var deposit = new DepositController(_inventory, _hardware);
         var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(999, CurrencyCashType.Bill), 1 } };
-        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
+        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
         ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
@@ -86,7 +86,7 @@ public class CommandTests
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         _inventory.SetCount(key, 0);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
-        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false, null!);
+        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false);
 
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);

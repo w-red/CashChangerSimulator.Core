@@ -34,7 +34,8 @@ public class DispenseControllerTest
         DeviceErrorCode resultCode = DeviceErrorCode.Failure;
 
         // Act (synchronous mode so we can assert final state after await)
-        await controller.DispenseChangeAsync(1000, false, (code, ex) => resultCode = code);
+        await controller.DispenseChangeAsync(1000, false);
+        resultCode = controller.LastErrorCode;
 
         // Assert
         controller.Status.ShouldBe(CashDispenseStatus.Idle);
@@ -56,13 +57,13 @@ public class DispenseControllerTest
 
         // Act & Assert
         // Start first dispense (async mode keeps it in BUSY)
-        _ = controller.DispenseChangeAsync(1000, true, IgnoreDispenseResult);
+        _ = controller.DispenseChangeAsync(1000, true);
 
         // Wait briefly for status to transition
         await Task.Delay(TestTimingConstants.StartupCheckDelayMs, TestContext.Current.CancellationToken);
 
         // Second call should throw
-        await Should.ThrowAsync<DeviceException>(() => controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult));
+        await Should.ThrowAsync<DeviceException>(() => controller.DispenseChangeAsync(1000, false));
     }
 
     /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証する。</summary>
@@ -81,7 +82,7 @@ public class DispenseControllerTest
         var controller = new DispenseController(manager, hw, mockSimulator.Object);
 
         // Act
-        await controller.DispenseChangeAsync(1000, false, IgnoreDispenseResult);
+        await controller.DispenseChangeAsync(1000, false);
 
         // Assert
         mockSimulator.Verify(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()), Times.Once);

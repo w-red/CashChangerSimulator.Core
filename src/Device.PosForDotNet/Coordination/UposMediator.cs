@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.PointOfService;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.PosForDotNet.Services;
@@ -10,7 +11,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 /// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。</summary>
 public class UposMediator : IUposMediator
 {
-    private readonly object _stateLock = new();
+    private readonly Lock _stateLock = new();
     private bool _isBusy;
     private int _resultCode;
     private int _resultCodeExtended;
@@ -199,46 +200,6 @@ public class UposMediator : IUposMediator
         ResultCodeExtended = codeEx;
 
         throw new PosControlException("Operation failed.", (ErrorCode)ResultCode, ResultCodeExtended);
-    }
-
-    /// <summary>払い出し操作の結果を処理します。</summary>
-    public void HandleDispenseResult(ErrorCode code, int codeEx, bool wasAsync)
-    {
-        if (_sink == null) return;
-
-        bool fireEvent = false;
-        lock (_stateLock)
-        {
-            if (wasAsync)
-            {
-                _logger?.LogInformation("Async dispense finished with code: {Code}, codeEx: {CodeEx}", code, codeEx);
-                _asyncResultCode = (int)code;
-                _asyncResultCodeExtended = codeEx;
-
-                // Use the field to avoid double locking if desired, but we must ensure IsBusy logic is handled.
-                _isBusy = false;
-                _resultCode = (int)code;
-                _resultCodeExtended = codeEx;
-
-                fireEvent = true;
-            }
-            else
-            {
-                _resultCode = (int)code;
-                _resultCodeExtended = codeEx;
-            }
-        }
-
-        if (wasAsync)
-        {
-            // Sync with sink state and fire event outside the lock to avoid deadlocks
-            _sink?.SetAsyncProcessing(false);
-        }
-
-        if (fireEvent)
-        {
-            _sink?.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
-        }
     }
 
     public void FireEvent(EventArgs e)

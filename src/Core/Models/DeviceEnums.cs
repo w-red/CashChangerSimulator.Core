@@ -40,7 +40,9 @@ public enum DeviceErrorCode
     /// <summary>ハードウェア・ジャムが発生。</summary>
     Jammed = 300,
     /// <summary>処理が重複している。</summary>
-    Overlapped = 301
+    Overlapped = 301,
+    /// <summary>処理がキャンセル（クリア）された。</summary>
+    Cancelled = 115
 }
 
 /// <summary>入金状態を表す列挙型。</summary>

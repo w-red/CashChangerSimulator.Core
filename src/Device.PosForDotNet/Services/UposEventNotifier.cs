@@ -83,4 +83,18 @@ public class UposEventNotifier : IUposEventNotifier
 
     /// <inheritdoc/>
     public bool DisableUposEventQueuing => _sink?.DisableUposEventQueuing ?? false;
+
+    /// <inheritdoc/>
+    public int AsyncResultCode
+    {
+        get => _sink?.AsyncResultCode ?? 0;
+        set { if (_sink != null) _sink.AsyncResultCode = value; }
+    }
+
+    /// <inheritdoc/>
+    public int AsyncResultCodeExtended
+    {
+        get => _sink?.AsyncResultCodeExtended ?? 0;
+        set { if (_sink != null) _sink.AsyncResultCodeExtended = value; }
+    }
 }

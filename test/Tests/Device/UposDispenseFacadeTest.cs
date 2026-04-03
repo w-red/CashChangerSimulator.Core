@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
+using CashChangerSimulator.Device;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -65,7 +66,7 @@ public class UposDispenseFacadeTest
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
+            _facade.DispenseByAmount(1000, "JPY", 1m, false));
     }
 
     /// <summary>ジャム中に出金しようとすると例外がスローされることを確認します。</summary>
@@ -76,7 +77,7 @@ public class UposDispenseFacadeTest
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(1000, "JPY", 1m, false, (_, _, _) => { }));
+            _facade.DispenseByAmount(1000, "JPY", 1m, false));
     }
 
     /// <summary>金額0以下で例外がスローされることを確認します。</summary>
@@ -84,17 +85,15 @@ public class UposDispenseFacadeTest
     public void DispenseByAmountZeroAmountShouldThrow()
     {
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(0, "JPY", 1m, false, (_, _, _) => { }));
+            _facade.DispenseByAmount(0, "JPY", 1m, false));
     }
 
     /// <summary>正常な金額出金が成功することを確認します。</summary>
     [Fact]
     public void DispenseByAmountValidAmountShouldSucceed()
     {
-        ErrorCode? resultCode = null;
-        _facade.DispenseByAmount(1000, "JPY", 1m, false, (code, _, _) => resultCode = code);
-
-        resultCode.ShouldBe(ErrorCode.Success);
+        _facade.DispenseByAmount(1000, "JPY", 1m, false);
+        _dispenseController.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
     }
 
     /// <summary>金種指定の出金で在庫不足時に例外がスローされることを確認します。</summary>
@@ -105,6 +104,6 @@ public class UposDispenseFacadeTest
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false, (_, _, _) => { }));
+            _facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false));
     }
 }

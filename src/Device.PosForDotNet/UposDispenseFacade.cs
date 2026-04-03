@@ -51,10 +51,8 @@ public class UposDispenseFacade
         int amount,
         string currencyCode,
         decimal factor,
-        bool asyncMode,
-        Action<ErrorCode, int, bool> onResult)
+        bool asyncMode)
     {
-        ArgumentNullException.ThrowIfNull(onResult);
         if (amount <= 0)
             throw new PosControlException("Amount must be positive", ErrorCode.Illegal);
 
@@ -64,8 +62,7 @@ public class UposDispenseFacade
             _hardwareStatusManager,
             _depositController,
             decimalAmount,
-            asyncMode,
-            (code, codeEx) => onResult(code, codeEx, asyncMode));
+            asyncMode);
 
         _mediator.Execute(command);
     }
@@ -74,11 +71,9 @@ public class UposDispenseFacade
         CashCount[] cashCounts,
         string currencyCode,
         decimal factor,
-        bool asyncMode,
-        Action<ErrorCode, int, bool> onResult)
+        bool asyncMode)
     {
         ArgumentNullException.ThrowIfNull(cashCounts);
-        ArgumentNullException.ThrowIfNull(onResult);
         var dict = CashCountAdapter.ToDenominationDict(cashCounts, currencyCode, factor);
 
         var command = new DispenseCashCommand(
@@ -87,8 +82,7 @@ public class UposDispenseFacade
             _hardwareStatusManager,
             _depositController,
             dict,
-            asyncMode,
-            (code, codeEx) => onResult(code, codeEx, asyncMode));
+            asyncMode);
 
         _mediator.Execute(command);
     }

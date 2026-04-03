@@ -36,6 +36,12 @@ public interface IUposEventSink
     /// <summary>POS.NET の内部イベントキューイングを無効化するかどうかを取得します。</summary>
     bool DisableUposEventQueuing { get; }
 
+    /// <summary>非同期処理の実行結果。</summary>
+    int AsyncResultCode { get; set; }
+
+    /// <summary>非同期処理の拡張エラーコード。</summary>
+    int AsyncResultCodeExtended { get; set; }
+
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
     /// <param name="e">イベント引数。</param>
     void NotifyEvent(EventArgs e);
