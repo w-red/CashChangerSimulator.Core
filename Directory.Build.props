@@ -7,5 +7,11 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>Copyright (c) 2026 w-red TERASHI, yohei</Copyright>
     <PackageTags>Simulator;POS;CashChanger;UPOS</PackageTags>
+    <Description>Core logic and hardware emulation for the CashChanger Simulator. Provides platform-independent managers and virtual device controllers. / 自動釣銭機シミュレータのコアロジックとハードウェア・エミュレーション層。プラットフォームに依存しないマネージャと仮想デバイスコントローラを提供します。</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>
