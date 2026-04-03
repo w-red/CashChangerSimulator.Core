@@ -10,22 +10,14 @@
 このリポジトリは、コアロジックとシミュレーション層に焦点を当てています。UI コンポーネントは別のリポジトリで管理されています。
 
 | リポジトリ / パッケージ | 説明 |
-|---|---|
+| --- | --- |
 | **[CashChangerSimulator.Core](https://github.com/w-red/CashChangerSimulator.Core)** | プラットフォーム非依存のコアロジック、通貨計算、およびマネージャー。 |
 | **[CashChangerSimulator.Device](https://github.com/w-red/CashChangerSimulator.Core)** | 抽象化されたデバイスインターフェースと共通のシミュレーション基盤。 |
-| **[CashChangerSimulator.Device.Virtual](https://github.com/w-red/CashChangerSimulator.Core)** | 純粋な C# による仮想ハードウェア。Web/Linux/Windows 上で動作。 |
+| **[CashChangerSimulator.Device.Virtual](https://github.com/w-red/CashChangerSimulator.Core)** | 純粋な C# による仮想ハードウェア。Web/Linux/Windows 上で動作、.NET 10 対応。 |
 | **[CashChangerSimulator.Device.PosForDotNet](https://github.com/w-red/CashChangerSimulator.Core)** | Windows 固有の UPOS (POS for .NET) アダプター。既存システムとの連携用。 |
 
 > [!NOTE]
-> **Cli** (コマンドライン・インターフェース) および **Wpf** (Windows デスクトップ UI) は、それぞれ専用のリポジトリで管理されています。
-
----
-
-## 🚀 Live Demo / Simulator API
-
-Virtual Cash Changer API は Google Cloud Run 上で動作しており、ローカル環境のセットアップなしに API 連携のテストが可能です。
-
-- **対話型ドキュメント (Scalar)**: [**API リファレンスを表示**](https://cash-changer-api-904915502524.asia-northeast1.run.app/scalar/v1)
+> **[Cli](https://github.com/w-red/CashChangerSimulator.Cli)** (コマンドライン・インターフェース) および **[Wpf](https://github.com/w-red/CashChangerSimulator.Wpf)** (Windows デスクトップ UI) は、それぞれ専用のリポジトリで管理されています。
 
 ---
 
@@ -55,6 +47,16 @@ dotnet add package CashChangerSimulator.Device
 # Core ライブラリとデバイスシミュレータのビルド
 dotnet build
 ```
+
+---
+
+## 🚀 Live Demo / Simulator API
+
+Virtual Cash Changer API は Google Cloud Run 上で動作しており、ローカル環境のセットアップなしに API 連携のテストが可能です。
+
+- **対話型ドキュメント (Scalar)**: [**API リファレンスを表示**](https://cash-changer-api-904915502524.asia-northeast1.run.app/scalar/v1)
+
+---
 
 ## ドキュメント
 

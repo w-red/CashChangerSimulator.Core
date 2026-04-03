@@ -10,22 +10,14 @@ This repository contains the core logic and hardware device emulation for the Ca
 This project focuses on the core logic and simulation layers. The UI components are managed in separate repositories.
 
 | Repository / Package | Description |
-|---|---|
+| --- | --- |
 | **[CashChangerSimulator.Core](https://github.com/w-red/CashChangerSimulator.Core)** | Platform-independent core logic, currency calculation, and managers. |
 | **[CashChangerSimulator.Device](https://github.com/w-red/CashChangerSimulator.Core)** | Abstract device interfaces and common simulation infrastructure. |
-| **[CashChangerSimulator.Device.Virtual](https://github.com/w-red/CashChangerSimulator.Core)** | Pure C# virtual hardware simulation (works on Web/Linux/Windows). |
+| **[CashChangerSimulator.Device.Virtual](https://github.com/w-red/CashChangerSimulator.Core)** | Pure C# virtual hardware simulation (works on Web/Linux/Windows, .NET 10). |
 | **[CashChangerSimulator.Device.PosForDotNet](https://github.com/w-red/CashChangerSimulator.Core)** | Windows-specific UPOS (POS for .NET) adapter for legacy integration. |
 
 > [!NOTE]
-> **Cli** (Command Line Interface) and **Wpf** (Windows Desktop UI) are maintained in their own dedicated repositories.
-
----
-
-## 🚀 Live Demo / Simulator API
-
-The Virtual Cash Changer API is available on Google Cloud Run for testing without local setup:
-
-- **Interactive Documentation (Scalar)**: [**View API Reference**](https://cash-changer-api-904915502524.asia-northeast1.run.app/scalar/v1)
+> **[Cli](https://github.com/w-red/CashChangerSimulator.Cli)** (Command Line Interface) and **[Wpf](https://github.com/w-red/CashChangerSimulator.Wpf)** (Windows Desktop UI) are maintained in their own dedicated repositories.
 
 ---
 
@@ -55,6 +47,16 @@ If you need to build from source:
 # Build the core library and device simulator
 dotnet build
 ```
+
+---
+
+## 🚀 Live Demo / Simulator API
+
+The Virtual Cash Changer API is available on Google Cloud Run for testing without local setup:
+
+- **Interactive Documentation (Scalar)**: [**View API Reference**](https://cash-changer-api-904915502524.asia-northeast1.run.app/scalar/v1)
+
+---
 
 ## Documentation
 
