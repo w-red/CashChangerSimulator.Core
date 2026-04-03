@@ -14,4 +14,11 @@ public class DeviceException : Exception
         ErrorCode = errorCode;
         ErrorCodeExtended = errorCodeExtended;
     }
+
+    public DeviceException(string message, DeviceErrorCode errorCode, int errorCodeExtended, Exception inner)
+        : base(message, inner)
+    {
+        ErrorCode = errorCode;
+        ErrorCodeExtended = errorCodeExtended;
+    }
 }

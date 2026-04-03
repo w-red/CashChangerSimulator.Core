@@ -1,3 +1,4 @@
+using System.Threading;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
@@ -25,8 +26,10 @@ public class DispenseController : IDisposable
     private readonly Subject<Unit> _changed = new();
     private readonly CompositeDisposable _disposables = [];
 
-    private readonly object _stateLock = new();
+    private readonly Lock _stateLock = new();
     private CashDispenseStatus _status = CashDispenseStatus.Idle;
+    private DeviceErrorCode _lastErrorCode = DeviceErrorCode.Success;
+    private int _lastErrorCodeExtended = 0;
     private bool _disposed;
 
     public DispenseController(
@@ -42,8 +45,10 @@ public class DispenseController : IDisposable
     public virtual Observable<Unit> Changed => _changed;
     public virtual CashDispenseStatus Status { get { lock (_stateLock) return _status; } }
     public virtual bool IsBusy { get { lock (_stateLock) return _status == CashDispenseStatus.Busy; } }
+    public virtual DeviceErrorCode LastErrorCode { get { lock (_stateLock) return _lastErrorCode; } }
+    public virtual int LastErrorCodeExtended { get { lock (_stateLock) return _lastErrorCodeExtended; } }
 
-    public virtual async Task DispenseChangeAsync(int amount, bool asyncMode, Action<DeviceErrorCode, int> onComplete, string? currencyCode = null)
+    public virtual async Task DispenseChangeAsync(int amount, bool asyncMode, string? currencyCode = null)
     {
         lock (_stateLock)
         {
@@ -56,6 +61,8 @@ public class DispenseController : IDisposable
             if (_hardwareStatusManager.IsOverlapped.Value) throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
 
             _status = CashDispenseStatus.Busy;
+            _lastErrorCode = DeviceErrorCode.Success;
+            _lastErrorCodeExtended = 0;
         }
         _changed.OnNext(Unit.Default);
         await Task.Yield();
@@ -69,17 +76,17 @@ public class DispenseController : IDisposable
         {
             _ = Task.Run(async () =>
             {
-                try { await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token); }
-                catch (Exception ex) { _logger.ZLogError($"Background dispense error: {ex.Message}"); }
+                try { await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), token); }
+                catch (Exception ex) { _logger.ZLogError(ex, $"Background dispense error: {ex.Message}"); }
             }, token);
         }
         else
         {
-            await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), onComplete, token);
+            await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), token);
         }
     }
 
-    public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode, Action<DeviceErrorCode, int> onComplete)
+    public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode)
     {
         lock (_stateLock)
         {
@@ -92,6 +99,8 @@ public class DispenseController : IDisposable
             if (_hardwareStatusManager.IsOverlapped.Value) throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
 
             _status = CashDispenseStatus.Busy;
+            _lastErrorCode = DeviceErrorCode.Success;
+            _lastErrorCodeExtended = 0;
         }
         _changed.OnNext(Unit.Default);
         await Task.Yield();
@@ -105,56 +114,44 @@ public class DispenseController : IDisposable
         {
             _ = Task.Run(async () =>
             {
-                try { await ExecuteDispense(() => _manager.Dispense(counts), onComplete, token); }
-                catch (Exception ex) { _logger.ZLogError($"Background dispense error: {ex.Message}"); }
+                try { await ExecuteDispense(() => _manager.Dispense(counts), token); }
+                catch (Exception ex) { _logger.ZLogError(ex, $"Background dispense error: {ex.Message}"); }
             }, token);
         }
         else
         {
-            await ExecuteDispense(() => _manager.Dispense(counts), onComplete, token);
+            await ExecuteDispense(() => _manager.Dispense(counts), token);
         }
     }
 
-    private async Task ExecuteDispense(Action action, Action<DeviceErrorCode, int> onComplete, CancellationToken token)
+    private async Task ExecuteDispense(Action action, CancellationToken token)
     {
+        DeviceErrorCode code = DeviceErrorCode.Success;
+        int codeEx = 0;
+        bool isError = false;
+
         try
         {
             await _simulator.SimulateDispenseAsync(token);
             token.ThrowIfCancellationRequested();
             action();
-            lock (_stateLock)
-            {
-                _status = CashDispenseStatus.Idle;
-            }
-            onComplete(0, 0); // Success
         }
         catch (OperationCanceledException)
         {
-            lock (_stateLock)
-            {
-                _status = CashDispenseStatus.Idle;
-            }
+            // Canceled: status back to Idle without specific error result.
         }
         catch (InsufficientCashException ex)
         {
-            // [FIX] Error 時にもステータスをリセットしないと、デバイスが Busy のまま固まってしまう。
-            lock (_stateLock)
-            {
-                _status = CashDispenseStatus.Error;
-            }
-            // Throw DeviceException with Extended (201) for the Mediator/Tests to catch
-            onComplete(DeviceErrorCode.Extended, 201);
-            throw new DeviceException(ex.Message, DeviceErrorCode.Extended, 201);
+            isError = true;
+            code = DeviceErrorCode.Extended;
+            codeEx = 201;
+            _logger.ZLogError(ex, $"Insufficient cash: {ex.Message}");
         }
         catch (Exception ex)
         {
-            lock (_stateLock)
-            {
-                _status = CashDispenseStatus.Error;
-            }
-
-            DeviceErrorCode code = DeviceErrorCode.Failure;
-            int codeEx = 0;
+            isError = true;
+            code = DeviceErrorCode.Failure;
+            codeEx = 0;
 
             if (ex is DeviceException dex)
             {
@@ -180,12 +177,16 @@ public class DispenseController : IDisposable
                     if (valEx != null) codeEx = Convert.ToInt32(valEx);
                 }
             }
-
-            onComplete(code, codeEx);
-            throw new DeviceException($"Dispense failed: {ex.Message} (Type: {ex.GetType().Name})", code, codeEx);
+            _logger.ZLogError(ex, $"Dispense failed: {ex.Message}");
         }
         finally
         {
+            lock (_stateLock)
+            {
+                _status = isError ? CashDispenseStatus.Error : CashDispenseStatus.Idle;
+                _lastErrorCode = code;
+                _lastErrorCodeExtended = codeEx;
+            }
             _changed.OnNext(Unit.Default);
         }
     }
@@ -198,6 +199,8 @@ public class DispenseController : IDisposable
             if (_status != CashDispenseStatus.Idle)
             {
                 _status = CashDispenseStatus.Idle;
+                _lastErrorCode = DeviceErrorCode.Cancelled;
+                _lastErrorCodeExtended = 0;
                 _changed.OnNext(Unit.Default);
             }
         }
