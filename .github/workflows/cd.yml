@@ -53,13 +53,15 @@ jobs:
         continue-on-error: true
 
       - name: Publish to NuGet.org
-        if: secrets.NUGET_API_KEY != ''
+        if: ${{ env.NUGET_API_KEY != '' }}
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         shell: pwsh
         run: |
           $packages = Get-ChildItem "./artifacts/*.nupkg"
           if ($packages) {
             $packages | ForEach-Object {
-              dotnet nuget push $_.FullName --source "https://api.nuget.org/v3/index.json" --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+              dotnet nuget push $_.FullName --source "https://api.nuget.org/v3/index.json" --api-key ${{ env.NUGET_API_KEY }} --skip-duplicate
             }
           }
         continue-on-error: true
