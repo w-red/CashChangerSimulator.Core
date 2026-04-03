@@ -46,7 +46,7 @@ public class DispenseCashCommand : IUposCommand
     public void Execute()
     {
         ExecuteAsync().GetAwaiter().GetResult();
-        if (_controller.LastErrorCode != DeviceErrorCode.Success)
+        if (!_async && _controller.LastErrorCode != DeviceErrorCode.Success)
         {
             throw new DeviceException("DispenseCash failed", _controller.LastErrorCode, _controller.LastErrorCodeExtended);
         }
