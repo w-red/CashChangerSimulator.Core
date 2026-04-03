@@ -39,16 +39,29 @@ jobs:
         run: dotnet pack CashChangerSimulator.Core.slnx --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.VERSION }}
 
       - name: Publish to GitHub Packages
+        shell: pwsh
         run: |
-          dotnet nuget push "./artifacts/*.nupkg" --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+          $packages = Get-ChildItem "./artifacts/*.nupkg"
+          if ($packages) {
+            $packages | ForEach-Object {
+              dotnet nuget push $_.FullName --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+            }
+          } else {
+            Write-Error "No .nupkg files found in ./artifacts"
+            exit 1
+          }
         continue-on-error: true
 
       - name: Publish to NuGet.org
-        if: env.NUGET_API_KEY != ''
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        if: secrets.NUGET_API_KEY != ''
+        shell: pwsh
         run: |
-          dotnet nuget push "./artifacts/*.nupkg" --source "https://api.nuget.org/v3/index.json" --api-key ${{ env.NUGET_API_KEY }} --skip-duplicate
+          $packages = Get-ChildItem "./artifacts/*.nupkg"
+          if ($packages) {
+            $packages | ForEach-Object {
+              dotnet nuget push $_.FullName --source "https://api.nuget.org/v3/index.json" --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+            }
+          }
         continue-on-error: true
 
       - name: Create GitHub Release
