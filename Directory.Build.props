@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <Authors>w-red TERASHI, yohei</Authors>
+    <PackageProjectUrl>https://github.com/w-red/CashChangerSimulator.Core</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/w-red/CashChangerSimulator.Core</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright (c) 2026 w-red TERASHI, yohei</Copyright>
+    <PackageTags>Simulator;POS;CashChanger;UPOS</PackageTags>
+  </PropertyGroup>
+</Project>
