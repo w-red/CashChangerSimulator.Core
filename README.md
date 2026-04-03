@@ -1,14 +1,23 @@
 # CashChanger Simulator - Core
 
+[![NuGet Version](https://img.shields.io/nuget/v/CashChangerSimulator.Core)](https://www.nuget.org/packages/CashChangerSimulator.Core)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This repository contains the core logic and hardware device emulation for the CashChanger Simulator. It is designed as a modular foundational component that powers various user interfaces.
 
 ## 📦 Repositories in this Project
 
-This project is split into several modular repositories:
+This project focuses on the core logic and simulation layers. The UI components are managed in separate repositories.
 
-- **[CashChangerSimulator.Core](https://github.com/w-red/CashChangerSimulator.Core)**: Platform-independent core logic, managers, and shared models.
-- **[CashChangerSimulator.Device.Virtual](https://github.com/w-red/CashChangerSimulator.Core/tree/main/src/Device.Virtual)**: Platform-independent device simulation logic and controllers.
-- **[CashChangerSimulator.Device.PosForDotNet](https://github.com/w-red/CashChangerSimulator.Core/tree/main/src/Device.PosForDotNet)**: Windows-specific POS for .NET (UPOS) adapter layer.
+| Repository / Package | Description |
+|---|---|
+| **[CashChangerSimulator.Core](https://github.com/w-red/CashChangerSimulator.Core)** | Platform-independent core logic, currency calculation, and managers. |
+| **[CashChangerSimulator.Device](https://github.com/w-red/CashChangerSimulator.Core)** | Abstract device interfaces and common simulation infrastructure. |
+| **[CashChangerSimulator.Device.Virtual](https://github.com/w-red/CashChangerSimulator.Core)** | Pure C# virtual hardware simulation (works on Web/Linux/Windows). |
+| **[CashChangerSimulator.Device.PosForDotNet](https://github.com/w-red/CashChangerSimulator.Core)** | Windows-specific UPOS (POS for .NET) adapter for legacy integration. |
+
+> [!NOTE]
+> **Cli** (Command Line Interface) and **Wpf** (Windows Desktop UI) are maintained in their own dedicated repositories.
 
 ---
 
@@ -16,8 +25,7 @@ This project is split into several modular repositories:
 
 The Virtual Cash Changer API is available on Google Cloud Run for testing without local setup:
 
-- **Base URL**: [https://cash-changer-api-904915502524.asia-northeast1.run.app](https://cash-changer-api-904915502524.asia-northeast1.run.app)
-- **Interactive Documentation (Scalar)**: [View API Reference](https://cash-changer-api-904915502524.asia-northeast1.run.app/scalar/v1)
+- **Interactive Documentation (Scalar)**: [**View API Reference**](https://cash-changer-api-904915502524.asia-northeast1.run.app/scalar/v1)
 
 ---
 
@@ -30,23 +38,22 @@ The Virtual Cash Changer API is available on Google Cloud Run for testing withou
 
 ## Setup
 
-### Prerequisites
+### Using NuGet (Recommended)
 
-- .NET 10.0 SDK
+You can install the official packages via NuGet.org or GitHub Packages:
 
-### Build
+```powershell
+dotnet add package CashChangerSimulator.Core
+dotnet add package CashChangerSimulator.Device
+```
+
+### Local Build
+
+If you need to build from source:
 
 ```powershell
 # Build the core library and device simulator
 dotnet build
-```
-
-### Publishing for Local Use (NuGet)
-
-To use these libraries in your UI projects, pack and publish them to a local NuGet source:
-
-```powershell
-./scripts/publish_local.ps1
 ```
 
 ## Documentation
