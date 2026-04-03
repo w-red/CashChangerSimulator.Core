@@ -47,7 +47,7 @@ public class ZLoggerIntegrationTests : IDisposable
                 // ここで例外オブジェクトを渡すことが重要
                 logger.ZLogError(ex, $"Caught async error: {ex.Message}");
             }
-        });
+        }, TestContext.Current.CancellationToken);
 
         // ZLogger はバックグラウンドスレッドで書き込むため、Dispose してフラッシュを強制する
         LogProvider.Dispose();
