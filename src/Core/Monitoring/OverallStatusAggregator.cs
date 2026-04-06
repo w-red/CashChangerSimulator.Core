@@ -7,8 +7,9 @@ public class OverallStatusAggregator : IDisposable
 {
     private readonly BindableReactiveProperty<CashStatus> deviceStatus = new(CashStatus.Unknown);
     private readonly BindableReactiveProperty<CashStatus> fullStatus = new(CashStatus.Unknown);
+    private readonly CompositeDisposable disposables = [];
     private IEnumerable<CashStatusMonitor> monitors;
-    private IDisposable? currentSubscription;
+    private IDisposable currentSubscription = Disposable.Empty;
     private bool disposed;
 
     /// <summary>Initializes a new instance of the <see cref="OverallStatusAggregator"/> class.監視対象のモニター一覧を指定して初期化します。</summary>
@@ -16,8 +17,8 @@ public class OverallStatusAggregator : IDisposable
     public OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
     {
         this.monitors = monitors;
-        DeviceStatus = deviceStatus.ToReadOnlyReactiveProperty();
-        FullStatus = fullStatus.ToReadOnlyReactiveProperty();
+        DeviceStatus = deviceStatus.ToReadOnlyReactiveProperty().AddTo(disposables);
+        FullStatus = fullStatus.ToReadOnlyReactiveProperty().AddTo(disposables);
 
         Refresh(monitors);
     }
@@ -72,7 +73,8 @@ public class OverallStatusAggregator : IDisposable
 
         if (disposing)
         {
-            currentSubscription?.Dispose();
+            currentSubscription.Dispose();
+            disposables.Dispose();
             deviceStatus.Dispose();
             fullStatus.Dispose();
         }
