@@ -5,6 +5,11 @@
         <LangVersion>preview</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <!-- Disable all analysis and code style enforcement for this legacy host project -->
+        <AnalysisLevel>none</AnalysisLevel>
+        <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+        <NoWarn>$(NoWarn);SA0001;CS1591</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
