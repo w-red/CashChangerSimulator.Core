@@ -4,6 +4,8 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
@@ -25,6 +27,8 @@ public class DepositController : IDisposable
     private readonly ILogger<DepositController> logger = LogProvider.CreateLogger<DepositController>();
     private readonly CompositeDisposable disposables = [];
     private readonly Subject<Unit> changed = new();
+    private readonly Subject<DeviceDataEventArgs> dataEvents = new();
+    private readonly Subject<DeviceErrorEventArgs> errorEvents = new();
     private readonly Lock stateLock = new();
     private readonly Dictionary<DenominationKey, int> depositCounts = [];
     private readonly List<string> depositedSerials = [];
@@ -73,6 +77,12 @@ public class DepositController : IDisposable
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public virtual Observable<Unit> Changed => changed;
+
+    /// <summary>データイベントの通知ストリーム。</summary>
+    public virtual Observable<DeviceDataEventArgs> DataEvents => dataEvents;
+
+    /// <summary>エラーイベントの通知ストリーム。</summary>
+    public virtual Observable<DeviceErrorEventArgs> ErrorEvents => errorEvents;
 
     /// <summary>リアルタイムデータの通知。上位層（アダプター等）が利用します。</summary>
     public bool RealTimeDataEnabled { get; set; }
@@ -442,6 +452,7 @@ public class DepositController : IDisposable
             {
                 lastErrorCode = dex.ErrorCode;
                 lastErrorCodeExtended = dex.ErrorCodeExtended;
+                errorEvents.OnNext(new DeviceErrorEventArgs(lastErrorCode, lastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
             }
         }
         catch (Exception ex)
@@ -451,6 +462,7 @@ public class DepositController : IDisposable
             {
                 lastErrorCode = DeviceErrorCode.Failure;
                 lastErrorCodeExtended = 0;
+                errorEvents.OnNext(new DeviceErrorEventArgs(lastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
             }
         }
         finally
@@ -611,6 +623,11 @@ public class DepositController : IDisposable
 
                 inventory.AddEscrow(kv.Key, kv.Value);
             }
+
+            if (RealTimeDataEnabled)
+            {
+                dataEvents.OnNext(new DeviceDataEventArgs(0));
+            }
         }
 
         changed.OnNext(Unit.Default);
@@ -628,6 +645,11 @@ public class DepositController : IDisposable
             }
 
             rejectAmount += amount;
+        }
+
+        if (RealTimeDataEnabled)
+        {
+            dataEvents.OnNext(new DeviceDataEventArgs(0));
         }
 
         changed.OnNext(Unit.Default);
@@ -656,6 +678,10 @@ public class DepositController : IDisposable
             disposables.Dispose();
             changed.OnCompleted();
             changed.Dispose();
+            dataEvents.OnCompleted();
+            dataEvents.Dispose();
+            errorEvents.OnCompleted();
+            errorEvents.Dispose();
             internalConfigProvider?.Dispose();
 
             // Note: Injected dependencies (inventory, hardwareStatusManager) should not be disposed here.

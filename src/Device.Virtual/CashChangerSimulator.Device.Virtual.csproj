@@ -19,7 +19,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Core\CashChangerSimulator.Core.csproj" />
-        <ProjectReference Include="..\Device\CashChangerSimulator.Device.csproj" />
     </ItemGroup>
 
 </Project>

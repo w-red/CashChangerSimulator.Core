@@ -148,24 +148,25 @@ public class CashChangerManager
         Dispense(counts);
     }
 
-    /// <summary>リサイクル在庫をすべて回収庫へ移動します。</summary>
+    /// <summary>すべてのリサイクル庫を回収庫に移動します。</summary>
     public virtual void PurgeCash()
     {
-        var keys = inventory.AllCounts.Select(kv => kv.Key).ToList();
-        var counts = new Dictionary<DenominationKey, int>();
+        var counts = inventory.AllCounts
+            .Where(kv => configProvider.Config.GetDenominationSetting(kv.Key).IsRecyclable)
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-        foreach (var key in keys)
+        foreach (var kv in counts)
         {
-            var count = inventory.GetCount(key);
+            var key = kv.Key;
+            var count = kv.Value;
             if (count > 0)
             {
                 inventory.Add(key, -count);
                 inventory.AddCollection(key, count);
-                counts[key] = count;
             }
         }
 
-        if (counts.Count > 0)
+        if (counts.Sum(kv => kv.Value) > 0)
         {
             logger.ZLogInformation($"PurgeCash: Moved all recyclable inventory to collection.");
             history.Add(new TransactionEntry(
@@ -174,5 +175,18 @@ public class CashChangerManager
                 counts.Sum(kv => kv.Key.Value * kv.Value),
                 counts));
         }
+    }
+
+    /// <summary>在庫枚数を直接調整します（管理用）。</summary>
+    /// <param name="counts">調整する金種と枚数のディクショナリ。</param>
+    public virtual void Adjust(IReadOnlyDictionary<DenominationKey, int> counts)
+    {
+        ArgumentNullException.ThrowIfNull(counts);
+        foreach (var (key, count) in counts)
+        {
+            inventory.SetCount(key, count);
+        }
+
+        logger.ZLogInformation($"Adjust: Inventory adjusted manually for {counts.Count} denominations.");
     }
 }

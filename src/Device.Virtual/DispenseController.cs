@@ -6,6 +6,7 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
@@ -23,6 +24,8 @@ public class DispenseController : IDisposable
     private readonly IDeviceSimulator simulator;
     private readonly ILogger<DispenseController> logger = LogProvider.CreateLogger<DispenseController>();
     private readonly Subject<Unit> changed = new();
+    private readonly Subject<DeviceOutputCompleteEventArgs> outputCompleteEvents = new();
+    private readonly Subject<DeviceErrorEventArgs> errorEvents = new();
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
     private CancellationTokenSource? dispenseCts;
@@ -49,6 +52,12 @@ public class DispenseController : IDisposable
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public virtual Observable<Unit> Changed => changed;
+
+    /// <summary>出力完了イベントの通知ストリーム。</summary>
+    public virtual Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEvents;
+
+    /// <summary>エラーイベントの通知ストリーム。</summary>
+    public virtual Observable<DeviceErrorEventArgs> ErrorEvents => errorEvents;
 
     /// <summary>現在の出金状態を取得します。</summary>
     public virtual CashDispenseStatus Status
@@ -280,6 +289,10 @@ public class DispenseController : IDisposable
             disposables.Dispose();
             changed.OnCompleted();
             changed.Dispose();
+            outputCompleteEvents.OnCompleted();
+            outputCompleteEvents.Dispose();
+            errorEvents.OnCompleted();
+            errorEvents.Dispose();
         }
 
         disposed = true;
@@ -354,6 +367,15 @@ public class DispenseController : IDisposable
                 status = isError ? CashDispenseStatus.Error : CashDispenseStatus.Idle;
                 lastErrorCode = code;
                 lastErrorCodeExtended = codeEx;
+
+                if (isError)
+                {
+                    errorEvents.OnNext(new DeviceErrorEventArgs(code, codeEx, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                }
+                else
+                {
+                    outputCompleteEvents.OnNext(new DeviceOutputCompleteEventArgs(0));
+                }
             }
 
             changed.OnNext(Unit.Default);

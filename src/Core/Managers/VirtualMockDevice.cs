@@ -1,8 +1,9 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Device;
+using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Microsoft.Extensions.Logging;
+using R3;
 using ZLogger;
 
 namespace CashChangerSimulator.Core.Managers;
@@ -19,10 +20,20 @@ public class VirtualMockDevice : ICashChangerDevice
     private readonly HardwareStatusManager statusManager;
     private readonly ILogger<VirtualMockDevice> logger;
     private readonly Mutex deviceMutex = new(false, MutexName);
+    private readonly Subject<DeviceDataEventArgs> dataEvents = new();
+    private readonly Subject<DeviceErrorEventArgs> errorEvents = new();
+    private readonly Subject<DeviceStatusUpdateEventArgs> statusUpdateEvents = new();
+    private readonly Subject<DeviceDirectIOEventArgs> directIOEvents = new();
+    private readonly Subject<DeviceOutputCompleteEventArgs> outputCompleteEvents = new();
+    private readonly CompositeDisposable disposables = new();
+
     private bool hasMutex;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="VirtualMockDevice"/> class.仮想デバイスを初期化する。</summary>
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VirtualMockDevice"/> class.
+    /// 仮想デバイスを初期化する。
+    /// </summary>
     /// <param name="manager">釣銭機マネージャー。</param>
     /// <param name="inventory">在庫。</param>
     /// <param name="statusManager">ハードウェアステータスマネージャー。</param>
@@ -37,6 +48,11 @@ public class VirtualMockDevice : ICashChangerDevice
         this.inventory = inventory;
         this.statusManager = statusManager;
         this.logger = logger;
+
+        // R3 Disposable pattern (example)
+        this.statusManager.IsConnected
+            .Subscribe(v => this.logger.ZLogDebug($"Connection status changed: {v}"))
+            .AddTo(this.disposables);
     }
 
     /// <summary>デバイスがオープンされているかどうかを取得します。</summary>
@@ -47,6 +63,27 @@ public class VirtualMockDevice : ICashChangerDevice
 
     /// <summary>デバイスが有効化（Enable）されているかどうかを取得します。</summary>
     public bool DeviceEnabled { get; private set; }
+
+    /// <inheritdoc/>
+    public Observable<DeviceDataEventArgs> DataEvents => dataEvents;
+
+    /// <inheritdoc/>
+    public Observable<DeviceErrorEventArgs> ErrorEvents => errorEvents;
+
+    /// <inheritdoc/>
+    public Observable<DeviceStatusUpdateEventArgs> StatusUpdateEvents => statusUpdateEvents;
+
+    /// <inheritdoc/>
+    public Observable<DeviceDirectIOEventArgs> DirectIOEvents => directIOEvents;
+
+    /// <inheritdoc/>
+    public Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEvents;
+
+    /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<bool> IsBusy => Observable.Return(false).ToReadOnlyReactiveProperty(false);
+
+    /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<DeviceControlState> State => Observable.Return(DeviceControlState.Idle).ToReadOnlyReactiveProperty(DeviceControlState.Idle);
 
     /// <summary>デバイスをプログラム的にオープンします。</summary>
     public void Open()
@@ -107,6 +144,48 @@ public class VirtualMockDevice : ICashChangerDevice
         logger.ZLogInformation($"VirtualMockDevice Released.");
     }
 
+    /// <inheritdoc/>
+    public Task OpenAsync()
+    {
+        Open();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task CloseAsync()
+    {
+        Close();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task ClaimAsync(int timeout)
+    {
+        Claim(timeout);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task ReleaseAsync()
+    {
+        Release();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task EnableAsync()
+    {
+        Enable();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task DisableAsync()
+    {
+        Disable();
+        return Task.CompletedTask;
+    }
+
     /// <summary>デバイスを有効化し、入排金操作を可能にします。</summary>
     public void Enable()
     {
@@ -151,6 +230,55 @@ public class VirtualMockDevice : ICashChangerDevice
         manager.Dispense(amount, currencyCode);
     }
 
+    /// <inheritdoc/>
+    public Task BeginDepositAsync() => Task.FromException(new NotImplementedException());
+
+    /// <inheritdoc/>
+    public Task EndDepositAsync(DepositAction action) => Task.FromException(new NotImplementedException());
+
+    /// <inheritdoc/>
+    public Task FixDepositAsync() => Task.FromException(new NotImplementedException());
+
+    /// <inheritdoc/>
+    public Task PauseDepositAsync(DeviceDepositPause control) => Task.FromException(new NotImplementedException());
+
+    /// <inheritdoc/>
+    public Task RepayDepositAsync() => Task.FromException(new NotImplementedException());
+
+    /// <inheritdoc/>
+    public Task DispenseChangeAsync(int amount)
+    {
+        Dispense(amount);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task DispenseCashAsync(IEnumerable<CashDenominationCount> counts)
+    {
+        manager.Dispense(counts.ToDictionary(c => FindKey(c.Denomination), c => c.Count));
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task<Inventory> ReadInventoryAsync() => Task.FromResult(inventory);
+
+    /// <inheritdoc/>
+    public Task AdjustInventoryAsync(IEnumerable<CashDenominationCount> counts)
+    {
+        manager.Adjust(counts.ToDictionary(c => FindKey(c.Denomination), c => c.Count));
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task PurgeCashAsync()
+    {
+        manager.PurgeCash();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task<string> CheckHealthAsync(DeviceHealthCheckLevel level) => Task.FromResult("OK");
+
     /// <summary>現在の在庫情報を取得します。</summary>
     /// <returns>在庫情報のコピー。</returns>
     public IReadOnlyDictionary<DenominationKey, int> GetInventory()
@@ -178,9 +306,28 @@ public class VirtualMockDevice : ICashChangerDevice
         {
             Release();
             deviceMutex.Dispose();
+            dataEvents.OnCompleted();
+            dataEvents.Dispose();
+            errorEvents.OnCompleted();
+            errorEvents.Dispose();
+            statusUpdateEvents.OnCompleted();
+            statusUpdateEvents.Dispose();
+            directIOEvents.OnCompleted();
+            directIOEvents.Dispose();
+            outputCompleteEvents.OnCompleted();
+            outputCompleteEvents.Dispose();
+            disposables.Dispose();
             logger.ZLogInformation($"VirtualMockDevice Disposed.");
         }
 
         disposed = true;
+    }
+
+    private DenominationKey FindKey(decimal value)
+    {
+        // 在庫情報から、対応する金種を検索する（なければ例外、またはデフォルト生成を検討）
+        var key = inventory.AllCounts.Select(kv => kv.Key).FirstOrDefault(k => k.Value == value)
+                ?? throw new DeviceException($"Denomination {value} not found in inventory configuration.", DeviceErrorCode.Illegal);
+        return key;
     }
 }
