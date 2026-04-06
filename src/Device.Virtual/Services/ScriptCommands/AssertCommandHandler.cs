@@ -7,7 +7,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>assert コマンド: 実行時の状態をアサーションします。</summary>
 public class AssertCommandHandler(Inventory inventory) : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "ASSERT";
 
     /// <summary>スクリプトコマンドを実行します。</summary>

@@ -5,7 +5,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>begindeposit コマンド: 入金受付を開始します。</summary>
 public class BeginDepositCommandHandler(DepositController depositController) : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "BEGINDEPOSIT";
 
     /// <summary>スクリプトコマンドを実行します。</summary>

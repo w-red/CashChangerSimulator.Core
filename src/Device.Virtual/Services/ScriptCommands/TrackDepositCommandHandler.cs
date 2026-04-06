@@ -7,7 +7,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>trackdeposit コマンド: 金種を投入シミュレーションします。</summary>
 public class TrackDepositCommandHandler(DepositController depositController) : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "TRACKDEPOSIT";
 
     /// <summary>スクリプトコマンドを実行します。</summary>

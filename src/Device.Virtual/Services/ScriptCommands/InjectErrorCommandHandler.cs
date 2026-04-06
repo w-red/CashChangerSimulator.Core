@@ -9,7 +9,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <param name="hardwareStatusManager">ハードウェア状態管理インスタンス。</param>
 public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManager) : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "INJECTERROR";
 
     /// <summary>スクリプトコマンドを実行します。</summary>

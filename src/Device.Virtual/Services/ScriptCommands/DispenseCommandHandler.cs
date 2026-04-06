@@ -6,7 +6,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>dispense コマンド: 出金を実行します。</summary>
 public class DispenseCommandHandler(DispenseController dispenseController) : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "DISPENSE";
 
     /// <summary>スクリプトコマンドを実行します。</summary>

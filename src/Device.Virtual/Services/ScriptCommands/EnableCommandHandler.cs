@@ -6,7 +6,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>enable コマンド: デバイスを有効状態にします。</summary>
 public class EnableCommandHandler(HardwareStatusManager hardwareStatusManager) : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "ENABLE";
 
     /// <summary>スクリプトコマンドを実行します。</summary>

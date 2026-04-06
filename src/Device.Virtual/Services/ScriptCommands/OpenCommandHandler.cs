@@ -7,7 +7,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>open コマンド: デバイスを接続状態にします。</summary>
 public class OpenCommandHandler(HardwareStatusManager hardwareStatusManager) : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "OPEN";
 
     /// <summary>スクリプトコマンドを実行します。</summary>

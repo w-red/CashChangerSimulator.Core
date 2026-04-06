@@ -6,7 +6,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>set コマンド: 変数に値を格納します。</summary>
 public class SetCommandHandler : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "SET";
 
     /// <summary>スクリプトコマンドを実行します。</summary>

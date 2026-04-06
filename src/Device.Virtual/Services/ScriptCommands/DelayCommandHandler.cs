@@ -6,7 +6,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>delay コマンド: 指定ミリ秒待機します。</summary>
 public class DelayCommandHandler : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。</summary>
+    /// <summary>コマンド名を取得します。</summary>
     public string OpName => "DELAY";
 
     /// <summary>スクリプトコマンドを実行します。</summary>
