@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 

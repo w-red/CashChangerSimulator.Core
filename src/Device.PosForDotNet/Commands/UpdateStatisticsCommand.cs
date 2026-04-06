@@ -1,6 +1,7 @@
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using Microsoft.PointOfService;
 
+using CashChangerSimulator.Core.Models;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>統計情報更新操作をカプセル化するコマンド。</summary>
