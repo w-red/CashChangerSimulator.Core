@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+          <Exclude>[*.Tests]*,[xunit.*]*,[CashChangerSimulator.Core]MemoryPack.Formatter*,[CashChangerSimulator.Core]ZLogger.Generated*,[CashChangerSimulator.Device.Virtual]ZLogger.Generated*,[CashChangerSimulator.Device.PosForDotNet]ZLogger.Generated*</Exclude>
+          <ExcludeByFile>**\*.g.cs,**\obj\**</ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

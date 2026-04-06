@@ -15,6 +15,11 @@
     <!-- CS8625: Null literals accepted in Moq constructors -->
     <!-- CS1591: Missing XML comments for public members in tests -->
     <NoWarn>$(NoWarn);CS0618;CS8625;1591</NoWarn>
+
+    <!-- Coverlet code coverage exclusions -->
+    <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+    <Exclude>[*.Tests]*,[xunit.*]*,[CashChangerSimulator.Core]MemoryPack.Formatter*,[CashChangerSimulator.Core]ZLogger.Generated*,[CashChangerSimulator.Device.Virtual]ZLogger.Generated*,[CashChangerSimulator.Device.PosForDotNet]ZLogger.Generated*</Exclude>
+    <ExcludeByFile>**\*.g.cs,**\obj\**</ExcludeByFile>
   </PropertyGroup>
 
   <ItemGroup>
