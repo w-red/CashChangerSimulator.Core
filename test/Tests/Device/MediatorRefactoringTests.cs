@@ -22,8 +22,9 @@ public class MediatorRefactoringTests
     }
 
     /// <summary>Execute メソッドが内部のスキップフラグを参照してコマンドを実行することを検証します。</summary>
+    /// <summary>内部の検証スキップフラグを参照してコマンドが実行されることを検証する。</summary>
     [Fact]
-    public void Execute_ShouldUseInternalSkipFlag()
+    public void ExecuteShouldUseInternalSkipFlag()
     {
         var so = new Mock<SimulatorCashChanger>(new SimulatorDependencies()).Object;
         var mediator = new UposMediator();

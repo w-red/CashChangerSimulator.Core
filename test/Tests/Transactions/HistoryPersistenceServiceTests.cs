@@ -142,4 +142,63 @@ public class HistoryPersistenceServiceTests : IDisposable
         restored.Timestamp.ShouldBe(original.Timestamp);
         restored.Counts.Count.ShouldBe(1);
     }
+
+    /// <summary>アクセス権限がない場合に Load が適切にハンドルし空の履歴を返すことを検証します。</summary>
+    [Fact]
+    public void LoadShouldHandleUnauthorizedAccessException()
+    {
+        // Arrange
+        // Create a directory with the same name as the file to cause access error on some OS, 
+        // or just point to a protected location. On Windows, a directory handle usually fails with Unauthorized.
+        var dirPath = Path.Combine(Path.GetTempPath(), $"dir_{Guid.NewGuid()}");
+        Directory.CreateDirectory(dirPath);
+        var serviceWithDir = new HistoryPersistenceService(history, dirPath);
+
+        try
+        {
+            // Act
+            var state = serviceWithDir.Load();
+
+            // Assert
+            state.ShouldNotBeNull();
+            state.Entries.ShouldBeEmpty();
+        }
+        finally
+        {
+            Directory.Delete(dirPath);
+        }
+    }
+
+    /// <summary>アクセス権限がない場合に Save が例外をスローせず適切にハンドルすることを検証します。</summary>
+    [Fact]
+    public void SaveShouldHandleUnauthorizedAccessException()
+    {
+        // Arrange
+        var dirPath = Path.Combine(Path.GetTempPath(), $"dir_save_{Guid.NewGuid()}");
+        Directory.CreateDirectory(dirPath);
+        var serviceWithDir = new HistoryPersistenceService(history, dirPath);
+
+        try
+        {
+            // Act & Assert
+            var state = new HistoryState { Entries = [] };
+            Should.NotThrow(() => serviceWithDir.Save(state));
+        }
+        finally
+        {
+            Directory.Delete(dirPath);
+        }
+    }
+
+    /// <summary>Dispose メソッドが複数回呼び出されても安全であることを検証します。</summary>
+    [Fact]
+    public void DisposeShouldBeIdempotent()
+    {
+        // Act & Assert
+        Should.NotThrow(() =>
+        {
+            service.Dispose();
+            service.Dispose();
+        });
+    }
 }

@@ -13,7 +13,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>出金制御クラス（DispenseController）の基本動作とエラー系を検証するテストクラス。</summary>
+/// <summary>DispenseController の出金制御ロジックを網羅的に検証するテストクラス。</summary>
 public class DispenseControllerTests
 {
     private readonly Inventory inventory;
@@ -29,209 +29,218 @@ public class DispenseControllerTests
         mockManager = new Mock<CashChangerManager>(inventory, new TransactionHistory(), null);
         mockSimulator = new Mock<IDeviceSimulator>();
         controller = new DispenseController(mockManager.Object, hw, mockSimulator.Object);
-        controller = new DispenseController(mockManager.Object, hw, mockSimulator.Object);
 
         // Default connected state
         hw.SetConnected(true);
     }
 
-    /// <summary>オフライン（未接続）状態で出金を試みた場合に E_CLOSED がスローされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>未接続状態での出金要求時に Closed エラーが発生することを検証する。</summary>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowClosedWhenNotConnected()
     {
-        // Arrange
         hw.SetConnected(false);
-
-        // Act & Assert
         var ex = await Should.ThrowAsync<DeviceException>(() =>
-            controller.DispenseChangeAsync((int)100, false)).ConfigureAwait(false);
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
 
-    /// <summary>ハードウェア障害（ジャム）が発生している状態で出金を試みた場合に E_FAILURE がスローされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>ハード故障（ジャム）発生中の出金要求時に Failure エラーが発生することを検証する。</summary>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowFailureWhenJammed()
     {
-        // Arrange
         hw.SetJammed(true);
-
-        // Act & Assert
         var ex = await Should.ThrowAsync<DeviceException>(() =>
-            controller.DispenseChangeAsync((int)100, false)).ConfigureAwait(false);
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Failure);
     }
 
-    /// <summary>在庫不足（InsufficientCash）時に E_EXT (OverDispense) が正しく報告されることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>在庫不足時の出金要求時に OverDispense エラーが報告されることを検証する。</summary>
     [Fact]
     public async Task DispenseChangeAsyncShouldHandleInsufficientCash()
     {
-        // Arrange
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new InsufficientCashException("Shortage"));
 
-        // Act
-        await controller.DispenseChangeAsync((int)100, false).ConfigureAwait(false);
+        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
 
-        // Assert
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Extended);
         controller.LastErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
         controller.Status.ShouldBe(CashDispenseStatus.Error);
     }
 
-    /// <summary>指定された金種構成での出金が正常に完了することを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>有効な金種指定での出金が正常に完了することを検証する。</summary>
     [Fact]
     public async Task DispenseCashAsyncShouldSucceedWithValidCounts()
     {
-        // Arrange
-        var counts = new Dictionary<DenominationKey, int>
-        {
-            { new DenominationKey(100, CurrencyCashType.Coin), 1 }
-        };
+        var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(100, CurrencyCashType.Coin), 1 } };
+        await controller.DispenseCashAsync(counts, false).ConfigureAwait(false);
 
-        // Act
-        await controller.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false).ConfigureAwait(false);
-
-        // Assert
         mockManager.Verify(m => m.Dispense(counts), Times.Once);
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
         controller.Status.ShouldBe(CashDispenseStatus.Idle);
     }
 
-    /// <summary>既に別の出金処理が進行中の場合に E_BUSY がスローされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>出金処理中に重ねて出金要求を行うと Busy エラーが発生することを検証する。</summary>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowBusyWhenAlreadyProcessing()
     {
-        // Arrange
         mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
             .Returns(async (CancellationToken t) => await Task.Delay(1000, t).ConfigureAwait(false));
 
-        _ = controller.DispenseChangeAsync((int)100, true);
-        await Task.Delay(50, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var task = controller.DispenseChangeAsync(100, true);
+        await Task.Delay(50).ConfigureAwait(false);
 
-        // Act & Assert
         controller.IsBusy.ShouldBeTrue();
         await Should.ThrowAsync<DeviceException>(() =>
-            controller.DispenseChangeAsync((int)100, false)).ConfigureAwait(false);
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
+            
+        controller.ClearOutput();
+        await task;
     }
 
-    /// <summary>オーバーラップ処理中に新たな出金要求が来た場合に E_FAILURE がスローされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>重なり発生中の出金要求時に Failure エラーが発生することを検証する。</summary>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowFailureWhenOverlapped()
     {
-        // Arrange
         hw.SetOverlapped(true);
-
-        // Act & Assert
         var ex = await Should.ThrowAsync<DeviceException>(() =>
-            controller.DispenseChangeAsync((int)100, false)).ConfigureAwait(false);
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Failure);
     }
 
-    /// <summary>ClearOutput 呼び出しにより、実行中の出金処理がキャンセルされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>ClearOutput により実行中の出金処理がキャンセルされることを検証する。</summary>
     [Fact]
     public async Task ClearOutputShouldCancelActiveDispense()
     {
-        // Arrange
         bool wasCanceled = false;
         var tcs = new TaskCompletionSource<bool>();
-
         mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
             .Returns(async (CancellationToken t) =>
             {
                 tcs.SetResult(true);
-                try
-                {
-                    await Task.Delay(5000, t).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    wasCanceled = true;
-                    throw;
-                }
+                try { await Task.Delay(5000, t).ConfigureAwait(false); }
+                catch (OperationCanceledException) { wasCanceled = true; throw; }
             });
 
-        _ = controller.DispenseChangeAsync((int)100, true);
-
+        var task = controller.DispenseChangeAsync(100, true);
         await tcs.Task.ConfigureAwait(false);
-
-        // Act
         controller.ClearOutput();
-        await Task.Delay(100, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(100).ConfigureAwait(false);
 
-        // Assert
         controller.IsBusy.ShouldBeFalse();
         wasCanceled.ShouldBeTrue();
     }
 
-    /// <summary>未予期な例外が発生した場合に E_FAILURE として適切にハンドリングされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>予期しない例外発生時に Failure エラーとして適切に処理されることを検証する。</summary>
     [Fact]
     public async Task ExecuteDispenseShouldHandleUnexpectedException()
     {
-        // Arrange
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new InvalidOperationException("Unexpected"));
 
-        // Act
-        await controller.DispenseChangeAsync((int)100, false).ConfigureAwait(false);
+        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
 
-        // Assert
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Failure);
         controller.Status.ShouldBe(CashDispenseStatus.Error);
     }
 
-    /// <summary>エラー状態から ClearOutput により Idle 状態に復帰できることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>エラー状態から ClearOutput により正常状態に復帰できることを検証する。</summary>
     [Fact]
     public async Task ClearOutputShouldResetStatus()
     {
-        // Arrange
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new Exception("Fail"));
 
-        await controller.DispenseChangeAsync((int)100, false).ConfigureAwait(false);
+        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
         controller.Status.ShouldBe(CashDispenseStatus.Error);
 
-        // Act
         controller.ClearOutput();
-
-        // Assert
         controller.Status.ShouldBe(CashDispenseStatus.Idle);
     }
 
-    /// <summary>明示的な PosControlException が発生した場合に、そのエラーコードが正しく反映されることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>PosControlException 発生時にエラー詳細が正しく反映されることを検証する。</summary>
     [Fact]
     public async Task ExecuteDispenseShouldHandlePosControlException()
     {
-        // Arrange
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new PosControlException("Explicit error", ErrorCode.Illegal, 123));
 
-        // Act
-        await controller.DispenseChangeAsync((int)100, false).ConfigureAwait(false);
+        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
 
-        // Assert
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Illegal);
         controller.LastErrorCodeExtended.ShouldBe(123);
         controller.Status.ShouldBe(CashDispenseStatus.Error);
     }
 
-    /// <summary>オブジェクトの破棄（Dispose）が例外なく実行できることを検証します。</summary>
+    /// <summary>オブジェクトの破棄を複数回行っても例外が発生しないことを検証する。</summary>
     [Fact]
     public void DisposeShouldNotThrow()
     {
-        var controller = new DispenseController(mockManager.Object, hw, mockSimulator.Object);
-        controller.Dispose();
+        var tempController = new DispenseController(mockManager.Object, hw, mockSimulator.Object);
+        tempController.Dispose();
+        tempController.Dispose();
+    }
 
-        // Second dispose should also not throw
-        controller.Dispose();
+    /// <summary>非同期モードでの例外発生が正しくハンドリングされることを検証する。</summary>
+    [Fact]
+    public async Task DispenseChangeAsyncShouldHandleBackgroundException()
+    {
+        mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
+            .Throws(new Exception("Background fail"));
+
+        await controller.DispenseChangeAsync(100, true).ConfigureAwait(false);
+        await Task.Delay(100).ConfigureAwait(false);
+
+        controller.Status.ShouldBe(CashDispenseStatus.Error);
+    }
+
+    /// <summary>金種指定出金においても非同期モードの例外がハンドリングされることを検証する。</summary>
+    [Fact]
+    public async Task DispenseCashAsyncShouldHandleBackgroundException()
+    {
+        var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(100, CurrencyCashType.Coin), 1 } };
+        mockManager.Setup(m => m.Dispense(It.IsAny<IReadOnlyDictionary<DenominationKey, int>>()))
+            .Throws(new Exception("Background fail"));
+
+        await controller.DispenseCashAsync(counts, true).ConfigureAwait(false);
+        await Task.Delay(100).ConfigureAwait(false);
+
+        controller.Status.ShouldBe(CashDispenseStatus.Error);
+    }
+
+    /// <summary>ExecuteDispense 内で DeviceException がキャッチされることを検証する。</summary>
+    [Fact]
+    public async Task ExecuteDispenseShouldCatchDeviceException()
+    {
+        mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
+            .Throws(new DeviceException("Internal Jam", DeviceErrorCode.Jammed, 456));
+
+        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
+
+        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Jammed);
+        controller.LastErrorCodeExtended.ShouldBe(456);
+        controller.Status.ShouldBe(CashDispenseStatus.Error);
+    }
+
+    /// <summary>シミュレーター実行中のキャンセルが正しく処理されることを検証する。</summary>
+    [Fact]
+    public async Task ExecuteDispenseShouldHandleCancellation()
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .Returns(async (CancellationToken t) =>
+            {
+                tcs.SetResult(true);
+                await Task.Delay(5000, t).ConfigureAwait(false);
+            });
+
+        var task = controller.DispenseChangeAsync(100, true);
+        await tcs.Task.ConfigureAwait(false);
+        
+        controller.ClearOutput(); // Triggers cancellation
+        
+        await task;
+        controller.Status.ShouldBe(CashDispenseStatus.Idle);
+        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
     }
 }

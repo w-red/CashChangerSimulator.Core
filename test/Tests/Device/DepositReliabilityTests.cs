@@ -32,8 +32,9 @@ public class DepositReliabilityTests
 
     /// <summary>バックグラウンドでの入金挿入と、メインスレッドでの確定操作が競合した場合に DataEvent が正しく1回だけ発行されることを検証します。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>データの追跡と確定が並行して行われる際の DataEvent の整合性を検証する。</summary>
     [Fact]
-    public async Task DataEvent_Consistency_Under_Concurrent_Track_And_Fix()
+    public async Task DataEventConsistencyUnderConcurrentTrackAndFix()
     {
         // Arrange
         var changer = new DepositReliabilityChanger
@@ -93,8 +94,9 @@ public class DepositReliabilityTests
 
     /// <summary>入金セッションのライフサイクル（Begin->Track->Fix->End）を高頻度で繰り返し、状態の破損や整合性エラーが発生しないことを検証します。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>入金セクションのライフサイクルを高頻度で繰り返した際の信頼性を検証する。</summary>
     [Fact]
-    public async Task Rapid_Session_Lifecycle_Reliability()
+    public async Task RapidSessionLifecycleReliability()
     {
         // Arrange
         var changer = new DepositReliabilityChanger
@@ -136,8 +138,9 @@ public class DepositReliabilityTests
 
     /// <summary>一時停止（Pause）の切り替えと入金挿入が並行して発生した場合に、停止中の挿入が無視され、状態が整合していることを検証します。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <summary>一時停止と再開が競合する条件下での動作の整合性を検証する。</summary>
     [Fact]
-    public async Task Pause_Resume_Race_Condition()
+    public async Task PauseResumeRaceCondition()
     {
         // Arrange
         var changer = new DepositReliabilityChanger

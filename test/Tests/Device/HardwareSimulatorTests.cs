@@ -50,8 +50,9 @@ public class HardwareSimulatorTests
         sw.ElapsedMilliseconds.ShouldBeLessThan(50);
     }
 
+    /// <summary>コンストラクタによりデフォルト設定でシミュレータが初期化されることを検証する。</summary>
     [Fact]
-    public void Constructor_ShouldInitializeWithDefaultConfig()
+    public void ConstructorShouldInitializeWithDefaultConfig()
     {
         // Act
         using var simulator = new HardwareSimulator();
@@ -60,8 +61,9 @@ public class HardwareSimulatorTests
         simulator.ShouldNotBeNull();
     }
 
+    /// <summary>外部設定プロバイダーを使用している場合にオブジェクトの破棄が正しく行われることを検証する。</summary>
     [Fact]
-    public void Dispose_ShouldHandleExternalConfig()
+    public void DisposeShouldHandleExternalConfig()
     {
         // Arrange
         var configProvider = new ConfigurationProvider();

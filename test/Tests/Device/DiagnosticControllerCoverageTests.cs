@@ -8,8 +8,9 @@ namespace CashChangerSimulator.Tests.Device;
 
 public class DiagnosticControllerCoverageTests
 {
+    /// <summary>不感帯（デプリション）失敗のカウントが正しくインクリメントされることを検証する。</summary>
     [Fact]
-    public void IncrementFailedDepletion_ShouldIncreaseValue()
+    public void IncrementFailedDepletionShouldIncreaseValue()
     {
         var hw = new HardwareStatusManager();
         var controller = new DiagnosticController(new Inventory(), hw);
@@ -17,8 +18,9 @@ public class DiagnosticControllerCoverageTests
         Should.NotThrow(() => controller.IncrementFailedDepletion());
     }
 
+    /// <summary>指定されたレベルに応じたヘルスレポートが生成され、適切な詳細が含まれていることを検証する。</summary>
     [Fact]
-    public void GetHealthReport_WithVariousLevels_ShouldIncludeDetails()
+    public void GetHealthReportWithVariousLevelsShouldIncludeDetails()
     {
         var hw = new HardwareStatusManager();
         var controller = new DiagnosticController(new Inventory(), hw);
@@ -31,8 +33,9 @@ public class DiagnosticControllerCoverageTests
         report2.ShouldContain("Interactive check initiated");
     }
 
+    /// <summary>Dispose を複数回呼び出しても例外が発生しないことを検証する。</summary>
     [Fact]
-    public void Dispose_WhenCalledMultipleTimes_ShouldNotThrow()
+    public void DisposeWhenCalledMultipleTimesShouldNotThrow()
     {
         var hw = new HardwareStatusManager();
         var controller = new DiagnosticController(new Inventory(), hw);

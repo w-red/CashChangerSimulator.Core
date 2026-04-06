@@ -5,8 +5,9 @@ namespace CashChangerSimulator.Tests.Device;
 
 public class ScriptExecutionServiceCoverageTests
 {
+    /// <summary>未知の変数が指定された際に値の解決が適切に行われる（または例外が投げられる）ことを検証する。</summary>
     [Fact]
-    public void ResolveValue_WithUnknownVariable_ShouldReturnAsIsOrThrow()
+    public void ResolveValueWithUnknownVariableShouldReturnAsIsOrThrow()
     {
         var context = new ScriptExecutionContext();
         
