@@ -5,10 +5,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>HardwareStatusManager の状態管理とライフサイクルを検証するテスト。</summary>
+/// <summary>HardwareStatusManager の状態管理とライフサイクルを検証するテスト。.</summary>
 public class HardwareStatusManagerTests
 {
-    /// <summary>ジャム状態が正しく設定・保持されることを検証する。</summary>
+    /// <summary>ジャム状態が正しく設定・保持されることを検証する。.</summary>
     [Fact]
     public void SetJammedShouldUpdateSubject()
     {
@@ -29,7 +29,7 @@ public class HardwareStatusManagerTests
         manager.IsJammed.Value.ShouldBeFalse();
     }
 
-    /// <summary>ジャム箇所を設定・取得できることを検証する。</summary>
+    /// <summary>ジャム箇所を設定・取得できることを検証する。.</summary>
     [Fact]
     public void SetJammedWithLocationShouldStoreCorrectLocation()
     {
@@ -44,7 +44,7 @@ public class HardwareStatusManagerTests
         manager.JamLocation.Value.ShouldBe(JamLocation.BillCassette1);
     }
 
-    /// <summary>ジャム解除時にジャム箇所も None になることを検証する。</summary>
+    /// <summary>ジャム解除時にジャム箇所も None になることを検証する。.</summary>
     [Fact]
     public void SetJammedFalseShouldClearLocation()
     {
@@ -60,7 +60,7 @@ public class HardwareStatusManagerTests
         manager.JamLocation.Value.ShouldBe(JamLocation.None);
     }
 
-    /// <summary>重なり状態が正しく設定・保持されることを検証する。</summary>
+    /// <summary>重なり状態が正しく設定・保持されることを検証する。.</summary>
     [Fact]
     public void SetOverlappedShouldUpdateSubject()
     {
@@ -77,7 +77,7 @@ public class HardwareStatusManagerTests
         statusChanged.ShouldBeTrue();
     }
 
-    /// <summary>ジャムと重なりが独立して動作することを検証する。</summary>
+    /// <summary>ジャムと重なりが独立して動作することを検証する。.</summary>
     [Fact]
     public void JamAndOverlapShouldBeIndependent()
     {
@@ -100,7 +100,7 @@ public class HardwareStatusManagerTests
         manager.JamLocation.Value.ShouldBe(JamLocation.None);
     }
 
-    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。</summary>
+    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。.</summary>
     [Fact]
     public void DisposeShouldWork()
     {
@@ -114,7 +114,7 @@ public class HardwareStatusManagerTests
         Should.NotThrow(() => manager.Dispose());
     }
 
-    /// <summary>すべてのエラーリセット時にジャム箇所もクリアされることを検証する。</summary>
+    /// <summary>すべてのエラーリセット時にジャム箇所もクリアされることを検証する。.</summary>
     [Fact]
     public void ResetErrorShouldClearJamLocation()
     {

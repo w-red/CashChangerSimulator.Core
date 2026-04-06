@@ -8,101 +8,101 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>検証スキップ版ライフサイクルハンドラの状態遷移およびライフサイクル操作を検証するテストクラス。</summary>
+/// <summary>検証スキップ版ライフサイクルハンドラの状態遷移およびライフサイクル操作を検証するテストクラス。.</summary>
 public class SkipVerificationLifecycleHandlerTests
 {
-    private readonly HardwareStatusManager _hardware;
-    private readonly Mock<IUposMediator> _mediator;
-    private readonly TransactionHistory _history;
-    private readonly SkipVerificationLifecycleHandler _handler;
+    private readonly HardwareStatusManager hardware;
+    private readonly Mock<IUposMediator> mediator;
+    private readonly TransactionHistory history;
+    private readonly SkipVerificationLifecycleHandler handler;
 
     public SkipVerificationLifecycleHandlerTests()
     {
-        _hardware = new HardwareStatusManager();
-        _mediator = new Mock<IUposMediator>();
-        _history = new TransactionHistory();
-        _handler = new SkipVerificationLifecycleHandler(_hardware, _mediator.Object, _history, NullLogger.Instance);
+        hardware = new HardwareStatusManager();
+        mediator = new Mock<IUposMediator>();
+        history = new TransactionHistory();
+        handler = new SkipVerificationLifecycleHandler(hardware, mediator.Object, history, NullLogger.Instance);
     }
 
-    /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を反映することを検証します。</summary>
+    /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を反映することを検証します。.</summary>
     [Fact]
     public void StateShouldReflectHardwareAndMediator()
     {
         // Closed
-        _hardware.SetConnected(false);
-        _handler.State.ShouldBe(ControlState.Closed);
+        hardware.SetConnected(false);
+        handler.State.ShouldBe(ControlState.Closed);
 
         // Busy
-        _hardware.SetConnected(true);
-        _mediator.Setup(m => m.IsBusy).Returns(true);
-        _handler.State.ShouldBe(ControlState.Busy);
+        hardware.SetConnected(true);
+        mediator.Setup(m => m.IsBusy).Returns(true);
+        handler.State.ShouldBe(ControlState.Busy);
 
         // Idle
-        _mediator.Setup(m => m.IsBusy).Returns(false);
-        _handler.State.ShouldBe(ControlState.Idle);
+        mediator.Setup(m => m.IsBusy).Returns(false);
+        handler.State.ShouldBe(ControlState.Idle);
     }
 
-    /// <summary>Open, Claim, Close の各ライフサイクル操作がハードウェアおよび履歴に正しく反映されることを検証します。</summary>
+    /// <summary>Open, Claim, Close の各ライフサイクル操作がハードウェアおよび履歴に正しく反映されることを検証します。.</summary>
     [Fact]
     public void LifecycleShouldWork()
     {
         // Open
-        _handler.Open(() => { });
-        _hardware.IsConnected.Value.ShouldBeTrue();
-        _history.Entries.ShouldContain(e => e.Type == TransactionType.Open);
+        handler.Open(() => { });
+        hardware.IsConnected.Value.ShouldBeTrue();
+        history.Entries.ShouldContain(e => e.Type == TransactionType.Open);
 
         // Claim
-        _handler.Claim(0, _ => { });
-        _mediator.VerifySet(m => m.Claimed = true);
-        _history.Entries.ShouldContain(e => e.Type == TransactionType.Claim);
+        handler.Claim(0, _ => { });
+        mediator.VerifySet(m => m.Claimed = true);
+        history.Entries.ShouldContain(e => e.Type == TransactionType.Claim);
 
         // Mediator Claimed mock for Close/Release tests
-        _mediator.Setup(m => m.Claimed).Returns(true);
+        mediator.Setup(m => m.Claimed).Returns(true);
 
         // Close
-        _handler.Close(() => { });
-        _hardware.IsConnected.Value.ShouldBeFalse();
-        _history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
-        _history.Entries.ShouldContain(e => e.Type == TransactionType.Close);
+        handler.Close(() => { });
+        hardware.IsConnected.Value.ShouldBeFalse();
+        history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
+        history.Entries.ShouldContain(e => e.Type == TransactionType.Close);
     }
 
-    /// <summary>Closed 状態で Claim や Release を試みた際に例外が発生することを検証します。</summary>
+    /// <summary>Closed 状態で Claim や Release を試みた際に例外が発生することを検証します。.</summary>
     [Fact]
     public void ClaimAndReleaseShouldThrowWhenClosed()
     {
-        _hardware.SetConnected(false);
+        hardware.SetConnected(false);
 
-        Should.Throw<PosControlException>(() => _handler.Claim(0, _ => { }))
+        Should.Throw<PosControlException>(() => handler.Claim(0, _ => { }))
             .ErrorCode.ShouldBe(ErrorCode.Closed);
 
-        Should.Throw<PosControlException>(() => _handler.Release(() => { }))
+        Should.Throw<PosControlException>(() => handler.Release(() => { }))
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>Open 状態で Release を実行した際の正常動作を検証します。</summary>
+    /// <summary>Open 状態で Release を実行した際の正常動作を検証します。.</summary>
     [Fact]
     public void ReleaseShouldWorkWhenOpen()
     {
-        _hardware.SetConnected(true);
-        _handler.Release(() => { });
+        hardware.SetConnected(true);
+        handler.Release(() => { });
 
-        _mediator.VerifySet(m => m.Claimed = false);
-        _history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
+        mediator.VerifySet(m => m.Claimed = false);
+        history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
     }
 
-    /// <summary>DeviceEnabled などのプロパティがメディエータへ正しく委譲されることを検証します。</summary>
+    /// <summary>DeviceEnabled などのプロパティがメディエータへ正しく委譲されることを検証します。.</summary>
     [Fact]
     public void PropertiesShouldProxyToMediator()
     {
-        _mediator.SetupProperty(m => m.DeviceEnabled);
-        _mediator.SetupProperty(m => m.DataEventEnabled);
+        mediator.SetupProperty(m => m.DeviceEnabled);
+        mediator.SetupProperty(m => m.DataEventEnabled);
 
-        _handler.DeviceEnabled = true;
-        _mediator.Object.DeviceEnabled.ShouldBeTrue();
-        _handler.DeviceEnabled.ShouldBeTrue();
+        handler.DeviceEnabled = true;
+        mediator.Object.DeviceEnabled.ShouldBeTrue();
+        handler.DeviceEnabled.ShouldBeTrue();
 
-        _handler.DataEventEnabled = true;
-        _mediator.Object.DataEventEnabled.ShouldBeTrue();
-        _handler.DataEventEnabled.ShouldBeTrue();
+        handler.DataEventEnabled = true;
+        mediator.Object.DataEventEnabled.ShouldBeTrue();
+        handler.DataEventEnabled.ShouldBeTrue();
     }
 }

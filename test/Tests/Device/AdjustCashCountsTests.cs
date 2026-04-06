@@ -4,7 +4,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>在庫の調整機能（AdjustCashCounts）を検証するテストクラス。</summary>
+/// <summary>在庫の調整機能（AdjustCashCounts）を検証するテストクラス。.</summary>
 public class AdjustCashCountsTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
@@ -18,7 +18,7 @@ public class AdjustCashCountsTests
         return simulator;
     }
 
-    /// <summary>在庫調整後にインベントリが正しく更新されることを検証します。</summary>
+    /// <summary>在庫調整後にインベントリが正しく更新されることを検証します。.</summary>
     [Fact]
     public void AdjustCashCountsShouldUpdateInventory()
     {
@@ -26,7 +26,8 @@ public class AdjustCashCountsTests
         simulator.SkipStateVerification = true;
 
         // Define adjustment: 10 bills of 1000 JPY, 5 coins of 100 JPY
-        var cashCounts = new CashCounts([
+        var cashCounts = new CashCounts(
+            [
             new CashCount(CashCountType.Bill, 1000, 10),
             new CashCount(CashCountType.Coin, 100, 5)
         ], false);
@@ -44,7 +45,7 @@ public class AdjustCashCountsTests
         coinCount.ShouldBe(5, "100 JPY coin count should be adjusted to 5.");
     }
 
-    /// <summary>複数通貨がサポートされている場合に在庫調整が正しく処理されることを検証します。</summary>
+    /// <summary>複数通貨がサポートされている場合に在庫調整が正しく処理されることを検証します。.</summary>
     [Fact]
     public void AdjustCashCountsShouldHandleMultipleCurrenciesIfSupported()
     {

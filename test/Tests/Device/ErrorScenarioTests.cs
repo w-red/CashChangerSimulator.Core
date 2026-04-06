@@ -13,7 +13,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>各種エラーシナリオ（ビジー、不正なパラメータ/シーケンス、在庫不足、ジャム）の検証テスト。</summary>
+/// <summary>各種エラーシナリオ（ビジー、不正なパラメータ/シーケンス、在庫不足、ジャム）の検証テスト。.</summary>
 [Collection("GlobalLock")]
 public class ErrorScenarioTests
 {
@@ -24,18 +24,14 @@ public class ErrorScenarioTests
         // Ensure USD is in the config for tests that need it
         if (!configProvider.Config.Inventory.ContainsKey("USD"))
         {
-            configProvider.Config.Inventory["USD"] = new InventorySettings
-            {
-                Denominations = new Dictionary<string, DenominationSettings>
-                {
-                    ["B10"] = new(),
-                    ["B5"] = new(),
-                    ["B1"] = new(),
-                    ["C1"] = new(),
-                    ["C0.25"] = new(),
-                    ["C0.1"] = new()
-                }
-            };
+            var usdSettings = new InventorySettings();
+            usdSettings.Denominations.Add("B10", new());
+            usdSettings.Denominations.Add("B5", new());
+            usdSettings.Denominations.Add("B1", new());
+            usdSettings.Denominations.Add("C1", new());
+            usdSettings.Denominations.Add("C0.25", new());
+            usdSettings.Denominations.Add("C0.1", new());
+            configProvider.Config.Inventory["USD"] = usdSettings;
         }
 
         var inventory = new Inventory();
@@ -53,7 +49,7 @@ public class ErrorScenarioTests
         }
 
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
         var hardware = new HardwareStatusManager();
         var metadataProvider = new CurrencyMetadataProvider(configProvider);
         var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
@@ -80,7 +76,7 @@ public class ErrorScenarioTests
         return (device, hardware);
     }
 
-    /// <summary>0 以下の金額での出金要求が E_ILLEGAL になることを検証します。</summary>
+    /// <summary>0 以下の金額での出金要求が E_ILLEGAL になることを検証します。.</summary>
     [Fact]
     public void DispenseChangeWithNegativeAmountShouldThrowIllegal()
     {
@@ -91,7 +87,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>入金中に払出を試みた際、ErrorCode.Illegal が発生することを検証する。</summary>
+    /// <summary>入金中に払出を試みた際、ErrorCode.Illegal が発生することを検証する。.</summary>
     [Fact]
     public void DispenseDuringDepositShouldThrowIllegal()
     {
@@ -102,7 +98,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>fixDeposit を呼ばずに endDeposit を実行した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    /// <summary>fixDeposit を呼ばずに endDeposit を実行した際、ErrorCode.Illegal が発生することを検証する。.</summary>
     [Fact]
     public void EndDepositWithoutFixDepositShouldThrowIllegal()
     {
@@ -113,18 +109,19 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>在庫不足時（OverDispense）の例外処理を検証します。</summary>
+    /// <summary>在庫不足時（OverDispense）の例外処理を検証します。.</summary>
     [Fact]
     public void DispenseWithShortageShouldThrowOverdispense()
     {
         var (device, _) = CreateDevice();
+
         // 在庫 0 の状態で払出
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(1000));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
         ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense); // ECHAN_OVERDISPENSE
     }
 
-    /// <summary>ジャムが発生している際、払出が ErrorCode.Failure で失敗することを検証する。</summary>
+    /// <summary>ジャムが発生している際、払出が ErrorCode.Failure で失敗することを検証する。.</summary>
     [Fact]
     public void DispenseDuringJamShouldThrowFailure()
     {
@@ -136,7 +133,7 @@ public class ErrorScenarioTests
         ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.Jam);
     }
 
-    /// <summary>ジャム発生・復旧時に正しい StatusUpdateEvent が発火することを検証する。</summary>
+    /// <summary>ジャム発生・復旧時に正しい StatusUpdateEvent が発火することを検証する。.</summary>
     [Fact]
     public void JamShouldFireStatusUpdateEvent()
     {
@@ -160,7 +157,7 @@ public class ErrorScenarioTests
         lastStatus.ShouldBe((int)UposCashChangerStatusUpdateCode.Ok);
     }
 
-    /// <summary>重複した pauseDeposit 呼び出しが ErrorCode.Illegal を発生させることを検証する。</summary>
+    /// <summary>重複した pauseDeposit 呼び出しが ErrorCode.Illegal を発生させることを検証する。.</summary>
     [Fact]
     public void DuplicatePauseDepositShouldThrowIllegal()
     {
@@ -176,7 +173,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>AdjustCashCounts に 0 未満の枚数を指定した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    /// <summary>AdjustCashCounts に 0 未満の枚数を指定した際、ErrorCode.Illegal が発生することを検証する。.</summary>
     [Fact]
     public void AdjustCashCountsWithNegativeCountShouldThrowIllegal()
     {
@@ -187,7 +184,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>DispenseCash に 0 未満の枚数を指定した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    /// <summary>DispenseCash に 0 未満の枚数を指定した際、ErrorCode.Illegal が発生することを検証する。.</summary>
     [Fact]
     public void DispenseCashWithNegativeCountShouldThrowIllegal()
     {
@@ -198,11 +195,12 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>DispenseCash で特定の金種が不足している際、ECHAN_OVERDISPENSE が発生することを検証する。</summary>
+    /// <summary>DispenseCash で特定の金種が不足している際、ECHAN_OVERDISPENSE が発生することを検証する。.</summary>
     [Fact]
     public void DispenseCashWithSpecificShortageShouldThrowOverdispense()
     {
         var (device, _) = CreateDevice();
+
         // 在庫 0 の金種を指定して払出
         var counts = new[] { new CashCount(CashCountType.Bill, 1000, 1) };
 
@@ -211,11 +209,12 @@ public class ErrorScenarioTests
         ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense); // ECHAN_OVERDISPENSE
     }
 
-    /// <summary>在庫の合計金額は足りているが、金種の組み合わせで端数が支払えない（Impossible Change）場合にエラーになることを検証する。</summary>
+    /// <summary>在庫の合計金額は足りているが、金種の組み合わせで端数が支払えない（Impossible Change）場合にエラーになることを検証する。.</summary>
     [Fact]
     public void DispenseChangeWithImpossibleCombinationShouldThrowOverdispense()
     {
         var (device, _) = CreateDevice();
+
         // 1000円札 1枚のみの設定
         device.AdjustCashCounts([new CashCount(CashCountType.Bill, 1000, 1)]);
 
@@ -225,11 +224,12 @@ public class ErrorScenarioTests
         ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
     }
 
-    /// <summary>インベントリに登録されていない不正な金種を DispenseCash で要求した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    /// <summary>インベントリに登録されていない不正な金種を DispenseCash で要求した際、ErrorCode.Illegal が発生することを検証する。.</summary>
     [Fact]
     public void DispenseCashWithUnsupportedDenominationShouldThrowIllegal()
     {
         var (device, _) = CreateDevice();
+
         // USD設定下かつ標準でない金種（3ドルなど）
         device.CurrencyCode = "USD";
         var counts = new[] { new CashCount(CashCountType.Bill, 3, 1) };
@@ -238,7 +238,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>DirectIO (ADJUST_CASH_COUNTS_STR) に不正な引数（nullや非文字列）を渡した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    /// <summary>DirectIO (ADJUST_CASH_COUNTS_STR) に不正な引数（nullや非文字列）を渡した際、ErrorCode.Illegal が発生することを検証する。.</summary>
     [Fact]
     public void DirectIOAdjustWithInvalidArgumentsShouldThrowIllegal()
     {
@@ -253,7 +253,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>CashCountParser において不正なセクション数などの境界値を検証する。</summary>
+    /// <summary>CashCountParser において不正なセクション数などの境界値を検証する。.</summary>
     [Fact]
     public void ParseWithInvalidSectionsShouldThrowIllegal()
     {

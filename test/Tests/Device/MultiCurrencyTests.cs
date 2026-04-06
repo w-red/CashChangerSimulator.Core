@@ -12,23 +12,21 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>マルチ通貨（JPY/USD切り替え、フィルタリング、小数の名目値）の検証テスト。</summary>
+/// <summary>マルチ通貨（JPY/USD切り替え、フィルタリング、小数の名目値）の検証テスト。.</summary>
 public class MultiCurrencyTests
 {
     private static InternalSimulatorCashChanger CreateDevice()
     {
         var configProvider = new ConfigurationProvider();
-        configProvider.Config.Inventory = new()
-        {
-            ["JPY"] = new InventorySettings
-            {
-                Denominations = new() { ["B1000"] = new() { InitialCount = 10 } }
-            },
-            ["USD"] = new InventorySettings
-            {
-                Denominations = new() { ["C0.5"] = new() { InitialCount = 20 } }
-            }
-        };
+        configProvider.Config.Inventory.Clear();
+
+        var jpySettings = new InventorySettings();
+        jpySettings.Denominations.Add("B1000", new() { InitialCount = 10 });
+        configProvider.Config.Inventory["JPY"] = jpySettings;
+
+        var usdSettings = new InventorySettings();
+        usdSettings.Denominations.Add("C0.5", new() { InitialCount = 20 });
+        configProvider.Config.Inventory["USD"] = usdSettings;
 
         // Build inventory explicitly
         var inventory = new Inventory();
@@ -45,7 +43,7 @@ public class MultiCurrencyTests
 
         var hardware = new HardwareStatusManager();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
         var metadataProvider = new CurrencyMetadataProvider(configProvider);
         var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
@@ -71,7 +69,7 @@ public class MultiCurrencyTests
         return device;
     }
 
-    /// <summary>サポートされている通貨コードのリストが正しく取得できることを検証する。</summary>
+    /// <summary>サポートされている通貨コードのリストが正しく取得できることを検証する。.</summary>
     [Fact]
     public void CurrencyCodeListShouldContainConfiguredCurrencies()
     {
@@ -81,7 +79,7 @@ public class MultiCurrencyTests
         device.DepositCodeList.ShouldBe(device.CurrencyCodeList);
     }
 
-    /// <summary>CurrencyCode を切り替えることで、報告される金種情報が正しくフィルタリングされることを検証する。</summary>
+    /// <summary>CurrencyCode を切り替えることで、報告される金種情報が正しくフィルタリングされることを検証する。.</summary>
     [Fact]
     public void SwitchingCurrencyCodeShouldFilterCashCounts()
     {
@@ -99,11 +97,12 @@ public class MultiCurrencyTests
         var usdCounts = device.ReadCashCounts();
         usdCounts.Counts.Length.ShouldBe(1);
         usdCounts.Counts[0].Type.ShouldBe(CashCountType.Coin);
+
         // $0.5 -> 50 (Scaled)
         usdCounts.Counts[0].NominalValue.ShouldBe(50);
     }
 
-    /// <summary>USドルのような小数を含む額面が、正しくスケール調整されて報告されることを検証する。</summary>
+    /// <summary>USドルのような小数を含む額面が、正しくスケール調整されて報告されることを検証する。.</summary>
     [Fact]
     public void UsdDecimalScalingVerification()
     {
@@ -115,7 +114,7 @@ public class MultiCurrencyTests
         counts.Counts[0].NominalValue.ShouldBe(50);
     }
 
-    /// <summary>サポートされていない通貨コードを設定しようとした際に例外がスローされることを検証する。</summary>
+    /// <summary>サポートされていない通貨コードを設定しようとした際に例外がスローされることを検証する。.</summary>
     [Fact]
     public void SettingInvalidCurrencyCodeShouldThrow()
     {

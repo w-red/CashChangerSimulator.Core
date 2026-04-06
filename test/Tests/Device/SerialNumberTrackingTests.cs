@@ -7,7 +7,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>入金確定（FixDeposit）時の記番号（シリアルナンバー）追跡機能を検証するテストクラス。</summary>
+/// <summary>入金確定（FixDeposit）時の記番号（シリアルナンバー）追跡機能を検証するテストクラス。.</summary>
 public class SerialNumberTrackingTests
 {
     private static (InternalSimulatorCashChanger changer, DepositController controller) CreateChanger()
@@ -25,7 +25,7 @@ public class SerialNumberTrackingTests
         return (changer, controller);
     }
 
-    /// <summary>DirectIO(GetVersion) が正しいバージョン文字列を返却することを検証します。</summary>
+    /// <summary>DirectIO(GetVersion) が正しいバージョン文字列を返却することを検証します。.</summary>
     [Fact]
     public void DirectIOGetVersionShouldWorkWithConstant()
     {
@@ -33,14 +33,14 @@ public class SerialNumberTrackingTests
         var (changer, _) = CreateChanger();
 
         // Act
-        var result = changer.DirectIO(DirectIOCommands.GetVersion, 0, "");
+        var result = changer.DirectIO(DirectIOCommands.GetVersion, 0, string.Empty);
 
         // Assert
         result.Object.ShouldNotBeNull();
         result.Object.ToString()!.ShouldContain("InternalSimulatorCashChanger");
     }
 
-    /// <summary>初期状態で DirectIO(GetDepositedSerials) が空の結果を返却することを検証します。</summary>
+    /// <summary>初期状態で DirectIO(GetDepositedSerials) が空の結果を返却することを検証します。.</summary>
     [Fact]
     public void DirectIOGetDepositedSerialsShouldReturnEmptyInitially()
     {
@@ -48,14 +48,14 @@ public class SerialNumberTrackingTests
         var (changer, _) = CreateChanger();
 
         // Act
-        var result = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
+        var result = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, string.Empty);
 
         // Assert
         result.Object.ShouldNotBeNull();
-        result.Object.ToString()!.ShouldBe("");
+        result.Object.ToString()!.ShouldBe(string.Empty);
     }
 
-    /// <summary>FixDeposit 実行後に DirectIO(GetDepositedSerials) から記番号が取得できることを検証します。</summary>
+    /// <summary>FixDeposit 実行後に DirectIO(GetDepositedSerials) から記番号が取得できることを検証します。.</summary>
     [Fact]
     public void DirectIOGetDepositedSerialsShouldReturnSerialsAfterDepositFix()
     {
@@ -73,17 +73,17 @@ public class SerialNumberTrackingTests
         changer.FixDeposit();
 
         // Assert
-        var result = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
+        var result = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, string.Empty);
         result.Object.ShouldNotBeNull();
         var serials = result.Object.ToString()!.Split(',');
 
         serials?.Length.ShouldBe(2);
-        serials?[0].ShouldStartWith("S1000-");
-        serials?[1].ShouldStartWith("S1000-");
+        serials?[0].ShouldStartWith("SN-1000-");
+        serials?[1].ShouldStartWith("SN-1000-");
         serials?[0].ShouldNotBe(serials?[1]);
     }
 
-    /// <summary>EndDeposit 実行後も直近の記番号データが保持されていることを検証します。</summary>
+    /// <summary>EndDeposit 実行後も直近の記番号データが保持されていることを検証します。.</summary>
     [Fact]
     public void DirectIOGetDepositedSerialsShouldPersistAfterEndDeposit()
     {
@@ -95,14 +95,14 @@ public class SerialNumberTrackingTests
         controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key1000, 1 } });
         changer.FixDeposit();
 
-        var resultBeforeHeader = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
-        string serialBefore = resultBeforeHeader.Object?.ToString() ?? "";
+        var resultBeforeHeader = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, string.Empty);
+        string serialBefore = resultBeforeHeader.Object?.ToString() ?? string.Empty;
 
         // Act
         changer.EndDeposit(CashDepositAction.NoChange);
 
         // Assert
-        var resultAfter = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, "");
+        var resultAfter = changer.DirectIO(DirectIOCommands.GetDepositedSerials, 0, string.Empty);
         resultAfter.Object.ShouldNotBeNull();
         resultAfter.Object.ToString()!.ShouldBe(serialBefore);
     }

@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -12,13 +12,16 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests;
 
-/// <summary>DispenseController の動作を検証するテストクラス。</summary>
+/// <summary>DispenseController の動作を検証するテストクラス。.</summary>
 public class DispenseControllerTest
 {
-    /// <summary>ディスペンス結果を無視するコールバック。</summary>
-    private static void IgnoreDispenseResult(DeviceErrorCode code, int codeEx) { }
+    /// <summary>ディスペンス結果を無視するコールバック。.</summary>
+    private static void IgnoreDispenseResult(DeviceErrorCode code, int codeEx)
+    {
+    }
 
-    /// <summary>同期的な払い出し操作でステータスが遷移することを検証する。</summary>
+    /// <summary>同期的な払い出し操作でステータスが遷移することを検証する。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldTransitionToBusyAndBackToIdle()
     {
@@ -26,7 +29,7 @@ public class DispenseControllerTest
         var inventory = new Inventory();
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inventory.SetCount(key, 10);
-        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
         var hw = new HardwareStatusManager();
         hw.SetConnected(true);
         var controller = new DispenseController(manager, hw, new HardwareSimulator(new ConfigurationProvider()));
@@ -34,7 +37,7 @@ public class DispenseControllerTest
         DeviceErrorCode resultCode = DeviceErrorCode.Failure;
 
         // Act (synchronous mode so we can assert final state after await)
-        await controller.DispenseChangeAsync(1000, false);
+        await controller.DispenseChangeAsync(1000, false).ConfigureAwait(false);
         resultCode = controller.LastErrorCode;
 
         // Assert
@@ -44,13 +47,14 @@ public class DispenseControllerTest
         inventory.GetCount(key).ShouldBe(9);
     }
 
-    /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証する。</summary>
+    /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証する。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowIfBusy()
     {
         // Arrange
         var inventory = new Inventory();
-        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
         var hw = new HardwareStatusManager();
         hw.SetConnected(true);
         var controller = new DispenseController(manager, hw, new HardwareSimulator(new ConfigurationProvider()));
@@ -60,13 +64,14 @@ public class DispenseControllerTest
         _ = controller.DispenseChangeAsync(1000, true);
 
         // Wait briefly for status to transition
-        await Task.Delay(TestTimingConstants.StartupCheckDelayMs, TestContext.Current.CancellationToken);
+        await Task.Delay(TestTimingConstants.StartupCheckDelayMs, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Second call should throw
-        await Should.ThrowAsync<DeviceException>(() => controller.DispenseChangeAsync(1000, false));
+        await Should.ThrowAsync<DeviceException>(() => controller.DispenseChangeAsync(1000, false)).ConfigureAwait(false);
     }
 
-    /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証する。</summary>
+    /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証する。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldCallSimulator()
     {
@@ -74,7 +79,7 @@ public class DispenseControllerTest
         var inventory = new Inventory();
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inventory.SetCount(key, 10);
-        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
         var mockSimulator = new Mock<IDeviceSimulator>();
 
         var hw = new HardwareStatusManager();
@@ -82,7 +87,7 @@ public class DispenseControllerTest
         var controller = new DispenseController(manager, hw, mockSimulator.Object);
 
         // Act
-        await controller.DispenseChangeAsync(1000, false);
+        await controller.DispenseChangeAsync(1000, false).ConfigureAwait(false);
 
         // Assert
         mockSimulator.Verify(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()), Times.Once);

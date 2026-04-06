@@ -17,7 +17,9 @@ namespace CashChangerSimulator.Tests.Device;
 public class CustomLogger<T> : ILogger<T>
 {
     public List<string> Logs { get; } = new();
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+    public IDisposable? BeginScope<TState>(TState state)
+        where TState : notnull
+        => null;
     public bool IsEnabled(LogLevel logLevel) => true;
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
@@ -25,7 +27,7 @@ public class CustomLogger<T> : ILogger<T>
     }
 }
 
-/// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。</summary>
+/// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。.</summary>
 [Collection("GlobalLock")]
 public class UposLifecycleTests
 {
@@ -33,12 +35,15 @@ public class UposLifecycleTests
     {
         var configProvider = new ConfigurationProvider();
         configProvider.Config.Simulation.HotStart = false;
-        configProvider.Config.Inventory["JPY"] = new InventorySettings { Denominations = new() { ["C100"] = new() { InitialCount = 50 } } };
+        var jpySettings = new InventorySettings();
+        jpySettings.Denominations.Add("C100", new() { InitialCount = 50 });
+        configProvider.Config.Inventory["JPY"] = jpySettings;
+
 
         var inv = new Inventory();
         var hw = new HardwareStatusManager();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inv, history, (object?)null, null);
         var metadataProvider = new CurrencyMetadataProvider(configProvider);
         var monitorsProvider = new MonitorsProvider(inv, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
@@ -48,9 +53,9 @@ public class UposLifecycleTests
         var deps = new SimulatorDependencies(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw);
 
         var logger = new CustomLogger<SimulatorCashChanger>();
+
         // Note: SimulatorCashChanger uses LogProvider internally, but custom DI would be needed to inject this logger properly.
         // For this test, we might need to rely on the fact that LifecycleManager and Handlers use the logger passed to them.
-
         var changer = new InternalSimulatorCashChanger(deps)
         {
             SkipStateVerification = false
@@ -60,7 +65,7 @@ public class UposLifecycleTests
 
     private static InternalSimulatorCashChanger CreateCashChanger() => CreateCashChangerWithLogger().cc;
 
-    /// <summary>占有されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。</summary>
+    /// <summary>占有されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。.</summary>
     [Fact]
     public void DispenseChangeShouldThrowWhenNotClaimed()
     {
@@ -68,7 +73,7 @@ public class UposLifecycleTests
         Should.Throw<PosControlException>(() => cc.DispenseChange(100));
     }
 
-    /// <summary>占有されていない状態で BeginDeposit を呼び出すと例外がスローされることを検証する。</summary>
+    /// <summary>占有されていない状態で BeginDeposit を呼び出すと例外がスローされることを検証する。.</summary>
     [Fact]
     public void BeginDepositShouldThrowWhenNotClaimed()
     {
@@ -77,7 +82,7 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>占有されていない状態で ReadCashCounts を呼び出すと例外がスローされることを検証する。</summary>
+    /// <summary>占有されていない状態で ReadCashCounts を呼び出すと例外がスローされることを検証する。.</summary>
     [Fact]
     public void ReadCashCountsShouldThrowWhenNotClaimed()
     {
@@ -86,7 +91,7 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>デバイスがオープンされる前に占有（Claim）を試みると例外がスローされることを検証する。</summary>
+    /// <summary>デバイスがオープンされる前に占有（Claim）を試みると例外がスローされることを検証する。.</summary>
     [Fact]
     public void ClaimBeforeOpenShouldSucceedInWaitState()
     {
@@ -95,7 +100,7 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>正常な Open/Claim シーケンスがエラーなく完了することを検証する。</summary>
+    /// <summary>正常な Open/Claim シーケンスがエラーなく完了することを検証する。.</summary>
     [Fact]
     public void SuccessfulLifecycle()
     {
@@ -104,7 +109,7 @@ public class UposLifecycleTests
         cc.Claim(1000);
     }
 
-    /// <summary>健康状態確認（CheckHealth）が常に OK を返すことを検証する。</summary>
+    /// <summary>健康状態確認（CheckHealth）が常に OK を返すことを検証する。.</summary>
     [Fact]
     public void CheckHealthShouldReturnOk()
     {
@@ -112,7 +117,7 @@ public class UposLifecycleTests
         cc.CheckHealth((HealthCheckLevel)DeviceHealthCheckLevel.Internal).ShouldContain("OK");
     }
 
-    /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する（NRE回避の確認）。</summary>
+    /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する（NRE回避の確認）。.</summary>
     [Fact]
     public void SkipStateVerificationShouldBypassFramework()
     {
@@ -129,7 +134,7 @@ public class UposLifecycleTests
         cc.Claimed.ShouldBeTrue();
     }
 
-    /// <summary>プロパティ変更時にハンドラーが即座に切り替わることを検証する。</summary>
+    /// <summary>プロパティ変更時にハンドラーが即座に切り替わることを検証する。.</summary>
     [Fact]
     public void HandlerShouldSwitchWhenPropertyChanges()
     {
@@ -143,6 +148,7 @@ public class UposLifecycleTests
 
         // Standard に戻す
         cc.SkipStateVerification = false;
+
         // この時点で Claim すると実際には base.Claim が呼ばれるが、StandardLifecycleHandler が例外をキャッチする
         cc.Claim(1000);
     }

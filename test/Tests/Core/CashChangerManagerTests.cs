@@ -1,5 +1,4 @@
-
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -8,17 +7,18 @@ using CashChangerSimulator.Core.Transactions;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
-/// <summary>CashChangerManager のビジネスロジックを検証するテスト。</summary>
+
+/// <summary>CashChangerManager のビジネスロジックを検証するテスト。.</summary>
 public class CashChangerManagerTests
 {
-    /// <summary>入金時に在庫と履歴が正しく更新されることを検証する。</summary>
+    /// <summary>入金時に在庫と履歴が正しく更新されることを検証する。.</summary>
     [Fact]
     public void DepositShouldUpdateInventoryAndHistory()
     {
         // Arrange
         var inventory = new Inventory();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         var c100 = new DenominationKey(100, CurrencyCashType.Coin);
         var depositCounts = new Dictionary<DenominationKey, int> { { b1000, 2 }, { c100, 5 } };
@@ -40,7 +40,7 @@ public class CashChangerManagerTests
         entry.Counts[c100].ShouldBe(5);
     }
 
-    /// <summary>払出時に在庫と履歴が正しく更新されることを検証する。</summary>
+    /// <summary>払出時に在庫と履歴が正しく更新されることを検証する。.</summary>
     [Fact]
     public void DispenseShouldUpdateInventoryAndHistory()
     {
@@ -49,7 +49,7 @@ public class CashChangerManagerTests
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         inventory.SetCount(b1000, 10);
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
         var dispenseCounts = new Dictionary<DenominationKey, int> { { b1000, 3 } };
 
         // Act
@@ -65,7 +65,7 @@ public class CashChangerManagerTests
         entry.Amount.ShouldBe(3000m);
     }
 
-    /// <summary>金額指定の払出時に計算、在庫更新、履歴記録が正しく行われることを検証する。</summary>
+    /// <summary>金額指定の払出時に計算、在庫更新、履歴記録が正しく行われることを検証する。.</summary>
     [Fact]
     public void DispenseByAmountShouldCalculateUpdateAndRecord()
     {
@@ -76,7 +76,7 @@ public class CashChangerManagerTests
         inventory.SetCount(b1000, 5);
         inventory.SetCount(c100, 10);
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
 
         // Act: 1200円を出金
         manager.Dispense(1200m);
@@ -92,14 +92,14 @@ public class CashChangerManagerTests
         history.Entries[0].Counts[c100].ShouldBe(2);
     }
 
-    /// <summary>多通貨（USD）での入金と履歴記録を検証する。</summary>
+    /// <summary>多通貨（USD）での入金と履歴記録を検証する。.</summary>
     [Fact]
     public void DepositWithOtherCurrencyShouldStoreCorrectCurrencyCode()
     {
         // Arrange
         var inventory = new Inventory();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
         var usd20 = new DenominationKey(20, CurrencyCashType.Bill, "USD");
         var depositCounts = new Dictionary<DenominationKey, int> { { usd20, 2 } };
 
@@ -112,14 +112,14 @@ public class CashChangerManagerTests
         history.Entries[0].Counts.Keys.ShouldContain(k => k.CurrencyCode == "USD");
     }
 
-    /// <summary>在庫不足時に払出が失敗し、在庫と履歴が更新されないことを検証する。</summary>
+    /// <summary>在庫不足時に払出が失敗し、在庫と履歴が更新されないことを検証する。.</summary>
     [Fact]
     public void DispenseByAmountWithInsufficientCashShouldThrowAndNotModifyState()
     {
         // Arrange
         var inventory = new Inventory(); // Empty
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
 
         // Act & Assert
         Should.Throw<InsufficientCashException>(() => manager.Dispense(100m));
@@ -128,17 +128,18 @@ public class CashChangerManagerTests
         history.Entries.ShouldBeEmpty();
     }
 
-    /// <summary>非リサイクル金種が入金時に回収庫へ振り分けられることを検証する。</summary>
+    /// <summary>非リサイクル金種が入金時に回収庫へ振り分けられることを検証する。.</summary>
     [Fact]
     public void DepositNonRecyclableShouldGoToCollection()
     {
         // Arrange
         var inventory = new Inventory();
         var configProvider = new ConfigurationProvider();
+
         // 2000円札を非リサイクルとして明示的に設定
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
 
-        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), null, configProvider);
 
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
         var counts = new Dictionary<DenominationKey, int> { { b2000, 3 } };
@@ -152,7 +153,7 @@ public class CashChangerManagerTests
         inventory.CalculateTotal().ShouldBe(6000m);
     }
 
-    /// <summary>金額指定の出金時に非リサイクル金種がスキップされることを検証する。</summary>
+    /// <summary>金額指定の出金時に非リサイクル金種がスキップされることを検証する。.</summary>
     [Fact]
     public void DispenseByAmountShouldSkipNonRecyclable()
     {
@@ -166,10 +167,11 @@ public class CashChangerManagerTests
         inventory.SetCount(b1000, 10);
 
         var configProvider = new ConfigurationProvider();
+
         // 2000円札を非リサイクルとして明示的に設定
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
 
-        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), null, configProvider);
 
         // Act: 2000円を出金
         manager.Dispense(2000m);
@@ -179,7 +181,7 @@ public class CashChangerManagerTests
         inventory.GetCount(b2000).ShouldBe(10);
     }
 
-    /// <summary>入金時に満廃しきい値を超えた分が回収庫へ振り分けられることを検証する。</summary>
+    /// <summary>入金時に満廃しきい値を超えた分が回収庫へ振り分けられることを検証する。.</summary>
     [Fact]
     public void DepositShouldHandleOverflow()
     {
@@ -192,7 +194,7 @@ public class CashChangerManagerTests
         inventory.SetCount(b1000, 90);
 
         var configProvider = new ConfigurationProvider();
-        var manager = new CashChangerManager(inventory, new TransactionHistory(), new ChangeCalculator(), configProvider);
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), null, configProvider);
         var counts = new Dictionary<DenominationKey, int> { { b1000, 20 } };
 
         // Act: 20枚入金 (計 110枚)

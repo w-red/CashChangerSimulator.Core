@@ -6,12 +6,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>出金計算ロジック（最適な金種構成の算出、通貨フィルタ等）を検証するテストクラス。</summary>
+/// <summary>出金計算ロジック（最適な金種構成の算出、通貨フィルタ等）を検証するテストクラス。.</summary>
 public class ChangeCalculatorTests
 {
-    private readonly ChangeCalculator _calculator = new();
-
-    /// <summary>通貨コード指定のフィルタが正しく機能し、指定通貨のみで出金計算が行われることを検証します。</summary>
+    /// <summary>通貨コード指定のフィルタが正しく機能し、指定通貨のみで出金計算が行われることを検証します。.</summary>
     [Fact]
     public void CalculateWithCurrencyFilterShouldWork()
     {
@@ -19,12 +17,12 @@ public class ChangeCalculatorTests
         inv.Add(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 10);
         inv.Add(new DenominationKey(1, CurrencyCashType.Bill, "USD"), 10);
 
-        var result = _calculator.Calculate(inv, 1000, "JPY");
+        var result = ChangeCalculator.Calculate(inv, 1000, "JPY");
         result.Count.ShouldBe(1);
         result.Keys.First().CurrencyCode.ShouldBe("JPY");
     }
 
-    /// <summary>カスタムフィルタ（例：紙幣のみ）が指定された際に、条件に合う金種のみで計算されることを検証します。</summary>
+    /// <summary>カスタムフィルタ（例：紙幣のみ）が指定された際に、条件に合う金種のみで計算されることを検証します。.</summary>
     [Fact]
     public void CalculateWithCustomFilterShouldWork()
     {
@@ -33,20 +31,20 @@ public class ChangeCalculatorTests
         inv.Add(new DenominationKey(500, CurrencyCashType.Coin, "JPY"), 10);
 
         // Filter: Only bills. 1500 cannot be paid fully with only 1000 bills.
-        Should.Throw<InsufficientCashException>(() => _calculator.Calculate(inv, 1500, filter: k => k.Type == CurrencyCashType.Bill));
+        Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(inv, 1500, filter: k => k.Type == CurrencyCashType.Bill));
     }
 
-    /// <summary>在庫不足により出金計算が不可能な場合に InsufficientCashException がスローされることを検証します。</summary>
+    /// <summary>在庫不足により出金計算が不可能な場合に InsufficientCashException がスローされることを検証します。.</summary>
     [Fact]
     public void CalculateInsufficientCashShouldThrow()
     {
         var inv = new Inventory();
         inv.Add(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 1);
 
-        Should.Throw<InsufficientCashException>(() => _calculator.Calculate(inv, 1500));
+        Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(inv, 1500));
     }
 
-    /// <summary>Inventory クラス以外の IReadOnlyInventory 実装を渡した際のエラーハンドリングを検証します。</summary>
+    /// <summary>Inventory クラス以外の IReadOnlyInventory 実装を渡した際のエラーハンドリングを検証します。.</summary>
     [Fact]
     public void CalculateWithNonInventoryTypeShouldReturnEmpty()
     {
@@ -55,6 +53,6 @@ public class ChangeCalculatorTests
         var mockInv = new Mock<IReadOnlyInventory>();
         mockInv.Setup(m => m.GetCount(It.IsAny<DenominationKey>())).Returns(10);
 
-        Should.Throw<InsufficientCashException>(() => _calculator.Calculate(mockInv.Object, 100));
+        Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(mockInv.Object, 100));
     }
 }

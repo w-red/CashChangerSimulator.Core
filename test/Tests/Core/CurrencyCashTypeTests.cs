@@ -3,10 +3,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>CurrencyCashType の基本定義とパース機能を検証するためのテストクラス。</summary>
+/// <summary>CurrencyCashType の基本定義とパース機能を検証するためのテストクラス。.</summary>
 public class CurrencyCashTypeTests
 {
-    /// <summary>全ての予期される値が定義されていることを確認します。</summary>
+    /// <summary>全ての予期される値が定義されていることを確認します。.</summary>
     [Fact]
     public void ShouldDefineExpectedValues()
     {
@@ -16,7 +16,7 @@ public class CurrencyCashTypeTests
         Enum.GetNames(typeof(CurrencyCashType)).ShouldContain("Bill");
     }
 
-    /// <summary>文字列からパースできることを確認します。</summary>
+    /// <summary>文字列からパースできることを確認します。.</summary>
     [Fact]
     public void ShouldParseFromString()
     {

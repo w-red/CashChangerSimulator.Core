@@ -13,12 +13,12 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>InternalSimulatorCashChanger の StatusUpdateEvent 発火を検証するテストクラス (TDD Red)。</summary>
+/// <summary>InternalSimulatorCashChanger の StatusUpdateEvent 発火を検証するテストクラス (TDD Red)。.</summary>
 public class StatusUpdateEventTests
 {
     private static readonly DenominationKey Coin100 = new(100, CurrencyCashType.Coin, "JPY");
 
-    /// <summary>テスト用の InternalSimulatorCashChanger を生成する。</summary>
+    /// <summary>テスト用の InternalSimulatorCashChanger を生成する。.</summary>
     private static (InternalSimulatorCashChanger cc, Inventory inv, HardwareStatusManager hw, List<int> events) CreateTestCashChanger(
         int nearEmpty = 5, int nearFull = 90, int full = 100)
     {
@@ -28,18 +28,14 @@ public class StatusUpdateEventTests
         configProvider.Config.Thresholds.Full = full;
 
         // Initialize with a denomination
-        configProvider.Config.Inventory["JPY"] = new InventorySettings
-        {
-            Denominations = new()
-            {
-                ["C100"] = new() { InitialCount = 50, NearEmpty = nearEmpty, NearFull = nearFull, Full = full }
-            }
-        };
+        var jpySettings = new InventorySettings();
+        jpySettings.Denominations.Add("C100", new() { InitialCount = 50, NearEmpty = nearEmpty, NearFull = nearFull, Full = full });
+        configProvider.Config.Inventory["JPY"] = jpySettings;
 
         var inv = new Inventory();
         var hw = new HardwareStatusManager();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inv, history, (object?)null, null);
         var metadataProvider = new CurrencyMetadataProvider(configProvider);
 
         // Initialize all denominations to 50 to ensure they are NOT Empty/NearEmpty initially
@@ -67,8 +63,8 @@ public class StatusUpdateEventTests
         {
             SkipStateVerification = true
         };
-        // cc.Open(); -- StatusUpdateTests handles Open manually if needed or via CreateTestCashChanger
 
+        // cc.Open(); -- StatusUpdateTests handles Open manually if needed or via CreateTestCashChanger
         var events = new List<int>();
         cc.OnEventQueued += e =>
         {
@@ -83,7 +79,7 @@ public class StatusUpdateEventTests
 
     // ========== DeviceStatus StatusUpdateEvent ==========
 
-    /// <summary>在庫が空になった際に StatusUpdateEvent が発火することを検証する。</summary>
+    /// <summary>在庫が空になった際に StatusUpdateEvent が発火することを検証する。.</summary>
     [Fact]
     public void ShouldFireStatusUpdateEventWhenDeviceStatusBecomesEmpty()
     {
@@ -98,7 +94,7 @@ public class StatusUpdateEventTests
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Empty);
     }
 
-    /// <summary>在庫が NearEmpty しきい値に達した際に StatusUpdateEvent が発火することを検証する。</summary>
+    /// <summary>在庫が NearEmpty しきい値に達した際に StatusUpdateEvent が発火することを検証する。.</summary>
     [Fact]
     public void ShouldFireStatusUpdateEventWhenDeviceStatusBecomesNearEmpty()
     {
@@ -112,7 +108,7 @@ public class StatusUpdateEventTests
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.NearEmpty);
     }
 
-    /// <summary>在庫が空の状態から復帰した際に StatusUpdateEvent が発火することを検証する。</summary>
+    /// <summary>在庫が空の状態から復帰した際に StatusUpdateEvent が発火することを検証する。.</summary>
     [Fact]
     public void ShouldFireStatusUpdateEventWhenDeviceStatusRecoversFromEmpty()
     {
@@ -132,7 +128,7 @@ public class StatusUpdateEventTests
 
     // ========== FullStatus OK transitions ==========
 
-    /// <summary>在庫がフルの状態から復帰した際に StatusUpdateEvent が発火することを検証する。</summary>
+    /// <summary>在庫がフルの状態から復帰した際に StatusUpdateEvent が発火することを検証する。.</summary>
     [Fact]
     public void ShouldFireStatusUpdateEventWhenFullStatusRecoversFromFull()
     {
@@ -152,7 +148,7 @@ public class StatusUpdateEventTests
 
     // ========== Jam StatusUpdateEvent ==========
 
-    /// <summary>ジャムが発生した際に標準のジャムコードで StatusUpdateEvent が発火することを検証する。</summary>
+    /// <summary>ジャムが発生した際に標準のジャムコードで StatusUpdateEvent が発火することを検証する。.</summary>
     [Fact]
     public void ShouldFireStatusUpdateEventWithStandardJamCodeWhenJammed()
     {
@@ -165,7 +161,7 @@ public class StatusUpdateEventTests
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Jam);
     }
 
-    /// <summary>ジャムが解消された際に OK コードで StatusUpdateEvent が発火することを検証する。</summary>
+    /// <summary>ジャムが解消された際に OK コードで StatusUpdateEvent が発火することを検証する。.</summary>
     [Fact]
     public void ShouldFireStatusUpdateEventWithOkCodeWhenJamCleared()
     {
@@ -184,7 +180,7 @@ public class StatusUpdateEventTests
 
     // ========== Physical Unit (Collection Box) StatusUpdateEvent ==========
 
-    /// <summary>回収庫が取り外された際に StatusUpdateEvent (REMOVED) が発火することを検証する。</summary>
+    /// <summary>回収庫が取り外された際に StatusUpdateEvent (REMOVED) が発火することを検証する。.</summary>
     [Fact]
     public void ShouldFireStatusUpdateEventWhenCollectionBoxIsRemoved()
     {
@@ -198,7 +194,7 @@ public class StatusUpdateEventTests
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Removed);
     }
 
-    /// <summary>回収庫が装着された際に StatusUpdateEvent (INSERTED) が発火することを検証する。</summary>
+    /// <summary>回収庫が装着された際に StatusUpdateEvent (INSERTED) が発火することを検証する。.</summary>
     [Fact]
     public void ShouldFireStatusUpdateEventWhenCollectionBoxIsInserted()
     {

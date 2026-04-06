@@ -5,10 +5,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>OverallStatusAggregator の集約ロジックを検証するテスト。</summary>
+/// <summary>OverallStatusAggregator の集約ロジックを検証するテスト。.</summary>
 public class OverallStatusAggregatorTests
 {
-    /// <summary>各金種のステータスに基づき、全体のステータスが正しく集約されることを検証する。</summary>
+    /// <summary>各金種のステータスに基づき、全体のステータスが正しく集約されることを検証する。.</summary>
     [Fact]
     public void OverallStatusAggregatorShouldAggregateIndividualStatuses()
     {
@@ -22,8 +22,7 @@ public class OverallStatusAggregatorTests
 
         // モニター作成
         var monitors = denominations.Select(d =>
-            new CashStatusMonitor(inventory, d, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)
-        ).ToList();
+            new CashStatusMonitor(inventory, d, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)).ToList();
 
         var aggregator = new OverallStatusAggregator(monitors);
 
@@ -38,29 +37,33 @@ public class OverallStatusAggregatorTests
 
         // Act: 1000円を Normal にする (1000: 5枚, 5000: 0枚)
         inventory.SetCount(denominations[0], 5);
+
         // Assert: 5000円がまだ Empty なので、DeviceStatus=Empty
         deviceStatus.ShouldBe(CashStatus.Empty);
 
         // Act: 5000円も Normal にする (1000: 5枚, 5000: 5枚)
         inventory.SetCount(denominations[1], 5);
+
         // Assert: 両方正常
         deviceStatus.ShouldBe(CashStatus.Normal);
         fullStatus.ShouldBe(CashStatus.Normal);
 
         // Act: 1000円を Full にする (1000: 10枚, 5000: 5枚)
         inventory.SetCount(denominations[0], 10);
+
         // Assert: FullStatus=Full
         fullStatus.ShouldBe(CashStatus.Full);
         deviceStatus.ShouldBe(CashStatus.Normal);
 
         // Act: 1000円を Full のまま、5000円を Empty にする (1000: 10枚, 5000: 0枚)
         inventory.SetCount(denominations[1], 0);
+
         // Assert: 両方の異常が独立して報告される
         fullStatus.ShouldBe(CashStatus.Full);
         deviceStatus.ShouldBe(CashStatus.Empty);
     }
 
-    /// <summary>多数のモニターを扱う際に正しく集約されることを検証する。</summary>
+    /// <summary>多数のモニターを扱う際に正しく集約されることを検証する。.</summary>
     [Fact]
     public void AggregatorShouldHandleManyMonitors()
     {
@@ -90,7 +93,7 @@ public class OverallStatusAggregatorTests
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
     }
 
-    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。</summary>
+    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。.</summary>
     [Fact]
     public void DisposeShouldWork()
     {
@@ -101,7 +104,7 @@ public class OverallStatusAggregatorTests
         Should.NotThrow(() => aggregator.Dispose());
     }
 
-    /// <summary>Refresh 呼び出しにより監視対象が更新され、集約結果が再計算されることを検証する。</summary>
+    /// <summary>Refresh 呼び出しにより監視対象が更新され、集約結果が再計算されることを検証する。.</summary>
     [Fact]
     public void RefreshShouldUpdateMonitorsAndRecalculate()
     {
@@ -127,7 +130,7 @@ public class OverallStatusAggregatorTests
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
     }
 
-    /// <summary>非リサイクル金種のステータスが、全体のステータス集計から除外されることを検証する。</summary>
+    /// <summary>非リサイクル金種のステータスが、全体のステータス集計から除外されることを検証する。.</summary>
     [Fact]
     public void AggregatorShouldIgnoreNonRecyclableMonitors()
     {
@@ -149,11 +152,13 @@ public class OverallStatusAggregatorTests
 
         // Act: リサイクル金種を Empty にする
         inventory.SetCount(kRecyclable, 0);
+
         // Assert: リサイクル金種が Empty なので集約結果も Empty
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
 
         // Act: 非リサイクル金種を Full にする
         inventory.SetCount(kNonRecyclable, 100);
+
         // Assert: 非リサイクルなので FullStatus は Normal のまま
         aggregator.FullStatus.CurrentValue.ShouldBe(CashStatus.Normal);
     }

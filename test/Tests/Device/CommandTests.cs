@@ -9,86 +9,86 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>各コマンド（AdjustCashCounts, DispenseCash 等）の実行前検証と例外処理をテストするクラス。</summary>
+/// <summary>各コマンド（AdjustCashCounts, DispenseCash 等）の実行前検証と例外処理をテストするクラス。.</summary>
 public class CommandTests
 {
-    private readonly Inventory _inventory;
-    private readonly HardwareStatusManager _hardware;
-    private readonly Mock<IUposMediator> _mediator;
+    private readonly Inventory inventory;
+    private readonly HardwareStatusManager hardware;
+    private readonly Mock<IUposMediator> mediator;
 
     public CommandTests()
     {
-        _inventory = new Inventory();
-        _hardware = new HardwareStatusManager();
-        _mediator = new Mock<IUposMediator>();
+        inventory = new Inventory();
+        hardware = new HardwareStatusManager();
+        mediator = new Mock<IUposMediator>();
     }
 
-    /// <summary>デバイスがジャム状態の時に AdjustCashCountsCommand が E_EXT をスローすることを検証します。</summary>
+    /// <summary>デバイスがジャム状態の時に AdjustCashCountsCommand が E_EXT をスローすることを検証します。.</summary>
     [Fact]
     public void AdjustCashCountsCommandShouldThrowWhenJammed()
     {
         var counts = new List<CashCount> { new(CashCountType.Bill, 1000, 10) };
-        var cmd = new AdjustCashCountsCommand(_inventory, counts, "JPY", 1, _hardware);
+        var cmd = new AdjustCashCountsCommand(inventory, counts, "JPY", 1, hardware);
 
-        _hardware.SetJammed(true);
+        hardware.SetJammed(true);
         var ex = Should.Throw<PosControlException>(() => cmd.Execute());
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 
-    /// <summary>デバイスがジャム状態の時に DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
+    /// <summary>デバイスがジャム状態の時に DispenseCashCommand の Verify が E_EXT をスローすることを検証します。.</summary>
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenJammed()
     {
-        var deposit = new DepositController(_inventory, _hardware);
+        var deposit = new DepositController(inventory, hardware);
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        _inventory.SetCount(key, 10);
+        inventory.SetCount(key, 10);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
-        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false);
+        var cmd = new DispenseCashCommand(null!, inventory, hardware, deposit, counts, false);
 
-        _hardware.SetJammed(true);
-        var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
+        hardware.SetJammed(true);
+        var ex = Should.Throw<PosControlException>(() => cmd.Verify(mediator.Object));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 
-    /// <summary>入金処理中の際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
+    /// <summary>入金処理中の際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。.</summary>
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenDepositInProgress()
     {
-        var deposit = new DepositController(_inventory, _hardware);
+        var deposit = new DepositController(inventory, hardware);
         deposit.BeginDeposit(); // Sets IsDepositInProgress to true
 
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        _inventory.SetCount(key, 10);
+        inventory.SetCount(key, 10);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
-        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false);
+        var cmd = new DispenseCashCommand(null!, inventory, hardware, deposit, counts, false);
 
-        var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
+        var ex = Should.Throw<PosControlException>(() => cmd.Verify(mediator.Object));
         ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>未登録の金種が指定された際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
+    /// <summary>未登録の金種が指定された際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。.</summary>
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenDenominationNotRegistered()
     {
-        var deposit = new DepositController(_inventory, _hardware);
+        var deposit = new DepositController(inventory, hardware);
         var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(999, CurrencyCashType.Bill), 1 } };
-        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false);
+        var cmd = new DispenseCashCommand(null!, inventory, hardware, deposit, counts, false);
 
-        var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
+        var ex = Should.Throw<PosControlException>(() => cmd.Verify(mediator.Object));
         ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>在庫不足の際、DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
+    /// <summary>在庫不足の際、DispenseCashCommand の Verify が E_EXT をスローすることを検証します。.</summary>
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenInsufficientInventory()
     {
-        var deposit = new DepositController(_inventory, _hardware);
+        var deposit = new DepositController(inventory, hardware);
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        _inventory.SetCount(key, 0);
+        inventory.SetCount(key, 0);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
-        var cmd = new DispenseCashCommand(null!, _inventory, _hardware, deposit, counts, false);
+        var cmd = new DispenseCashCommand(null!, inventory, hardware, deposit, counts, false);
 
-        var ex = Should.Throw<PosControlException>(() => cmd.Verify(_mediator.Object));
+        var ex = Should.Throw<PosControlException>(() => cmd.Verify(mediator.Object));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 }

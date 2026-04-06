@@ -10,11 +10,11 @@ namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>
 /// <see cref="DepositController"/> が直接在庫を更新せず、
-/// <see cref="CashChangerManager"/> に入金履歴の記録と在庫の更新を委譲することを検証するテストクラス。
+/// <see cref="CashChangerManager"/> に入金履歴の記録と在庫の更新を委譲することを検証するテストクラス。.
 /// </summary>
 public class DepositControllerDelegationTest
 {
-    /// <summary>EndDeposit(Store) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。</summary>
+    /// <summary>EndDeposit(Store) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。.</summary>
     [Fact]
     public void EndDepositStoreShouldDelegateToCashChangerManagerDeposit()
     {
@@ -26,11 +26,12 @@ public class DepositControllerDelegationTest
             new Mock<CashChangerManager>(
                 inventory,
                 new TransactionHistory(),
-                new ChangeCalculator());
+                null);
 
         var controller = new DepositController(inventory, hardwareManager, managerMock.Object);
 
         controller.BeginDeposit();
+
         // Simulate adding cash
         var key = new DenominationKey(1000m, CurrencyCashType.Bill, "JPY");
         controller.RequiredAmount = 2000m;
@@ -41,8 +42,8 @@ public class DepositControllerDelegationTest
         controller.EndDeposit(DepositAction.Store);
 
         // Assert
-        managerMock.Verify(m => m.Deposit(It.Is<IReadOnlyDictionary<DenominationKey, int>>(
-            dict => dict.ContainsKey(key) && dict[key] == 2
-        )), Times.Once);
+        managerMock.Verify(
+            m => m.Deposit(It.Is<IReadOnlyDictionary<DenominationKey, int>>(
+            dict => dict.ContainsKey(key) && dict[key] == 2)), Times.Once);
     }
 }

@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
@@ -14,10 +14,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>テスト用のモックキャッシュチェンジャーマネージャー。</summary>
-/// <param name="inv">在庫オブジェクト。</param>
-/// <param name="config">設定プロバイダー。</param>
-public class MockCashChangerManager(Inventory inv, ConfigurationProvider? config = null) : CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator(), config)
+/// <summary>テスト用のモックキャッシュチェンジャーマネージャー。.</summary>
+/// <param name="inv">在庫オブジェクト。.</param>
+/// <param name="config">設定プロバイダー。.</param>
+public class MockCashChangerManager(Inventory inv, ConfigurationProvider? config = null) : CashChangerManager(inv, new TransactionHistory(), null, config)
 {
     public ManualResetEventSlim DispenseStartSignal { get; } = new(false);
     public ManualResetEventSlim DispenseFinishSignal { get; } = new(false);
@@ -30,7 +30,7 @@ public class MockCashChangerManager(Inventory inv, ConfigurationProvider? config
     }
 }
 
-/// <summary>テスト用のシミュレータキャッシュチェンジャー。</summary>
+/// <summary>テスト用のシミュレータキャッシュチェンジャー。.</summary>
 public class TestSimulatorCashChanger : InternalSimulatorCashChanger
 {
     public List<EventArgs> QueuedEvents { get; } = [];
@@ -60,11 +60,12 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
     }
 }
 
-/// <summary>非同期モードでの出金操作（DispenseChange, DispenseCash）の挙動を検証するテストクラス。</summary>
+/// <summary>非同期モードでの出金操作（DispenseChange, DispenseCash）の挙動を検証するテストクラス。.</summary>
 [Collection("GlobalLock")]
 public class DispenseAsyncTests
 {
-    /// <summary>非同期の払出操作が呼び出し元をブロックせず、完了時にイベントを発火することを検証する。</summary>
+    /// <summary>非同期の払出操作が呼び出し元をブロックせず、完了時にイベントを発火することを検証する。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task AsyncDispenseShouldNotBlockAndFireEvent()
     {
@@ -96,18 +97,20 @@ public class DispenseAsyncTests
         bool eventFired = false;
         while (!eventFired && timeout < 50)
         {
-            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken);
+            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken).ConfigureAwait(false);
             lock (changer.QueuedEvents)
             {
                 eventFired = changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
             }
+
             timeout++;
         }
 
         eventFired.ShouldBeTrue();
     }
 
-    /// <summary>非同期払出中に重ねて払出を要求した場合に E_BUSY がスローされることを検証します。</summary>
+    /// <summary>非同期払出中に重ねて払出を要求した場合に E_BUSY がスローされることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DispenseDuringAsyncShouldThrowBusy()
     {
@@ -137,10 +140,11 @@ public class DispenseAsyncTests
 
         // Cleanup
         manager.DispenseFinishSignal.Set();
-        await dispenseTask;
+        await dispenseTask.ConfigureAwait(false);
     }
 
-    /// <summary>非同期払出中に在庫読取を試みた場合に E_BUSY がスローされることを検証します。</summary>
+    /// <summary>非同期払出中に在庫読取を試みた場合に E_BUSY がスローされることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task ReadCountsDuringAsyncShouldThrowBusy()
     {
@@ -168,10 +172,11 @@ public class DispenseAsyncTests
 
         // Cleanup
         manager.DispenseFinishSignal.Set();
-        await dispenseTask;
+        await dispenseTask.ConfigureAwait(false);
     }
 
-    /// <summary>ClearOutput 呼び出しにより、実行中の非同期払出が適切にキャンセルされることを検証します。</summary>
+    /// <summary>ClearOutput 呼び出しにより、実行中の非同期払出が適切にキャンセルされることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task ClearOutputShouldCancelAsyncDispense()
     {
@@ -190,7 +195,7 @@ public class DispenseAsyncTests
                 hardwareSimulatedSignal.Set();
                 try
                 {
-                    await Task.Delay(10000, ct); // Block until cancelled
+                    await Task.Delay(10000, ct).ConfigureAwait(false); // Block until cancelled
                 }
                 catch (OperationCanceledException)
                 {
@@ -226,7 +231,7 @@ public class DispenseAsyncTests
         changer.ReadCashCounts(); // Should NO LONGER throw Busy
 
         // Wait a bit for the async task to propagate the cancellation catch
-        await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken);
+        await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Verify no AsyncFinished event fired
         lock (changer.QueuedEvents)
@@ -235,7 +240,8 @@ public class DispenseAsyncTests
         }
     }
 
-    /// <summary>非同期払出時にハード故障が発生した場合、AsyncResultCodeExtended にエラー詳細がセットされることを検証します。</summary>
+    /// <summary>非同期払出時にハード故障が発生した場合、AsyncResultCodeExtended にエラー詳細がセットされることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task AsyncDispenseFailureShouldSetAsyncResultCodeExtended()
     {
@@ -267,11 +273,12 @@ public class DispenseAsyncTests
         bool eventFired = false;
         while (!eventFired && timeout < 50)
         {
-            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken);
+            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken).ConfigureAwait(false);
             lock (changer.QueuedEvents)
             {
                 eventFired = changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
             }
+
             timeout++;
         }
 

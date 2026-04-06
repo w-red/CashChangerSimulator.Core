@@ -4,46 +4,46 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>デバイスの機能フラグ（Capabilities）が構成設定を正しく反映しているか検証するテストクラス。</summary>
+/// <summary>デバイスの機能フラグ（Capabilities）が構成設定を正しく反映しているか検証するテストクラス。.</summary>
 public class CapabilitiesFacadeTests
 {
-    private readonly SimulatorConfiguration _config;
-    private readonly CapabilitiesFacade _sut;
+    private readonly SimulatorConfiguration config;
+    private readonly CapabilitiesFacade sut;
 
     public CapabilitiesFacadeTests()
     {
-        _config = new SimulatorConfiguration();
-        _sut = new CapabilitiesFacade(_config);
+        config = new SimulatorConfiguration();
+        sut = new CapabilitiesFacade(config);
     }
 
-    /// <summary>入金機能（CapDeposit）が有効であることを確認します。</summary>
+    /// <summary>入金機能（CapDeposit）が有効であることを確認します。.</summary>
     [Fact]
     public void CapDepositShouldBeTrue()
     {
-        _sut.CapDeposit.ShouldBeTrue();
+        sut.CapDeposit.ShouldBeTrue();
     }
 
-    /// <summary>フルセンサー機能（CapFullSensor）が有効であることを確認します。</summary>
+    /// <summary>フルセンサー機能（CapFullSensor）が有効であることを確認します。.</summary>
     [Fact]
     public void CapFullSensorShouldBeTrue()
     {
-        _sut.CapFullSensor.ShouldBeTrue();
+        sut.CapFullSensor.ShouldBeTrue();
     }
 
-    /// <summary>リアルタイムデータ機能（CapRealTimeData）が構成設定を正しく反映することを検証します。</summary>
+    /// <summary>リアルタイムデータ機能（CapRealTimeData）が構成設定を正しく反映することを検証します。.</summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public void CapRealTimeDataShouldReflectConfig(bool expected)
     {
-        _config.Simulation.CapRealTimeData = expected;
-        _sut.CapRealTimeData.ShouldBe(expected);
+        config.Simulation.CapRealTimeData = expected;
+        sut.CapRealTimeData.ShouldBe(expected);
     }
 
-    /// <summary>統計情報報告機能（CapStatisticsReporting）が有効であることを確認します。</summary>
+    /// <summary>統計情報報告機能（CapStatisticsReporting）が有効であることを確認します。.</summary>
     [Fact]
     public void CapStatisticsReportingShouldBeTrue()
     {
-        _sut.CapStatisticsReporting.ShouldBeTrue();
+        sut.CapStatisticsReporting.ShouldBeTrue();
     }
 }

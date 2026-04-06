@@ -1,13 +1,13 @@
-
 using CashChangerSimulator.Core.Configuration;
 using R3;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
-/// <summary>ConfigurationProvider の動作を検証するテスト。</summary>
+
+/// <summary>ConfigurationProvider の動作を検証するテスト。.</summary>
 public class ConfigurationProviderTests
 {
-    /// <summary>設定の初期読み込みと再読み込みイベントの発火を検証する。</summary>
+    /// <summary>設定の初期読み込みと再読み込みイベントの発火を検証する。.</summary>
     [Fact]
     public void ReloadShouldUpdateConfigAndFireEvent()
     {

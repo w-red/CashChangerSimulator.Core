@@ -6,75 +6,75 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>デバイスのライフサイクル状態（Closed, Opened, Claimed）の遷移ロジックを個別検証するテストクラス。</summary>
+/// <summary>デバイスのライフサイクル状態（Closed, Opened, Claimed）の遷移ロジックを個別検証するテストクラス。.</summary>
 public class LifecycleStateTests
 {
-    private readonly DeviceLifecycleContext _context;
-    private bool _deviceEnabled;
+    private readonly DeviceLifecycleContext context;
+    private bool deviceEnabled;
 
     public LifecycleStateTests()
     {
         var hw = new HardwareStatusManager();
-        _context = new DeviceLifecycleContext(hw, NullLogger.Instance, enabled => _deviceEnabled = enabled);
+        context = new DeviceLifecycleContext(hw, NullLogger.Instance, enabled => deviceEnabled = enabled);
     }
 
-    /// <summary>ClosedState からの各操作による状態遷移と例外発生を検証します。</summary>
+    /// <summary>ClosedState からの各操作による状態遷移と例外発生を検証します。.</summary>
     [Fact]
     public void ClosedStateTransitions()
     {
         var state = new ClosedState();
 
         // Open
-        state.Open(_context).ShouldBeOfType<OpenedState>();
-        _context.HardwareStatusManager.IsConnected.Value.ShouldBeTrue();
+        state.Open(context).ShouldBeOfType<OpenedState>();
+        context.HardwareStatusManager.IsConnected.Value.ShouldBeTrue();
 
         // Already closed or invalid operations
-        Should.Throw<PosControlException>(() => state.Close(_context)).ErrorCode.ShouldBe(ErrorCode.Closed);
-        Should.Throw<PosControlException>(() => state.Claim(_context, 0)).ErrorCode.ShouldBe(ErrorCode.Closed);
-        Should.Throw<PosControlException>(() => state.Release(_context)).ErrorCode.ShouldBe(ErrorCode.Closed);
+        Should.Throw<PosControlException>(() => state.Close(context)).ErrorCode.ShouldBe(ErrorCode.Closed);
+        Should.Throw<PosControlException>(() => state.Claim(context, 0)).ErrorCode.ShouldBe(ErrorCode.Closed);
+        Should.Throw<PosControlException>(() => state.Release(context)).ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>OpenedState からの各操作による状態遷移（Claim, Close等）を検証します。</summary>
+    /// <summary>OpenedState からの各操作による状態遷移（Claim, Close等）を検証します。.</summary>
     [Fact]
     public void OpenedStateTransitions()
     {
         var state = new OpenedState();
 
         // Already open
-        state.Open(_context).ShouldBe(state);
+        state.Open(context).ShouldBe(state);
 
         // Claim
-        state.Claim(_context, 0).ShouldBeOfType<ClaimedState>();
+        state.Claim(context, 0).ShouldBeOfType<ClaimedState>();
 
         // Close
-        _context.HardwareStatusManager.SetConnected(true);
-        state.Close(_context).ShouldBeOfType<ClosedState>();
-        _context.HardwareStatusManager.IsConnected.Value.ShouldBeFalse();
+        context.HardwareStatusManager.SetConnected(true);
+        state.Close(context).ShouldBeOfType<ClosedState>();
+        context.HardwareStatusManager.IsConnected.Value.ShouldBeFalse();
 
         // Release (ignored)
-        state.Release(_context).ShouldBe(state);
+        state.Release(context).ShouldBe(state);
     }
 
-    /// <summary>ClaimedState からの解放（Release）および自動解放を伴う Close 操作を検証します。</summary>
+    /// <summary>ClaimedState からの解放（Release）および自動解放を伴う Close 操作を検証します。.</summary>
     [Fact]
     public void ClaimedStateTransitions()
     {
         var state = new ClaimedState();
 
         // Already open/claimed
-        state.Open(_context).ShouldBe(state);
-        state.Claim(_context, 0).ShouldBe(state);
+        state.Open(context).ShouldBe(state);
+        state.Claim(context, 0).ShouldBe(state);
 
         // Release
-        _deviceEnabled = true;
-        state.Release(_context).ShouldBeOfType<OpenedState>();
-        _deviceEnabled.ShouldBeFalse();
+        deviceEnabled = true;
+        state.Release(context).ShouldBeOfType<OpenedState>();
+        deviceEnabled.ShouldBeFalse();
 
         // Close (auto-release)
-        _context.HardwareStatusManager.SetConnected(true);
-        _deviceEnabled = true;
-        state.Close(_context).ShouldBeOfType<ClosedState>();
-        _deviceEnabled.ShouldBeFalse();
-        _context.HardwareStatusManager.IsConnected.Value.ShouldBeFalse();
+        context.HardwareStatusManager.SetConnected(true);
+        deviceEnabled = true;
+        state.Close(context).ShouldBeOfType<ClosedState>();
+        deviceEnabled.ShouldBeFalse();
+        context.HardwareStatusManager.IsConnected.Value.ShouldBeFalse();
     }
 }

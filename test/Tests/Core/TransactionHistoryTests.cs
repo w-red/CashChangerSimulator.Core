@@ -6,10 +6,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>TransactionHistory の動作を検証するテスト。</summary>
+/// <summary>TransactionHistory の動作を検証するテスト。.</summary>
 public class TransactionHistoryTests
 {
-    /// <summary>取引履歴が追加された際、正しく通知され、格納されることを検証する。</summary>
+    /// <summary>取引履歴が追加された際、正しく通知され、格納されることを検証する。.</summary>
     [Fact]
     public void TransactionHistoryAddEntryShouldNotifyAndStore()
     {
@@ -35,7 +35,7 @@ public class TransactionHistoryTests
         history.Entries[0].Type.ShouldBe(TransactionType.Deposit);
     }
 
-    /// <summary>1000件を超える履歴が追加された際、古い順に破棄されることを検証する。</summary>
+    /// <summary>1000件を超える履歴が追加された際、古い順に破棄されることを検証する。.</summary>
     [Fact]
     public void TransactionHistoryShouldEnforceLimit()
     {
@@ -50,7 +50,7 @@ public class TransactionHistoryTests
         history.Entries[999].Amount.ShouldBe(100); // 100番目が最後（100-1099の1000件）
     }
 
-    /// <summary>HistoryState DTO との相互変換が正しく行われることを検証する。</summary>
+    /// <summary>HistoryState DTO との相互変換が正しく行われることを検証する。.</summary>
     [Fact]
     public void TransactionHistoryShouldConvertStateCorrectly()
     {
@@ -70,7 +70,7 @@ public class TransactionHistoryTests
         history2.Entries[0].Counts[key].ShouldBe(5);
     }
 
-    /// <summary>Entries が null の HistoryState を渡してもクラッシュしないことを検証する。</summary>
+    /// <summary>Entries が null の HistoryState を渡してもクラッシュしないことを検証する。.</summary>
     [Fact]
     public void FromStateWithNullEntriesShouldNotCrash()
     {
@@ -82,7 +82,7 @@ public class TransactionHistoryTests
         history.Entries.ShouldBeEmpty();
     }
 
-    /// <summary>FromState で 1000件 を超えるデータがある場合、制限されることを検証する。</summary>
+    /// <summary>FromState で 1000件 を超えるデータがある場合、制限されることを検証する。.</summary>
     [Fact]
     public void FromStateWithTooManyEntriesShouldEnforceLimit()
     {
@@ -92,6 +92,7 @@ public class TransactionHistoryTests
         {
             entries.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Adjustment, i, new Dictionary<DenominationKey, int>()));
         }
+
         var state = new HistoryState { Entries = entries };
 
         // Act

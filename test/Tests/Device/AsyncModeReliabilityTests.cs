@@ -11,10 +11,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>非同期モードにおけるデバイス動作の信頼性と状態の整合性を検証するテストクラス。</summary>
+/// <summary>非同期モードにおけるデバイス動作の信頼性と状態の整合性を検証するテストクラス。.</summary>
 /// <remarks>
 /// 非同期払い出し操作において、完了イベントが通知された瞬間の内部状態（Status, ResultCode）が
-/// 規約通りであることをタイムクリティカルな条件下で検証します。
+/// 規約通りであることをタイムクリティカルな条件下で検証します。.
 /// </remarks>
 public class AsyncModeReliabilityTests
 {
@@ -26,14 +26,14 @@ public class AsyncModeReliabilityTests
         public ManualResetEventSlim CompletionSignal { get; } = new(false);
         public Exception? BackgroundException { get; private set; }
 
-        private readonly List<EventArgs> _eventHistory = [];
-        private readonly Lock _lock = new();
+        private readonly List<EventArgs> eventHistory = [];
+        private readonly Lock @lock = new();
 
         protected override void NotifyEvent(EventArgs e)
         {
-            lock (_lock)
+            lock (@lock)
             {
-                _eventHistory.Add(e);
+                eventHistory.Add(e);
                 if (e is StatusUpdateEventArgs se && se.Status == 91)
                 {
                     // [IMPORTANT] Capture internal state AT THE MOMENT of event notification.
@@ -50,7 +50,8 @@ public class AsyncModeReliabilityTests
         public bool WaitForEvent(int timeoutMs) => CompletionSignal.Wait(timeoutMs);
     }
 
-    /// <summary>非同期出金処理において、完了イベント通知時の内部状態が正しいことを検証します。</summary>
+    /// <summary>非同期出金処理において、完了イベント通知時の内部状態が正しいことを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task AsyncDispenseShouldHaveCorrectStateWhenEventFires()
     {
@@ -84,10 +85,16 @@ public class AsyncModeReliabilityTests
         // Capture background exceptions properly for diagnostic output
         Func<Task> act = async () =>
         {
-            try { changer.DispenseChange(100); }
-            catch (Exception ex) { changer.SetBackgroundException(ex); }
+            try
+            {
+                changer.DispenseChange(100);
+            }
+            catch (Exception ex)
+            {
+                changer.SetBackgroundException(ex);
+            }
         };
-        await Task.Run(act, TestContext.Current.CancellationToken);
+        await Task.Run(act, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Assert: Ensure it's busy immediately
         changer.DispenseController.IsBusy.ShouldBeTrue("Dispense operation should be busy.");

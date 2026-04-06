@@ -9,10 +9,11 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>高度なスクリプト機能（ループ、変数）のテストクラス。</summary>
+/// <summary>高度なスクリプト機能（ループ、変数）のテストクラス。.</summary>
 public class AdvancedScriptingTests
 {
-    /// <summary>スクリプト内の Repeat（ループ）操作が期待通りに複数回実行されることを検証します。</summary>
+    /// <summary>スクリプト内の Repeat（ループ）操作が期待通りに複数回実行されることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task ExecuteScriptAsyncRepeatShouldExecuteMultipleTimes()
     {
@@ -21,7 +22,7 @@ public class AdvancedScriptingTests
         var hardware = new HardwareStatusManager();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
-        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
@@ -42,14 +43,30 @@ public class AdvancedScriptingTests
 
         // Act
         controller.RequiredAmount = 10000; // Ensure everything is stored
-        await service.ExecuteScriptAsync(json);
+        Console.WriteLine($"Starting Script Execution...");
+        await service.ExecuteScriptAsync(json).ConfigureAwait(false);
+        Console.WriteLine($"Script Execution Finished.");
 
         // Assert
         var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        inv.GetCount(key1000).ShouldBe(3);
+        var actualCount = inv.GetCount(key1000);
+        Console.WriteLine($"Final Count for {key1000}: {actualCount}");
+        
+        if (actualCount == 0)
+        {
+            Console.WriteLine("Inventory content:");
+            foreach (var kv in inv.AllCounts)
+            {
+                Console.WriteLine($"  - {kv.Key}: {kv.Value} (Hash: {kv.Key.GetHashCode()}, Value: {kv.Key.Value}, Scale: {decimal.GetBits(kv.Key.Value)[3]})");
+            }
+            Console.WriteLine($"Expected key: {key1000} (Hash: {key1000.GetHashCode()}, Value: {key1000.Value}, Scale: {decimal.GetBits(key1000.Value)[3]})");
+        }
+
+        actualCount.ShouldBe(3);
     }
 
-    /// <summary>スクリプト内で変数をセットし、動的なパラメータとして後続のコマンドで使用できることを検証します。</summary>
+    /// <summary>スクリプト内で変数をセットし、動的なパラメータとして後続のコマンドで使用できることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task ExecuteScriptAsyncSetVariableShouldAllowDynamicParameters()
     {
@@ -58,7 +75,7 @@ public class AdvancedScriptingTests
         var hardware = new HardwareStatusManager();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
-        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
@@ -76,7 +93,7 @@ public class AdvancedScriptingTests
 
         // Act
         controller.RequiredAmount = 10000; // Ensure everything is stored
-        await service.ExecuteScriptAsync(json);
+        await service.ExecuteScriptAsync(json).ConfigureAwait(false);
 
         // Assert
         var key1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
@@ -84,7 +101,8 @@ public class AdvancedScriptingTests
         inv.CalculateTotal().ShouldBe(1000); // 3000 - 2000
     }
 
-    /// <summary>スクリプト経由でハードウェアエラーを注入し、デバイス状態が正しく更新されることを検証します。</summary>
+    /// <summary>スクリプト経由でハードウェアエラーを注入し、デバイス状態が正しく更新されることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task ExecuteScriptAsyncInjectErrorShouldChangeHardwareState()
     {
@@ -93,7 +111,7 @@ public class AdvancedScriptingTests
         var hardware = new HardwareStatusManager();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
-        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
@@ -106,11 +124,12 @@ public class AdvancedScriptingTests
 
         // Act & Assert
         // BeginDeposit はハードウェアエラー状態（Jammed）なので DeviceException を投げるべき
-        await Should.ThrowAsync<CashChangerSimulator.Core.Exceptions.DeviceException>(async () => await service.ExecuteScriptAsync(json));
+        await Should.ThrowAsync<CashChangerSimulator.Core.Exceptions.DeviceException>(async () => await service.ExecuteScriptAsync(json).ConfigureAwait(false)).ConfigureAwait(false);
         hardware.IsJammed.Value.ShouldBeTrue();
     }
 
-    /// <summary>スクリプト内の Assert 操作により、現在のインベントリ状態が正しく検証されることを確認します。</summary>
+    /// <summary>スクリプト内の Assert 操作により、現在のインベントリ状態が正しく検証されることを確認します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task ExecuteScriptAsyncAssertShouldVerifyInventory()
     {
@@ -119,7 +138,7 @@ public class AdvancedScriptingTests
         var hardware = new HardwareStatusManager();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
-        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
@@ -135,14 +154,15 @@ public class AdvancedScriptingTests
 
         // Act
         controller.RequiredAmount = 1000;
-        await service.ExecuteScriptAsync(json);
+        await service.ExecuteScriptAsync(json).ConfigureAwait(false);
 
         // Assert (スクリプト内で Assert が通れば例外は出ない)
         var key500 = new DenominationKey(500, CurrencyCashType.Coin, "JPY");
         inv.GetCount(key500).ShouldBe(2);
     }
 
-    /// <summary>特定の箇所（Inletなど）へのジャム注入がハードウェア状態に正しく反映されることを検証します。</summary>
+    /// <summary>特定の箇所（Inletなど）へのジャム注入がハードウェア状態に正しく反映されることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task ExecuteScriptAsyncInjectErrorJamLocationShouldUpdateHardware()
     {
@@ -151,7 +171,7 @@ public class AdvancedScriptingTests
         var hardware = new HardwareStatusManager();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
-        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
@@ -162,14 +182,15 @@ public class AdvancedScriptingTests
         ]";
 
         // Act
-        await service.ExecuteScriptAsync(json);
+        await service.ExecuteScriptAsync(json).ConfigureAwait(false);
 
         // Assert
         hardware.IsJammed.Value.ShouldBeTrue();
         hardware.JamLocation.Value.ShouldBe(JamLocation.Inlet);
     }
 
-    /// <summary>汎用デバイスエラーの注入がハードウェア状態およびエラーコードに正しく反映されることを検証します。</summary>
+    /// <summary>汎用デバイスエラーの注入がハードウェア状態およびエラーコードに正しく反映されることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task ExecuteScriptAsyncInjectErrorDeviceShouldUpdateHardware()
     {
@@ -178,7 +199,7 @@ public class AdvancedScriptingTests
         var hardware = new HardwareStatusManager();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
-        var manager = new CashChangerManager(inv, new TransactionHistory(), new ChangeCalculator());
+        var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
@@ -189,7 +210,7 @@ public class AdvancedScriptingTests
         ]";
 
         // Act
-        await service.ExecuteScriptAsync(json);
+        await service.ExecuteScriptAsync(json).ConfigureAwait(false);
 
         // Assert
         hardware.IsDeviceError.Value.ShouldBeTrue();

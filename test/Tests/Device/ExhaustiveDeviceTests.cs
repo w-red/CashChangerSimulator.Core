@@ -15,32 +15,31 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>CashChangerSimulator.Device のカバレッジを 100% にするための網羅的テストクラス。</summary>
+/// <summary>CashChangerSimulator.Device のカバレッジを 100% にするための網羅的テストクラス。.</summary>
 public class ExhaustiveDeviceTests : IDisposable
 {
-    private readonly Inventory _inventory;
-    private readonly CashChangerManager _manager;
-    private readonly HardwareStatusManager _hardwareStatusManager;
-    private readonly Mock<IDeviceSimulator> _simulatorMock;
-    private readonly DispenseController _controller;
+    private readonly Inventory inventory;
+    private readonly CashChangerManager manager;
+    private readonly HardwareStatusManager hardwareStatusManager;
+    private readonly Mock<IDeviceSimulator> simulatorMock;
+    private readonly DispenseController controller;
 
     public ExhaustiveDeviceTests()
     {
-        _inventory = new Inventory();
+        inventory = new Inventory();
         var history = new TransactionHistory();
-        var calculator = new ChangeCalculator();
-        _manager = new CashChangerManager(_inventory, history, calculator);
-        _hardwareStatusManager = new HardwareStatusManager();
-        _simulatorMock = new Mock<IDeviceSimulator>();
-        _controller = new DispenseController(_manager, _hardwareStatusManager, _simulatorMock.Object);
+        manager = new CashChangerManager(inventory, history, (object?)null, null);
+        hardwareStatusManager = new HardwareStatusManager();
+        simulatorMock = new Mock<IDeviceSimulator>();
+        controller = new DispenseController(manager, hardwareStatusManager, simulatorMock.Object);
 
-        _hardwareStatusManager.SetConnected(true);
+        hardwareStatusManager.SetConnected(true);
     }
 
     public void Dispose()
     {
-        _controller.Dispose();
-        _hardwareStatusManager.Dispose();
+        controller.Dispose();
+        hardwareStatusManager.Dispose();
     }
 
     [Fact]
@@ -48,36 +47,37 @@ public class ExhaustiveDeviceTests : IDisposable
     {
         // Normal path
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        _inventory.SetCount(key, 10);
-        _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        inventory.SetCount(key, 10);
+        simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await _controller.DispenseChangeAsync((int)1000, false);
-        _controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
+        await controller.DispenseChangeAsync((int)1000, false).ConfigureAwait(false);
+        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
 
         // Async mode
-        await _controller.DispenseChangeAsync((int)1000, true);
-        await Task.Delay(200, TestContext.Current.CancellationToken);
-        _controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
+        await controller.DispenseChangeAsync((int)1000, true).ConfigureAwait(false);
+        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
 
         // Error: Busy
         var tcs = new TaskCompletionSource();
-        _simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
-        var task = _controller.DispenseChangeAsync((int)1000, false);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
-        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false));
+        simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
+        var task = controller.DispenseChangeAsync((int)1000, false);
+        await Task.Delay(100, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync((int)1000, false).ConfigureAwait(false)).ConfigureAwait(false);
         tcs.SetResult();
-        _controller.ClearOutput();
+        controller.ClearOutput();
 
         // Error: Disconnected
-        _hardwareStatusManager.SetConnected(false);
-        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync((int)1000, false));
-        _hardwareStatusManager.SetConnected(true);
+        hardwareStatusManager.SetConnected(false);
+        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync((int)1000, false).ConfigureAwait(false)).ConfigureAwait(false);
+        hardwareStatusManager.SetConnected(true);
     }
 
     [Fact]
     public void CashCountParserBranches()
     {
-        var keys = new List<DenominationKey> {
+        var keys = new List<DenominationKey>
+        {
             new(100, CurrencyCashType.Coin, "JPY"),
             new(1000, CurrencyCashType.Bill, "JPY")
         };
@@ -88,7 +88,8 @@ public class ExhaustiveDeviceTests : IDisposable
         // Error cases
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("100:10;1000:5;2000:1", keys, 1)); // Too many sections
 
-        var ambiguousKeys = new List<DenominationKey> {
+        var ambiguousKeys = new List<DenominationKey>
+        {
             new(100, CurrencyCashType.Coin, "JPY"),
             new(100, CurrencyCashType.Bill, "JPY")
         };
@@ -124,7 +125,7 @@ public class ExhaustiveDeviceTests : IDisposable
 
         // Inventory
         device.AdjustCashCounts("1000:10");
-        var ccStr = "";
+        var ccStr = string.Empty;
         var disc = false;
         device.ReadCashCounts(ref ccStr, ref disc);
         ccStr.ShouldContain("1000:10");
@@ -132,7 +133,7 @@ public class ExhaustiveDeviceTests : IDisposable
         // Stats & Health
         device.RetrieveStatistics(["test"]);
         device.CheckHealth(HealthCheckLevel.Internal);
-        device.DirectIO(0, 0, "");
+        device.DirectIO(0, 0, string.Empty);
 
         device.DeviceEnabled = false;
         device.Release();
@@ -146,29 +147,29 @@ public class ExhaustiveDeviceTests : IDisposable
         var context = new ScriptExecutionContext();
 
         // Enable
-        var enableHandler = new EnableCommandHandler(_hardwareStatusManager);
-        await enableHandler.ExecuteAsync(new ScriptCommand { Op = "enable", Value = "true" }, context, logger, null);
-        _hardwareStatusManager.IsConnected.Value.ShouldBeTrue();
+        var enableHandler = new EnableCommandHandler(hardwareStatusManager);
+        await enableHandler.ExecuteAsync(new ScriptCommand { Op = "enable", Value = "true" }, context, logger, null).ConfigureAwait(false);
+        hardwareStatusManager.IsConnected.Value.ShouldBeTrue();
 
         // InjectError
-        var injectHandler = new InjectErrorCommandHandler(_hardwareStatusManager);
-        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "overlap" }, context, logger, null);
-        _hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
+        var injectHandler = new InjectErrorCommandHandler(hardwareStatusManager);
+        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "overlap" }, context, logger, null).ConfigureAwait(false);
+        hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
 
-        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "device", ErrorCode = 1, ErrorCodeExtended = 2 }, context, logger, null);
+        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "device", ErrorCode = 1, ErrorCodeExtended = 2 }, context, logger, null).ConfigureAwait(false);
 
-        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "reset" }, context, logger, null);
-        _hardwareStatusManager.IsOverlapped.Value.ShouldBeFalse();
+        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "reset" }, context, logger, null).ConfigureAwait(false);
+        hardwareStatusManager.IsOverlapped.Value.ShouldBeFalse();
 
-        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "jam", Location = "Entrance" }, context, logger, null);
-        _hardwareStatusManager.IsJammed.Value.ShouldBeTrue();
+        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "jam", Location = "Entrance" }, context, logger, null).ConfigureAwait(false);
+        hardwareStatusManager.IsJammed.Value.ShouldBeTrue();
 
-        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "unknown" }, context, logger, null);
-        _hardwareStatusManager.IsJammed.Value.ShouldBeFalse();
+        await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "unknown" }, context, logger, null).ConfigureAwait(false);
+        hardwareStatusManager.IsJammed.Value.ShouldBeFalse();
 
         // Open (already connected in constructor, but call again)
-        var openHandler = new OpenCommandHandler(_hardwareStatusManager);
-        await openHandler.ExecuteAsync(new ScriptCommand { Op = "open" }, context, logger, null);
+        var openHandler = new OpenCommandHandler(hardwareStatusManager);
+        await openHandler.ExecuteAsync(new ScriptCommand { Op = "open" }, context, logger, null).ConfigureAwait(false);
     }
 
     [Fact]

@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>入金（Deposit）処理の非同期動作における信頼性と整合性を検証するテストクラス。</summary>
+/// <summary>入金（Deposit）処理の非同期動作における信頼性と整合性を検証するテストクラス。.</summary>
 public class DepositReliabilityTests
 {
     private class DepositReliabilityChanger : InternalSimulatorCashChanger
@@ -14,7 +14,8 @@ public class DepositReliabilityTests
         public ConcurrentBag<EventArgs> EventHistory { get; } = [];
         public int DataEventCount => EventHistory.Count(e => e is DataEventArgs);
 
-        public DepositReliabilityChanger() : base()
+        public DepositReliabilityChanger()
+            : base()
         {
             // [STABILITY] Disable POS.NET internal event queueing to prevent duplicate NotifyEvent calls in headless environments.
             DisableUposEventQueuing = true;
@@ -23,12 +24,14 @@ public class DepositReliabilityTests
         protected override void NotifyEvent(EventArgs e)
         {
             EventHistory.Add(e);
+
             // base.NotifyEvent is NOT called if we want to completely isolate the event fired from coordinator
-            // base.NotifyEvent(e); 
+            // base.NotifyEvent(e);
         }
     }
 
-    /// <summary>バックグラウンドでの入金挿入と、メインスレッドでの確定操作が競合した場合に DataEvent が正しく1回だけ発行されることを検証します。</summary>
+    /// <summary>バックグラウンドでの入金挿入と、メインスレッドでの確定操作が競合した場合に DataEvent が正しく1回だけ発行されることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DataEvent_Consistency_Under_Concurrent_Track_And_Fix()
     {
@@ -50,22 +53,33 @@ public class DepositReliabilityTests
         var cts = new CancellationTokenSource();
         var ct = TestContext.Current.CancellationToken;
 
-        var insertionTask = Task.Run(async () =>
+        var insertionTask = Task.Run(
+            async () =>
         {
             for (int i = 0; i < 5; i++)
             {
-                if (cts.Token.IsCancellationRequested || ct.IsCancellationRequested) break;
+                if (cts.Token.IsCancellationRequested || ct.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 changer.DepositController.TrackDeposit(key);
-                await Task.Delay(5, ct);
+                await Task.Delay(5, ct).ConfigureAwait(false);
             }
         }, ct);
 
         // Wait slightly and FixDeposit concurrently
-        await Task.Delay(10, ct);
+        await Task.Delay(10, ct).ConfigureAwait(false);
         changer.FixDeposit();
         cts.Cancel();
 
-        try { await Task.WhenAny(insertionTask, Task.Delay(500, ct)); } catch (OperationCanceledException) { }
+        try
+        {
+            await Task.WhenAny(insertionTask, Task.Delay(500, ct)).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+        }
 
         // Assert
         var events = changer.EventHistory.ToList();
@@ -77,7 +91,8 @@ public class DepositReliabilityTests
         changer.Close();
     }
 
-    /// <summary>入金セッションのライフサイクル（Begin->Track->Fix->End）を高頻度で繰り返し、状態の破損や整合性エラーが発生しないことを検証します。</summary>
+    /// <summary>入金セッションのライフサイクル（Begin->Track->Fix->End）を高頻度で繰り返し、状態の破損や整合性エラーが発生しないことを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task Rapid_Session_Lifecycle_Reliability()
     {
@@ -98,7 +113,10 @@ public class DepositReliabilityTests
         // Act: 100 iterations of full deposit lifecycle
         for (int i = 0; i < 100; i++)
         {
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
 
             changer.EventHistory.Clear();
             changer.BeginDeposit();
@@ -116,7 +134,8 @@ public class DepositReliabilityTests
         changer.Close();
     }
 
-    /// <summary>一時停止（Pause）の切り替えと入金挿入が並行して発生した場合に、停止中の挿入が無視され、状態が整合していることを検証します。</summary>
+    /// <summary>一時停止（Pause）の切り替えと入金挿入が並行して発生した場合に、停止中の挿入が無視され、状態が整合していることを検証します。.</summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task Pause_Resume_Race_Condition()
     {
@@ -135,32 +154,42 @@ public class DepositReliabilityTests
 
         // Act: Concurrent pause/resume and insertions
         var cts = new CancellationTokenSource();
-        var task = Task.Run(async () =>
+        var task = Task.Run(
+            async () =>
         {
             while (!cts.Token.IsCancellationRequested && !ct.IsCancellationRequested)
             {
                 changer.DepositController.TrackDeposit(key);
-                await Task.Delay(1, ct);
+                await Task.Delay(1, ct).ConfigureAwait(false);
             }
         }, ct);
 
         for (int i = 0; i < 10; i++)
         {
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
 
             changer.PauseDeposit(CashDepositPause.Pause);
-            await Task.Delay(5, ct);
+            await Task.Delay(5, ct).ConfigureAwait(false);
             var pausedAmount = changer.DepositAmount;
 
-            await Task.Delay(10, ct);
+            await Task.Delay(10, ct).ConfigureAwait(false);
             changer.DepositAmount.ShouldBe(pausedAmount, $"Amount should not increase while paused (Iteration {i}).");
 
             changer.PauseDeposit(CashDepositPause.Restart);
-            await Task.Delay(5, ct);
+            await Task.Delay(5, ct).ConfigureAwait(false);
         }
 
         cts.Cancel();
-        try { await Task.WhenAny(task, Task.Delay(500, ct)); } catch (OperationCanceledException) { }
+        try
+        {
+            await Task.WhenAny(task, Task.Delay(500, ct)).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+        }
 
         changer.FixDeposit();
         changer.Close();

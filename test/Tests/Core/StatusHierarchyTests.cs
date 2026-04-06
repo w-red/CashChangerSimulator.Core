@@ -4,10 +4,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>在庫ステータスの優先順位と集約ロジックを検証するテストクラス。</summary>
+/// <summary>在庫ステータスの優先順位と集約ロジックを検証するテストクラス。.</summary>
 public class StatusHierarchyTests
 {
-    /// <summary>空の状態とフルの状態が別々のスロットで発生した際、双方が正しく報告されることを検証する。</summary>
+    /// <summary>空の状態とフルの状態が別々のスロットで発生した際、双方が正しく報告されることを検証する。.</summary>
     [Fact]
     public void StatusHierarchyEmptyShouldNotBeMaskedByFullInDifferentSlots()
     {

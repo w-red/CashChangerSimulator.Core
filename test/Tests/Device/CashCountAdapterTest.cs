@@ -5,10 +5,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>CashCountAdapter の変換ロジックを検証するテストクラス。</summary>
+/// <summary>CashCountAdapter の変換ロジックを検証するテストクラス。.</summary>
 public class CashCountAdapterTest
 {
-    /// <summary>CashCount から DenominationKey への変換が正しいことを確認します。</summary>
+    /// <summary>CashCount から DenominationKey への変換が正しいことを確認します。.</summary>
     [Fact]
     public void ToDenominationKeyShouldConvertCorrectly()
     {
@@ -20,7 +20,7 @@ public class CashCountAdapterTest
         key.CurrencyCode.ShouldBe("JPY");
     }
 
-    /// <summary>Coin タイプの CashCount 変換が正しいことを確認します。</summary>
+    /// <summary>Coin タイプの CashCount 変換が正しいことを確認します。.</summary>
     [Fact]
     public void ToDenominationKeyCoinShouldConvertCorrectly()
     {
@@ -32,7 +32,7 @@ public class CashCountAdapterTest
         key.CurrencyCode.ShouldBe("JPY");
     }
 
-    /// <summary>通貨係数を適用した変換が正しいことを確認します (USD: factor=100)。</summary>
+    /// <summary>通貨係数を適用した変換が正しいことを確認します (USD: factor=100)。.</summary>
     [Fact]
     public void ToDenominationKeyWithCurrencyFactorShouldApplyFactor()
     {
@@ -44,7 +44,7 @@ public class CashCountAdapterTest
         key.CurrencyCode.ShouldBe("USD");
     }
 
-    /// <summary>DenominationKey から CashCount への逆変換が正しいことを確認します。</summary>
+    /// <summary>DenominationKey から CashCount への逆変換が正しいことを確認します。.</summary>
     [Fact]
     public void ToCashCountShouldConvertCorrectly()
     {
@@ -56,7 +56,7 @@ public class CashCountAdapterTest
         cc.Count.ShouldBe(5);
     }
 
-    /// <summary>CashCount 配列から Dictionary への一括変換が正しいことを確認します。</summary>
+    /// <summary>CashCount 配列から Dictionary への一括変換が正しいことを確認します。.</summary>
     [Fact]
     public void ToDenominationDictShouldConvertArray()
     {
@@ -73,7 +73,7 @@ public class CashCountAdapterTest
         dict[new DenominationKey(100m, CurrencyCashType.Coin, "JPY")].ShouldBe(5);
     }
 
-    /// <summary>負の Count を持つ CashCount で例外がスローされることを確認します。</summary>
+    /// <summary>負の Count を持つ CashCount で例外がスローされることを確認します。.</summary>
     [Fact]
     public void ToDenominationDictNegativeCountShouldThrow()
     {

@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>DirectIO コマンド（オーバーラップ、ジャム注入、バージョン取得など）の個別動作を検証するテストクラス。</summary>
+/// <summary>DirectIO コマンド（オーバーラップ、ジャム注入、バージョン取得など）の個別動作を検証するテストクラス。.</summary>
 public class DirectIOTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
@@ -17,7 +17,7 @@ public class DirectIOTests
         return simulator;
     }
 
-    /// <summary>DirectIO(10) によりオーバーラップ状態の切り替えが正しく行われることを検証します。</summary>
+    /// <summary>DirectIO(10) によりオーバーラップ状態の切り替えが正しく行われることを検証します。.</summary>
     [Fact]
     public void DirectIoCommand10ShouldToggleOverlap()
     {
@@ -37,7 +37,7 @@ public class DirectIOTests
         hardwareStatusManager.IsOverlapped.Value.ShouldBeFalse("DirectIO 10 with data=0 should set Overlap to false.");
     }
 
-    /// <summary>DirectIO(11) によりジャム状態の切り替えが正しく行われることを検証します。</summary>
+    /// <summary>DirectIO(11) によりジャム状態の切り替えが正しく行われることを検証します。.</summary>
     [Fact]
     public void DirectIoCommand11ShouldToggleJam()
     {
@@ -54,19 +54,19 @@ public class DirectIOTests
         hardwareStatusManager.IsJammed.Value.ShouldBeFalse("DirectIO 11 with data=0 should set Jam to false.");
     }
 
-    /// <summary>DirectIO(100) によりバージョン情報が正しく返却されることを検証します。</summary>
+    /// <summary>DirectIO(100) によりバージョン情報が正しく返却されることを検証します。.</summary>
     [Fact]
     public void DirectIoCommand100ShouldReturnVersionInfo()
     {
         var simulator = CreateSimulator();
         simulator.SkipStateVerification = true;
 
-        var result = simulator.DirectIO(100, 0, "");
+        var result = simulator.DirectIO(100, 0, string.Empty);
         result.Object.ShouldNotBeNull();
         result.Object.ToString()!.ShouldContain("InternalSimulatorCashChanger");
     }
 
-    /// <summary>未定義の DirectIO コマンドがエラーにならず、そのままパススルーされることを検証します。</summary>
+    /// <summary>未定義の DirectIO コマンドがエラーにならず、そのままパススルーされることを検証します。.</summary>
     [Fact]
     public void DirectIoUnknownCommandShouldPassThrough()
     {

@@ -5,17 +5,17 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>CsvHistoryExportService の CSV エクスポート機能を検証するテストクラス。</summary>
+/// <summary>CsvHistoryExportService の CSV エクスポート機能を検証するテストクラス。.</summary>
 public class CsvHistoryExportServiceTests
 {
-    private readonly CsvHistoryExportService _service;
+    private readonly CsvHistoryExportService service;
 
     public CsvHistoryExportServiceTests()
     {
-        _service = new CsvHistoryExportService();
+        service = new CsvHistoryExportService();
     }
 
-    /// <summary>取引履歴リストが正しい CSV 文字列（ヘッダーとデータ行）に変換されることを検証します。</summary>
+    /// <summary>取引履歴リストが正しい CSV 文字列（ヘッダーとデータ行）に変換されることを検証します。.</summary>
     [Fact]
     public void ExportShouldReturnCorrectCsvString()
     {
@@ -31,8 +31,7 @@ public class CsvHistoryExportServiceTests
                 {
                     { new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 1 },
                     { new DenominationKey(500, CurrencyCashType.Coin, "JPY"), 1 }
-                }
-            ),
+                }),
             new(
                 timestamp.AddMinutes(5),
                 TransactionType.Dispense,
@@ -40,12 +39,11 @@ public class CsvHistoryExportServiceTests
                 new Dictionary<DenominationKey, int>
                 {
                     { new DenominationKey(100, CurrencyCashType.Coin, "JPY"), -2 }
-                }
-            )
+                })
         };
 
         // Act
-        var csv = _service.Export(entries);
+        var csv = service.Export(entries);
 
         // Assert
         var lines = csv.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
@@ -67,7 +65,7 @@ public class CsvHistoryExportServiceTests
         lines[2].ShouldContain("JPY-C100:-2");
     }
 
-    /// <summary>空の取引履歴リストを渡した際に、ヘッダーのみの CSV が生成されることを検証します。</summary>
+    /// <summary>空の取引履歴リストを渡した際に、ヘッダーのみの CSV が生成されることを検証します。.</summary>
     [Fact]
     public void ExportShouldHandleEmptyList()
     {
@@ -75,7 +73,7 @@ public class CsvHistoryExportServiceTests
         var entries = Enumerable.Empty<TransactionEntry>();
 
         // Act
-        var csv = _service.Export(entries);
+        var csv = service.Export(entries);
 
         // Assert
         var lines = csv.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);

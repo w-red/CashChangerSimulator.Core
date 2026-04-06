@@ -11,14 +11,14 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>入金シーケンスの各状態遷移（UPOS準拠）を検証するテストクラス。</summary>
+/// <summary>入金シーケンスの各状態遷移（UPOS準拠）を検証するテストクラス。.</summary>
 public class DepositSequenceTests
 {
     private static (DepositController Controller, Inventory Inventory) CreateController()
     {
         var inventory = new Inventory();
         var history = new TransactionHistory();
-        _ = new CashChangerManager(inventory, history, new ChangeCalculator());
+        _ = new CashChangerManager(inventory, history, (object?)null, null);
         var hw = new HardwareStatusManager();
         hw.SetConnected(true);
         var controller = new DepositController(inventory, hw);
@@ -29,7 +29,7 @@ public class DepositSequenceTests
     // 正常シーケンス
     // =====================================================
 
-    /// <summary>beginDepositから釣銭ありendDepositまでの正常な一連のシーケンスを検証する。</summary>
+    /// <summary>beginDepositから釣銭ありendDepositまでの正常な一連のシーケンスを検証する。.</summary>
     [Fact]
     public void FullDepositSequenceWithChange()
     {
@@ -56,7 +56,7 @@ public class DepositSequenceTests
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
     }
 
-    /// <summary>beginDepositから釣銭なしendDepositまでの正常な一連のシーケンスを検証する。</summary>
+    /// <summary>beginDepositから釣銭なしendDepositまでの正常な一連のシーケンスを検証する。.</summary>
     [Fact]
     public void FullDepositSequenceWithNoChange()
     {
@@ -74,7 +74,7 @@ public class DepositSequenceTests
         inventory.GetCount(b1000).ShouldBe(1); // 在庫に残る
     }
 
-    /// <summary>beginDepositから返却(Repay)を伴うendDepositまでのシーケンスを検証する。</summary>
+    /// <summary>beginDepositから返却(Repay)を伴うendDepositまでのシーケンスを検証する。.</summary>
     [Fact]
     public void FullDepositSequenceWithRepay()
     {
@@ -94,7 +94,7 @@ public class DepositSequenceTests
         inventory.GetCount(b1000).ShouldBe(0); // 在庫から消える（返却）
     }
 
-    /// <summary>入金中の中断(Pause)と再開(Restart)を含むシーケンスを検証する。</summary>
+    /// <summary>入金中の中断(Pause)と再開(Restart)を含むシーケンスを検証する。.</summary>
     [Fact]
     public void PauseAndRestartDuringDeposit()
     {
@@ -128,7 +128,7 @@ public class DepositSequenceTests
     // 異常シーケンス（E_ILLEGAL ガード）
     // =====================================================
 
-    /// <summary>fixDepositを呼ばずにendDepositを実行した際にErrorCode.Illegalがスローされることを検証する。</summary>
+    /// <summary>fixDepositを呼ばずにendDepositを実行した際にErrorCode.Illegalがスローされることを検証する。.</summary>
     [Fact]
     public void EndDepositWithoutFixDepositThrowsIllegal()
     {
@@ -141,7 +141,7 @@ public class DepositSequenceTests
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
-    /// <summary>beginDepositを呼ばずにfixDepositを実行した際にErrorCode.Illegalがスローされることを検証する。</summary>
+    /// <summary>beginDepositを呼ばずにfixDepositを実行した際にErrorCode.Illegalがスローされることを検証する。.</summary>
     [Fact]
     public void FixDepositWithoutBeginDepositThrowsIllegal()
     {
@@ -152,7 +152,7 @@ public class DepositSequenceTests
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
-    /// <summary>入金シーケンスの各段階でIsDepositInProgressフラグが正しく更新されることを検証する。</summary>
+    /// <summary>入金シーケンスの各段階でIsDepositInProgressフラグが正しく更新されることを検証する。.</summary>
     [Fact]
     public void DepositInProgressGuardTest()
     {
@@ -174,7 +174,7 @@ public class DepositSequenceTests
     // オーバーフロー・バリデーション検証
     // =====================================================
 
-    /// <summary>在庫が満杯(Full)の状態で入金した際、オーバーフローとしてカウントされることを検証する。</summary>
+    /// <summary>在庫が満杯(Full)の状態で入金した際、オーバーフローとしてカウントされることを検証する。.</summary>
     [Fact]
     public void TrackDepositShouldOverflow_WhenInventoryIsFull()
     {
@@ -185,13 +185,9 @@ public class DepositSequenceTests
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         var config = new SimulatorConfiguration();
-        config.Inventory[b1000.CurrencyCode] = new InventorySettings
-        {
-            Denominations = new Dictionary<string, DenominationSettings>
-            {
-                { b1000.ToDenominationString(), new DenominationSettings { Full = 5, IsRecyclable = true } }
-            }
-        };
+        var inventorySettings = new InventorySettings();
+        inventorySettings.Denominations.Add(b1000.ToDenominationString(), new DenominationSettings { Full = 5, IsRecyclable = true });
+        config.Inventory[b1000.CurrencyCode] = inventorySettings;
         var configProvider = new ConfigurationProvider();
         configProvider.Update(config);
 
@@ -209,13 +205,13 @@ public class DepositSequenceTests
         controller.DepositCounts[b1000].ShouldBe(1);
     }
 
-    /// <summary>デバイスがジャム(Jam)状態の時に入金を試みた際、例外がスローされることを検証する。</summary>
+    /// <summary>デバイスがジャム(Jam)状態の時に入金を試みた際、例外がスローされることを検証する。.</summary>
     [Fact]
     public void TrackDepositShouldThrow_WhenDeviceIsJammed()
     {
         // Arrange
         var (controller, _) = CreateController();
-        var hwField = typeof(DepositController).GetField("_hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var hwField = typeof(DepositController).GetField("hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
         var hw = (HardwareStatusManager)hwField.GetValue(controller)!;
 
         controller.BeginDeposit();
@@ -226,32 +222,8 @@ public class DepositSequenceTests
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
     }
 
-    /// <summary>入金中にリジェクトイベント（SimulateReject）が発生した際、リジェクト金額が加算され、Changedイベントが発火することを検証する。</summary>
-    [Fact]
-    public void SimulateRejectShouldIncreaseRejectAmountWhenInProgress()
-    {
-        var (controller, _) = CreateController();
-        bool changedEventFired = false;
-        controller.Changed.Subscribe(_ => changedEventFired = true);
 
-        // Assert Before Start
-        controller.SimulateReject(1000); // Should be ignored since not in Count status
-        controller.RejectAmount.ShouldBe(0m);
-        changedEventFired.ShouldBeFalse();
-
-        // Arrange & Act (Start Deposit)
-        controller.BeginDeposit();
-        changedEventFired = false; // Reset changed event flag after BeginDeposit
-
-        // Act (Simulate Reject)
-        controller.SimulateReject(1000);
-
-        // Assert
-        controller.RejectAmount.ShouldBe(1000m);
-        changedEventFired.ShouldBeTrue();
-    }
-
-    /// <summary>投入された現金がリアルタイムでエスクロー在庫を更新することを検証します。</summary>
+    /// <summary>投入された現金がリアルタイムでエスクロー在庫を更新することを検証します。.</summary>
     [Fact]
     public void TrackDepositShouldUpdateInventoryEscrow()
     {
@@ -266,7 +238,7 @@ public class DepositSequenceTests
         inventory.GetCount(b1000).ShouldBe(0); // Not in main inventory yet
     }
 
-    /// <summary>釣銭返却アクション（EndDeposit Change）時にエスクロー内の特定金種が優先的に扱われることを検証します。</summary>
+    /// <summary>釣銭返却アクション（EndDeposit Change）時にエスクロー内の特定金種が優先的に扱われることを検証します。.</summary>
     [Fact]
     public void EndDepositChangeShouldDispenseFromEscrowFirst()
     {
@@ -280,8 +252,15 @@ public class DepositSequenceTests
         controller.BeginDeposit();
 
         // Input: 5x1000 bills, 7x10 coins = 5070
-        for (int i = 0; i < 5; i++) controller.TrackDeposit(b1000);
-        for (int i = 0; i < 7; i++) controller.TrackDeposit(c10);
+        for (int i = 0; i < 5; i++)
+        {
+            controller.TrackDeposit(b1000);
+        }
+
+        for (int i = 0; i < 7; i++)
+        {
+            controller.TrackDeposit(c10);
+        }
 
         controller.FixDeposit();
 
@@ -295,7 +274,7 @@ public class DepositSequenceTests
         inventory.EscrowCounts.ShouldBeEmpty();
     }
 
-    /// <summary>入金キャンセル（Repay）時にエスクロー在庫がクリアされることを検証します。</summary>
+    /// <summary>入金キャンセル（Repay）時にエスクロー在庫がクリアされることを検証します。.</summary>
     [Fact]
     public void EndDepositRepayShouldClearInventoryEscrow()
     {

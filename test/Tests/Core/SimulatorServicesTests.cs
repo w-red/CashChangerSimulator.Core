@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core;
+﻿using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -11,10 +11,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>SimulatorServices の DI 抽象レイヤーを検証するテストクラス (TDD)。</summary>
+/// <summary>SimulatorServices の DI 抽象レイヤーを検証するテストクラス (TDD)。.</summary>
 public class SimulatorServicesTests : IDisposable
 {
-    /// <summary>SimulatorServicesTests の新しいインスタンスを初期化します。</summary>
+    /// <summary>Initializes a new instance of the <see cref="SimulatorServicesTests"/> class.SimulatorServicesTests の新しいインスタンスを初期化します。.</summary>
     public SimulatorServicesTests()
     {
         // 各テスト開始時にプロバイダーをクリア
@@ -28,7 +28,7 @@ public class SimulatorServicesTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>プロバイダーが設定されていない場合に TryResolve が null を返すことを検証する。</summary>
+    /// <summary>プロバイダーが設定されていない場合に TryResolve が null を返すことを検証する。.</summary>
     [Fact]
     public void TryResolveShouldReturnNullWhenProviderNotSet()
     {
@@ -36,7 +36,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeNull();
     }
 
-    /// <summary>プロバイダーが設定されている場合に TryResolve がインスタンスを返すことを検証する。</summary>
+    /// <summary>プロバイダーが設定されている場合に TryResolve がインスタンスを返すことを検証する。.</summary>
     [Fact]
     public void TryResolveShouldReturnInstanceWhenProviderIsSet()
     {
@@ -47,7 +47,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeSameAs(inventory);
     }
 
-    /// <summary>サービスプロバイダーが例外をスローした場合に、TryResolve が null を返すことを検証します。</summary>
+    /// <summary>サービスプロバイダーが例外をスローした場合に、TryResolve が null を返すことを検証します。.</summary>
     [Fact]
     public void TryResolveProviderThrowsShouldReturnNull()
     {
@@ -58,7 +58,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeNull();
     }
 
-    /// <summary>プロバイダーが未設定の状態で Resolve を呼び出した際に InvalidOperationException が発生することを検証します。</summary>
+    /// <summary>プロバイダーが未設定の状態で Resolve を呼び出した際に InvalidOperationException が発生することを検証します。.</summary>
     [Fact]
     public void ResolveNotRegisteredShouldThrow()
     {
@@ -66,7 +66,7 @@ public class SimulatorServicesTests : IDisposable
         Should.Throw<InvalidOperationException>(() => SimulatorServices.Resolve<Inventory>());
     }
 
-    /// <summary>InternalSimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証する。</summary>
+    /// <summary>InternalSimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証する。.</summary>
     [Fact]
     public void SimulatorCashChangerShouldUseProviderInstancesWhenAvailable()
     {
@@ -74,7 +74,7 @@ public class SimulatorServicesTests : IDisposable
         var inventory = new Inventory();
         var history = new TransactionHistory();
         var hw = new HardwareStatusManager();
-        var manager = new CashChangerManager(inventory, history, new ChangeCalculator());
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
         var metadataProvider = new CurrencyMetadataProvider(configProvider);
         var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
@@ -107,10 +107,10 @@ public class SimulatorServicesTests : IDisposable
         ex.ErrorCode.ShouldBe(Microsoft.PointOfService.ErrorCode.Closed);
     }
 
-    /// <summary>テスト用の ISimulatorServiceProvider 実装。</summary>
+    /// <summary>テスト用の ISimulatorServiceProvider 実装。.</summary>
     private class TestServiceProvider : ISimulatorServiceProvider
     {
-        private readonly Dictionary<Type, object> _services = [];
+        private readonly Dictionary<Type, object> services = [];
 
         public TestServiceProvider(
             ConfigurationProvider? configProvider = null,
@@ -124,21 +124,61 @@ public class SimulatorServicesTests : IDisposable
             DepositController? deposit = null,
             DispenseController? dispense = null)
         {
-            if (configProvider != null) _services[typeof(ConfigurationProvider)] = configProvider;
-            if (inventory != null) _services[typeof(Inventory)] = inventory;
-            if (history != null) _services[typeof(TransactionHistory)] = history;
-            if (manager != null) _services[typeof(CashChangerManager)] = manager;
-            if (hw != null) _services[typeof(HardwareStatusManager)] = hw;
-            if (metadata != null) _services[typeof(CurrencyMetadataProvider)] = metadata;
-            if (monitors != null) _services[typeof(MonitorsProvider)] = monitors;
-            if (aggregator != null) _services[typeof(OverallStatusAggregatorProvider)] = aggregator;
-            if (deposit != null) _services[typeof(DepositController)] = deposit;
-            if (dispense != null) _services[typeof(DispenseController)] = dispense;
+            if (configProvider != null)
+            {
+                services[typeof(ConfigurationProvider)] = configProvider;
+            }
+
+            if (inventory != null)
+            {
+                services[typeof(Inventory)] = inventory;
+            }
+
+            if (history != null)
+            {
+                services[typeof(TransactionHistory)] = history;
+            }
+
+            if (manager != null)
+            {
+                services[typeof(CashChangerManager)] = manager;
+            }
+
+            if (hw != null)
+            {
+                services[typeof(HardwareStatusManager)] = hw;
+            }
+
+            if (metadata != null)
+            {
+                services[typeof(CurrencyMetadataProvider)] = metadata;
+            }
+
+            if (monitors != null)
+            {
+                services[typeof(MonitorsProvider)] = monitors;
+            }
+
+            if (aggregator != null)
+            {
+                services[typeof(OverallStatusAggregatorProvider)] = aggregator;
+            }
+
+            if (deposit != null)
+            {
+                services[typeof(DepositController)] = deposit;
+            }
+
+            if (dispense != null)
+            {
+                services[typeof(DispenseController)] = dispense;
+            }
         }
 
-        public T Resolve<T>() where T : class
+        public T Resolve<T>()
+            where T : class
         {
-            return _services.TryGetValue(typeof(T), out var service)
+            return services.TryGetValue(typeof(T), out var service)
                 ? (T)service
                 : throw new InvalidOperationException($"Service {typeof(T).Name} not registered.");
         }

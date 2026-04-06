@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>CashChangerSimulator.Core のカバレッジを 100% にするための網羅的テストクラス。</summary>
+/// <summary>CashChangerSimulator.Core のカバレッジを 100% にするための網羅的テストクラス。.</summary>
 public class ExhaustiveCoreTests : IDisposable
 {
     public ExhaustiveCoreTests()
@@ -22,7 +22,7 @@ public class ExhaustiveCoreTests : IDisposable
         LogProvider.Dispose();
     }
 
-    /// <summary>LogProvider の各設定パス（コンソール、ファイル、ログレベル）を網羅的に検証します。</summary>
+    /// <summary>LogProvider の各設定パス（コンソール、ファイル、ログレベル）を網羅的に検証します。.</summary>
     [Fact]
     public void LogProviderShouldCoverageAllPaths()
     {
@@ -57,7 +57,7 @@ public class ExhaustiveCoreTests : IDisposable
         LogProvider.Dispose();
     }
 
-    /// <summary>DenominationKey の等価性、ハッシュ、文字列変換、パースの網羅的検証を行います。</summary>
+    /// <summary>DenominationKey の等価性、ハッシュ、文字列変換、パースの網羅的検証を行います。.</summary>
     [Fact]
     public void DenominationKeyExhaustiveTests()
     {
@@ -81,7 +81,7 @@ public class ExhaustiveCoreTests : IDisposable
 
         // 4. TryParse - Failure cases
         DenominationKey.TryParse(null!, out _).ShouldBeFalse();
-        DenominationKey.TryParse("", out _).ShouldBeFalse();
+        DenominationKey.TryParse(string.Empty, out _).ShouldBeFalse();
         DenominationKey.TryParse("X", out _).ShouldBeFalse();
         DenominationKey.TryParse("X100", out _).ShouldBeFalse();
         DenominationKey.TryParse("BABC", out _).ShouldBeFalse();
@@ -99,7 +99,7 @@ public class ExhaustiveCoreTests : IDisposable
         key1.CurrencyCode.ShouldBe("JPY");
     }
 
-    /// <summary>Inventory の各種加算メソッド、クリア、辞書からのロード等の網羅的検証を行います。</summary>
+    /// <summary>Inventory の各種加算メソッド、クリア、辞書からのロード等の網羅的検証を行います。.</summary>
     [Fact]
     public void InventoryDeepCoverage()
     {
@@ -149,6 +149,7 @@ public class ExhaustiveCoreTests : IDisposable
             { "COL:", 1 }, // Too short, should throw IndexOutOfRangeException or similar in StartsWith? No, kv.Key[4..] on "COL:" is fine.
             { "C", 1 },    // Too short for "COL:" but StartsWith is false.
         };
+
         // Trigger the TryParseKey return false
         malformedDict["INVALID:KEY:FORMAT"] = 1;
 
@@ -158,7 +159,7 @@ public class ExhaustiveCoreTests : IDisposable
         inventory.Add(key, -999);
     }
 
-    /// <summary>ConfigurationLoader のロード、保存、異常系（破損ファイル）の網羅的検証を行います。</summary>
+    /// <summary>ConfigurationLoader のロード、保存、異常系（破損ファイル）の網羅的検証を行います。.</summary>
     [Fact]
     public void ConfigurationLoaderExhaustive()
     {
@@ -167,10 +168,10 @@ public class ExhaustiveCoreTests : IDisposable
 
         try
         {
-            // 1. Get default paths
-            ConfigurationLoader.GetDefaultConfigPath().ShouldNotBeNull();
-            ConfigurationLoader.GetDefaultInventoryStatePath().ShouldNotBeNull();
-            ConfigurationLoader.GetDefaultHistoryStatePath().ShouldNotBeNull();
+            // 1. Get default paths (these methods were removed from ConfigurationLoader)
+            // ConfigurationLoader.GetDefaultConfigPath().ShouldNotBeNull();
+            // ConfigurationLoader.GetDefaultInventoryStatePath().ShouldNotBeNull();
+            // ConfigurationLoader.GetDefaultHistoryStatePath().ShouldNotBeNull();
 
             // 2. Load non-existent (creates default)
             var config = ConfigurationLoader.Load(tempConfig);
@@ -204,19 +205,25 @@ public class ExhaustiveCoreTests : IDisposable
         }
         finally
         {
-            if (File.Exists(tempConfig)) File.Delete(tempConfig);
-            if (File.Exists(tempState)) File.Delete(tempState);
+            if (File.Exists(tempConfig))
+            {
+                File.Delete(tempConfig);
+            }
+
+            if (File.Exists(tempState))
+            {
+                File.Delete(tempState);
+            }
         }
     }
 
-    /// <summary>GlobalLockManager のロック取得、競合、解放、異常系の網羅的検証を行います。</summary>
+    /// <summary>GlobalLockManager のロック取得、競合、解放、異常系の網羅的検証を行います。.</summary>
     [Fact]
     public void GlobalLockManagerExhaustive()
     {
         var lockFile1 = Path.Combine(Path.GetTempPath(), "CCS_Lock1_" + Guid.NewGuid());
         var lockFile2 = Path.Combine(Path.GetTempPath(), "CCS_Lock2_" + Guid.NewGuid());
         var logger = LogProvider.CreateLogger<GlobalLockManager>();
-
         {
             using var manager1 = new GlobalLockManager(lockFile1, logger);
             using var manager2 = new GlobalLockManager(lockFile1, logger);
@@ -256,13 +263,17 @@ public class ExhaustiveCoreTests : IDisposable
             managerError.TryAcquire().ShouldBeFalse(); // Access denied to directory as file
             managerError.IsLockHeldByAnother().ShouldBeFalse(); // Should catch exception and return false
         }
+
         Directory.Delete(dirPath);
 
         // Cleanup
-        if (File.Exists(lockFile1)) File.Delete(lockFile1);
+        if (File.Exists(lockFile1))
+        {
+            File.Delete(lockFile1);
+        }
     }
 
-    /// <summary>TransactionEntry のプロパティ保持を検証します。</summary>
+    /// <summary>TransactionEntry のプロパティ保持を検証します。.</summary>
     [Fact]
     public void TransactionEntryCoverage()
     {

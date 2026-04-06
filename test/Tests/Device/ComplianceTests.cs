@@ -9,10 +9,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>OPOS/UPOS 規格への準拠性とシミュレータ固有の拡張機能を検証するテストクラス。</summary>
+/// <summary>OPOS/UPOS 規格への準拠性とシミュレータ固有の拡張機能を検証するテストクラス。.</summary>
 /// <remarks>
 /// リアルタイムデータ通知、ディレクトIOによる状態操作、不整合フラグのレポートなど、
-/// デバイスの標準的な振る舞いとカスタムコマンドの正確性を網羅的に検証します。
+/// デバイスの標準的な振る舞いとカスタムコマンドの正確性を網羅的に検証します。.
 /// </remarks>
 [Collection("GlobalLock")]
 public class ComplianceTests
@@ -49,7 +49,7 @@ public class ComplianceTests
         return (changer, controller, inventory, history, observer);
     }
 
-    /// <summary>ReadCashCounts が在庫の不整合（Discrepancy）を正しく報告することを検証します。</summary>
+    /// <summary>ReadCashCounts が在庫の不整合（Discrepancy）を正しく報告することを検証します。.</summary>
     [Fact]
     public void ReadCashCountsShouldReportDiscrepancy()
     {
@@ -64,7 +64,7 @@ public class ComplianceTests
         counts.Discrepancy.ShouldBeTrue();
     }
 
-    /// <summary>リアルタイム通知が無効な場合、入金確定時にのみ DataEvent が発火することを検証します。</summary>
+    /// <summary>リアルタイム通知が無効な場合、入金確定時にのみ DataEvent が発火することを検証します。.</summary>
     [Fact]
     public void RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix()
     {
@@ -73,7 +73,13 @@ public class ComplianceTests
         changer.RealTimeDataEnabled = false;
         int eventCount = 0;
         changer.OnEventQueued +=
-            (e) => { if (e is DataEventArgs) eventCount++; };
+            (e) =>
+            {
+                if (e is DataEventArgs)
+{
+    eventCount++;
+}
+            };
 
         // Act
         changer.BeginDeposit();
@@ -84,7 +90,7 @@ public class ComplianceTests
         eventCount.ShouldBe(1); // Fired on Fix (buffered data notification)
     }
 
-    /// <summary>リアルタイム通知が有効な場合、投入の都度 DataEvent が発火することを検証します。</summary>
+    /// <summary>リアルタイム通知が有効な場合、投入の都度 DataEvent が発火することを検証します。.</summary>
     [Fact]
     public void RealTimeDataEnabledTrueShouldFireDataEventOnTrack()
     {
@@ -94,7 +100,13 @@ public class ComplianceTests
         changer.BeginDeposit();
 
         int eventCount = 0;
-        changer.OnEventQueued += (e) => { if (e is DataEventArgs) eventCount++; };
+        changer.OnEventQueued += (e) =>
+        {
+            if (e is DataEventArgs)
+{
+    eventCount++;
+}
+        };
 
         // Act
         controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"));
@@ -104,7 +116,7 @@ public class ComplianceTests
         history.Entries.ShouldContain(e => e.Type == CashChangerSimulator.Core.Transactions.TransactionType.DataEvent);
     }
 
-    /// <summary>DirectIO(SimulateRemoved) によりカセット取外しイベントが発火することを検証します。</summary>
+    /// <summary>DirectIO(SimulateRemoved) によりカセット取外しイベントが発火することを検証します。.</summary>
     [Fact]
     public void DirectIOSimulateRemovedShouldFireStatusUpdateEvent()
     {
@@ -115,33 +127,42 @@ public class ComplianceTests
             .OnEventQueued
             += (e) =>
             {
-                if (e is StatusUpdateEventArgs se) status = se.Status;
+                if (e is StatusUpdateEventArgs se)
+                {
+                    status = se.Status;
+                }
             };
 
         // Act
-        changer.DirectIO(DirectIOCommands.SimulateRemoved, 0, "");
+        changer.DirectIO(DirectIOCommands.SimulateRemoved, 0, string.Empty);
 
         // Assert
         status.ShouldBe(41); // CHAN_STATUS_REMOVED
     }
 
-    /// <summary>DirectIO(SimulateInserted) によりカセット装着イベントが発火することを検証します。</summary>
+    /// <summary>DirectIO(SimulateInserted) によりカセット装着イベントが発火することを検証します。.</summary>
     [Fact]
     public void DirectIOSimulateInsertedShouldFireStatusUpdateEvent()
     {
         // Arrange
         var (changer, _, _, _, _) = CreateChanger();
         int status = -1;
-        changer.OnEventQueued += (e) => { if (e is StatusUpdateEventArgs se) status = se.Status; };
+        changer.OnEventQueued += (e) =>
+        {
+            if (e is StatusUpdateEventArgs se)
+{
+    status = se.Status;
+}
+        };
 
         // Act
-        changer.DirectIO(DirectIOCommands.SimulateInserted, 0, "");
+        changer.DirectIO(DirectIOCommands.SimulateInserted, 0, string.Empty);
 
         // Assert
         status.ShouldBe(42); // CHAN_STATUS_INSERTED
     }
 
-    /// <summary>DirectIO(SetDiscrepancy) により不整合フラグが更新されることを検証します。</summary>
+    /// <summary>DirectIO(SetDiscrepancy) により不整合フラグが更新されることを検証します。.</summary>
     [Fact]
     public void DirectIOSetDiscrepancyShouldUpdateHasDiscrepancy()
     {
@@ -150,21 +171,22 @@ public class ComplianceTests
         changer.ReadCashCounts().Discrepancy.ShouldBeFalse();
 
         // Act & Assert (Enable)
-        changer.DirectIO(DirectIOCommands.SetDiscrepancy, 1, "");
+        changer.DirectIO(DirectIOCommands.SetDiscrepancy, 1, string.Empty);
         changer.ReadCashCounts().Discrepancy.ShouldBeTrue();
 
         // Act & Assert (Disable)
-        changer.DirectIO(DirectIOCommands.SetDiscrepancy, 0, "");
+        changer.DirectIO(DirectIOCommands.SetDiscrepancy, 0, string.Empty);
         changer.ReadCashCounts().Discrepancy.ShouldBeFalse();
     }
 
-    /// <summary>DirectIO(AdjustCashCountsStr) により在庫が文字列指定で更新されることを検証します。</summary>
+    /// <summary>DirectIO(AdjustCashCountsStr) により在庫が文字列指定で更新されることを検証します。.</summary>
     [Fact]
     public void DirectIOAdjustCashCountsStrShouldUpdateInventory()
     {
         // Arrange
         var (changer, _, inventory, _, _) = CreateChanger();
         var jpy1000 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+
         // Seed the inventory first so the parser knows this key exists
         inventory.SetCount(jpy1000, 0);
 
@@ -177,7 +199,7 @@ public class ComplianceTests
         inventory.GetCount(jpy1000).ShouldBe(15);
     }
 
-    /// <summary>AdjustCashCounts(string) により在庫が正しく更新されることを検証します。</summary>
+    /// <summary>AdjustCashCounts(string) により在庫が正しく更新されることを検証します。.</summary>
     [Fact]
     public void AdjustCashCountsStrShouldUpdateInventory()
     {
@@ -193,14 +215,14 @@ public class ComplianceTests
         inventory.GetCount(jpy1000).ShouldBe(20);
     }
 
-    /// <summary>ReadCashCounts(ref variables) 形式で不整合フラグが正しく取得できることを検証します。</summary>
+    /// <summary>ReadCashCounts(ref variables) 形式で不整合フラグが正しく取得できることを検証します。.</summary>
     [Fact]
     public void ReadCashCountsWithDiscrepancyShouldReturnProperFlags()
     {
         // Arrange
         var (changer, _, inventory, _, _) = CreateChanger();
         inventory.HasDiscrepancy = true;
-        string counts = "";
+        string counts = string.Empty;
         bool discrepancy = false;
 
         // Act

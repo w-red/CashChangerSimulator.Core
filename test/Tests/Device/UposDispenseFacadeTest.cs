@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Managers;
+﻿using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
@@ -13,90 +13,90 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UposDispenseFacade の動作を検証するテストクラス。</summary>
+/// <summary>UposDispenseFacade の動作を検証するテストクラス。.</summary>
 public class UposDispenseFacadeTest
 {
-    private readonly Inventory Inventory;
-    private readonly DepositController DepositController;
-    private readonly DispenseController _dispenseController;
-    private readonly HardwareStatusManager HardwareStatusManager;
-    private readonly Mock<IUposMediator> _mediatorMock;
-    private readonly UposDispenseFacade _facade;
+    private readonly Inventory inventory;
+    private readonly DepositController depositController;
+    private readonly DispenseController dispenseController;
+    private readonly HardwareStatusManager hardwareStatusManager;
+    private readonly Mock<IUposMediator> mediatorMock;
+    private readonly UposDispenseFacade facade;
 
-    /// <summary>UposDispenseFacadeTest の新しいインスタンスを初期化します。</summary>
+    /// <summary>Initializes a new instance of the <see cref="UposDispenseFacadeTest"/> class.UposDispenseFacadeTest の新しいインスタンスを初期化します。.</summary>
     public UposDispenseFacadeTest()
     {
-        Inventory = new Inventory();
-        Inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 10);
-        Inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 20);
+        inventory = new Inventory();
+        inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 10);
+        inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 20);
 
-        HardwareStatusManager = new HardwareStatusManager();
-        HardwareStatusManager.SetConnected(true);
-        var manager = new CashChangerManager(Inventory, new TransactionHistory(), new ChangeCalculator());
-        DepositController = new DepositController(Inventory, HardwareStatusManager);
-        _dispenseController = new DispenseController(manager, HardwareStatusManager, null);
-        _mediatorMock = new Mock<IUposMediator>();
-        _mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
+        hardwareStatusManager = new HardwareStatusManager();
+        hardwareStatusManager.SetConnected(true);
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
+        depositController = new DepositController(inventory, hardwareStatusManager);
+        dispenseController = new DispenseController(manager, hardwareStatusManager, null);
+        mediatorMock = new Mock<IUposMediator>();
+        mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
             .Callback<IUposCommand>((cmd) => cmd.Execute());
 
-        _facade = new UposDispenseFacade(
-            _dispenseController,
-            DepositController,
-            HardwareStatusManager,
-            Inventory,
-            _mediatorMock.Object,
+        facade = new UposDispenseFacade(
+            dispenseController,
+            depositController,
+            hardwareStatusManager,
+            inventory,
+            mediatorMock.Object,
             new Mock<ILogger<UposDispenseFacade>>().Object);
     }
 
     private void SetupMediatorToThrow()
     {
-        _mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
+        mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
             .Callback<IUposCommand>(cmd =>
             {
-                cmd.Verify(_mediatorMock.Object);
+                cmd.Verify(mediatorMock.Object);
                 cmd.Execute();
             });
     }
 
-    /// <summary>入金中に出金しようとすると例外がスローされることを確認します。</summary>
+    /// <summary>入金中に出金しようとすると例外がスローされることを確認します。.</summary>
     [Fact]
     public void DispenseByAmountWhenDepositInProgressShouldThrow()
     {
-        DepositController.BeginDeposit();
+        depositController.BeginDeposit();
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(1000, "JPY", 1m, false));
+            facade.DispenseByAmount(1000, "JPY", 1m, false));
     }
 
-    /// <summary>ジャム中に出金しようとすると例外がスローされることを確認します。</summary>
+    /// <summary>ジャム中に出金しようとすると例外がスローされることを確認します。.</summary>
     [Fact]
     public void DispenseByAmountWhenJammedShouldThrow()
     {
-        HardwareStatusManager.SetJammed(true);
+        hardwareStatusManager.SetJammed(true);
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(1000, "JPY", 1m, false));
+            facade.DispenseByAmount(1000, "JPY", 1m, false));
     }
 
-    /// <summary>金額0以下で例外がスローされることを確認します。</summary>
+    /// <summary>金額0以下で例外がスローされることを確認します。.</summary>
     [Fact]
     public void DispenseByAmountZeroAmountShouldThrow()
     {
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByAmount(0, "JPY", 1m, false));
+            facade.DispenseByAmount(0, "JPY", 1m, false));
     }
 
-    /// <summary>正常な金額出金が成功することを確認します。</summary>
+    /// <summary>正常な金額出金が成功することを確認します。.</summary>
     [Fact]
     public void DispenseByAmountValidAmountShouldSucceed()
     {
-        _facade.DispenseByAmount(1000, "JPY", 1m, false);
-        _dispenseController.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
+        facade.DispenseByAmount(1000, "JPY", 1m, false);
+        dispenseController.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
     }
 
-    /// <summary>金種指定の出金で在庫不足時に例外がスローされることを確認します。</summary>
+    /// <summary>金種指定の出金で在庫不足時に例外がスローされることを確認します。.</summary>
     [Fact]
     public void DispenseByCashCountsInsufficientInventoryShouldThrow()
     {
@@ -104,6 +104,6 @@ public class UposDispenseFacadeTest
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>
-            _facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false));
+            facade.DispenseByCashCounts(cashCounts, "JPY", 1m, false));
     }
 }
