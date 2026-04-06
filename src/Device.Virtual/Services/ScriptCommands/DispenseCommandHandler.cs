@@ -3,18 +3,18 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
-/// <summary>dispense コマンド: 出金を実行します。.</summary>
+/// <summary>dispense コマンド: 出金を実行します。</summary>
 public class DispenseCommandHandler(DispenseController dispenseController) : IScriptCommandHandler
 {
-    /// <summary>Gets コマンド名を取得します。.</summary>
+    /// <summary>Gets コマンド名を取得します。</summary>
     public string OpName => "DISPENSE";
 
-    /// <summary>スクリプトコマンドを実行します。.</summary>
-    /// <param name="cmd">コマンド。.</param>
-    /// <param name="context">実行コンテキスト。.</param>
-    /// <param name="logger">ロガー。.</param>
-    /// <param name="onProgress">進行状況を通知するコールバック。.</param>
-    /// <returns>非同期タスク。.</returns>
+    /// <summary>スクリプトコマンドを実行します。</summary>
+    /// <param name="cmd">コマンド。</param>
+    /// <param name="context">実行コンテキスト。</param>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="onProgress">進行状況を通知するコールバック。</param>
+    /// <returns>非同期タスク。</returns>
     public async Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
     {
         ArgumentNullException.ThrowIfNull(cmd);

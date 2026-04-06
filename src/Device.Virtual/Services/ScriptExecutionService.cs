@@ -8,25 +8,33 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services;
 
-/// <summary>スクリプトデータに基づいてシミュレーターの操作を自動実行するサービス。.</summary>
+/// <summary>スクリプトデータに基づいてシミュレーターの操作を自動実行するサービス。</summary>
 public class ScriptExecutionService(
     DepositController depositController,
     DispenseController dispenseController,
     Inventory inventory,
     HardwareStatusManager hardwareStatusManager) : IScriptExecutionService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions JsonOptions =
+        new() { PropertyNameCaseInsensitive = true };
 
-    private readonly ILogger<ScriptExecutionService> logger = LogProvider.CreateLogger<ScriptExecutionService>();
+    private readonly ILogger<ScriptExecutionService> logger =
+        LogProvider.CreateLogger<ScriptExecutionService>();
 
-    private readonly Dictionary<string, IScriptCommandHandler> handlers = InitializeHandlers(
-        depositController, dispenseController, inventory, hardwareStatusManager);
+    private readonly Dictionary<string, IScriptCommandHandler> handlers =
+        InitializeHandlers(
+            depositController,
+            dispenseController,
+            inventory,
+            hardwareStatusManager);
 
-    /// <summary>変数参照を解決して整数値を返します。.</summary>
-    /// <param name="value">値オブジェクト。.</param>
-    /// <param name="context">コンテキスト。.</param>
-    /// <returns>解決された整数値。.</returns>
-    public static int ResolveValue(object value, ScriptExecutionContext context)
+    /// <summary>変数参照を解決して整数値を返します。</summary>
+    /// <param name="value">値オブジェクト。</param>
+    /// <param name="context">コンテキスト。</param>
+    /// <returns>解決された整数値。</returns>
+    public static int ResolveValue(
+        object value,
+        ScriptExecutionContext context)
     {
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(context);
@@ -64,11 +72,13 @@ public class ScriptExecutionService(
         return Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    /// <summary>JSON スクリプトを解析して実行します。.</summary>
-    /// <param name="json">JSON 文字列。.</param>
-    /// <param name="onProgress">進行状況を通知するコールバック。.</param>
-    /// <returns>非同期操作。.</returns>
-    public async Task ExecuteScriptAsync(string json, Action<string>? onProgress = null)
+    /// <summary>JSON スクリプトを解析して実行します。</summary>
+    /// <param name="json">JSON 文字列。</param>
+    /// <param name="onProgress">進行状況を通知するコールバック。</param>
+    /// <returns>非同期操作。</returns>
+    public async Task ExecuteScriptAsync(
+        string json,
+        Action<string>? onProgress = null)
     {
         var commands = JsonSerializer.Deserialize<List<ScriptCommand>>(json, JsonOptions);
         if (commands == null)
@@ -86,13 +96,16 @@ public class ScriptExecutionService(
     }
 
     /// <summary>
-    /// 内部でコマンドリストを実行します。.
+    /// 内部でコマンドリストを実行します。
     /// </summary>
-    /// <param name="commands">コマンドリスト。.</param>
-    /// <param name="context">実行コンテキスト。.</param>
-    /// <param name="onProgress">プログレス通知。.</param>
-    /// <returns>非同期タスク。.</returns>
-    internal async Task ExecuteCommandsInternalAsync(IEnumerable<ScriptCommand> commands, ScriptExecutionContext context, Action<string>? onProgress)
+    /// <param name="commands">コマンドリスト。</param>
+    /// <param name="context">実行コンテキスト。</param>
+    /// <param name="onProgress">プログレス通知。</param>
+    /// <returns>非同期タスク。</returns>
+    internal async Task ExecuteCommandsInternalAsync(
+        IEnumerable<ScriptCommand> commands,
+        ScriptExecutionContext context,
+        Action<string>? onProgress)
     {
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(context);
@@ -125,14 +138,15 @@ public class ScriptExecutionService(
         return handlers.ToDictionary(h => h.OpName, h => h);
     }
 
-    /// <summary>
-    /// 単一のコマンドを実行します。.
-    /// </summary>
-    /// <param name="cmd">コマンド。.</param>
-    /// <param name="context">コンテキスト。.</param>
-    /// <param name="onProgress">通知。.</param>
-    /// <returns>タスク。.</returns>
-    private async Task ExecuteCommandAsync(ScriptCommand cmd, ScriptExecutionContext context, Action<string>? onProgress)
+    /// <summary>単一のコマンドを実行します。</summary>
+    /// <param name="cmd">コマンド。</param>
+    /// <param name="context">コンテキスト。</param>
+    /// <param name="onProgress">通知。</param>
+    /// <returns>タスク。</returns>
+    private async Task ExecuteCommandAsync(
+        ScriptCommand cmd,
+        ScriptExecutionContext context,
+        Action<string>? onProgress)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         ArgumentNullException.ThrowIfNull(context);
