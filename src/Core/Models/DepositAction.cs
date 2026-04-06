@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Device;
+namespace CashChangerSimulator.Core.Models;
 
 /// <summary>入金確定時のアクション。</summary>
 public enum DepositAction

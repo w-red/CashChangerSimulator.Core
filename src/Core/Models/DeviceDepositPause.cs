@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Device;
+namespace CashChangerSimulator.Core.Models;
 
 /// <summary>入金一時停止制御。</summary>
 public enum DeviceDepositPause

@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Device;
+namespace CashChangerSimulator.Core.Models;
 
 /// <summary>出金・払い出し状態を表す列挙型。</summary>
 public enum DeviceDispenseStatus

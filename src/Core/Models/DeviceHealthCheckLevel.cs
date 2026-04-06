@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Device;
+namespace CashChangerSimulator.Core.Models;
 
 /// <summary>診断レベルを表す列挙型。</summary>
 public enum DeviceHealthCheckLevel

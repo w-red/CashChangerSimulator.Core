@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Device;
+namespace CashChangerSimulator.Core.Models;
 
 /// <summary>入金状態を表す列挙型。</summary>
 public enum DeviceDepositStatus
