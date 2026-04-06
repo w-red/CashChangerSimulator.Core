@@ -8,7 +8,7 @@ public class CashStatusMonitor : IDisposable
 {
     private readonly IReadOnlyInventory inventory;
     private readonly ReactiveProperty<CashStatus> status = new(CashStatus.Unknown);
-    private readonly IDisposable subscription;
+    private readonly CompositeDisposable disposables = [];
     private bool disposed;
 
     /// <summary>Initializes a new instance of the <see cref="CashStatusMonitor"/> class.在庫、金種キー、各種しきい値を指定してインスタンスを初期化する。</summary>
@@ -34,9 +34,10 @@ public class CashStatusMonitor : IDisposable
         UpdateStatus();
 
         // 在庫変更時の再計算
-        subscription = inventory.Changed
+        inventory.Changed
             .Where(k => k == Key)
-            .Subscribe(_ => UpdateStatus());
+            .Subscribe(_ => UpdateStatus())
+            .AddTo(disposables);
     }
 
     /// <summary>この金種がリサイクル可能かどうか。</summary>
@@ -87,7 +88,7 @@ public class CashStatusMonitor : IDisposable
 
         if (disposing)
         {
-            subscription.Dispose();
+            disposables.Dispose();
             status.Dispose();
         }
 
