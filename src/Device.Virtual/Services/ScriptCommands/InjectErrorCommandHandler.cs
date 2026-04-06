@@ -5,36 +5,48 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
-/// <summary>inject-error コマンド: ハードウェアエラーを注入します。</summary>
-/// <param name="hardwareStatusManager">ハードウェア状態管理インスタンス。</param>
+/// <summary>inject-error コマンド: ハードウェアエラーを注入します。.</summary>
+/// <param name="hardwareStatusManager">ハードウェア状態管理インスタンス。.</param>
 public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManager) : IScriptCommandHandler
 {
-    /// <summary>コマンド名を取得します。</summary>
-    public string OpName => "inject-error";
+    /// <summary>Gets コマンド名を取得します。.</summary>
+    public string OpName => "INJECTERROR";
 
-    /// <summary>スクリプトコマンドを実行します。</summary>
+    /// <summary>スクリプトコマンドを実行します。.</summary>
+    /// <param name="cmd">コマンド。.</param>
+    /// <param name="context">実行コンテキスト。.</param>
+    /// <param name="logger">ロガー。.</param>
+    /// <param name="onProgress">進行状況を通知するコールバック。.</param>
+    /// <returns>非同期タスク。.</returns>
     public Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
     {
-        var errorType = cmd.Error?.ToLower();
+        ArgumentNullException.ThrowIfNull(cmd);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        var errorType = cmd.Error?.ToUpperInvariant();
         logger.ZLogInformation($"Injecting error: {errorType}");
         switch (errorType)
         {
-            case "jam":
+            case "JAM":
                 var location = JamLocation.None;
                 if (!string.IsNullOrEmpty(cmd.Location))
                 {
                     Enum.TryParse(cmd.Location, true, out location);
                 }
+
                 hardwareStatusManager.SetJammed(true, location);
                 break;
-            case "overlap":
+            case "OVERLAP":
                 hardwareStatusManager.SetOverlapped(true);
                 break;
-            case "device":
-                hardwareStatusManager.SetDeviceError(cmd.ErrorCode ?? 0, cmd.ErrorCodeExtended ?? 0);
+            case "DEVICE":
+                var code = cmd.ErrorCode != null ? ScriptExecutionService.ResolveValue(cmd.ErrorCode, context) : 0;
+                var extended = cmd.ErrorCodeExtended != null ? ScriptExecutionService.ResolveValue(cmd.ErrorCodeExtended, context) : 0;
+                hardwareStatusManager.SetDeviceError(code, extended);
                 break;
-            case "none":
-            case "reset":
+            case "NONE":
+            case "RESET":
                 hardwareStatusManager.ResetError();
                 break;
             default:
@@ -42,6 +54,7 @@ public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManag
                 hardwareStatusManager.SetOverlapped(false);
                 break;
         }
+
         return Task.CompletedTask;
     }
 }

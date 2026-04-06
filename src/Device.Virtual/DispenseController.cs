@@ -12,116 +12,285 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>出金（払出）シーケンスを管理するコントローラー（仮想デバイス実装）。</summary>
+/// <summary>出金（払出）シーケンスを管理するコントローラー（仮想デバイス実装）。.</summary>
 /// <remarks>
-/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして出金プロセスをシミュレートします。
+/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして出金プロセスをシミュレートします。.
 /// </remarks>
 public class DispenseController : IDisposable
 {
-    private readonly CashChangerManager _manager;
-    private readonly HardwareStatusManager _hardwareStatusManager;
-    private readonly IDeviceSimulator _simulator;
-    private CancellationTokenSource? _dispenseCts;
-    private readonly ILogger<DispenseController> _logger = LogProvider.CreateLogger<DispenseController>();
-    private readonly Subject<Unit> _changed = new();
-    private readonly CompositeDisposable _disposables = [];
+    private readonly CashChangerManager manager;
+    private readonly HardwareStatusManager hardwareStatusManager;
+    private readonly IDeviceSimulator simulator;
+    private readonly ILogger<DispenseController> logger = LogProvider.CreateLogger<DispenseController>();
+    private readonly Subject<Unit> changed = new();
+    private readonly CompositeDisposable disposables = [];
+    private readonly Lock stateLock = new();
+    private CancellationTokenSource? dispenseCts;
+    private CashDispenseStatus status = CashDispenseStatus.Idle;
+    private DeviceErrorCode lastErrorCode = DeviceErrorCode.Success;
+    private int lastErrorCodeExtended;
+    private bool disposed;
 
-    private readonly Lock _stateLock = new();
-    private CashDispenseStatus _status = CashDispenseStatus.Idle;
-    private DeviceErrorCode _lastErrorCode = DeviceErrorCode.Success;
-    private int _lastErrorCodeExtended = 0;
-    private bool _disposed;
-
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DispenseController"/> class.
+    /// </summary>
+    /// <param name="manager">釣銭機マネージャー。.</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態管理。.</param>
+    /// <param name="simulator">デバイスシミュレーター。.</param>
     public DispenseController(
         CashChangerManager manager,
         HardwareStatusManager? hardwareStatusManager = null,
         IDeviceSimulator? simulator = null)
     {
-        _manager = manager ?? throw new ArgumentNullException(nameof(manager));
-        _hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-        _simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
+        this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
+        this.hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+        this.simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
     }
 
-    public virtual Observable<Unit> Changed => _changed;
-    public virtual CashDispenseStatus Status { get { lock (_stateLock) return _status; } }
-    public virtual bool IsBusy { get { lock (_stateLock) return _status == CashDispenseStatus.Busy; } }
-    public virtual DeviceErrorCode LastErrorCode { get { lock (_stateLock) return _lastErrorCode; } }
-    public virtual int LastErrorCodeExtended { get { lock (_stateLock) return _lastErrorCodeExtended; } }
+    /// <summary>Gets 状態が変更されたときに通知されるストリーム。.</summary>
+    public virtual Observable<Unit> Changed => changed;
 
+    /// <summary>Gets 現在の出金状態を取得します。.</summary>
+    public virtual CashDispenseStatus Status
+    {
+        get
+        {
+            lock (stateLock)
+            {
+                return status;
+            }
+        }
+    }
+
+    /// <summary>Gets a value indicating whether デバイスがビジー状態かどうかを取得します。.</summary>
+    public virtual bool IsBusy
+    {
+        get
+        {
+            lock (stateLock)
+            {
+                return status == CashDispenseStatus.Busy;
+            }
+        }
+    }
+
+    /// <summary>Gets 直近に発生したエラーコードを取得します。.</summary>
+    public virtual DeviceErrorCode LastErrorCode
+    {
+        get
+        {
+            lock (stateLock)
+            {
+                return lastErrorCode;
+            }
+        }
+    }
+
+    /// <summary>Gets 直近に発生した拡張エラーコードを取得します。.</summary>
+    public virtual int LastErrorCodeExtended
+    {
+        get
+        {
+            lock (stateLock)
+            {
+                return lastErrorCodeExtended;
+            }
+        }
+    }
+
+    /// <summary>指定された金額を非同期で払い出します。.</summary>
+    /// <param name="amount">払い出す金額。.</param>
+    /// <param name="asyncMode">非同期実行モードかどうか。.</param>
+    /// <param name="currencyCode">通貨コード（任意）。.</param>
+    /// <returns>完了を示すタスク。.</returns>
     public virtual async Task DispenseChangeAsync(int amount, bool asyncMode, string? currencyCode = null)
     {
-        lock (_stateLock)
+        lock (stateLock)
         {
-            if (_status == CashDispenseStatus.Busy) throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
-            if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
-            if (_hardwareStatusManager.IsJammed.Value) throw new DeviceException("Device jammed", DeviceErrorCode.Failure);
+            if (status == CashDispenseStatus.Busy)
+            {
+                throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
+            }
 
-            // [FIX] Return Failure for Overlapped to match expectations in DispenseControllerTests.
-            // [修正] DispenseControllerTests の期待値に合わせて、オーバーラップ時は Failure を返します。
-            if (_hardwareStatusManager.IsOverlapped.Value) throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
+            if (!hardwareStatusManager.IsConnected.Value)
+            {
+                throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
+            }
 
-            _status = CashDispenseStatus.Busy;
-            _lastErrorCode = DeviceErrorCode.Success;
-            _lastErrorCodeExtended = 0;
+            if (hardwareStatusManager.IsJammed.Value)
+            {
+                throw new DeviceException("Device jammed", DeviceErrorCode.Failure);
+            }
+
+            if (hardwareStatusManager.IsOverlapped.Value)
+            {
+                throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
+            }
+
+            status = CashDispenseStatus.Busy;
+            lastErrorCode = DeviceErrorCode.Success;
+            lastErrorCodeExtended = 0;
         }
-        _changed.OnNext(Unit.Default);
+
+        changed.OnNext(Unit.Default);
         await Task.Yield();
 
-        _dispenseCts?.Cancel();
-        _dispenseCts?.Dispose();
-        _dispenseCts = new CancellationTokenSource();
-        var token = _dispenseCts.Token;
+        if (dispenseCts != null)
+        {
+            await dispenseCts.CancelAsync().ConfigureAwait(false);
+            dispenseCts.Dispose();
+        }
+
+        dispenseCts = new CancellationTokenSource();
+        var token = dispenseCts.Token;
 
         if (asyncMode)
         {
-            _ = Task.Run(async () =>
-            {
-                try { await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), token); }
-                catch (Exception ex) { _logger.ZLogError(ex, $"Background dispense error: {ex.Message}"); }
-            }, token);
+#pragma warning disable CA2016
+            _ = Task.Run(
+                async () =>
+                {
+                    try
+                    {
+                        await ExecuteDispense(() => manager.Dispense(amount, currencyCode), token).ConfigureAwait(false);
+                    }
+#pragma warning disable CA1031
+                    catch (Exception ex)
+#pragma warning restore CA1031
+                    {
+                        logger.ZLogError(ex, $"Background dispense error: {ex.Message}");
+                    }
+                },
+                token);
+#pragma warning restore CA2016
         }
         else
         {
-            await ExecuteDispense(() => _manager.Dispense(amount, currencyCode), token);
+            await ExecuteDispense(() => manager.Dispense(amount, currencyCode), token).ConfigureAwait(false);
         }
     }
 
+    /// <summary>指定された金種と枚数を非同期で払い出します。.</summary>
+    /// <param name="counts">払い出す金種と枚数。.</param>
+    /// <param name="asyncMode">非同期実行モードかどうか。.</param>
+    /// <returns>完了を示すタスク。.</returns>
     public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode)
     {
-        lock (_stateLock)
+        ArgumentNullException.ThrowIfNull(counts);
+
+        lock (stateLock)
         {
-            if (_status == CashDispenseStatus.Busy) throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
-            if (!_hardwareStatusManager.IsConnected.Value) throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
-            if (_hardwareStatusManager.IsJammed.Value) throw new DeviceException("Device jammed", DeviceErrorCode.Failure);
+            if (status == CashDispenseStatus.Busy)
+            {
+                throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
+            }
 
-            // [FIX] Return Failure for Overlapped to match expectations in DispenseControllerTests.
-            // [修正] DispenseControllerTests の期待値に合わせて、オーバーラップ時は Failure を返します。
-            if (_hardwareStatusManager.IsOverlapped.Value) throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
+            if (!hardwareStatusManager.IsConnected.Value)
+            {
+                throw new DeviceException("Device not connected", DeviceErrorCode.Closed);
+            }
 
-            _status = CashDispenseStatus.Busy;
-            _lastErrorCode = DeviceErrorCode.Success;
-            _lastErrorCodeExtended = 0;
+            if (hardwareStatusManager.IsJammed.Value)
+            {
+                throw new DeviceException("Device jammed", DeviceErrorCode.Failure);
+            }
+
+            if (hardwareStatusManager.IsOverlapped.Value)
+            {
+                throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
+            }
+
+            status = CashDispenseStatus.Busy;
+            lastErrorCode = DeviceErrorCode.Success;
+            lastErrorCodeExtended = 0;
         }
-        _changed.OnNext(Unit.Default);
+
+        changed.OnNext(Unit.Default);
         await Task.Yield();
 
-        _dispenseCts?.Cancel();
-        _dispenseCts?.Dispose();
-        _dispenseCts = new CancellationTokenSource();
-        var token = _dispenseCts.Token;
+        if (dispenseCts != null)
+        {
+            await dispenseCts.CancelAsync().ConfigureAwait(false);
+            dispenseCts.Dispose();
+        }
+
+        dispenseCts = new CancellationTokenSource();
+        var token = dispenseCts.Token;
 
         if (asyncMode)
         {
-            _ = Task.Run(async () =>
-            {
-                try { await ExecuteDispense(() => _manager.Dispense(counts), token); }
-                catch (Exception ex) { _logger.ZLogError(ex, $"Background dispense error: {ex.Message}"); }
-            }, token);
+#pragma warning disable CA2016
+            _ = Task.Run(
+                async () =>
+                {
+                    try
+                    {
+                        await ExecuteDispense(() => manager.Dispense(counts), token).ConfigureAwait(false);
+                    }
+#pragma warning disable CA1031
+                    catch (Exception ex)
+#pragma warning restore CA1031
+                    {
+                        logger.ZLogError(ex, $"Background dispense error: {ex.Message}");
+                    }
+                },
+                token);
+#pragma warning restore CA2016
         }
         else
         {
-            await ExecuteDispense(() => _manager.Dispense(counts), token);
+            await ExecuteDispense(() => manager.Dispense(counts), token).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>現在の出金をキャンセルします。.</summary>
+    public virtual void ClearOutput()
+    {
+        dispenseCts?.Cancel();
+        lock (stateLock)
+        {
+            if (status != CashDispenseStatus.Idle)
+            {
+                status = CashDispenseStatus.Idle;
+                lastErrorCode = DeviceErrorCode.Cancelled;
+                lastErrorCodeExtended = 0;
+                changed.OnNext(Unit.Default);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>リソースを破棄します。.</summary>
+    /// <param name="disposing">マネージリソースを破棄する場合は true。.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            // 外部から注入された dependencies (simulator, manager, hardwareStatusManager) は、
+            // このクラスの Dispose で破棄すべきではありません。
+            if (dispenseCts != null)
+            {
+                dispenseCts.Cancel();
+                dispenseCts.Dispose();
+            }
+
+            disposables.Dispose();
+            changed.OnCompleted();
+            changed.Dispose();
+        }
+
+        disposed = true;
     }
 
     private async Task ExecuteDispense(Action action, CancellationToken token)
@@ -132,7 +301,7 @@ public class DispenseController : IDisposable
 
         try
         {
-            await _simulator.SimulateDispenseAsync(token);
+            await simulator.SimulateDispenseAsync(token).ConfigureAwait(false);
             token.ThrowIfCancellationRequested();
             action();
         }
@@ -145,76 +314,59 @@ public class DispenseController : IDisposable
             isError = true;
             code = DeviceErrorCode.Extended;
             codeEx = 201;
-            _logger.ZLogError(ex, $"Insufficient cash: {ex.Message}");
+            logger.ZLogError(ex, $"Insufficient cash: {ex.Message}");
         }
+        catch (DeviceException dex)
+        {
+            isError = true;
+            code = dex.ErrorCode;
+            codeEx = dex.ErrorCodeExtended;
+            logger.ZLogError(dex, $"Dispense failed with device error: {dex.Message}");
+        }
+#pragma warning disable CA1031
         catch (Exception ex)
+#pragma warning restore CA1031
         {
             isError = true;
             code = DeviceErrorCode.Failure;
             codeEx = 0;
 
-            if (ex is DeviceException dex)
-            {
-                code = dex.ErrorCode;
-                codeEx = dex.ErrorCodeExtended;
-            }
-            else
-            {
-                // Attempt to extract error codes from external exceptions (e.g. PosControlException in tests)
-                // without adding a direct dependency on POS.NET in this virtual layer.
-                var type = ex.GetType();
-                var pCode = type.GetProperty("ErrorCode");
-                var pCodeEx = type.GetProperty("ErrorCodeExtended");
+            // Attempt to extract error codes from external exceptions (e.g. PosControlException in tests)
+            // without adding a direct dependency on POS.NET in this virtual layer.
+            var type = ex.GetType();
+            var pCode = type.GetProperty("ErrorCode");
+            var pCodeEx = type.GetProperty("ErrorCodeExtended");
 
-                if (pCode != null)
+            if (pCode != null)
+            {
+                var val = pCode.GetValue(ex);
+                if (val != null)
                 {
-                    var val = pCode.GetValue(ex);
-                    if (val != null) code = (DeviceErrorCode)Convert.ToInt32(val);
-                }
-                if (pCodeEx != null)
-                {
-                    var valEx = pCodeEx.GetValue(ex);
-                    if (valEx != null) codeEx = Convert.ToInt32(valEx);
+                    code = (DeviceErrorCode)Convert.ToInt32(val, System.Globalization.CultureInfo.InvariantCulture);
                 }
             }
-            _logger.ZLogError(ex, $"Dispense failed: {ex.Message}");
+
+            if (pCodeEx != null)
+            {
+                var valEx = pCodeEx.GetValue(ex);
+                if (valEx != null)
+                {
+                    codeEx = Convert.ToInt32(valEx, System.Globalization.CultureInfo.InvariantCulture);
+                }
+            }
+
+            logger.ZLogError(ex, $"Dispense failed: {ex.Message}");
         }
         finally
         {
-            lock (_stateLock)
+            lock (stateLock)
             {
-                _status = isError ? CashDispenseStatus.Error : CashDispenseStatus.Idle;
-                _lastErrorCode = code;
-                _lastErrorCodeExtended = codeEx;
+                status = isError ? CashDispenseStatus.Error : CashDispenseStatus.Idle;
+                lastErrorCode = code;
+                lastErrorCodeExtended = codeEx;
             }
-            _changed.OnNext(Unit.Default);
-        }
-    }
 
-    public virtual void ClearOutput()
-    {
-        _dispenseCts?.Cancel();
-        lock (_stateLock)
-        {
-            if (_status != CashDispenseStatus.Idle)
-            {
-                _status = CashDispenseStatus.Idle;
-                _lastErrorCode = DeviceErrorCode.Cancelled;
-                _lastErrorCodeExtended = 0;
-                _changed.OnNext(Unit.Default);
-            }
+            changed.OnNext(Unit.Default);
         }
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _dispenseCts?.Cancel();
-        _dispenseCts?.Dispose();
-        _disposables.Dispose();
-        _changed.OnCompleted();
-        _simulator.Dispose();
-        _disposed = true;
-        GC.SuppressFinalize(this);
     }
 }

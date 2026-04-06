@@ -3,21 +3,30 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
-/// <summary>enddeposit コマンド: 入金を終了します（仮想デバイス）。</summary>
+/// <summary>enddeposit コマンド: 入金を終了します（仮想デバイス）。.</summary>
 public class EndDepositCommandHandler(DepositController depositController) : IScriptCommandHandler
 {
-    /// <summary>コマンド名を取得します。</summary>
-    public string OpName => "enddeposit";
+    /// <summary>Gets コマンド名を取得します。.</summary>
+    public string OpName => "ENDDEPOSIT";
 
-    /// <summary>スクリプトコマンドを実行します。</summary>
+    /// <summary>スクリプトコマンドを実行します。.</summary>
+    /// <param name="cmd">コマンド。.</param>
+    /// <param name="context">実行コンテキスト。.</param>
+    /// <param name="logger">ロガー。.</param>
+    /// <param name="onProgress">進行状況を通知するコールバック。.</param>
+    /// <returns>非同期タスク。.</returns>
     public async Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
     {
-        var action = cmd.Action?.ToLower() switch
+        ArgumentNullException.ThrowIfNull(cmd);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        var action = cmd.Action?.ToUpperInvariant() switch
         {
-            "repay" => DepositAction.Repay,
+            "REPAY" => DepositAction.Repay,
             _ => DepositAction.Store
         };
         logger.ZLogDebug($"EndDeposit Action: {action}");
-        await depositController.EndDepositAsync(action);
+        await depositController.EndDepositAsync(action).ConfigureAwait(false);
     }
 }
