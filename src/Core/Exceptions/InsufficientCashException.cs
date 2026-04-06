@@ -5,6 +5,7 @@ public class InsufficientCashException : Exception
 {
     /// <summary>Initializes a new instance of the <see cref="InsufficientCashException"/> class.空のインスタンスを初期化する。</summary>
     public InsufficientCashException()
+        : base("Insufficient cash or counts to perform the operation.")
     {
     }
 

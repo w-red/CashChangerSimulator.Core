@@ -7,7 +7,9 @@ public class DeviceException : Exception
 {
     /// <summary>空のインスタンスを初期化する。</summary>
     public DeviceException()
+        : base("A device error has occurred.")
     {
+        ErrorCode = DeviceErrorCode.Failure;
     }
 
     /// <summary>メッセージを指定して初期化する。</summary>
@@ -15,6 +17,7 @@ public class DeviceException : Exception
     public DeviceException(string message)
         : base(message)
     {
+        ErrorCode = DeviceErrorCode.Failure;
     }
 
     /// <summary>メッセージと内部例外を指定して初期化する。</summary>
@@ -23,6 +26,7 @@ public class DeviceException : Exception
     public DeviceException(string message, Exception innerException)
         : base(message, innerException)
     {
+        ErrorCode = DeviceErrorCode.Failure;
     }
 
     /// <summary>詳細なエラーコードを指定して初期化する。</summary>
