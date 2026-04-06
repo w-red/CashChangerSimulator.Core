@@ -1,0 +1,362 @@
+using System.Threading;
+using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Services.DeviceEventTypes;
+using Microsoft.Extensions.Logging;
+using R3;
+using ZLogger;
+
+namespace CashChangerSimulator.Device.Virtual;
+
+/// <summary>
+/// 仮想ハードウェアのシミュレーションロジックを統合し、ICashChangerDevice インターフェースを提供するクラス。
+/// </summary>
+public sealed class VirtualCashChangerDevice : ICashChangerDevice
+{
+    private readonly DepositController depositController;
+    private readonly DispenseController dispenseController;
+    private readonly DiagnosticController diagnosticController;
+    private readonly HardwareStatusManager hardwareStatus;
+    private readonly CashChangerManager manager;
+    private readonly Inventory inventory;
+    private readonly ILogger<VirtualCashChangerDevice> logger;
+    private readonly Mutex deviceMutex;
+    private readonly CompositeDisposable disposables = [];
+    private readonly Lock stateLock = new();
+
+    private readonly ReactiveProperty<DeviceControlState> state = new(DeviceControlState.Closed);
+    private readonly ReactiveProperty<bool> isBusy = new(false);
+
+    private bool hasMutex;
+    private bool disposed;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VirtualCashChangerDevice"/> class.
+    /// </summary>
+    /// <param name="depositController">入金コントローラー。</param>
+    /// <param name="dispenseController">出金コントローラー。</param>
+    /// <param name="diagnosticController">診断コントローラー。</param>
+    /// <param name="hardwareStatus">ハードウェア状態管理。</param>
+    /// <param name="manager">釣銭機マネージャー。</param>
+    /// <param name="inventory">現金在庫。</param>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="mutexName">共有ミューテックス名。</param>
+    internal VirtualCashChangerDevice(
+        DepositController depositController,
+        DispenseController dispenseController,
+        DiagnosticController diagnosticController,
+        HardwareStatusManager hardwareStatus,
+        CashChangerManager manager,
+        Inventory inventory,
+        ILogger<VirtualCashChangerDevice> logger,
+        string mutexName)
+    {
+        this.depositController = depositController ?? throw new ArgumentNullException(nameof(depositController));
+        this.dispenseController = dispenseController ?? throw new ArgumentNullException(nameof(dispenseController));
+        this.diagnosticController = diagnosticController ?? throw new ArgumentNullException(nameof(diagnosticController));
+        this.hardwareStatus = hardwareStatus ?? throw new ArgumentNullException(nameof(hardwareStatus));
+        this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
+        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.deviceMutex = new Mutex(false, mutexName);
+
+        // 状態の統合監視
+        Observable.CombineLatest(
+            this.depositController.Changed,
+            this.dispenseController.Changed,
+            (a, b) => Unit.Default)
+            .Subscribe(_ => UpdateCompositeStatus())
+            .AddTo(this.disposables);
+
+        this.hardwareStatus.IsConnected
+            .Subscribe(_ => UpdateCompositeStatus())
+            .AddTo(this.disposables);
+    }
+
+    /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<bool> IsBusy => isBusy.ToReadOnlyReactiveProperty();
+
+    /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<DeviceControlState> State => state.ToReadOnlyReactiveProperty();
+
+    /// <inheritdoc/>
+    public Observable<DeviceDataEventArgs> DataEvents => depositController.DataEvents;
+
+    /// <inheritdoc/>
+    public Observable<DeviceErrorEventArgs> ErrorEvents =>
+        Observable.Merge(depositController.ErrorEvents, dispenseController.ErrorEvents);
+
+    /// <inheritdoc/>
+    public Observable<DeviceStatusUpdateEventArgs> StatusUpdateEvents => hardwareStatus.StatusUpdateEvents;
+
+    /// <inheritdoc/>
+    public Observable<DeviceDirectIOEventArgs> DirectIOEvents => Observable.Empty<DeviceDirectIOEventArgs>();
+
+    /// <inheritdoc/>
+    public Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => dispenseController.OutputCompleteEvents;
+
+    /// <inheritdoc/>
+    public Task OpenAsync()
+    {
+        lock (stateLock)
+        {
+            hardwareStatus.SetConnected(true);
+            logger.ZLogInformation($"VirtualCashChangerDevice Opened.");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task CloseAsync()
+    {
+        lock (stateLock)
+        {
+            hardwareStatus.SetConnected(false);
+            hardwareStatus.DeviceEnabled.Value = false;
+        }
+
+        if (hasMutex)
+        {
+            ReleaseInternal();
+        }
+
+        logger.ZLogInformation($"VirtualCashChangerDevice Closed.");
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task ClaimAsync(int timeout)
+    {
+        if (!hardwareStatus.IsConnected.Value)
+        {
+            throw new DeviceException("Device not opened.", DeviceErrorCode.Closed);
+        }
+
+        try
+        {
+            hasMutex = deviceMutex.WaitOne(timeout);
+            if (!hasMutex)
+            {
+                throw new DeviceException("The device is already claimed by another process or instance.", DeviceErrorCode.Claimed);
+            }
+
+            logger.ZLogInformation($"VirtualCashChangerDevice Claimed.");
+        }
+        catch (AbandonedMutexException)
+        {
+            hasMutex = true;
+            logger.ZLogWarning($"VirtualCashChangerDevice Claimed (AbandonedMutex rescued).");
+        }
+
+        UpdateCompositeStatus();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task ReleaseAsync()
+    {
+        ReleaseInternal();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task EnableAsync()
+    {
+        if (!hasMutex)
+        {
+            throw new DeviceException("Device not claimed.", DeviceErrorCode.Illegal);
+        }
+
+        hardwareStatus.SetDeviceEnabled(true);
+        logger.ZLogInformation($"VirtualCashChangerDevice Enabled.");
+        UpdateCompositeStatus();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task DisableAsync()
+    {
+        hardwareStatus.SetDeviceEnabled(false);
+        logger.ZLogInformation($"VirtualCashChangerDevice Disabled.");
+        UpdateCompositeStatus();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task BeginDepositAsync()
+    {
+        EnsureEnabled();
+        depositController.BeginDeposit();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task FixDepositAsync()
+    {
+        EnsureEnabled();
+        depositController.FixDeposit();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task PauseDepositAsync(DeviceDepositPause control)
+    {
+        EnsureEnabled();
+        depositController.PauseDeposit(control);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task RepayDepositAsync()
+    {
+        EnsureEnabled();
+        return depositController.RepayDepositAsync();
+    }
+
+    /// <inheritdoc/>
+    public Task EndDepositAsync(DepositAction action)
+    {
+        EnsureEnabled();
+        return depositController.EndDepositAsync(action);
+    }
+
+    /// <inheritdoc/>
+    public Task DispenseChangeAsync(int amount)
+    {
+        EnsureEnabled();
+        return dispenseController.DispenseChangeAsync(amount, true);
+    }
+
+    /// <inheritdoc/>
+    public Task DispenseCashAsync(IEnumerable<CashDenominationCount> counts)
+    {
+        EnsureEnabled();
+        var dict = counts.ToDictionary(
+            c => FindKey(c.Denomination),
+            c => c.Count);
+        return dispenseController.DispenseCashAsync(dict, true);
+    }
+
+    /// <inheritdoc/>
+    public Task<Inventory> ReadInventoryAsync()
+    {
+        return Task.FromResult(inventory);
+    }
+
+    /// <inheritdoc/>
+    public Task AdjustInventoryAsync(IEnumerable<CashDenominationCount> counts)
+    {
+        EnsureEnabled();
+        manager.Adjust(counts.ToDictionary(
+            c => FindKey(c.Denomination),
+            c => c.Count));
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task PurgeCashAsync()
+    {
+        EnsureEnabled();
+        manager.PurgeCash();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public Task<string> CheckHealthAsync(DeviceHealthCheckLevel level)
+    {
+        return Task.FromResult(diagnosticController.GetHealthReport(level));
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        ReleaseInternal();
+        deviceMutex.Dispose();
+        disposables.Dispose();
+
+        // ReactiveProperty の型が IDisposable を実装している場合は破棄が必要
+        state.Dispose();
+        isBusy.Dispose();
+
+        // Controller は外部管理（Factory等）であっても良いが、
+        // ここでは統合実装の一部として Dispose する。
+        depositController.Dispose();
+        dispenseController.Dispose();
+        diagnosticController.Dispose();
+
+        disposed = true;
+        logger.ZLogInformation($"VirtualCashChangerDevice Disposed.");
+    }
+
+    private void ReleaseInternal()
+    {
+        if (hasMutex)
+        {
+            deviceMutex.ReleaseMutex();
+            hasMutex = false;
+            logger.ZLogInformation($"VirtualCashChangerDevice Released.");
+        }
+    }
+
+    private void EnsureEnabled()
+    {
+        if (!hardwareStatus.IsConnected.Value)
+        {
+            throw new DeviceException("Device not opened.", DeviceErrorCode.Closed);
+        }
+
+        if (!hasMutex)
+        {
+            throw new DeviceException("Device not claimed.", DeviceErrorCode.Illegal);
+        }
+
+        if (!hardwareStatus.DeviceEnabled.Value)
+        {
+            throw new DeviceException("Device not enabled.", DeviceErrorCode.Disabled);
+        }
+    }
+
+    private void UpdateCompositeStatus()
+    {
+        lock (stateLock)
+        {
+            bool busy = depositController.IsBusy || dispenseController.IsBusy;
+            isBusy.Value = busy;
+
+            if (!hardwareStatus.IsConnected.Value)
+            {
+                state.Value = DeviceControlState.Closed;
+            }
+            else if (busy)
+            {
+                state.Value = DeviceControlState.Busy;
+            }
+            else if (depositController.LastErrorCode != DeviceErrorCode.Success
+                     || dispenseController.LastErrorCode != DeviceErrorCode.Success)
+            {
+                // エラー状態の判定（リカバリ待ち等の詳細ロジックは必要に応じて拡張）
+                state.Value = DeviceControlState.Error;
+            }
+            else
+            {
+                state.Value = DeviceControlState.Idle;
+            }
+        }
+    }
+
+    private DenominationKey FindKey(decimal value)
+    {
+        var key = inventory.AllCounts.Select(kv => kv.Key).FirstOrDefault(k => k.Value == value)
+                ?? throw new DeviceException($"Denomination {value} not found in inventory configuration.", DeviceErrorCode.Illegal);
+        return key;
+    }
+}
