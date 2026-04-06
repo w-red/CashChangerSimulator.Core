@@ -8,7 +8,8 @@ public class BeginDepositCommand : IUposCommand
 {
     private readonly DepositController controller;
 
-    /// <inheritdoc/>
+    /// <summary><see cref="BeginDepositCommand"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="controller">入金コントローラー。</param>
     public BeginDepositCommand(DepositController controller)
     {
         this.controller = controller;

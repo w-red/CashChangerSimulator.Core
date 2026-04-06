@@ -10,7 +10,9 @@ public class CheckHealthCommand : IUposCommand
     private readonly DiagnosticController controller;
     private readonly HealthCheckLevel level;
 
-    /// <inheritdoc/>
+    /// <summary><see cref="CheckHealthCommand"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="controller">診断コントローラー。</param>
+    /// <param name="level">ヘルスチェックのレベル。</param>
     public CheckHealthCommand(DiagnosticController controller, HealthCheckLevel level)
     {
         this.controller = controller;
@@ -18,7 +20,7 @@ public class CheckHealthCommand : IUposCommand
         Result = string.Empty;
     }
 
-    /// <inheritdoc/>
+    /// <summary>診断の実行結果を取得します。</summary>
     public string Result { get; private set; }
 
     /// <inheritdoc/>

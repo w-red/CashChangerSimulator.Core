@@ -12,14 +12,16 @@ public class EndDepositCommand : IUposCommand
     private readonly CashDepositAction action;
     private IUposMediator? mediator;
 
-    /// <inheritdoc/>
+    /// <summary><see cref="EndDepositCommand"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="controller">入金コントローラー。</param>
+    /// <param name="action">入金完了時のアクション。</param>
     public EndDepositCommand(DepositController controller, CashDepositAction action)
     {
         this.controller = controller;
         this.action = action;
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドを実行します。</summary>
     public void Execute()
     {
         ExecuteAsync().GetAwaiter().GetResult();
@@ -29,7 +31,7 @@ public class EndDepositCommand : IUposCommand
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドを非同期で実行します。</summary>
     public async Task ExecuteAsync()
     {
         var actionText = action.ToString();
@@ -46,7 +48,7 @@ public class EndDepositCommand : IUposCommand
         await controller.EndDepositAsync(coreAction).ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドの実行条件を検証します。</summary>
     public void Verify(IUposMediator mediator)
     {
         this.mediator = mediator;

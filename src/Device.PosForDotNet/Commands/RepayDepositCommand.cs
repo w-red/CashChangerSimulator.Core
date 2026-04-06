@@ -10,13 +10,14 @@ public class RepayDepositCommand : IUposCommand
     private readonly DepositController controller;
     private IUposMediator? mediator;
 
-    /// <inheritdoc/>
+    /// <summary><see cref="RepayDepositCommand"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="controller">入金コントローラー。</param>
     public RepayDepositCommand(DepositController controller)
     {
         this.controller = controller;
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドを実行します。</summary>
     public void Execute()
     {
         ExecuteAsync().GetAwaiter().GetResult();
@@ -26,13 +27,13 @@ public class RepayDepositCommand : IUposCommand
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドを非同期で実行します。</summary>
     public async Task ExecuteAsync()
     {
         await controller.RepayDepositAsync().ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドの実行条件を検証します。</summary>
     public void Verify(IUposMediator mediator)
     {
         this.mediator = mediator;

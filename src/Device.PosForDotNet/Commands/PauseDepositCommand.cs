@@ -10,24 +10,26 @@ public class PauseDepositCommand : IUposCommand
     private readonly DepositController controller;
     private readonly CashDepositPause pause;
 
-    /// <inheritdoc/>
+    /// <summary><see cref="PauseDepositCommand"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="controller">入金コントローラー。</param>
+    /// <param name="pause">一時停止の状態。</param>
     public PauseDepositCommand(DepositController controller, CashDepositPause pause)
     {
         this.controller = controller;
         this.pause = pause;
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドを実行します。</summary>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
 
-    /// <inheritdoc/>
+    /// <summary>コマンドを非同期で実行します。</summary>
     public Task ExecuteAsync()
     {
         controller.PauseDeposit(pause == CashDepositPause.Pause ? DeviceDepositPause.Pause : DeviceDepositPause.Resume);
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドの実行条件を検証します。</summary>
     public void Verify(IUposMediator mediator)
     {
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);

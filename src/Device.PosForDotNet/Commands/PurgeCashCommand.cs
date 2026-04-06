@@ -8,23 +8,24 @@ public class PurgeCashCommand : IUposCommand
 {
     private readonly CashChangerManager manager;
 
-    /// <inheritdoc/>
+    /// <summary><see cref="PurgeCashCommand"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="manager">現金管理マネージャー。</param>
     public PurgeCashCommand(CashChangerManager manager)
     {
         this.manager = manager;
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドを実行します。</summary>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
 
-    /// <inheritdoc/>
+    /// <summary>コマンドを非同期で実行します。</summary>
     public Task ExecuteAsync()
     {
         manager.PurgeCash();
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc/>
+    /// <summary>コマンドの実行条件を検証します。</summary>
     public void Verify(IUposMediator mediator)
     {
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
