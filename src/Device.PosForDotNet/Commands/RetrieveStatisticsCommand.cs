@@ -3,29 +3,34 @@ using CashChangerSimulator.Device.Virtual;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>統計情報取得操作をカプセル化するコマンド。</summary>
+/// <summary>統計情報取得操作をカプセル化するコマンド。.</summary>
 public class RetrieveStatisticsCommand : IUposCommand
 {
-    private readonly DiagnosticController _controller;
-    private readonly string[] _statistics;
+    private readonly DiagnosticController controller;
+    private readonly string[] statistics;
 
+    /// <inheritdoc/>
     public RetrieveStatisticsCommand(DiagnosticController controller, string[] statistics)
     {
-        _controller = controller;
-        _statistics = statistics;
+        this.controller = controller;
+        this.statistics = statistics;
         Result = string.Empty;
     }
 
+    /// <inheritdoc/>
     public string Result { get; private set; }
 
+    /// <inheritdoc/>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
 
+    /// <inheritdoc/>
     public Task ExecuteAsync()
     {
-        Result = _controller.RetrieveStatistics(_statistics);
+        Result = controller.RetrieveStatistics(statistics);
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public void Verify(IUposMediator mediator)
     {
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true);

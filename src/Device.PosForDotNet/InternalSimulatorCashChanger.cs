@@ -11,51 +11,59 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
 
-/// <summary>シミュレータ内部およびテストでのみ使用される機能を備えた <see cref="SimulatorCashChanger"/> の拡張クラス。</summary>
-/// <remarks>本番用（サービスオブジェクト）のロジックと、シミュレータの利便性・テスト用フックを分離するために使用します。</remarks>
+/// <summary>シミュレータ内部およびテストでのみ使用される機能を備えた <see cref="SimulatorCashChanger"/> の拡張クラス。.</summary>
+/// <remarks>本番用（サービスオブジェクト）のロジックと、シミュレータの利便性・テスト用フックを分離するために使用します。.</remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Internal Simulator Cash Changer", 1, 14)]
 public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulator
 {
     // テスト用に内部コンポーネントを公開
+    /// <inheritdoc/>
     public new Inventory Inventory => base.Inventory;
+    /// <inheritdoc/>
     public new HardwareStatusManager HardwareStatusManager => base.HardwareStatusManager;
+    /// <inheritdoc/>
     public new DepositController DepositController => base.DepositController;
+    /// <inheritdoc/>
     public DispenseController DispenseController => Context.DispenseController;
 
     // Nullable に変更：LogProvider が null を返す可能性や、テスト環境での変動に対応
-    private readonly ILogger<InternalSimulatorCashChanger>? _internalLogger;
+    private readonly ILogger<InternalSimulatorCashChanger>? internalLogger;
 
-    /// <summary>テスト用：構成を指定せずに初期化します。</summary>
+    /// <summary>Initializes a new instance of the <see cref="InternalSimulatorCashChanger"/> class.テスト用：構成を指定せずに初期化します。.</summary>
     public InternalSimulatorCashChanger()
         : base(new SimulatorDependencies(GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = true;
-        _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
+        internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
-    /// <summary>テスト用のイベント通知アクション。UIのアクティビティフィードやテストでの検証に使用されます。</summary>
+    /// <summary>テスト用のイベント通知アクション。UIのアクティビティフィードやテストでの検証に使用されます。.</summary>
     public Action<EventArgs>? OnEventQueued;
 
-    /// <summary>テスト用：Open 時に例外をシミュレートするかどうかを制御します。</summary>
+    /// <summary>Gets or sets a value indicating whether テスト用：Open 時に例外をシミュレートするかどうかを制御します。.</summary>
     public bool SimulateOpenException { get; set; }
 
-    /// <summary>テスト用：Close 時に例外をシミュレートするかどうかを制御します。</summary>
+    /// <summary>Gets or sets a value indicating whether テスト用：Close 時に例外をシミュレートするかどうかを制御します。.</summary>
     public bool SimulateCloseException { get; set; }
 
-    /// <summary>テスト用：出金時に例外をシミュレートするかどうかを制御します。</summary>
+    /// <summary>Gets or sets a value indicating whether テスト用：出金時に例外をシミュレートするかどうかを制御します。.</summary>
     public bool SimulateDispenseException { get; set; }
 
-    /// <summary>テスト用：POS.NET のイベントキューイングを無効にするかどうか（NRE回避用）。</summary>
+    /// <summary>Gets or sets a value indicating whether テスト用：POS.NET のイベントキューイングを無効にするかどうか（NRE回避用）。.</summary>
     public bool DisableUposEventQueuing { get; set; }
 
-    /// <summary>テスト用：OPOS コールの履歴を保持します。</summary>
+    /// <summary>Gets テスト用：OPOS コールの履歴を保持します。.</summary>
     public List<string> OposHistory { get; } = [];
 
     /// <inheritdoc/>
     public override void Open()
     {
         OposHistory.Add("Open");
-        if (SimulateOpenException) throw new IOException("Simulated open exception");
+        if (SimulateOpenException)
+        {
+            throw new IOException("Simulated open exception");
+        }
+
         base.Open();
     }
 
@@ -63,7 +71,11 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     public override void Close()
     {
         OposHistory.Add("Close");
-        if (SimulateCloseException) throw new IOException("Simulated close exception");
+        if (SimulateCloseException)
+        {
+            throw new IOException("Simulated close exception");
+        }
+
         base.Close();
     }
 
@@ -71,11 +83,16 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     public override void DispenseCash(CashCount[] cashCounts)
     {
         OposHistory.Add($"DispenseCash: {string.Join(",", cashCounts.Select(c => c.NominalValue.ToString()))}");
-        if (SimulateDispenseException) throw new PosControlException("Simulated dispense exception", ErrorCode.Failure);
+        if (SimulateDispenseException)
+        {
+            throw new PosControlException("Simulated dispense exception", ErrorCode.Failure);
+        }
+
         base.DispenseCash(cashCounts);
     }
 
-    /// <summary>IDeviceSimulator の実装として、払い出し動作のシミュレーションを行います。</summary>
+    /// <summary>IDeviceSimulator の実装として、払い出し動作のシミュレーションを行います。.</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task SimulateDispenseAsync(CancellationToken ct = default)
     {
         // ViewModels から呼び出された際の履歴を記録（テスト検証用）
@@ -85,18 +102,19 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         {
             throw new PosControlException("Simulated dispense exception", ErrorCode.Failure);
         }
-        await Task.Delay(10, ct);
+
+        await Task.Delay(10, ct).ConfigureAwait(false);
     }
 
-    /// <summary>指定された引数で新しいインスタンスを初期化します。</summary>
+    /// <summary>Initializes a new instance of the <see cref="InternalSimulatorCashChanger"/> class.指定された引数で新しいインスタンスを初期化します。.</summary>
     public InternalSimulatorCashChanger(SimulatorDependencies deps)
         : base(deps with { GlobalLockFilePath = deps.GlobalLockFilePath ?? Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock") })
     {
         Context.Mediator.SkipStateVerification = true;
-        _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
+        internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
-    /// <summary>テスト用：個別の依存関係を指定して初期化します（8個の引数版）。</summary>
+    /// <summary>Initializes a new instance of the <see cref="InternalSimulatorCashChanger"/> class.テスト用：個別の依存関係を指定して初期化します（8個の引数版）。.</summary>
     public InternalSimulatorCashChanger(
         ConfigurationProvider configProvider,
         Inventory inventory,
@@ -118,10 +136,10 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = true;
-        _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
+        internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
-    /// <summary>テスト用：最小限の依存関係で初期化します（named parameters対応）。</summary>
+    /// <summary>Initializes a new instance of the <see cref="InternalSimulatorCashChanger"/> class.テスト用：最小限の依存関係で初期化します（named parameters対応）。.</summary>
     public InternalSimulatorCashChanger(
         ConfigurationProvider? configProvider = null,
         Inventory? inventory = null,
@@ -145,16 +163,20 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = true;
-        _internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
+        internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
-    private bool _isHandlingEvent;
+    private bool isHandlingEvent;
 
-    /// <summary>イベント通知をオーバーライドし、OnEventQueued フックを実行します。</summary>
+    /// <summary>イベント通知をオーバーライドし、OnEventQueued フックを実行します。.</summary>
     protected override void NotifyEvent(EventArgs e)
     {
-        if (_isHandlingEvent) return;
-        _isHandlingEvent = true;
+        if (isHandlingEvent)
+        {
+            return;
+        }
+
+        isHandlingEvent = true;
         try
         {
             OnEventQueued?.Invoke(e);
@@ -170,7 +192,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         }
         finally
         {
-            _isHandlingEvent = false;
+            isHandlingEvent = false;
         }
     }
 }

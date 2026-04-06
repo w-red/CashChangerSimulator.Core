@@ -8,94 +8,120 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Services;
 
-/// <summary>シミュレータの設定と言語・通貨状態を管理するクラス。</summary>
+/// <summary>シミュレータの設定と言語・通貨状態を管理するクラス。.</summary>
 public class UposConfigurationManager : IUposConfigurationManager, IDisposable
 {
-    private readonly ConfigurationProvider _configProvider;
-    private readonly Inventory _inventory;
-    private readonly IDeviceStateProvider _stateProvider;
-    private readonly ILogger<UposConfigurationManager> _logger = LogProvider.CreateLogger<UposConfigurationManager>();
-    private string _activeCurrencyCode = "JPY";
-    private readonly IDisposable _subscription;
+    private readonly ConfigurationProvider configProvider;
+    private readonly Inventory inventory;
+    private readonly IDeviceStateProvider stateProvider;
+    private readonly ILogger<UposConfigurationManager> logger = LogProvider.CreateLogger<UposConfigurationManager>();
+    private string activeCurrencyCode = "JPY";
+    private readonly IDisposable subscription;
 
+    /// <inheritdoc/>
     public UposConfigurationManager(
         ConfigurationProvider configProvider,
         Inventory inventory,
         IDeviceStateProvider stateProvider)
     {
-        _configProvider = configProvider;
-        _inventory = inventory;
-        _stateProvider = stateProvider;
+        this.configProvider = configProvider;
+        this.inventory = inventory;
+        this.stateProvider = stateProvider;
 
-        _subscription = _configProvider.Reloaded.Subscribe(_ => OnConfigurationReloaded());
+        subscription = this.configProvider.Reloaded.Subscribe(_ => OnConfigurationReloaded());
     }
 
+    /// <inheritdoc/>
     public string CurrencyCode
     {
-        get => _activeCurrencyCode;
+        get => activeCurrencyCode;
         set
         {
             if (!CurrencyCodeList.Contains(value))
             {
                 throw new PosControlException($"Unsupported currency: {value}", ErrorCode.Illegal);
             }
-            _activeCurrencyCode = value;
+
+            activeCurrencyCode = value;
         }
     }
 
-    public string[] CurrencyCodeList => _configProvider.Config.Inventory.Keys.ToArray();
+    /// <inheritdoc/>
+    public string[] CurrencyCodeList => configProvider.Config.Inventory.Keys.ToArray();
+    /// <inheritdoc/>
     public string[] DepositCodeList => CurrencyCodeList;
 
-    public CashUnits CurrencyCashList => UposCurrencyHelper.BuildCashUnits(_inventory, _activeCurrencyCode);
+    /// <inheritdoc/>
+    public CashUnits CurrencyCashList => UposCurrencyHelper.BuildCashUnits(inventory, activeCurrencyCode);
 
+    /// <inheritdoc/>
     public CashUnits DepositCashList => CurrencyCashList;
 
+    /// <inheritdoc/>
     public void Initialize()
     {
-        _activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
+        activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
     }
 
-    private bool _disposed;
+    private bool disposed;
 
+    /// <inheritdoc/>
     public void Reload()
     {
-        if (_disposed) return;
-        _configProvider.Reload();
-        _logger.ZLogInformation($"Configuration reloaded in UposConfigurationManager.");
+        if (disposed)
+        {
+            return;
+        }
+
+        configProvider.Reload();
+        logger.ZLogInformation($"Configuration reloaded in UposConfigurationManager.");
         UpdateSimulatorState();
     }
 
     private void OnConfigurationReloaded()
     {
-        if (_disposed) return;
-        _logger.ZLogInformation($"Configuration reloaded in UposConfigurationManager.");
+        if (disposed)
+        {
+            return;
+        }
+
+        logger.ZLogInformation($"Configuration reloaded in UposConfigurationManager.");
         UpdateSimulatorState();
     }
 
     private void UpdateSimulatorState()
     {
-        if (_disposed) return;
-        // Re-detect active currency if current one is gone
-        if (!CurrencyCodeList.Contains(_activeCurrencyCode))
+        if (disposed)
         {
-            _activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
+            return;
+        }
+
+        // Re-detect active currency if current one is gone
+        if (!CurrencyCodeList.Contains(activeCurrencyCode))
+        {
+            activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
         }
 
         // Clear inventory to avoid cross-currency pollution
         // ONLY if device is open, to avoid interference with startup sequence
-        if (_stateProvider.State != DeviceControlState.Closed)
+        if (stateProvider.State != DeviceControlState.Closed)
         {
-            _inventory.Clear();
+            inventory.Clear();
         }
 
-        _logger.ZLogInformation($"Simulator state updated. Active Currency: {_activeCurrencyCode}");
+        logger.ZLogInformation($"Simulator state updated. Active Currency: {activeCurrencyCode}");
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        _subscription.Dispose();
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        subscription.Dispose();
         GC.SuppressFinalize(this);
     }
 }

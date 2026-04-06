@@ -7,19 +7,23 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>検証をスキップするシミュレータ用の UPOS ライフサイクルを実装するクラス。</summary>
+/// <summary>検証をスキップするシミュレータ用の UPOS ライフサイクルを実装するクラス。.</summary>
 public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, TransactionHistory history, ILogger logger) : IUposLifecycleHandler
 {
+    /// <inheritdoc/>
     public ControlState State => !hardware.IsConnected.Value ? ControlState.Closed : mediator.IsBusy ? ControlState.Busy : ControlState.Idle;
 
+    /// <inheritdoc/>
     public bool Claimed => mediator.Claimed;
 
+    /// <inheritdoc/>
     public bool DeviceEnabled
     {
         get => mediator.DeviceEnabled;
         set => mediator.DeviceEnabled = value;
     }
 
+    /// <inheritdoc/>
     public bool DataEventEnabled
     {
         get => mediator.DataEventEnabled;
@@ -30,6 +34,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
     public void Open(Action baseOpen)
     {
         ArgumentNullException.ThrowIfNull(baseOpen);
+
         // Skip baseOpen()
         hardware.SetConnected(true);
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
@@ -45,6 +50,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
         {
             history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
         }
+
         hardware.SetConnected(false);
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
         logger.ZLogInformation($"Device closed (Verification Skipped).");

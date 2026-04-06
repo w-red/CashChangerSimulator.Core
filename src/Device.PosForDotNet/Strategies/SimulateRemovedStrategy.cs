@@ -4,11 +4,13 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>デバイスの取り外し(REMOVED)をエミュレートする戦略。</summary>
+/// <summary>デバイスの取り外し(REMOVED)をエミュレートする戦略。.</summary>
 public class SimulateRemovedStrategy : IDirectIOCommand
 {
+    /// <inheritdoc/>
     public int CommandCode => DirectIOCommands.SimulateRemoved;
 
+    /// <inheritdoc/>
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
         // SimulatorCashChanger.NotifyEvent は protected なので、外部からは QueueEvent を呼ぶか、

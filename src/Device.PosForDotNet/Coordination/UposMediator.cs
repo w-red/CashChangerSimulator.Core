@@ -8,22 +8,22 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。</summary>
+/// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。.</summary>
 public class UposMediator : IUposMediator
 {
-    private readonly Lock _stateLock = new();
-    private bool _isBusy;
-    private int _resultCode;
-    private int _resultCodeExtended;
-    private int _asyncResultCode;
-    private int _asyncResultCodeExtended;
+    private readonly Lock stateLock = new();
+    private bool isBusy;
+    private int resultCode;
+    private int resultCodeExtended;
+    private int asyncResultCode;
+    private int asyncResultCodeExtended;
 
-    private ICashChangerStatusSink? _sink;
-    private ILogger? _logger;
-    private StatusCoordinator? _coordinator;
-    private HardwareStatusManager? _hardwareStatusManager;
+    private ICashChangerStatusSink? sink;
+    private ILogger? logger;
+    private StatusCoordinator? coordinator;
+    private HardwareStatusManager? hardwareStatusManager;
 
-    /// <summary>依存関係を指定せずに初期化します（後で Initialize を呼ぶ必要があります）。</summary>
+    /// <summary>Initializes a new instance of the <see cref="UposMediator"/> class.依存関係を指定せずに初期化します（後で Initialize を呼ぶ必要があります）。.</summary>
     public UposMediator()
     {
     }
@@ -31,113 +31,190 @@ public class UposMediator : IUposMediator
     /// <inheritdoc/>
     public void Initialize(ICashChangerStatusSink sink, ILogger logger, StatusCoordinator coordinator, HardwareStatusManager hardwareStatusManager)
     {
-        _sink = sink;
-        _logger = logger;
-        _coordinator = coordinator;
-        _hardwareStatusManager = hardwareStatusManager;
+        this.sink = sink;
+        this.logger = logger;
+        this.coordinator = coordinator;
+        this.hardwareStatusManager = hardwareStatusManager;
     }
 
+    /// <inheritdoc/>
     public int ResultCode
     {
-        get { lock (_stateLock) return _resultCode; }
+        get
+        {
+            lock (stateLock)
+            {
+                return resultCode;
+            }
+        }
         private set
         {
-            lock (_stateLock) _resultCode = value;
+            lock (stateLock)
+            {
+                resultCode = value;
+            }
         }
     }
 
+    /// <inheritdoc/>
     public int ResultCodeExtended
     {
-        get { lock (_stateLock) return _resultCodeExtended; }
+        get
+        {
+            lock (stateLock)
+            {
+                return resultCodeExtended;
+            }
+        }
         private set
         {
-            lock (_stateLock) _resultCodeExtended = value;
+            lock (stateLock)
+            {
+                resultCodeExtended = value;
+            }
         }
     }
 
+    /// <inheritdoc/>
     public bool DeviceEnabled { get; set; }
+    /// <inheritdoc/>
     public bool DataEventEnabled { get; set; }
+    /// <inheritdoc/>
     public bool Claimed { get; set; }
+    /// <inheritdoc/>
     public bool ClaimedByAnother
     {
-        get => _sink?.ClaimedByAnother ?? false;
-        set { if (_sink != null) _sink.ClaimedByAnother = value; }
-    }
-    public bool IsBusy
-    {
-        get { lock (_stateLock) return _isBusy; }
+        get => sink?.ClaimedByAnother ?? false;
         set
         {
-            lock (_stateLock)
+            if (sink != null)
             {
-                _isBusy = value;
-                if (_isBusy)
+                sink.ClaimedByAnother = value;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool IsBusy
+    {
+        get
+        {
+            lock (stateLock)
+            {
+                return isBusy;
+            }
+        }
+        set
+        {
+            lock (stateLock)
+            {
+                isBusy = value;
+                if (isBusy)
                 {
-                    _resultCode = (int)ErrorCode.Busy;
+                    resultCode = (int)ErrorCode.Busy;
                 }
                 else
                 {
                     // When busy is cleared, we assume back to success unless explicitly failed
-                    _resultCode = (int)ErrorCode.Success;
+                    resultCode = (int)ErrorCode.Success;
                 }
             }
-            _sink?.SetAsyncProcessing(value);
+
+            sink?.SetAsyncProcessing(value);
         }
     }
+
+    /// <inheritdoc/>
     public int AsyncResultCode
     {
-        get { lock (_stateLock) return _asyncResultCode; }
-        set { lock (_stateLock) _asyncResultCode = value; }
+        get
+        {
+            lock (stateLock)
+            {
+                return asyncResultCode;
+            }
+        }
+        set
+        {
+            lock (stateLock)
+            {
+                asyncResultCode = value;
+            }
+        }
     }
+
+    /// <inheritdoc/>
     public int AsyncResultCodeExtended
     {
-        get { lock (_stateLock) return _asyncResultCodeExtended; }
-        set { lock (_stateLock) _asyncResultCodeExtended = value; }
+        get
+        {
+            lock (stateLock)
+            {
+                return asyncResultCodeExtended;
+            }
+        }
+        set
+        {
+            lock (stateLock)
+            {
+                asyncResultCodeExtended = value;
+            }
+        }
     }
+
+    /// <inheritdoc/>
     public bool SkipStateVerification { get; set; }
 
-    public IUposEventSink? EventSink => _sink as IUposEventSink;
+    /// <inheritdoc/>
+    public IUposEventSink? EventSink => sink as IUposEventSink;
 
-    /// <summary>検証規則に基づき、現在の状態をチェックします。</summary>
-    /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。</remarks>
-    /// <param name="mustBeClaimed">排他占有（Claim）が必要かどうか。</param>
-    /// <param name="mustBeEnabled">デバイス有効化（Enabled）が必要かどうか。</param>
-    /// <param name="mustNotBeBusy">ビジー状態であってはならないかどうか。</param>
+    /// <summary>検証規則に基づき、現在の状態をチェックします。.</summary>
+    /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。.</remarks>
+    /// <param name="mustBeClaimed">排他占有（Claim）が必要かどうか。.</param>
+    /// <param name="mustBeEnabled">デバイス有効化（Enabled）が必要かどうか。.</param>
+    /// <param name="mustNotBeBusy">ビジー状態であってはならないかどうか。.</param>
     public void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false)
     {
-        if (SkipStateVerification) return;
-        if (_sink == null) throw new InvalidOperationException("Mediator not initialized.");
+        if (SkipStateVerification)
+        {
+            return;
+        }
+
+        if (sink == null)
+        {
+            throw new InvalidOperationException("Mediator not initialized.");
+        }
 
         // [UPOS PRECEDENCE] Mandatory priority: Closed > NotClaimed > Claimed > Disabled > Busy
         // [UPOS 優先順位] 強制的な優先順位: Closed > NotClaimed > Claimed > Disabled > Busy
 
         // 1. Closed Check (ErrorCode.Closed)
-        if (_sink.State == ControlState.Closed)
+        if (sink.State == ControlState.Closed)
         {
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
         // 2. Claimed Check (ErrorCode.Claimed - i.e. Occupied by another)
         // [FIX] Always refresh the global lock status before checking ClaimedByAnother for precedence.
-        _hardwareStatusManager?.RefreshClaimedStatus();
-        if (_hardwareStatusManager != null && _sink != null)
+        hardwareStatusManager?.RefreshClaimedStatus();
+        if (hardwareStatusManager != null && sink != null)
         {
-            _sink.ClaimedByAnother = _hardwareStatusManager.IsClaimedByAnother.Value;
+            sink.ClaimedByAnother = hardwareStatusManager.IsClaimedByAnother.Value;
         }
 
-        if (mustBeClaimed && _sink != null && _sink.ClaimedByAnother)
+        if (mustBeClaimed && sink != null && sink.ClaimedByAnother)
         {
             throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
         }
 
         // 3. NotClaimed Check (ErrorCode.NotClaimed)
-        if (mustBeClaimed && _sink != null && !_sink.Claimed)
+        if (mustBeClaimed && sink != null && !sink.Claimed)
         {
             throw new PosControlException("Device is not claimed.", ErrorCode.NotClaimed);
         }
 
         // 4. Disabled Check (ErrorCode.Disabled)
-        if (mustBeEnabled && _sink != null && !_sink.DeviceEnabled)
+        if (mustBeEnabled && sink != null && !sink.DeviceEnabled)
         {
             throw new PosControlException("Device is disabled.", ErrorCode.Disabled);
         }
@@ -149,6 +226,7 @@ public class UposMediator : IUposMediator
         }
     }
 
+    /// <inheritdoc/>
     public static void ThrowIfBusy(bool asyncProcessing)
     {
         if (asyncProcessing)
@@ -157,6 +235,7 @@ public class UposMediator : IUposMediator
         }
     }
 
+    /// <inheritdoc/>
     public static void ThrowIfDepositInProgress(bool inProgress)
     {
         if (inProgress)
@@ -165,24 +244,27 @@ public class UposMediator : IUposMediator
         }
     }
 
+    /// <inheritdoc/>
     public virtual void SetSuccess()
     {
-        lock (_stateLock)
+        lock (stateLock)
         {
-            _resultCode = (int)ErrorCode.Success;
-            _resultCodeExtended = 0;
+            resultCode = (int)ErrorCode.Success;
+            resultCodeExtended = 0;
         }
     }
 
+    /// <inheritdoc/>
     public virtual void SetFailure(ErrorCode code, int codeEx = 0)
     {
-        lock (_stateLock)
+        lock (stateLock)
         {
-            _resultCode = (int)code;
-            _resultCodeExtended = codeEx;
+            resultCode = (int)code;
+            resultCodeExtended = codeEx;
         }
     }
 
+    /// <inheritdoc/>
     public virtual void HandleFailure(DeviceErrorCode code, int codeEx = 0)
     {
         // [FIX] Extended Code が未指定（0）の場合、DeviceErrorCode に応じたデフォルト値をセットする。
@@ -202,9 +284,13 @@ public class UposMediator : IUposMediator
         throw new PosControlException("Operation failed.", (ErrorCode)ResultCode, ResultCodeExtended);
     }
 
+    /// <inheritdoc/>
     public void FireEvent(EventArgs e)
     {
-        if (EventSink == null) return;
+        if (EventSink == null)
+        {
+            return;
+        }
 
         if (e is DataEventArgs de)
         {
@@ -220,6 +306,7 @@ public class UposMediator : IUposMediator
         }
     }
 
+    /// <inheritdoc/>
     public void Execute(IUposCommand command)
     {
         ArgumentNullException.ThrowIfNull(command);
@@ -248,7 +335,7 @@ public class UposMediator : IUposMediator
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Unexpected error during command execution.");
+            logger?.LogError(ex, "Unexpected error during command execution.");
 
             // Extract ErrorCode from Exception if it has a property or is a known type
             var errorCode = ErrorCode.Failure;
@@ -258,6 +345,7 @@ public class UposMediator : IUposMediator
             {
                 errorCode = (ErrorCode)codeAsInt;
             }
+
             if (ex.GetType().GetProperty("ErrorCodeExtended")?.GetValue(ex) is int codeExAsInt)
             {
                 errorCodeExtended = codeExAsInt;
@@ -268,6 +356,7 @@ public class UposMediator : IUposMediator
         }
     }
 
+    /// <inheritdoc/>
     public static ErrorCode MapToErrorCode(DeviceErrorCode deviceError)
     {
         return deviceError switch
@@ -285,6 +374,7 @@ public class UposMediator : IUposMediator
         };
     }
 
+    /// <inheritdoc/>
     public static int MapToErrorCodeExtended(DeviceErrorCode deviceError)
     {
         return deviceError switch

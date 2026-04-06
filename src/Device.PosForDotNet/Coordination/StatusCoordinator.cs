@@ -7,8 +7,8 @@ using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>釣銭機の各コンポーネントからの通知を集約する調整クラス。</summary>
-/// <remarks>内部状態の変化を UPOS イベントへ変換して通知します。</remarks>
+/// <summary>釣銭機の各コンポーネントからの通知を集約する調整クラス。.</summary>
+/// <remarks>内部状態の変化を UPOS イベントへ変換して通知します。.</remarks>
 public class StatusCoordinator(
     ICashChangerStatusSink sink,
     OverallStatusAggregator statusAggregator,
@@ -16,21 +16,26 @@ public class StatusCoordinator(
     DepositController depositController,
     DispenseController dispenseController) : IDisposable
 {
-    private readonly CompositeDisposable _disposables = [];
-    private bool _disposed;
-    private bool _isStarted;
-    private bool _wasFixed;
+    private readonly CompositeDisposable disposables = [];
+    private bool disposed;
+    private bool isStarted;
+    private bool wasFixed;
 
-    /// <summary>現在のデバイスステータス。</summary>
+    /// <summary>Gets 現在のデバイスステータス。.</summary>
     public CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerStatus.OK;
 
-    /// <summary>現在のフルステータス。</summary>
+    /// <summary>Gets 現在のフルステータス。.</summary>
     public CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerFullStatus.OK;
 
+    /// <inheritdoc/>
     public void Start()
     {
-        if (_disposed || _isStarted) return;
-        _isStarted = true;
+        if (disposed || isStarted)
+        {
+            return;
+        }
+
+        isStarted = true;
 
         // Initialize with current values
         LastFullStatus = statusAggregator.FullStatus.CurrentValue switch
@@ -46,9 +51,13 @@ public class StatusCoordinator(
             _ => CashChangerStatus.OK
         };
 
-        _disposables.Add(statusAggregator.DeviceStatus.Subscribe(status =>
+        disposables.Add(statusAggregator.DeviceStatus.Subscribe(status =>
         {
-            if (_disposed) return;
+            if (disposed)
+            {
+                return;
+            }
+
             var newDeviceStatus = status switch
             {
                 CashStatus.Empty => CashChangerStatus.Empty,
@@ -80,9 +89,13 @@ public class StatusCoordinator(
             }
         }));
 
-        _disposables.Add(statusAggregator.FullStatus.Subscribe(status =>
+        disposables.Add(statusAggregator.FullStatus.Subscribe(status =>
         {
-            if (_disposed) return;
+            if (disposed)
+            {
+                return;
+            }
+
             var newFullStatus = status switch
             {
                 CashStatus.Full => CashChangerFullStatus.Full,
@@ -107,23 +120,35 @@ public class StatusCoordinator(
             }
         }));
 
-        _disposables.Add(hardwareStatusManager.IsConnected.Subscribe(connected =>
+        disposables.Add(hardwareStatusManager.IsConnected.Subscribe(connected =>
         {
-            if (_disposed) return;
+            if (disposed)
+            {
+                return;
+            }
+
             var code = connected ? UposCashChangerStatusUpdateCode.Inserted : UposCashChangerStatusUpdateCode.Removed;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
-        _disposables.Add(hardwareStatusManager.IsCollectionBoxRemoved.Skip(1).Subscribe(removed =>
+        disposables.Add(hardwareStatusManager.IsCollectionBoxRemoved.Skip(1).Subscribe(removed =>
         {
-            if (_disposed) return;
+            if (disposed)
+            {
+                return;
+            }
+
             var code = removed ? UposCashChangerStatusUpdateCode.Removed : UposCashChangerStatusUpdateCode.Inserted;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
-        _disposables.Add(hardwareStatusManager.IsJammed.Subscribe(jammed =>
+        disposables.Add(hardwareStatusManager.IsJammed.Subscribe(jammed =>
         {
-            if (_disposed) return;
+            if (disposed)
+            {
+                return;
+            }
+
             if (jammed)
             {
                 sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Jam));
@@ -140,18 +165,21 @@ public class StatusCoordinator(
                 };
                 sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
 
-                // If it was still Empty/NearEmpty, fire those too? 
+                // If it was still Empty/NearEmpty, fire those too?
                 // Actually, UPOS Ok event often implies clearing of error state.
             }
         }));
 
         // Handle deposit state changes and event firing
-        _disposables.Add(depositController.Changed
+        disposables.Add(depositController.Changed
             .Select(_ => (depositController.IsFixed, depositController.DepositStatus, depositController.IsPaused, depositController.DepositAmount))
             .DistinctUntilChanged() // [FIX] Prevent multiple events for the same state transition
             .Subscribe(state =>
         {
-            if (_disposed) return;
+            if (disposed)
+            {
+                return;
+            }
 
             bool isFixed = state.IsFixed;
             bool isPaused = state.IsPaused;
@@ -160,7 +188,7 @@ public class StatusCoordinator(
             // [LIFECYCLE] Reset wasFixed flag at the start of a deposit session.
             if (currentStatus == DeviceDepositStatus.Start)
             {
-                _wasFixed = false;
+                wasFixed = false;
                 return;
             }
 
@@ -175,10 +203,10 @@ public class StatusCoordinator(
                     // [REAL-TIME] Fire on every change (tracked money)
                     sink.FireEvent(new DataEventArgs(0));
                 }
-                else if (isFixed && !_wasFixed)
+                else if (isFixed && !wasFixed)
                 {
                     // [BUFFERED] Fire exactly once when FixDeposit is called.
-                    _wasFixed = true;
+                    wasFixed = true;
                     sink.FireEvent(new DataEventArgs(0));
                 }
             }
@@ -186,11 +214,11 @@ public class StatusCoordinator(
             // [LIFECYCLE] Ensure _wasFixed is reset if we leave the active state (e.g. End)
             if (currentStatus == DeviceDepositStatus.End || currentStatus == DeviceDepositStatus.None)
             {
-                _wasFixed = false;
+                wasFixed = false;
             }
         }));
 
-        _disposables.Add(dispenseController.Changed
+        disposables.Add(dispenseController.Changed
             .Select(_ => dispenseController.IsBusy)
             .DistinctUntilChanged()
             .Pairwise()
@@ -227,9 +255,13 @@ public class StatusCoordinator(
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        _disposables.Dispose();
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        disposables.Dispose();
         GC.SuppressFinalize(this);
     }
 }

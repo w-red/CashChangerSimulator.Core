@@ -4,11 +4,13 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>デバイスの装着(INSERTED)をエミュレートする戦略。</summary>
+/// <summary>デバイスの装着(INSERTED)をエミュレートする戦略。.</summary>
 public class SimulateInsertedStrategy : IDirectIOCommand
 {
+    /// <inheritdoc/>
     public int CommandCode => DirectIOCommands.SimulateInserted;
 
+    /// <inheritdoc/>
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
         device.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Inserted));

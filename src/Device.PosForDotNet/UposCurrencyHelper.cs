@@ -3,10 +3,11 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
 
-/// <summary>UPOS の通貨に関わる計算や単位の生成を行うヘルパークラス。</summary>
+/// <summary>UPOS の通貨に関わる計算や単位の生成を行うヘルパークラス。.</summary>
 public static class UposCurrencyHelper
 {
-    /// <summary>指定された通貨コードに対する係数 (セント等への変換率) を取得します。</summary>
+    /// <summary>指定された通貨コードに対する係数 (セント等への変換率) を取得します。.</summary>
+    /// <returns></returns>
     public static decimal GetCurrencyFactor(string currencyCode)
     {
         ArgumentNullException.ThrowIfNull(currencyCode);
@@ -17,7 +18,8 @@ public static class UposCurrencyHelper
         };
     }
 
-    /// <summary>DenominationKey から NominalValue (整数化された額面) を取得します。</summary>
+    /// <summary>DenominationKey から NominalValue (整数化された額面) を取得します。.</summary>
+    /// <returns></returns>
     public static int GetNominalValue(DenominationKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
@@ -25,7 +27,8 @@ public static class UposCurrencyHelper
             key.Value * GetCurrencyFactor(key.CurrencyCode));
     }
 
-    /// <summary>在庫情報からアクティブな通貨コードに対する CashUnits (硬貨と紙幣の額面一覧) を生成します。</summary>
+    /// <summary>在庫情報からアクティブな通貨コードに対する CashUnits (硬貨と紙幣の額面一覧) を生成します。.</summary>
+    /// <returns></returns>
     public static CashUnits BuildCashUnits(Inventory inventory, string activeCurrencyCode)
     {
         ArgumentNullException.ThrowIfNull(inventory);

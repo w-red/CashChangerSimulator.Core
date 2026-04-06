@@ -4,26 +4,30 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>投入一時停止操作をカプセル化するコマンド。</summary>
+/// <summary>投入一時停止操作をカプセル化するコマンド。.</summary>
 public class PauseDepositCommand : IUposCommand
 {
-    private readonly DepositController _controller;
-    private readonly CashDepositPause _pause;
+    private readonly DepositController controller;
+    private readonly CashDepositPause pause;
 
+    /// <inheritdoc/>
     public PauseDepositCommand(DepositController controller, CashDepositPause pause)
     {
-        _controller = controller;
-        _pause = pause;
+        this.controller = controller;
+        this.pause = pause;
     }
 
+    /// <inheritdoc/>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
 
+    /// <inheritdoc/>
     public Task ExecuteAsync()
     {
-        _controller.PauseDeposit(_pause == CashDepositPause.Pause ? DeviceDepositPause.Pause : DeviceDepositPause.Resume);
+        controller.PauseDeposit(pause == CashDepositPause.Pause ? DeviceDepositPause.Pause : DeviceDepositPause.Resume);
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public void Verify(IUposMediator mediator)
     {
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);

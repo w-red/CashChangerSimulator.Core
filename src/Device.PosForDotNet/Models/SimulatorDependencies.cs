@@ -9,8 +9,8 @@ using CashChangerSimulator.Device.Virtual;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Models;
 
-/// <summary>シミュレータの構築に必要な依存オブジェクトを保持するレコード。</summary>
-/// <remarks>テストや DI コンテナからの注入を容易にするために使用します。</remarks>
+/// <summary>シミュレータの構築に必要な依存オブジェクトを保持するレコード。.</summary>
+/// <remarks>テストや DI コンテナからの注入を容易にするために使用します。.</remarks>
 public record SimulatorDependencies(
     ConfigurationProvider? ConfigProvider = null,
     Inventory? Inventory = null,
@@ -24,5 +24,4 @@ public record SimulatorDependencies(
     IUposMediator? Mediator = null,
     IUposEventNotifier? EventNotifier = null,
     UposConfigurationManager? ConfigurationManager = null,
-    string? GlobalLockFilePath = null
-);
+    string? GlobalLockFilePath = null);

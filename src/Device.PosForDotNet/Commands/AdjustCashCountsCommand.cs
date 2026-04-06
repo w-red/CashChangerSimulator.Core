@@ -6,15 +6,16 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>在庫調整操作をカプセル化するコマンド。</summary>
+/// <summary>在庫調整操作をカプセル化するコマンド。.</summary>
 public class AdjustCashCountsCommand : IUposCommand
 {
-    private readonly Inventory _inventory;
-    private readonly IEnumerable<CashCount> _cashCounts;
-    private readonly string _currencyCode;
-    private readonly decimal _currencyFactor;
-    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly Inventory inventory;
+    private readonly IEnumerable<CashCount> cashCounts;
+    private readonly string currencyCode;
+    private readonly decimal currencyFactor;
+    private readonly HardwareStatusManager hardwareStatusManager;
 
+    /// <inheritdoc/>
     public AdjustCashCountsCommand(
         Inventory inventory,
         IEnumerable<CashCount> cashCounts,
@@ -22,18 +23,20 @@ public class AdjustCashCountsCommand : IUposCommand
         decimal currencyFactor,
         HardwareStatusManager hardwareStatusManager)
     {
-        _inventory = inventory;
-        _cashCounts = cashCounts;
-        _currencyCode = currencyCode;
-        _currencyFactor = currencyFactor;
-        _hardwareStatusManager = hardwareStatusManager;
+        this.inventory = inventory;
+        this.cashCounts = cashCounts;
+        this.currencyCode = currencyCode;
+        this.currencyFactor = currencyFactor;
+        this.hardwareStatusManager = hardwareStatusManager;
     }
 
+    /// <inheritdoc/>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
 
+    /// <inheritdoc/>
     public Task ExecuteAsync()
     {
-        if (_hardwareStatusManager.IsJammed.Value)
+        if (hardwareStatusManager.IsJammed.Value)
         {
             throw new PosControlException(
                 "Device is jammed. Cannot adjust cash counts.",
@@ -41,14 +44,16 @@ public class AdjustCashCountsCommand : IUposCommand
                 (int)UposCashChangerErrorCodeExtended.Jam);
         }
 
-        var dict = CashCountAdapter.ToDenominationDict(_cashCounts, _currencyCode, _currencyFactor);
+        var dict = CashCountAdapter.ToDenominationDict(cashCounts, currencyCode, currencyFactor);
         foreach (var (key, count) in dict)
         {
-            _inventory.SetCount(key, count);
+            inventory.SetCount(key, count);
         }
+
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public void Verify(IUposMediator mediator)
     {
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);

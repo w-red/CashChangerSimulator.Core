@@ -2,24 +2,28 @@ using CashChangerSimulator.Device.PosForDotNet.Coordination;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>統計情報リセット操作をカプセル化するコマンド。</summary>
+/// <summary>統計情報リセット操作をカプセル化するコマンド。.</summary>
 public class ResetStatisticsCommand : IUposCommand
 {
-    private readonly string[] _statistics;
+    private readonly string[] statistics;
 
+    /// <inheritdoc/>
     public ResetStatisticsCommand(string[] statistics)
     {
-        _statistics = statistics;
+        this.statistics = statistics;
     }
 
+    /// <inheritdoc/>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
 
+    /// <inheritdoc/>
     public Task ExecuteAsync()
     {
         // Reset logic can be added if needed
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public void Verify(IUposMediator mediator)
     {
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true);

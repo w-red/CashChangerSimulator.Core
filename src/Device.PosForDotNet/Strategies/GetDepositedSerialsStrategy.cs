@@ -3,11 +3,13 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>直前の入金セッションで投入された紙幣のシリアル番号一覧を取得する戦略。</summary>
+/// <summary>直前の入金セッションで投入された紙幣のシリアル番号一覧を取得する戦略。.</summary>
 public class GetDepositedSerialsStrategy : IDirectIOCommand
 {
+    /// <inheritdoc/>
     public int CommandCode => DirectIOCommands.GetDepositedSerials;
 
+    /// <inheritdoc/>
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
         var serials = string.Join(",", device.DepositController.LastDepositedSerials);

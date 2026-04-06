@@ -3,11 +3,13 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>診断ログを取得するための DirectIOStrategy。</summary>
+/// <summary>診断ログを取得するための DirectIOStrategy。.</summary>
 public class GetDiagnosticLogStrategy : IDirectIOCommand
 {
+    /// <inheritdoc/>
     public int CommandCode => DirectIOCommands.GetDiagnosticLog;
 
+    /// <inheritdoc/>
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
         // 簡易的に CheckHealthText をログとして返却する実装

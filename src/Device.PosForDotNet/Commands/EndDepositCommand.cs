@@ -5,32 +5,35 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>投入終了操作をカプセル化するコマンド。</summary>
+/// <summary>投入終了操作をカプセル化するコマンド。.</summary>
 public class EndDepositCommand : IUposCommand
 {
-    private readonly DepositController _controller;
-    private readonly CashDepositAction _action;
-    private IUposMediator? _mediator;
+    private readonly DepositController controller;
+    private readonly CashDepositAction action;
+    private IUposMediator? mediator;
 
+    /// <inheritdoc/>
     public EndDepositCommand(DepositController controller, CashDepositAction action)
     {
-        _controller = controller;
-        _action = action;
+        this.controller = controller;
+        this.action = action;
     }
 
+    /// <inheritdoc/>
     public void Execute()
     {
         ExecuteAsync().GetAwaiter().GetResult();
-        if (_controller.LastErrorCode != DeviceErrorCode.Success)
+        if (controller.LastErrorCode != DeviceErrorCode.Success)
         {
-            throw new DeviceException("EndDeposit failed", _controller.LastErrorCode, _controller.LastErrorCodeExtended);
+            throw new DeviceException("EndDeposit failed", controller.LastErrorCode, controller.LastErrorCodeExtended);
         }
     }
 
+    /// <inheritdoc/>
     public async Task ExecuteAsync()
     {
-        var actionText = _action.ToString();
-        var actionValue = (int)_action;
+        var actionText = action.ToString();
+        var actionValue = (int)action;
 
         var coreAction = actionText switch
         {
@@ -40,12 +43,13 @@ public class EndDepositCommand : IUposCommand
             _ when actionValue == 3 || actionValue == 4 => DepositAction.Repay,
             _ => DepositAction.Store
         };
-        await _controller.EndDepositAsync(coreAction);
+        await controller.EndDepositAsync(coreAction).ConfigureAwait(false);
     }
 
+    /// <inheritdoc/>
     public void Verify(IUposMediator mediator)
     {
-        _mediator = mediator;
+        this.mediator = mediator;
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

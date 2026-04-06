@@ -3,11 +3,13 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>現金を指定の文字列（UPOS形式）で調整する戦略。</summary>
+/// <summary>現金を指定の文字列（UPOS形式）で調整する戦略。.</summary>
 public class AdjustCashCountsStrStrategy : IDirectIOCommand
 {
+    /// <inheritdoc/>
     public int CommandCode => DirectIOCommands.AdjustCashCountsStr;
 
+    /// <inheritdoc/>
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
         if (obj is string strVal)

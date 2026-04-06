@@ -4,12 +4,13 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet;
 
 /// <summary>
-/// DirectIO コマンドの管理と実行を担当するクラス。
+/// DirectIO コマンドの管理と実行を担当するクラス。.
 /// </summary>
 public class DirectIOHandler
 {
-    private readonly Dictionary<int, IDirectIOCommand> _commands = [];
+    private readonly Dictionary<int, IDirectIOCommand> commands = [];
 
+    /// <inheritdoc/>
     public DirectIOHandler()
     {
         InitializeCommands();
@@ -33,16 +34,17 @@ public class DirectIOHandler
 
         foreach (var strategy in strategies)
         {
-            _commands[strategy.CommandCode] = strategy;
+            commands[strategy.CommandCode] = strategy;
         }
     }
 
     /// <summary>
-    /// 指定されたコマンドを実行します。
+    /// 指定されたコマンドを実行します。.
     /// </summary>
+    /// <returns></returns>
     public DirectIOData Handle(int command, int data, object obj, SimulatorCashChanger serviceObject)
     {
         ArgumentNullException.ThrowIfNull(serviceObject);
-        return _commands.TryGetValue(command, out var strategy) ? strategy.Execute(data, obj, serviceObject) : new DirectIOData(data, obj);
+        return commands.TryGetValue(command, out var strategy) ? strategy.Execute(data, obj, serviceObject) : new DirectIOData(data, obj);
     }
 }

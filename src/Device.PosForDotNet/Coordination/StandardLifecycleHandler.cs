@@ -7,25 +7,36 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>標準的な UPOS ライフサイクル（状態検証あり）を実装するクラス。</summary>
+/// <summary>標準的な UPOS ライフサイクル（状態検証あり）を実装するクラス。.</summary>
 public class StandardLifecycleHandler(
     HardwareStatusManager hardware,
     IUposMediator mediator,
     TransactionHistory history,
     ILogger logger) : IUposLifecycleHandler
 {
+    /// <inheritdoc/>
     public ControlState State
     {
         get
         {
-            if (hardware.IsDisposed || !hardware.IsConnected.Value) return ControlState.Closed;
-            if (mediator.IsBusy) return ControlState.Busy;
+            if (hardware.IsDisposed || !hardware.IsConnected.Value)
+            {
+                return ControlState.Closed;
+            }
+
+            if (mediator.IsBusy)
+            {
+                return ControlState.Busy;
+            }
+
             return ControlState.Idle;
         }
     }
 
+    /// <inheritdoc/>
     public bool Claimed => mediator.Claimed;
 
+    /// <inheritdoc/>
     public bool DeviceEnabled
     {
         get => mediator.DeviceEnabled;
@@ -35,23 +46,35 @@ public class StandardLifecycleHandler(
             {
                 // [FIX] Perform minimal local checks to satisfy unit tests that use a mock mediator.
                 // [修正] Mock メディエーターを使用するユニットテストを満たすため、最小限のローカルチェックを実行します。
-                if (State == ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
+                if (State == ControlState.Closed)
+                {
+                    throw new PosControlException("Device is closed.", ErrorCode.Closed);
+                }
 
                 // [FIX] Always refresh the global lock status before checking ClaimedByAnother for precedence.
                 // [修正] 優先順位の検証前に、グローバルロックの状態を常に最新化します。
                 hardware.RefreshClaimedStatus();
                 mediator.ClaimedByAnother = hardware.IsClaimedByAnother.Value;
 
-                if (mediator.ClaimedByAnother) throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
+                if (mediator.ClaimedByAnother)
+                {
+                    throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
+                }
 
-                if (!Claimed) throw new PosControlException("Device is not claimed.", ErrorCode.NotClaimed);
+                if (!Claimed)
+                {
+                    throw new PosControlException("Device is not claimed.", ErrorCode.NotClaimed);
+                }
 
                 // [UPOS PRECEDENCE] Use mediator for centralized complex verification.
                 // [UPOS 優先順位] 集中管理された複雑な検証にはメディエーターを使用します。
                 mediator.VerifyState(mustBeClaimed: true);
             }
 
-            if (value == mediator.DeviceEnabled) return;
+            if (value == mediator.DeviceEnabled)
+            {
+                return;
+            }
 
             mediator.DeviceEnabled = value;
             if (logger != null)
@@ -61,12 +84,14 @@ public class StandardLifecycleHandler(
         }
     }
 
+    /// <inheritdoc/>
     public bool DataEventEnabled
     {
         get => mediator.DataEventEnabled;
         set => mediator.DataEventEnabled = value;
     }
 
+    /// <inheritdoc/>
     public void Open(Action baseOpen)
     {
         ArgumentNullException.ThrowIfNull(baseOpen);
@@ -77,6 +102,7 @@ public class StandardLifecycleHandler(
             {
                 logger.ZLogInformation($"Open called but device is already {State}.");
             }
+
             mediator.SetSuccess();
             return;
         }
@@ -100,6 +126,7 @@ public class StandardLifecycleHandler(
         mediator.SetSuccess();
     }
 
+    /// <inheritdoc/>
     public void Close(Action baseClose)
     {
         ArgumentNullException.ThrowIfNull(baseClose);
@@ -110,6 +137,7 @@ public class StandardLifecycleHandler(
             {
                 logger.ZLogInformation($"Close called but device is already Closed.");
             }
+
             mediator.SetSuccess();
             return;
         }
@@ -117,12 +145,18 @@ public class StandardLifecycleHandler(
         // [SAFE SEQUENCE] Disable -> Release -> Close to prevent POS for .NET internal NRE on exit.
         if (DeviceEnabled)
         {
-            try { DeviceEnabled = false; } catch { }
+            try
+            {
+                DeviceEnabled = false;
+            }
+            catch
+            {
+            }
         }
 
         if (Claimed)
         {
-            // Note: We don't have the baseRelease delegate here, 
+            // Note: We don't have the baseRelease delegate here,
             // but setting Claimed=false and adding history is handled below.
             // Most SDKs handle the internal release during Close() if disabled.
         }
@@ -145,6 +179,7 @@ public class StandardLifecycleHandler(
             {
                 logger.ZLogInformation($"Close called while device is Claimed. Adding implicit Release log.");
             }
+
             history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
         }
 
@@ -153,6 +188,7 @@ public class StandardLifecycleHandler(
         mediator.SetSuccess();
     }
 
+    /// <inheritdoc/>
     public void Claim(int timeout, Action<int> baseClaim)
     {
         ArgumentNullException.ThrowIfNull(baseClaim);
@@ -163,6 +199,7 @@ public class StandardLifecycleHandler(
             {
                 logger.LogWarning("Claim called while device is Closed.");
             }
+
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
@@ -172,6 +209,7 @@ public class StandardLifecycleHandler(
             {
                 logger.LogInformation("Claim called but device is already claimed.");
             }
+
             mediator.SetSuccess();
             return;
         }
@@ -184,8 +222,10 @@ public class StandardLifecycleHandler(
                 {
                     logger.LogWarning("Claim failed due to global lock (claimed by another process).");
                 }
+
                 throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
             }
+
             baseClaim(timeout);
         }
         catch (Exception ex)
@@ -203,6 +243,7 @@ public class StandardLifecycleHandler(
         mediator.SetSuccess();
     }
 
+    /// <inheritdoc/>
     public void Release(Action baseRelease)
     {
         ArgumentNullException.ThrowIfNull(baseRelease);
@@ -213,6 +254,7 @@ public class StandardLifecycleHandler(
             {
                 logger.LogWarning("Release called while device is Closed.");
             }
+
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
@@ -222,6 +264,7 @@ public class StandardLifecycleHandler(
             {
                 logger.LogInformation("Release called but device is not claimed.");
             }
+
             mediator.SetSuccess();
             return;
         }

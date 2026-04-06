@@ -8,61 +8,57 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 /// <summary>
 /// UPOSデバイス (SimulatorCashChanger) から発火されるイベントを購読し、
 /// UIのActivity Feed等に表示するための取引履歴 (TransactionHistory) を記録するオブザーバー層。
-/// デバイス層が上位のUI履歴要件に依存しないように隔離するためのクラスです。
+/// デバイス層が上位のUI履歴要件に依存しないように隔離するためのクラスです。.
 /// </summary>
 public class DeviceEventHistoryObserver : IDisposable
 {
-    private readonly InternalSimulatorCashChanger _device;
-    private readonly TransactionHistory _history;
+    private readonly InternalSimulatorCashChanger device;
+    private readonly TransactionHistory history;
 
-    /// <summary>オブザーバーを初期化し、イベントを購読します。</summary>
+    /// <summary>Initializes a new instance of the <see cref="DeviceEventHistoryObserver"/> class.オブザーバーを初期化し、イベントを購読します。.</summary>
     public DeviceEventHistoryObserver(InternalSimulatorCashChanger device, TransactionHistory history)
     {
-        _device = device ?? throw new ArgumentNullException(nameof(device));
-        _history = history ?? throw new ArgumentNullException(nameof(history));
+        this.device = device ?? throw new ArgumentNullException(nameof(device));
+        this.history = history ?? throw new ArgumentNullException(nameof(history));
 
-        _device.OnEventQueued += HandleDeviceEvent;
+        this.device.OnEventQueued += HandleDeviceEvent;
     }
 
     private void HandleDeviceEvent(EventArgs e)
     {
         if (e is DataEventArgs)
         {
-            _history.Add(new TransactionEntry(
+            history.Add(new TransactionEntry(
                 DateTimeOffset.Now,
                 TransactionType.DataEvent,
                 0,
-                new Dictionary<DenominationKey, int>()
-            ));
+                new Dictionary<DenominationKey, int>()));
         }
-
         else if (e is StatusUpdateEventArgs se)
         {
             if (se.Status == (int)UposCashChangerStatusUpdateCode.Jam)
             {
-                _history.Add(new TransactionEntry(
+                history.Add(new TransactionEntry(
                     DateTimeOffset.Now,
                     TransactionType.HardwareError,
                     0,
-                    new Dictionary<DenominationKey, int>()
-                ));
+                    new Dictionary<DenominationKey, int>()));
             }
             else if (se.Status == (int)UposCashChangerStatusUpdateCode.Ok)
             {
-                _history.Add(new TransactionEntry(
+                history.Add(new TransactionEntry(
                     DateTimeOffset.Now,
                     TransactionType.ErrorRecovery,
                     0,
-                    new Dictionary<DenominationKey, int>()
-                ));
+                    new Dictionary<DenominationKey, int>()));
             }
         }
     }
 
-    /// <summary>イベントの購読を解除します。</summary>
+    /// <summary>イベントの購読を解除します。.</summary>
     public void Dispose()
     {
-        _device.OnEventQueued -= HandleDeviceEvent;
+        device.OnEventQueued -= HandleDeviceEvent;
         GC.SuppressFinalize(this);
     }
 }

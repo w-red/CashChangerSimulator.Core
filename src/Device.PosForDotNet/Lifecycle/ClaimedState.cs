@@ -3,7 +3,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Lifecycle;
 
-/// <summary>デバイスが Claim 済みの状態を表します。</summary>
+/// <summary>デバイスが Claim 済みの状態を表します。.</summary>
 public class ClaimedState : IDeviceState
 {
     /// <inheritdoc/>

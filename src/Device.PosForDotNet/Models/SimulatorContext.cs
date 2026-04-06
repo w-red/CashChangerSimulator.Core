@@ -11,12 +11,14 @@ using Microsoft.Extensions.Logging;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Models;
 
-/// <summary>シミュレータの構成要素（マネージャー、コントローラー、各種ステータスなど）を集約して管理するコンテキストクラス。</summary>
+/// <summary>シミュレータの構成要素（マネージャー、コントローラー、各種ステータスなど）を集約して管理するコンテキストクラス。.</summary>
 /// <remarks>
-/// 実行時に必要なオブジェクトを一元管理し、<see cref="SimulatorCashChanger"/> 内部でのデータ共有やイベント通知を円滑にします。
+/// 実行時に必要なオブジェクトを一元管理し、<see cref="SimulatorCashChanger"/> 内部でのデータ共有やイベント通知を円滑にします。.
 /// </remarks>
 public class SimulatorContext : IDisposable
 {
+    private bool disposed;
+
     public ConfigurationProvider ConfigProvider { get; }
     public Inventory Inventory { get; }
     public TransactionHistory History { get; }
@@ -32,8 +34,6 @@ public class SimulatorContext : IDisposable
     public IUposEventNotifier EventNotifier { get; }
     public MonitorsProvider MonitorsProvider { get; }
 
-    private bool _disposed;
-
     private SimulatorContext(SimulatorDependencies deps, ICashChangerStatusSink sink, ILogger logger)
     {
         ConfigProvider = deps.ConfigProvider ?? new ConfigurationProvider();
@@ -48,8 +48,7 @@ public class SimulatorContext : IDisposable
         // Use the monitors from the MonitorsProvider for aggregation
         Aggregator = new OverallStatusAggregator(MonitorsProvider.Monitors);
 
-        var calculator = new ChangeCalculator();
-        Manager = deps.Manager ?? new CashChangerManager(Inventory, History, calculator, ConfigProvider);
+        Manager = deps.Manager ?? new CashChangerManager(Inventory, History, ConfigProvider);
         DepositController = deps.DepositController ?? new DepositController(Inventory, HardwareStatusManager, Manager, ConfigProvider);
         DispenseController = deps.DispenseController ?? new DispenseController(Manager, HardwareStatusManager, new HardwareSimulator(ConfigProvider));
 
@@ -67,7 +66,8 @@ public class SimulatorContext : IDisposable
         }
     }
 
-    /// <summary>シミュレータの依存関係を解決してコンテキストを生成します。</summary>
+    /// <summary>シミュレータの依存関係を解決してコンテキストを生成します。.</summary>
+    /// <returns>シミュレータコンテキスト。</returns>
     public static SimulatorContext Create(SimulatorDependencies deps, ICashChangerStatusSink sink, ILogger logger)
     {
         var ctx = new SimulatorContext(deps, sink, logger);
@@ -76,13 +76,18 @@ public class SimulatorContext : IDisposable
         {
             ctx.EventNotifier.Initialize(eventSink);
         }
+
         return ctx;
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (_disposed) return;
+        if (disposed)
+        {
+            return;
+        }
+
         DepositController?.Dispose();
         DispenseController?.Dispose();
         DiagnosticController?.Dispose();
@@ -91,7 +96,7 @@ public class SimulatorContext : IDisposable
         ConfigProvider?.Dispose();
         MonitorsProvider?.Dispose();
         Aggregator?.Dispose();
-        _disposed = true;
+        disposed = true;
         GC.SuppressFinalize(this);
     }
 }

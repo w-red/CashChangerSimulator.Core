@@ -4,11 +4,13 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>シミュレーターのバージョン情報を取得する戦略。</summary>
+/// <summary>シミュレーターのバージョン情報を取得する戦略。.</summary>
 public class GetVersionStrategy : IDirectIOCommand
 {
+    /// <inheritdoc/>
     public int CommandCode => DirectIOCommands.GetVersion;
 
+    /// <inheritdoc/>
     public DirectIOData Execute(int data, object obj, SimulatorCashChanger device)
     {
         var version = $"{device.GetType().Name} v{Assembly.GetExecutingAssembly().GetName().Version}";
