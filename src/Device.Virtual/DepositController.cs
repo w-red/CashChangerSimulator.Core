@@ -10,9 +10,9 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>入金シーケンスのライフサイクルを管理するコントローラー（仮想デバイス実装）。.</summary>
+/// <summary>入金シーケンスのライフサイクルを管理するコントローラー（仮想デバイス実装）。</summary>
 /// <remarks>
-/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして入金プロセスをシミュレートします。.
+/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして入金プロセスをシミュレートします。
 /// </remarks>
 public class DepositController : IDisposable
 {
@@ -45,10 +45,10 @@ public class DepositController : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="DepositController"/> class.
     /// </summary>
-    /// <param name="inventory">現金在庫。.</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態管理。.</param>
-    /// <param name="manager">釣銭機マネージャー。.</param>
-    /// <param name="configProvider">設定プロバイダー。.</param>
+    /// <param name="inventory">現金在庫。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+    /// <param name="manager">釣銭機マネージャー。</param>
+    /// <param name="configProvider">設定プロバイダー。</param>
     public DepositController(
         Inventory inventory,
         HardwareStatusManager? hardwareStatusManager = null,
@@ -71,13 +71,13 @@ public class DepositController : IDisposable
         this.manager = manager;
     }
 
-    /// <summary>Gets a value indicating whether 状態が変更されたときに通知されるストリーム。.</summary>
+    /// <summary>Gets a value indicating whether 状態が変更されたときに通知されるストリーム。</summary>
     public virtual Observable<Unit> Changed => changed;
 
-    /// <summary>Gets or sets a value indicating whether リアルタイムデータの通知。上位層（アダプター等）が利用します。.</summary>
+    /// <summary>Gets or sets a value indicating whether リアルタイムデータの通知。上位層（アダプター等）が利用します。</summary>
     public bool RealTimeDataEnabled { get; set; }
 
-    /// <summary>Gets 投入された合計金額を取得します。.</summary>
+    /// <summary>Gets 投入された合計金額を取得します。</summary>
     public virtual decimal DepositAmount
     {
         get
@@ -89,7 +89,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets オーバーフロー（満杯等により収納不可）した金額を取得します。.</summary>
+    /// <summary>Gets オーバーフロー（満杯等により収納不可）した金額を取得します。</summary>
     public virtual decimal OverflowAmount
     {
         get
@@ -101,7 +101,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets リジェクト（偽札、汚れ等により返却）された金額を取得します。.</summary>
+    /// <summary>Gets リジェクト（偽札、汚れ等により返却）された金額を取得します。</summary>
     public virtual decimal RejectAmount
     {
         get
@@ -113,7 +113,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 投入された各種金種の枚数を取得します。.</summary>
+    /// <summary>Gets 投入された各種金種の枚数を取得します。</summary>
     public virtual IReadOnlyDictionary<DenominationKey, int> DepositCounts
     {
         get
@@ -125,7 +125,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 現在の預入状態を取得します。.</summary>
+    /// <summary>Gets 現在の預入状態を取得します。</summary>
     public virtual DeviceDepositStatus DepositStatus
     {
         get
@@ -137,7 +137,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether 入金処理が進行中かどうかを取得します。.</summary>
+    /// <summary>Gets a value indicating whether 入金処理が進行中かどうかを取得します。</summary>
     public virtual bool IsDepositInProgress
     {
         get
@@ -149,7 +149,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether 入金処理が一時停止中かどうかを取得します。.</summary>
+    /// <summary>Gets a value indicating whether 入金処理が一時停止中かどうかを取得します。</summary>
     public virtual bool IsPaused
     {
         get
@@ -161,7 +161,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether 入金が確定（Fixed）されたかどうかを取得します。.</summary>
+    /// <summary>Gets a value indicating whether 入金が確定（Fixed）されたかどうかを取得します。</summary>
     public virtual bool IsFixed
     {
         get
@@ -173,7 +173,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether デバイスがビジー状態かどうかを取得します。.</summary>
+    /// <summary>Gets a value indicating whether デバイスがビジー状態かどうかを取得します。</summary>
     public virtual bool IsBusy
     {
         get
@@ -185,7 +185,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に発生したエラーコードを取得します。.</summary>
+    /// <summary>Gets 直近に発生したエラーコードを取得します。</summary>
     public virtual DeviceErrorCode LastErrorCode
     {
         get
@@ -197,7 +197,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に発生した拡張エラーコードを取得します。.</summary>
+    /// <summary>Gets 直近に発生した拡張エラーコードを取得します。</summary>
     public virtual int LastErrorCodeExtended
     {
         get
@@ -209,19 +209,19 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に投入された紙幣のシリアル番号のリストを取得します。.</summary>
+    /// <summary>Gets 直近に投入された紙幣のシリアル番号のリストを取得します。</summary>
     public virtual IReadOnlyList<string> LastDepositedSerials
     {
         get
         {
             lock (stateLock)
             {
-                return lastDepositedSerials.ToArray();
+                return [.. lastDepositedSerials];
             }
         }
     }
 
-    /// <summary>Gets or sets 必要入金金額を取得または設定します。.</summary>
+    /// <summary>必要入金金額を取得または設定します。</summary>
     public virtual decimal RequiredAmount
     {
         get
@@ -248,7 +248,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>預入（Deposit）処理を開始します。.</summary>
+    /// <summary>預入（Deposit）処理を開始します。</summary>
     public virtual void BeginDeposit()
     {
         lock (stateLock)
@@ -288,7 +288,7 @@ public class DepositController : IDisposable
         changed.OnNext(Unit.Default);
     }
 
-    /// <summary>投入された金額を確定させます。.</summary>
+    /// <summary>投入された金額を確定させます。</summary>
     public virtual void FixDeposit()
     {
         lock (stateLock)
@@ -306,9 +306,9 @@ public class DepositController : IDisposable
         changed.OnNext(Unit.Default);
     }
 
-    /// <summary>入金処理を非同期で終了します。.</summary>
-    /// <param name="action">終了時のアクション（収納または返却）。.</param>
-    /// <returns>完了を示すタスク。.</returns>
+    /// <summary>入金処理を非同期で終了します。</summary>
+    /// <param name="action">終了時のアクション（収納または返却）。</param>
+    /// <returns>完了を示すタスク。</returns>
     public virtual async Task EndDepositAsync(DepositAction action)
     {
         lock (stateLock)
@@ -466,8 +466,8 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>入金を終了します（同期ラッパー）。.</summary>
-    /// <param name="action">終了時のアクション（収納または返却）。.</param>
+    /// <summary>入金を終了します（同期ラッパー）。</summary>
+    /// <param name="action">終了時のアクション（収納または返却）。</param>
     public virtual void EndDeposit(DepositAction action)
     {
         EndDepositAsync(action).GetAwaiter().GetResult();
@@ -477,8 +477,8 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>投入された現金を返却し、入金セッションを終了します。.</summary>
-    /// <returns>完了を示すタスク。.</returns>
+    /// <summary>投入された現金を返却し、入金セッションを終了します。</summary>
+    /// <returns>完了を示すタスク。</returns>
     public virtual async Task RepayDepositAsync()
     {
         bool needsFix = false;
@@ -492,10 +492,11 @@ public class DepositController : IDisposable
             FixDeposit();
         }
 
-        await EndDepositAsync(DepositAction.Repay).ConfigureAwait(false);
+        await EndDepositAsync(DepositAction.Repay)
+            .ConfigureAwait(false);
     }
 
-    /// <summary>投入された現金を返却し、入金セッションを終了します（同期ラッパー）。.</summary>
+    /// <summary>投入された現金を返却し、入金セッションを終了します（同期ラッパー）。</summary>
     public virtual void RepayDeposit()
     {
         RepayDepositAsync().GetAwaiter().GetResult();
@@ -505,8 +506,8 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>入金処理を一時停止または再開します。.</summary>
-    /// <param name="control">一時停止または再開。.</param>
+    /// <summary>入金処理を一時停止または再開します。</summary>
+    /// <param name="control">一時停止または再開。</param>
     public virtual void PauseDeposit(DeviceDepositPause control)
     {
         lock (stateLock)
@@ -528,23 +529,24 @@ public class DepositController : IDisposable
         changed.OnNext(Unit.Default);
     }
 
-    /// <summary>単一の金種の投入を追跡します。.</summary>
-    /// <param name="key">金種。.</param>
-    /// <param name="count">枚数。.</param>
+    /// <summary>単一の金種の投入を追跡します。</summary>
+    /// <param name="key">金種。</param>
+    /// <param name="count">枚数。</param>
     public void TrackDeposit(DenominationKey key, int count = 1)
     {
         ArgumentNullException.ThrowIfNull(key);
         TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });
     }
 
-    /// <summary>複数の金種の投入を一括で追跡します。.</summary>
-    /// <param name="counts">金種と枚数のセット。.</param>
+    /// <summary>複数の金種の投入を一括で追跡します。</summary>
+    /// <param name="counts">金種と枚数のセット。</param>
     public void TrackBulkDeposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         ArgumentNullException.ThrowIfNull(counts);
         lock (stateLock)
         {
-            if (depositStatus != DeviceDepositStatus.Counting || depositPaused)
+            if (depositStatus != DeviceDepositStatus.Counting
+                || depositPaused)
             {
                 return;
             }
@@ -608,8 +610,8 @@ public class DepositController : IDisposable
         changed.OnNext(Unit.Default);
     }
 
-    /// <summary>指定された金額に近い金種をリジェクト庫（返却用）に投入します。.</summary>
-    /// <param name="amount">リジェクトする合計金額。.</param>
+    /// <summary>指定された金額に近い金種をリジェクト庫（返却用）に投入します。</summary>
+    /// <param name="amount">リジェクトする合計金額。</param>
     public void TrackReject(decimal amount)
     {
         lock (stateLock)
@@ -632,8 +634,8 @@ public class DepositController : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを破棄します。.</summary>
-    /// <param name="disposing">マネージリソースを破棄する場合は true。.</param>
+    /// <summary>リソースを破棄します。</summary>
+    /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)
