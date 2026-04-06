@@ -5,19 +5,18 @@
 
 This repository contains the core logic and hardware device emulation for the CashChanger Simulator. It is designed as a modular foundational component that powers various user interfaces.
 
-## 📦 Repositories in this Project
+## 📦 NuGet Packages in this Repository
 
-This project focuses on the core logic and simulation layers. The UI components are managed in separate repositories.
+The following packages are maintained in this repository:
 
-| Repository / Package | Description |
-| --- | --- |
-| **[CashChangerSimulator.Core](https://github.com/w-red/CashChangerSimulator.Core)** | Platform-independent core logic, currency calculation, and managers. |
-| **[CashChangerSimulator.Device](https://github.com/w-red/CashChangerSimulator.Core)** | Abstract device interfaces and common simulation infrastructure. |
-| **[CashChangerSimulator.Device.Virtual](https://github.com/w-red/CashChangerSimulator.Core)** | Pure C# virtual hardware simulation (works on Web/Linux/Windows, .NET 10). |
-| **[CashChangerSimulator.Device.PosForDotNet](https://github.com/w-red/CashChangerSimulator.Core)** | Windows-specific UPOS (POS for .NET) adapter for legacy integration. |
+- **CashChangerSimulator.Core**: Platform-independent core logic, currency calculation, and managers.
+- **CashChangerSimulator.Device**: Abstract device interfaces and common simulation infrastructure.
+- **CashChangerSimulator.Device.Virtual**: Pure C# virtual hardware simulation (works on Web/Linux/Windows, .NET 10).
+- **CashChangerSimulator.Device.PosForDotNet**: Windows-specific UPOS (POS for .NET) adapter for legacy integration.
 
 > [!NOTE]
-> **[Cli](https://github.com/w-red/CashChangerSimulator.Cli)** (Command Line Interface) and **[Wpf](https://github.com/w-red/CashChangerSimulator.Wpf)** (Windows Desktop UI) are maintained in their own dedicated repositories.
+> User interface components are maintained in their own dedicated repositories:
+> [**Cli** (Command Line Interface)](https://github.com/w-red/CashChangerSimulator.Cli) and [**Wpf** (Windows Desktop UI)](https://github.com/w-red/CashChangerSimulator.Wpf).
 
 ---
 
