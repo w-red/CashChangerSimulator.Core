@@ -101,19 +101,19 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
     /// <inheritdoc/>
     public Observable<Unit> Changed => changed;
 
-    /// <summary>Gets 通貨コード（例: "JPY"）。</summary>
+    /// <summary>通貨コード（例: "JPY"）。</summary>
     public string CurrencyCode => currencyCodeProperty.Value;
 
-    /// <summary>Gets 通貨記号（プレフィックス優先）。</summary>
+    /// <summary>通貨記号（プレフィックス優先）。</summary>
     public string Symbol => !string.IsNullOrEmpty(symbolPrefix.Value) ? symbolPrefix.Value : symbolSuffix.Value;
 
-    /// <summary>Gets 通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。</summary>
+    /// <summary>通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolPrefix { get; }
 
-    /// <summary>Gets 通貨記号のサフィックス（例: "円"）。通常、金額の後ろに表示されます。</summary>
+    /// <summary>通貨記号のサフィックス（例: "円"）。通常、金額の後ろに表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolSuffix { get; }
 
-    /// <summary>Gets この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
+    /// <summary>この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
     public IReadOnlyList<DenominationKey> SupportedDenominations { get; private set; } = [];
 
     /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。</summary>

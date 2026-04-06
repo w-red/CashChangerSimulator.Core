@@ -23,10 +23,10 @@ public class ConfigurationProvider : IDisposable
         SetupWatcher(ConfigurationLoader.DefaultConfigFilePath);
     }
 
-    /// <summary>Gets 設定が再読み込みされたときに通知されるストリーム。</summary>
+    /// <summary>設定が再読み込みされたときに通知されるストリーム。</summary>
     public Observable<Unit> Reloaded => reloaded;
 
-    /// <summary>Gets or sets 現在保持している設定インスタンス。</summary>
+    /// <summary>現在保持している設定インスタンス。</summary>
     public virtual SimulatorConfiguration Config { get; protected set; }
 
     /// <summary>指定されたパスの設定ファイルを読み込むプロバイダーを作成します。</summary>

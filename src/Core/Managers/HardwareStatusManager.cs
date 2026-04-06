@@ -11,34 +11,34 @@ public class HardwareStatusManager : IDisposable
 {
     private GlobalLockManager? globalLockManager;
 
-    /// <summary>Gets a value indicating whether 他のプロセスやインスタンスによってデバイスが占有されているかどうかを保持するプロパティ。</summary>
+    /// <summary>他のプロセスやインスタンスによってデバイスが占有されているかどうかを保持するプロパティ。</summary>
     public BindableReactiveProperty<bool> IsClaimedByAnother { get; } = new(false);
 
-    /// <summary>Gets ジャムが発生しているかどうか。</summary>
+    /// <summary>ジャムが発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsJammed { get; } = new(false);
 
-    /// <summary>Gets ジャムが発生している具体的な箇所。</summary>
+    /// <summary>ジャムが発生している具体的な箇所。</summary>
     public BindableReactiveProperty<Models.JamLocation> JamLocation { get; } = new(Models.JamLocation.None);
 
-    /// <summary>Gets 紙幣などの重なり（バリデーションエラー）が発生しているかどうか。</summary>
+    /// <summary>紙幣などの重なり（バリデーションエラー）が発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsOverlapped { get; } = new(false);
 
-    /// <summary>Gets 個別の特定可能なエラー（ジャムなど）以外の、一般的なデバイスエラーが発生しているかどうか。</summary>
+    /// <summary>個別の特定可能なエラー（ジャムなど）以外の、一般的なデバイスエラーが発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsDeviceError { get; } = new(false);
 
-    /// <summary>Gets デバイスが論理的に接続（Open）されているかどうか。</summary>
+    /// <summary>デバイスが論理的に接続（Open）されているかどうか。</summary>
     public BindableReactiveProperty<bool> IsConnected { get; } = new(false);
 
-    /// <summary>Gets 回収庫が取り外されているかどうか。</summary>
+    /// <summary>回収庫が取り外されているかどうか。</summary>
     public BindableReactiveProperty<bool> IsCollectionBoxRemoved { get; } = new(false);
 
-    /// <summary>Gets 現在発生中のデバイスエラーの ErrorCode 値 (Nullable)。</summary>
+    /// <summary>現在発生中のデバイスエラーの ErrorCode 値 (Nullable)。</summary>
     public BindableReactiveProperty<int?> CurrentErrorCode { get; } = new(null);
 
-    /// <summary>Gets 現在発生中のデバイスエラーの ErrorCodeExtended 値。</summary>
+    /// <summary>現在発生中のデバイスエラーの ErrorCodeExtended 値。</summary>
     public BindableReactiveProperty<int> CurrentErrorCodeExtended { get; } = new(0);
 
-    /// <summary>Gets a value indicating whether このインスタンスが破棄されているかどうかを取得します。</summary>
+    /// <summary>このインスタンスが破棄されているかどうかを取得します。</summary>
     public bool IsDisposed { get; private set; }
 
     /// <summary>ジャム状態を切り替えます。箇所を指定することも可能です。</summary>
@@ -115,9 +115,7 @@ public class HardwareStatusManager : IDisposable
         globalLockManager = manager;
     }
 
-    /// <summary>
-    /// 他者による占有状態をグローバルロックマネージャーから最新化した上で取得します。
-    /// </summary>
+    /// <summary>他者による占有状態をグローバルロックマネージャーから最新化した上で取得します。</summary>
     /// <returns>占有されている場合は true。</returns>
     public bool RefreshClaimedStatus()
     {
@@ -137,29 +135,24 @@ public class HardwareStatusManager : IDisposable
     }
 
     /// <summary>グローバルロックの取得を試みます。</summary>
-    /// <returns>取得に成功した場合は true。</returns>
+    /// <returns>取得の成否</returns>
     public bool TryAcquireGlobalLock()
     {
         var result = globalLockManager?.TryAcquire() ?? true;
-        if (result)
-        {
-            IsClaimedByAnother.Value = false;
-        }
-        else
-        {
-            IsClaimedByAnother.Value = true;
-        }
-
+        IsClaimedByAnother.Value = !result;
         return result;
     }
 
     /// <summary>グローバルロックを解放します。</summary>
-    public void ReleaseGlobalLock() => globalLockManager?.Release();
+    public void ReleaseGlobalLock() =>
+        globalLockManager?.Release();
 
     /// <summary>デバイスエラー状態とそのエラーコードを設定します。</summary>
     /// <param name="errorCode">発生した ErrorCode の整数値.</param>
     /// <param name="errorCodeExtended">追加の詳細エラーコード.</param>
-    public void SetDeviceError(int errorCode, int errorCodeExtended = 0)
+    public void SetDeviceError(
+        int errorCode,
+        int errorCodeExtended = 0)
     {
         if (IsDisposed)
         {

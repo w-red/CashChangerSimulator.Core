@@ -28,7 +28,7 @@ public partial record DenominationKey(
     /// <summary>キーのセパレータ文字。</summary>
     public const char KeySeparator = ':';
 
-    /// <summary>Gets 種別に応じたプレフィックス文字を取得します。</summary>
+    /// <summary>種別に応じたプレフィックス文字を取得します。</summary>
     public char PrefixChar => Type == CurrencyCashType.Bill ? BillPrefix : CoinPrefix;
 
     /// <summary>額面を正規化した値を比較に使用します。</summary>

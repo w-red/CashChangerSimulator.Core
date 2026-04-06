@@ -39,22 +39,22 @@ public class CashStatusMonitor : IDisposable
             .Subscribe(_ => UpdateStatus());
     }
 
-    /// <summary>Gets a value indicating whether この金種がリサイクル可能かどうか。</summary>
+    /// <summary>この金種がリサイクル可能かどうか。</summary>
     public bool IsRecyclable { get; }
 
-    /// <summary>Gets ニアエンプティしきい値。</summary>
+    /// <summary>ニアエンプティしきい値。</summary>
     public int NearEmptyThreshold { get; private set; }
 
-    /// <summary>Gets ニアフルしきい値。</summary>
+    /// <summary>ニアフルしきい値。</summary>
     public int NearFullThreshold { get; private set; }
 
-    /// <summary>Gets フルしきい値。</summary>
+    /// <summary>フルしきい値。</summary>
     public int FullThreshold { get; private set; }
 
-    /// <summary>Gets 現在の状態を流すイベントストリーム。</summary>
+    /// <summary>現在の状態を流すイベントストリーム。</summary>
     public ReadOnlyReactiveProperty<CashStatus> Status => status;
 
-    /// <summary>Gets 監視する金種キー。</summary>
+    /// <summary>監視する金種キー。</summary>
     public DenominationKey Key { get; }
 
     /// <summary>しきい値を動的に更新し、状態を再計算します。</summary>

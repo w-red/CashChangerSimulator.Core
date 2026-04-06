@@ -36,10 +36,10 @@ public class MonitorsProvider : IDisposable
         metadataProvider.Changed.Subscribe(_ => RefreshMonitors()).AddTo(disposables);
     }
 
-    /// <summary>Gets 生成されたモニターのリスト。</summary>
+    /// <summary>生成されたモニターのリスト。</summary>
     public IReadOnlyList<CashStatusMonitor> Monitors => monitors;
 
-    /// <summary>Gets モニターリストが変更されたときに通知されるストリーム。</summary>
+    /// <summary>モニターリストが変更されたときに通知されるストリーム。</summary>
     public Observable<Unit> Changed => changed;
 
     /// <summary>現在の通貨設定に基づいてモニターリストを再構築する。</summary>

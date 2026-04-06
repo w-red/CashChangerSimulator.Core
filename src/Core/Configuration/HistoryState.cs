@@ -9,7 +9,7 @@ public partial class HistoryState
 {
     private List<TransactionEntry> entries = [];
 
-    /// <summary>Gets or sets 取引履歴エントリのリスト。</summary>
+    /// <summary>取引履歴エントリのリスト。</summary>
     public IReadOnlyList<TransactionEntry> Entries
     {
         get => entries;

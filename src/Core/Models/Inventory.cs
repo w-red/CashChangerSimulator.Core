@@ -27,7 +27,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <inheritdoc/>
     public virtual Observable<DenominationKey> Changed => changed;
 
-    /// <summary>Gets or sets a value indicating whether 在庫の不一致が発生しているかどうかを取得または設定します。</summary>
+    /// <summary>在庫の不一致が発生しているかどうかを取得または設定します。</summary>
     /// <remarks>通常、回収庫またはリジェクト庫に現金がある場合に不一致と見なされます。手動での設定も可能です。</remarks>
     public virtual bool HasDiscrepancy
     {
@@ -47,50 +47,50 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>Gets 通常庫（リサイクル可能）の全枚数。</summary>
+    /// <summary>通常庫（リサイクル可能）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts
     {
         get
         {
             lock (@lock)
             {
-                return counts.ToArray();
+                return [.. counts];
             }
         }
     }
 
-    /// <summary>Gets 回収庫（オーバーフロー等）の全枚数。</summary>
+    /// <summary>回収庫（オーバーフロー等）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts
     {
         get
         {
             lock (@lock)
             {
-                return collectionCounts.ToArray();
+                return [.. collectionCounts];
             }
         }
     }
 
-    /// <summary>Gets リジェクト庫（汚損等）の全枚数。</summary>
+    /// <summary>リジェクト庫（汚損等）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts
     {
         get
         {
             lock (@lock)
             {
-                return rejectCounts.ToArray();
+                return [.. rejectCounts];
             }
         }
     }
 
-    /// <summary>Gets 入金トレイ（エスクロー）の全枚数。</summary>
+    /// <summary>入金トレイ（エスクロー）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts
     {
         get
         {
             lock (@lock)
             {
-                return escrowCounts.ToArray();
+                return [.. escrowCounts];
             }
         }
     }

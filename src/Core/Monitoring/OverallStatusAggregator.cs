@@ -22,10 +22,10 @@ public class OverallStatusAggregator : IDisposable
         Refresh(monitors);
     }
 
-    /// <summary>Gets 空・ニアエンプティに関する集約ステータス。</summary>
+    /// <summary>空・ニアエンプティに関する集約ステータス。</summary>
     public ReadOnlyReactiveProperty<CashStatus> DeviceStatus { get; }
 
-    /// <summary>Gets 満杯・ニアフルに関する集約ステータス。</summary>
+    /// <summary>満杯・ニアフルに関する集約ステータス。</summary>
     public ReadOnlyReactiveProperty<CashStatus> FullStatus { get; }
 
     /// <summary>金種モニターのリストを更新し、集計ロジックを再構築します。</summary>

@@ -7,27 +7,29 @@ namespace CashChangerSimulator.Core.Configuration;
 /// </remarks>
 public class DenominationSettings
 {
-    /// <summary>Gets or sets 英語の表示名。</summary>
+    /// <summary>英語の表示名。</summary>
     public string? DisplayName { get; set; }
 
-    /// <summary>Gets or sets 日本語の表示名。</summary>
+    /// <summary>日本語の表示名。</summary>
     public string? DisplayNameJP { get; set; }
 
-    /// <summary>Gets or sets 初期枚数。</summary>
+    /// <summary>初期枚数。</summary>
     public int InitialCount { get; set; }
 
-    /// <summary>Gets or sets nearEmpty 判定値。</summary>
+    /// <summary>ニアエンプティ判定値。</summary>
     public int NearEmpty { get; set; } = 5;
 
-    /// <summary>Gets or sets nearFull 判定値。</summary>
+    /// <summary>ニアフル判定値。</summary>
     public int NearFull { get; set; } = 90;
 
-    /// <summary>Gets or sets full 判定値。</summary>
+    /// <summary>フル判定値。</summary>
     public int Full { get; set; } = 100;
 
-    /// <summary>Gets or sets a value indicating whether この金種を釣銭（リサイクル）として使用するかどうか。false の場合、出金時の計算対象から除外されます。</summary>
+    /// <summary>この金種を釣銭（リサイクル）として使用するかどうか。</summary>
+    /// <remarks>false: 出金時の計算対象から除外されます。</remarks>
     public bool IsRecyclable { get; set; } = true;
 
-    /// <summary>Gets or sets a value indicating whether この金種を入金可能にするかどうか。false の場合、入金処理時にこの金種は受け付けられません。</summary>
+    /// <summary>この金種を入金可能にするかどうか。</summary>
+    /// <remarks>false: 入金時の計算対象から除外されます。</remarks>
     public bool IsDepositable { get; set; } = true;
 }

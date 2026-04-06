@@ -17,7 +17,7 @@ public class OverallStatusAggregatorProvider : IDisposable
         monitorsProvider.Changed.Subscribe(_ => Aggregator.Refresh(monitorsProvider.Monitors)).AddTo(disposables);
     }
 
-    /// <summary>Gets ステータス集計インスタンス。</summary>
+    /// <summary>ステータス集計インスタンス。</summary>
     public OverallStatusAggregator Aggregator { get; }
 
     /// <inheritdoc/>

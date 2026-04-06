@@ -3,7 +3,7 @@ namespace CashChangerSimulator.Core;
 /// <summary>シミュレータのサービスプロバイダーへの静的アクセスポイント。</summary>
 public static class SimulatorServices
 {
-    /// <summary>Gets or sets サービスプロバイダー。アプリケーション起動時に設定される。</summary>
+    /// <summary>サービスプロバイダー。アプリケーション起動時に設定される。</summary>
     public static ISimulatorServiceProvider? Provider { get; set; }
 
     /// <summary>サービスの解決を試みる。プロバイダーが未設定またはサービスが未登録の場合は null を返す。</summary>
@@ -35,6 +35,8 @@ public static class SimulatorServices
     public static T Resolve<T>()
         where T : class
     {
-        return TryResolve<T>() ?? throw new InvalidOperationException($"Service {typeof(T).Name} not found.");
+        return TryResolve<T>()
+            ?? throw new InvalidOperationException(
+                $"Service {typeof(T).Name} not found.");
     }
 }

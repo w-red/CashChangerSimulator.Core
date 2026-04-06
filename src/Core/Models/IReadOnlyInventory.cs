@@ -5,22 +5,22 @@ namespace CashChangerSimulator.Core.Models;
 /// <summary>読み取り専用の在庫情報のインターフェース。</summary>
 public interface IReadOnlyInventory
 {
-    /// <summary>Gets 在庫が変更されたときに通知されるイベントストリーム。</summary>
+    /// <summary>在庫が変更されたときに通知されるイベントストリーム。</summary>
     Observable<DenominationKey> Changed { get; }
 
-    /// <summary>Gets 全在庫の金種キーと枚数の列挙を取得する。</summary>
+    /// <summary>全在庫の金種キーと枚数の列挙を取得する。</summary>
     IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts { get; }
 
-    /// <summary>Gets 回収庫の全金種と枚数の列挙を取得する。</summary>
+    /// <summary>回収庫の全金種と枚数の列挙を取得する。</summary>
     IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts { get; }
 
-    /// <summary>Gets リジェクト庫の全金種と枚数の列挙を取得する。</summary>
+    /// <summary>リジェクト庫の全金種と枚数の列挙を取得する。</summary>
     IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts { get; }
 
-    /// <summary>Gets 入金トレイ（エスクロー）の全金種と枚数の列挙を取得する。</summary>
+    /// <summary>入金トレイ（エスクロー）の全金種と枚数の列挙を取得する。</summary>
     IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts { get; }
 
-    /// <summary>Gets a value indicating whether 在庫の不一致が発生しているかどうかを取得します。</summary>
+    /// <summary>在庫の不一致が発生しているかどうかを取得します。</summary>
     /// <remarks>物理在庫と論理在庫の差（回収庫やリジェクト庫の有無）を示します。</remarks>
     bool HasDiscrepancy { get; }
 

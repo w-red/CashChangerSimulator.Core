@@ -11,7 +11,8 @@ public static class LogProvider
     private static ILoggerFactory? factory;
     private static LoggingSettings currentSettings = new() { LogLevel = "Information", EnableConsole = true };
 
-    /// <summary>Gets 全体で共有するロガーファクトリ。初期化前は NullLoggerFactory を返します。</summary>
+    /// <summary>全体で共有するロガーファクトリ。</summary>
+    /// <remarks>初期化前は NullLoggerFactory を返します。</remarks>
     public static ILoggerFactory Factory => factory ?? NullLoggerFactory.Instance;
 
     /// <summary>ロギング設定に基づいて LogProvider を初期化します。</summary>

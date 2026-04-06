@@ -47,22 +47,22 @@ public class SimulatorConfiguration
         }
     };
 
-    /// <summary>Gets or sets 全般的なシステム設定。</summary>
+    /// <summary>全般的なシステム設定。</summary>
     public SystemSettings System { get; set; } = new();
 
-    /// <summary>Gets 通貨コードごとの在庫設定。</summary>
+    /// <summary>通貨コードごとの在庫設定。</summary>
     public Dictionary<string, InventorySettings> Inventory => inventory;
 
-    /// <summary>Gets or sets デフォルトのしきい値設定。</summary>
+    /// <summary>デフォルトのしきい値設定。</summary>
     public ThresholdSettings Thresholds { get; set; } = new();
 
-    /// <summary>Gets or sets ロギング設定。</summary>
+    /// <summary>ロギング設定。</summary>
     public LoggingSettings Logging { get; set; } = new();
 
-    /// <summary>Gets or sets シミュレーション設定。</summary>
+    /// <summary>シミュレーション設定。</summary>
     public SimulationSettings Simulation { get; set; } = new();
 
-    /// <summary>Gets or sets 履歴設定。</summary>
+    /// <summary>履歴設定。</summary>
     public HistorySettings History { get; set; } = new();
 
     /// <summary>指定された金種の個別設定を取得する。存在しない場合はデフォルト値を返す。</summary>

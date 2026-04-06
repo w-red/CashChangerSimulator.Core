@@ -8,13 +8,13 @@ namespace CashChangerSimulator.Core.Services;
 /// </summary>
 public interface ICashChangerDevice : IDisposable
 {
-    /// <summary>Gets a value indicating whether デバイスがオープンされているかどうかを取得します。</summary>
+    /// <summary>デバイスがオープンされているかどうかを取得します。</summary>
     bool IsConnected { get; }
 
-    /// <summary>Gets a value indicating whether デバイスが排他権（Claim）を取得しているかどうかを取得します。</summary>
+    /// <summary>デバイスが排他権（Claim）を取得しているかどうかを取得します。</summary>
     bool Claimed { get; }
 
-    /// <summary>Gets a value indicating whether デバイスが有効化（Enable）されているかどうかを取得します。</summary>
+    /// <summary>デバイスが有効化（Enable）されているかどうかを取得します。</summary>
     bool DeviceEnabled { get; }
 
     /// <summary>デバイスをプログラム的にオープンします。</summary>

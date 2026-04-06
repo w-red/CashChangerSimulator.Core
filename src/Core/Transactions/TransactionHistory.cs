@@ -24,10 +24,10 @@ public class TransactionHistory : IDisposable
     {
     }
 
-    /// <summary>Gets 全ての取引履歴（読み取り専用）。</summary>
+    /// <summary>全ての取引履歴（読み取り専用）。</summary>
     public virtual IReadOnlyList<TransactionEntry> Entries => entries;
 
-    /// <summary>Gets 取引が新しく追加されたときに通知されるストリーム。</summary>
+    /// <summary>取引が新しく追加されたときに通知されるストリーム。</summary>
     public virtual Observable<TransactionEntry> Added => added;
 
     /// <summary>履歴を追加します。</summary>

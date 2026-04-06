@@ -39,13 +39,13 @@ public class VirtualMockDevice : ICashChangerDevice
         this.logger = logger;
     }
 
-    /// <summary>Gets a value indicating whether デバイスがオープンされているかどうかを取得します。</summary>
+    /// <summary>デバイスがオープンされているかどうかを取得します。</summary>
     public bool IsConnected => statusManager.IsConnected.Value;
 
-    /// <summary>Gets a value indicating whether デバイスが排他権（Claim）を取得しているかどうかを取得します。</summary>
+    /// <summary>デバイスが排他権（Claim）を取得しているかどうかを取得します。</summary>
     public bool Claimed { get; private set; }
 
-    /// <summary>Gets a value indicating whether デバイスが有効化（Enable）されているかどうかを取得します。</summary>
+    /// <summary>デバイスが有効化（Enable）されているかどうかを取得します。</summary>
     public bool DeviceEnabled { get; private set; }
 
     /// <summary>デバイスをプログラム的にオープンします。</summary>

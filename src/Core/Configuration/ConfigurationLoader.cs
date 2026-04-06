@@ -34,15 +34,15 @@ public static class ConfigurationLoader
             AppDomain.CurrentDomain.BaseDirectory,
             "history.bin");
 
-    /// <summary>Gets デフォルトの設定ファイルパス。</summary>
+    /// <summary>デフォルトの設定ファイルパス。</summary>
     public static string DefaultConfigFilePath =>
         DefaultConfigPath;
 
-    /// <summary>Gets デフォルトの在庫状態保存先ファイルパス。</summary>
+    /// <summary>デフォルトの在庫状態保存先ファイルパス。</summary>
     public static string DefaultInventoryStateFilePath =>
         InventoryStatePath;
 
-    /// <summary>Gets デフォルトの取引履歴保存先ファイルパス。</summary>
+    /// <summary>デフォルトの取引履歴保存先ファイルパス。</summary>
     public static string DefaultHistoryStateFilePath =>
         HistoryStatePath;
 
