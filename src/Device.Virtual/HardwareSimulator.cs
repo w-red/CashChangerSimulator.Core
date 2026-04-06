@@ -3,20 +3,20 @@ using CashChangerSimulator.Core.Services;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>釣銭機ハードウェアの動作をシミュレートするクラス。.</summary>
+/// <summary>釣銭機ハードウェアの動作をシミュレートするクラス。</summary>
 public class HardwareSimulator : IDeviceSimulator
 {
     private readonly ConfigurationProvider? configProvider;
     private readonly ConfigurationProvider? internalConfigProvider;
 
-    /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.デフォルト設定でシミュレーターを初期化する。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.デフォルト設定でシミュレーターを初期化する。</summary>
     public HardwareSimulator()
         : this(null)
     {
     }
 
-    /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.設定プロバイダーを指定してシミュレーターを初期化する。.</summary>
-    /// <param name="configProvider">設定プロバイダー。.</param>
+    /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.設定プロバイダーを指定してシミュレーターを初期化する。</summary>
+    /// <param name="configProvider">設定プロバイダー。</param>
     public HardwareSimulator(ConfigurationProvider? configProvider)
     {
         if (configProvider == null)
@@ -41,15 +41,15 @@ public class HardwareSimulator : IDeviceSimulator
         }
     }
 
-    /// <summary>リソースを破棄します。.</summary>
+    /// <summary>リソースを破棄します。</summary>
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>マネージリソースを破棄します。.</summary>
-    /// <param name="disposing">マネージリソースを破棄する場合は true。.</param>
+    /// <summary>マネージリソースを破棄します。</summary>
+    /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)

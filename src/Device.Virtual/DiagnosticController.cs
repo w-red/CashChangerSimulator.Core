@@ -5,9 +5,9 @@ using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>デバイスの診断機能（ヘルスチェック、統計情報）を管理するコントローラー（仮想デバイス実装）。.</summary>
+/// <summary>デバイスの診断機能（ヘルスチェック、統計情報）を管理するコントローラー（仮想デバイス実装）。</summary>
 /// <remarks>
-/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして診断機能を提供します。.
+/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして診断機能を提供します。
 /// </remarks>
 public class DiagnosticController : IDisposable
 {
@@ -20,17 +20,17 @@ public class DiagnosticController : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="DiagnosticController"/> class.
     /// </summary>
-    /// <param name="inventory">現金在庫データを管理する <see cref="Inventory"/> モデル。.</param>
-    /// <param name="hardwareStatusManager">デバイスの接続やジャム状態を管理する <see cref="HardwareStatusManager"/>。.</param>
+    /// <param name="inventory">現金在庫データを管理する <see cref="Inventory"/> モデル。</param>
+    /// <param name="hardwareStatusManager">デバイスの接続やジャム状態を管理する <see cref="HardwareStatusManager"/>。</param>
     public DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)
     {
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
     }
 
-    /// <summary>健康状態の報告書を作成します。.</summary>
-    /// <param name="level">ヘルスチェックのレベル。.</param>
-    /// <returns>ヘルスチェック報告書の文字列。.</returns>
+    /// <summary>健康状態の報告書を作成します。</summary>
+    /// <param name="level">ヘルスチェックのレベル。</param>
+    /// <returns>ヘルスチェック報告書の文字列。</returns>
     public virtual string GetHealthReport(DeviceHealthCheckLevel level)
     {
         var sb = new StringBuilder();
@@ -55,9 +55,9 @@ public class DiagnosticController : IDisposable
         return sb.ToString();
     }
 
-    /// <summary>統計情報を取得します。.</summary>
-    /// <param name="statistics">取得する統計情報の名前。.</param>
-    /// <returns>統計情報の XML 表現。.</returns>
+    /// <summary>統計情報を取得します。</summary>
+    /// <param name="statistics">取得する統計情報の名前。</param>
+    /// <returns>統計情報の XML 表現。</returns>
     public virtual string RetrieveStatistics(string[] statistics)
     {
         ArgumentNullException.ThrowIfNull(statistics);
@@ -78,10 +78,10 @@ public class DiagnosticController : IDisposable
         return sb.ToString();
     }
 
-    /// <summary>入金成功回数をカウントアップします。.</summary>
+    /// <summary>入金成功回数をカウントアップします。</summary>
     public virtual void IncrementSuccessfulDepletion() => successfulDepletionCount++;
 
-    /// <summary>入金失敗回数をカウントアップします。.</summary>
+    /// <summary>入金失敗回数をカウントアップします。</summary>
     public virtual void IncrementFailedDepletion() => failedDepletionCount++;
 
     /// <inheritdoc/>
@@ -91,8 +91,8 @@ public class DiagnosticController : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを破棄します。.</summary>
-    /// <param name="disposing">マネージリソースを破棄する場合は true。.</param>
+    /// <summary>リソースを破棄します。</summary>
+    /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)

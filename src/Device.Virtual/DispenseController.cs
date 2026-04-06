@@ -12,9 +12,9 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>出金（払出）シーケンスを管理するコントローラー（仮想デバイス実装）。.</summary>
+/// <summary>出金（払出）シーケンスを管理するコントローラー（仮想デバイス実装）。</summary>
 /// <remarks>
-/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして出金プロセスをシミュレートします。.
+/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして出金プロセスをシミュレートします。
 /// </remarks>
 public class DispenseController : IDisposable
 {
@@ -34,9 +34,9 @@ public class DispenseController : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="DispenseController"/> class.
     /// </summary>
-    /// <param name="manager">釣銭機マネージャー。.</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態管理。.</param>
-    /// <param name="simulator">デバイスシミュレーター。.</param>
+    /// <param name="manager">釣銭機マネージャー。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+    /// <param name="simulator">デバイスシミュレーター。</param>
     public DispenseController(
         CashChangerManager manager,
         HardwareStatusManager? hardwareStatusManager = null,
@@ -47,10 +47,10 @@ public class DispenseController : IDisposable
         this.simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
     }
 
-    /// <summary>Gets 状態が変更されたときに通知されるストリーム。.</summary>
+    /// <summary>Gets 状態が変更されたときに通知されるストリーム。</summary>
     public virtual Observable<Unit> Changed => changed;
 
-    /// <summary>Gets 現在の出金状態を取得します。.</summary>
+    /// <summary>Gets 現在の出金状態を取得します。</summary>
     public virtual CashDispenseStatus Status
     {
         get
@@ -62,7 +62,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether デバイスがビジー状態かどうかを取得します。.</summary>
+    /// <summary>Gets a value indicating whether デバイスがビジー状態かどうかを取得します。</summary>
     public virtual bool IsBusy
     {
         get
@@ -74,7 +74,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に発生したエラーコードを取得します。.</summary>
+    /// <summary>Gets 直近に発生したエラーコードを取得します。</summary>
     public virtual DeviceErrorCode LastErrorCode
     {
         get
@@ -86,7 +86,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に発生した拡張エラーコードを取得します。.</summary>
+    /// <summary>Gets 直近に発生した拡張エラーコードを取得します。</summary>
     public virtual int LastErrorCodeExtended
     {
         get
@@ -98,11 +98,11 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>指定された金額を非同期で払い出します。.</summary>
-    /// <param name="amount">払い出す金額。.</param>
-    /// <param name="asyncMode">非同期実行モードかどうか。.</param>
-    /// <param name="currencyCode">通貨コード（任意）。.</param>
-    /// <returns>完了を示すタスク。.</returns>
+    /// <summary>指定された金額を非同期で払い出します。</summary>
+    /// <param name="amount">払い出す金額。</param>
+    /// <param name="asyncMode">非同期実行モードかどうか。</param>
+    /// <param name="currencyCode">通貨コード（任意）。</param>
+    /// <returns>完了を示すタスク。</returns>
     public virtual async Task DispenseChangeAsync(int amount, bool asyncMode, string? currencyCode = null)
     {
         lock (stateLock)
@@ -170,10 +170,10 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>指定された金種と枚数を非同期で払い出します。.</summary>
-    /// <param name="counts">払い出す金種と枚数。.</param>
-    /// <param name="asyncMode">非同期実行モードかどうか。.</param>
-    /// <returns>完了を示すタスク。.</returns>
+    /// <summary>指定された金種と枚数を非同期で払い出します。</summary>
+    /// <param name="counts">払い出す金種と枚数。</param>
+    /// <param name="asyncMode">非同期実行モードかどうか。</param>
+    /// <returns>完了を示すタスク。</returns>
     public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode)
     {
         ArgumentNullException.ThrowIfNull(counts);
@@ -243,7 +243,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>現在の出金をキャンセルします。.</summary>
+    /// <summary>現在の出金をキャンセルします。</summary>
     public virtual void ClearOutput()
     {
         dispenseCts?.Cancel();
@@ -266,8 +266,8 @@ public class DispenseController : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを破棄します。.</summary>
-    /// <param name="disposing">マネージリソースを破棄する場合は true。.</param>
+    /// <summary>リソースを破棄します。</summary>
+    /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)
