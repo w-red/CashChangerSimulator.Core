@@ -2,22 +2,18 @@ using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>釣銭機シミュレーターの全設定を統括するルートモデル。</summary>
+/// <summary>釣銭機シミュレーターの全設定を統括するルートモデル。.</summary>
 /// <remarks>
 /// TOML 設定ファイルからデシリアライズされる全設定（システム、在庫、金種、しきい値、ログ等）を保持します。
-/// デバイスの動作条件やシミュレーションの振る舞いを決定づける設定値へのアクセスを提供します。
+/// デバイスの動作条件やシミュレーションの振る舞いを決定づける設定値へのアクセスを提供します。.
 /// </remarks>
 public class SimulatorConfiguration
 {
-    /// <summary>全般的なシステム設定。</summary>
-    public SystemSettings System { get; set; } = new();
-
-    /// <summary>通貨コードごとの在庫設定。</summary>
-    public Dictionary<string, InventorySettings> Inventory { get; set; } = new()
+    private readonly Dictionary<string, InventorySettings> inventory = new()
     {
         ["JPY"] = new InventorySettings
         {
-            Denominations = new()
+            Denominations =
             {
                 ["B10000"] = new() { InitialCount = 10, DisplayName = "10,000 Yen Bill", DisplayNameJP = "一万円札" },
                 ["B5000"] = new() { InitialCount = 10, DisplayName = "5,000 Yen Bill", DisplayNameJP = "五千円札" },
@@ -33,7 +29,7 @@ public class SimulatorConfiguration
         },
         ["USD"] = new InventorySettings
         {
-            Denominations = new()
+            Denominations =
             {
                 ["B100"] = new() { InitialCount = 5, DisplayName = "$100 Bill" },
                 ["B50"] = new() { InitialCount = 5, DisplayName = "$50 Bill" },
@@ -51,24 +47,33 @@ public class SimulatorConfiguration
         }
     };
 
-    /// <summary>デフォルトのしきい値設定。</summary>
+    /// <summary>Gets or sets 全般的なシステム設定。.</summary>
+    public SystemSettings System { get; set; } = new();
+
+    /// <summary>Gets 通貨コードごとの在庫設定。.</summary>
+    public Dictionary<string, InventorySettings> Inventory => inventory;
+
+    /// <summary>Gets or sets デフォルトのしきい値設定。.</summary>
     public ThresholdSettings Thresholds { get; set; } = new();
 
-    /// <summary>ロギング設定。</summary>
+    /// <summary>Gets or sets ロギング設定。.</summary>
     public LoggingSettings Logging { get; set; } = new();
 
-    /// <summary>シミュレーション設定。</summary>
+    /// <summary>Gets or sets シミュレーション設定。.</summary>
     public SimulationSettings Simulation { get; set; } = new();
 
-    /// <summary>履歴設定。</summary>
+    /// <summary>Gets or sets 履歴設定。.</summary>
     public HistorySettings History { get; set; } = new();
 
-    /// <summary>指定された金種の個別設定を取得する。存在しない場合はデフォルト値を返す。</summary>
+    /// <summary>指定された金種の個別設定を取得する。存在しない場合はデフォルト値を返す。.</summary>
+    /// <param name="key">金種キー。.</param>
+    /// <returns>金種別の設定。.</returns>
     public DenominationSettings GetDenominationSetting(DenominationKey key)
     {
+        ArgumentNullException.ThrowIfNull(key);
         var keyStr = key.ToDenominationString();
-        return Inventory.TryGetValue(key.CurrencyCode, out var inventory) &&
-            inventory.Denominations.TryGetValue(keyStr, out var setting)
+        return Inventory.TryGetValue(key.CurrencyCode, out var inv) &&
+            inv.Denominations.TryGetValue(keyStr, out var setting)
             ? setting
             : new DenominationSettings
             {
