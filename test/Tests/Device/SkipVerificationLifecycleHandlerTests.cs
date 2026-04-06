@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>検証スキップ版ライフサイクルハンドラの状態遷移およびライフサイクル操作を検証するテストクラス。.</summary>
+/// <summary>検証スキップ版ライフサイクルハンドラの状態遷移およびライフサイクル操作を検証するテストクラス。</summary>
 public class SkipVerificationLifecycleHandlerTests
 {
     private readonly HardwareStatusManager hardware;
@@ -24,7 +24,7 @@ public class SkipVerificationLifecycleHandlerTests
         handler = new SkipVerificationLifecycleHandler(hardware, mediator.Object, history, NullLogger.Instance);
     }
 
-    /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を反映することを検証します。.</summary>
+    /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を反映することを検証します。</summary>
     [Fact]
     public void StateShouldReflectHardwareAndMediator()
     {
@@ -42,7 +42,7 @@ public class SkipVerificationLifecycleHandlerTests
         handler.State.ShouldBe(ControlState.Idle);
     }
 
-    /// <summary>Open, Claim, Close の各ライフサイクル操作がハードウェアおよび履歴に正しく反映されることを検証します。.</summary>
+    /// <summary>Open, Claim, Close の各ライフサイクル操作がハードウェアおよび履歴に正しく反映されることを検証します。</summary>
     [Fact]
     public void LifecycleShouldWork()
     {
@@ -66,7 +66,7 @@ public class SkipVerificationLifecycleHandlerTests
         history.Entries.ShouldContain(e => e.Type == TransactionType.Close);
     }
 
-    /// <summary>Closed 状態で Claim や Release を試みた際に例外が発生することを検証します。.</summary>
+    /// <summary>Closed 状態で Claim や Release を試みた際に例外が発生することを検証します。</summary>
     [Fact]
     public void ClaimAndReleaseShouldThrowWhenClosed()
     {
@@ -79,7 +79,7 @@ public class SkipVerificationLifecycleHandlerTests
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>Open 状態で Release を実行した際の正常動作を検証します。.</summary>
+    /// <summary>Open 状態で Release を実行した際の正常動作を検証します。</summary>
     [Fact]
     public void ReleaseShouldWorkWhenOpen()
     {
@@ -90,7 +90,7 @@ public class SkipVerificationLifecycleHandlerTests
         history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
     }
 
-    /// <summary>DeviceEnabled などのプロパティがメディエータへ正しく委譲されることを検証します。.</summary>
+    /// <summary>DeviceEnabled などのプロパティがメディエータへ正しく委譲されることを検証します。</summary>
     [Fact]
     public void PropertiesShouldProxyToMediator()
     {

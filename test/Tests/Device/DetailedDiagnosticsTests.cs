@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>CheckHealth や統計情報（Statistics）などの自己診断機能を検証するテストクラス。.</summary>
+/// <summary>CheckHealth や統計情報（Statistics）などの自己診断機能を検証するテストクラス。</summary>
 public class DetailedDiagnosticsTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()
@@ -17,7 +17,7 @@ public class DetailedDiagnosticsTests
         return simulator;
     }
 
-    /// <summary>CheckHealth(Internal) が詳細な内部状態レポートを返却することを検証します。.</summary>
+    /// <summary>CheckHealth(Internal) が詳細な内部状態レポートを返却することを検証します。</summary>
     [Fact]
     public void CheckHealthInternalShouldReturnDetailedReport()
     {
@@ -31,7 +31,7 @@ public class DetailedDiagnosticsTests
         report.ShouldContain("Status: OK");
     }
 
-    /// <summary>CheckHealth(External) がハードウェア接続状態を含むレポートを返却することを検証します。.</summary>
+    /// <summary>CheckHealth(External) がハードウェア接続状態を含むレポートを返却することを検証します。</summary>
     [Fact]
     public void CheckHealthExternalShouldReturnHardwareReport()
     {
@@ -44,7 +44,7 @@ public class DetailedDiagnosticsTests
         report.ShouldContain("Hardware: Connected");
     }
 
-    /// <summary>デバイス統計情報（Statistics）が正しく集計・提供されることを検証します。.</summary>
+    /// <summary>デバイス統計情報（Statistics）が正しく集計・提供されることを検証します。</summary>
     [Fact]
     public void RetrieveStatisticsShouldReturnOperationCounts()
     {
@@ -61,7 +61,7 @@ public class DetailedDiagnosticsTests
         result.ShouldContain("SuccessfulDepletionCount");
     }
 
-    /// <summary>DirectIO(1002) 経由で診断ログが取得できることを検証します。.</summary>
+    /// <summary>DirectIO(1002) 経由で診断ログが取得できることを検証します。</summary>
     [Fact]
     public void DirectIOGetDiagnosticLogShouldReturnReport()
     {

@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UPOS メディエータの状態検証（VerifyState）、コマンド実行、非同期結果処理をテストするクラス。.</summary>
+/// <summary>UPOS メディエータの状態検証（VerifyState）、コマンド実行、非同期結果処理をテストするクラス。</summary>
 public class UposMediatorTests
 {
     private readonly InternalSimulatorCashChanger so;
@@ -21,7 +21,7 @@ public class UposMediatorTests
         mediator.SkipStateVerification = false;
     }
 
-    /// <summary>Closed 状態で状態検証を行うと例外が発生することを検証します。.</summary>
+    /// <summary>Closed 状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldThrowClosedWhenClosed()
     {
@@ -30,7 +30,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>占有（Claim）されていない状態で状態検証を行うと例外が発生することを検証します。.</summary>
+    /// <summary>占有（Claim）されていない状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldThrowNotClaimedWhenNotClaimed()
     {
@@ -39,7 +39,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.NotClaimed);
     }
 
-    /// <summary>無効（Disabled）状態で状態検証を行うと例外が発生することを検証します。.</summary>
+    /// <summary>無効（Disabled）状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldThrowDisabledWhenNotEnabled()
     {
@@ -49,7 +49,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Disabled);
     }
 
-    /// <summary>ビジー状態での状態検証時に例外が発生することを検証します。.</summary>
+    /// <summary>ビジー状態での状態検証時に例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldThrowBusyWhenBusy()
     {
@@ -62,7 +62,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Busy);
     }
 
-    /// <summary>全ての条件（Open, Claimed, Enabled, NotBusy）を満たす場合に状態検証が成功することを検証します。.</summary>
+    /// <summary>全ての条件（Open, Claimed, Enabled, NotBusy）を満たす場合に状態検証が成功することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldNotThrowWhenAllConditionsMet()
     {
@@ -74,7 +74,7 @@ public class UposMediatorTests
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
     }
 
-    /// <summary>検証スキップフラグが有効な場合に、不正な状態でも検証が成功することを検証します。.</summary>
+    /// <summary>検証スキップフラグが有効な場合に、不正な状態でも検証が成功することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldSkipWhenSkipFlagIsSet()
     {
@@ -82,7 +82,7 @@ public class UposMediatorTests
         mediator.VerifyState(); // Should not throw even if Closed
     }
 
-    /// <summary>ThrowIfBusy メソッドがビジー判定時に例外をスローすることを検証します。.</summary>
+    /// <summary>ThrowIfBusy メソッドがビジー判定時に例外をスローすることを検証します。</summary>
     [Fact]
     public void ThrowIfBusyShouldThrowWhenBusy()
     {
@@ -90,7 +90,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Busy);
     }
 
-    /// <summary>ThrowIfDepositInProgress メソッドが入金中判定時に例外をスローすることを検証します。.</summary>
+    /// <summary>ThrowIfDepositInProgress メソッドが入金中判定時に例外をスローすることを検証します。</summary>
     [Fact]
     public void ThrowIfDepositInProgressShouldThrowWhenInProgress()
     {
@@ -98,7 +98,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>SetSuccess および SetFailure により ResultCode 等が正しく更新されることを検証します。.</summary>
+    /// <summary>SetSuccess および SetFailure により ResultCode 等が正しく更新されることを検証します。</summary>
     [Fact]
     public void SetSuccessAndFailureShouldUpdateProperties()
     {
@@ -110,7 +110,7 @@ public class UposMediatorTests
         mediator.ResultCodeExtended.ShouldBe(456);
     }
 
-    /// <summary>コマンド実行中に PosControlException が発生した場合に、ResultCode 等が適切にキャッチ・設定されることを検証します。.</summary>
+    /// <summary>コマンド実行中に PosControlException が発生した場合に、ResultCode 等が適切にキャッチ・設定されることを検証します。</summary>
     [Fact]
     public void ExecuteShouldHandlePosControlException()
     {
@@ -125,7 +125,7 @@ public class UposMediatorTests
         ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Illegal);
     }
 
-    /// <summary>コマンドの正常実行が成功し、ResultCode が Success になることを検証します。.</summary>
+    /// <summary>コマンドの正常実行が成功し、ResultCode が Success になることを検証します。</summary>
     [Fact]
     public void ExecuteShouldSucceed()
     {

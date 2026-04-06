@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -12,15 +12,15 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests;
 
-/// <summary>DispenseController の動作を検証するテストクラス。.</summary>
+/// <summary>DispenseController の動作を検証するテストクラス。</summary>
 public class DispenseControllerTest
 {
-    /// <summary>ディスペンス結果を無視するコールバック。.</summary>
+    /// <summary>ディスペンス結果を無視するコールバック。</summary>
     private static void IgnoreDispenseResult(DeviceErrorCode code, int codeEx)
     {
     }
 
-    /// <summary>同期的な払い出し操作でステータスが遷移することを検証する。.</summary>
+    /// <summary>同期的な払い出し操作でステータスが遷移することを検証する。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldTransitionToBusyAndBackToIdle()
@@ -47,7 +47,7 @@ public class DispenseControllerTest
         inventory.GetCount(key).ShouldBe(9);
     }
 
-    /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証する。.</summary>
+    /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証する。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowIfBusy()
@@ -70,7 +70,7 @@ public class DispenseControllerTest
         await Should.ThrowAsync<DeviceException>(() => controller.DispenseChangeAsync(1000, false)).ConfigureAwait(false);
     }
 
-    /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証する。.</summary>
+    /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証する。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldCallSimulator()

@@ -5,14 +5,14 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Transactions;
 
-/// <summary>取引履歴の永続化サービスを検証するテストクラス。.</summary>
+/// <summary>取引履歴の永続化サービスを検証するテストクラス。</summary>
 public class HistoryPersistenceServiceTests : IDisposable
 {
     private readonly string testPath;
     private readonly HistoryPersistenceService service;
     private readonly TransactionHistory history;
 
-    /// <summary>Initializes a new instance of the <see cref="HistoryPersistenceServiceTests"/> class.HistoryPersistenceServiceTests の新しいインスタンスを初期化します。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="HistoryPersistenceServiceTests"/> class.HistoryPersistenceServiceTests の新しいインスタンスを初期化します。</summary>
     public HistoryPersistenceServiceTests()
     {
         testPath = Path.Combine(Path.GetTempPath(), $"history_test_{Guid.NewGuid()}.bin");
@@ -20,7 +20,7 @@ public class HistoryPersistenceServiceTests : IDisposable
         service = new HistoryPersistenceService(history, testPath);
     }
 
-    /// <summary>ファイルが存在しない場合に Load が空の履歴を返すことを検証します。.</summary>
+    /// <summary>ファイルが存在しない場合に Load が空の履歴を返すことを検証します。</summary>
     [Fact]
     public void LoadShouldReturnEmptyWhenFileDoesNotExist()
     {
@@ -38,7 +38,7 @@ public class HistoryPersistenceServiceTests : IDisposable
         state.Entries.ShouldBeEmpty();
     }
 
-    /// <summary>Save によりファイルが作成されることを検証します。.</summary>
+    /// <summary>Save によりファイルが作成されることを検証します。</summary>
     [Fact]
     public void SaveShouldCreateFile()
     {
@@ -58,7 +58,7 @@ public class HistoryPersistenceServiceTests : IDisposable
         File.Exists(testPath).ShouldBeTrue();
     }
 
-    /// <summary>オートセーブが有効な際、履歴の追加に伴い自動的に保存が行われることを検証します。.</summary>
+    /// <summary>オートセーブが有効な際、履歴の追加に伴い自動的に保存が行われることを検証します。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task AutoSaveShouldTriggerWhenEntryAdded()
@@ -80,7 +80,7 @@ public class HistoryPersistenceServiceTests : IDisposable
         loaded.Entries[0].Amount.ShouldBe(500);
     }
 
-    /// <summary>ファイルが破損している場合に Load が空の履歴を返すことを検証します。.</summary>
+    /// <summary>ファイルが破損している場合に Load が空の履歴を返すことを検証します。</summary>
     [Fact]
     public void LoadShouldReturnEmptyWhenFileIsCorrupted()
     {
@@ -95,7 +95,7 @@ public class HistoryPersistenceServiceTests : IDisposable
         state.Entries.ShouldBeEmpty();
     }
 
-    /// <summary>保存先パスが不正な場合でも例外が伝播せず適切にハンドルされることを検証します。.</summary>
+    /// <summary>保存先パスが不正な場合でも例外が伝播せず適切にハンドルされることを検証します。</summary>
     [Fact]
     public void SaveShouldHandleExceptionWhenPathIsInvalid()
     {
@@ -120,7 +120,7 @@ public class HistoryPersistenceServiceTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>TransactionEntry が MemoryPack によりシリアライズ・デシリアライズ可能であることを検証します。.</summary>
+    /// <summary>TransactionEntry が MemoryPack によりシリアライズ・デシリアライズ可能であることを検証します。</summary>
     [Fact]
     public void TransactionEntryCanBeMemoryPackDeserialized()
     {

@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UPOS エラーコード報告の優先順位（Precedence）を検証するテストクラス。.</summary>
+/// <summary>UPOS エラーコード報告の優先順位（Precedence）を検証するテストクラス。</summary>
 /// <remarks>
 /// UPOS 1.15 仕様に基づき、以下の優先順位でエラーが報告されることを確認します。
 /// 1. E_CLOSED

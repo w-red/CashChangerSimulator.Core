@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
@@ -13,7 +13,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UposDispenseFacade の動作を検証するテストクラス。.</summary>
+/// <summary>UposDispenseFacade の動作を検証するテストクラス。</summary>
 public class UposDispenseFacadeTest
 {
     private readonly Inventory inventory;
@@ -23,7 +23,7 @@ public class UposDispenseFacadeTest
     private readonly Mock<IUposMediator> mediatorMock;
     private readonly UposDispenseFacade facade;
 
-    /// <summary>Initializes a new instance of the <see cref="UposDispenseFacadeTest"/> class.UposDispenseFacadeTest の新しいインスタンスを初期化します。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="UposDispenseFacadeTest"/> class.UposDispenseFacadeTest の新しいインスタンスを初期化します。</summary>
     public UposDispenseFacadeTest()
     {
         inventory = new Inventory();
@@ -58,7 +58,7 @@ public class UposDispenseFacadeTest
             });
     }
 
-    /// <summary>入金中に出金しようとすると例外がスローされることを確認します。.</summary>
+    /// <summary>入金中に出金しようとすると例外がスローされることを確認します。</summary>
     [Fact]
     public void DispenseByAmountWhenDepositInProgressShouldThrow()
     {
@@ -69,7 +69,7 @@ public class UposDispenseFacadeTest
             facade.DispenseByAmount(1000, "JPY", 1m, false));
     }
 
-    /// <summary>ジャム中に出金しようとすると例外がスローされることを確認します。.</summary>
+    /// <summary>ジャム中に出金しようとすると例外がスローされることを確認します。</summary>
     [Fact]
     public void DispenseByAmountWhenJammedShouldThrow()
     {
@@ -80,7 +80,7 @@ public class UposDispenseFacadeTest
             facade.DispenseByAmount(1000, "JPY", 1m, false));
     }
 
-    /// <summary>金額0以下で例外がスローされることを確認します。.</summary>
+    /// <summary>金額0以下で例外がスローされることを確認します。</summary>
     [Fact]
     public void DispenseByAmountZeroAmountShouldThrow()
     {
@@ -88,7 +88,7 @@ public class UposDispenseFacadeTest
             facade.DispenseByAmount(0, "JPY", 1m, false));
     }
 
-    /// <summary>正常な金額出金が成功することを確認します。.</summary>
+    /// <summary>正常な金額出金が成功することを確認します。</summary>
     [Fact]
     public void DispenseByAmountValidAmountShouldSucceed()
     {
@@ -96,7 +96,7 @@ public class UposDispenseFacadeTest
         dispenseController.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
     }
 
-    /// <summary>金種指定の出金で在庫不足時に例外がスローされることを確認します。.</summary>
+    /// <summary>金種指定の出金で在庫不足時に例外がスローされることを確認します。</summary>
     [Fact]
     public void DispenseByCashCountsInsufficientInventoryShouldThrow()
     {

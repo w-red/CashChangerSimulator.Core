@@ -9,7 +9,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>各コマンド（AdjustCashCounts, DispenseCash 等）の実行前検証と例外処理をテストするクラス。.</summary>
+/// <summary>各コマンド（AdjustCashCounts, DispenseCash 等）の実行前検証と例外処理をテストするクラス。</summary>
 public class CommandTests
 {
     private readonly Inventory inventory;
@@ -23,7 +23,7 @@ public class CommandTests
         mediator = new Mock<IUposMediator>();
     }
 
-    /// <summary>デバイスがジャム状態の時に AdjustCashCountsCommand が E_EXT をスローすることを検証します。.</summary>
+    /// <summary>デバイスがジャム状態の時に AdjustCashCountsCommand が E_EXT をスローすることを検証します。</summary>
     [Fact]
     public void AdjustCashCountsCommandShouldThrowWhenJammed()
     {
@@ -35,7 +35,7 @@ public class CommandTests
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 
-    /// <summary>デバイスがジャム状態の時に DispenseCashCommand の Verify が E_EXT をスローすることを検証します。.</summary>
+    /// <summary>デバイスがジャム状態の時に DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenJammed()
     {
@@ -50,7 +50,7 @@ public class CommandTests
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 
-    /// <summary>入金処理中の際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。.</summary>
+    /// <summary>入金処理中の際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenDepositInProgress()
     {
@@ -66,7 +66,7 @@ public class CommandTests
         ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>未登録の金種が指定された際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。.</summary>
+    /// <summary>未登録の金種が指定された際、DispenseCashCommand の Verify が E_ILLEGAL をスローすることを検証します。</summary>
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenDenominationNotRegistered()
     {
@@ -78,7 +78,7 @@ public class CommandTests
         ex.ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>在庫不足の際、DispenseCashCommand の Verify が E_EXT をスローすることを検証します。.</summary>
+    /// <summary>在庫不足の際、DispenseCashCommand の Verify が E_EXT をスローすることを検証します。</summary>
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenInsufficientInventory()
     {

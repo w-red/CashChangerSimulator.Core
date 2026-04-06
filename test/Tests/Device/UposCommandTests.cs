@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
@@ -12,7 +12,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UPOS コマンドクラス群（BeginDeposit, DispenseCash 等）の実行および検証ロジックをテストするクラス。.</summary>
+/// <summary>UPOS コマンドクラス群（BeginDeposit, DispenseCash 等）の実行および検証ロジックをテストするクラス。</summary>
 public class UposCommandTests
 {
     private readonly Mock<IUposMediator> mediatorMock;
@@ -28,7 +28,7 @@ public class UposCommandTests
         depositControllerMock = new Mock<DepositController>(inventory, hardware, null!, null!);
     }
 
-    /// <summary>BeginDepositCommand の実行がコントローラへ委譲されることを検証します。.</summary>
+    /// <summary>BeginDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
     public void BeginDepositCommandExecuteShouldCallController()
     {
@@ -42,7 +42,7 @@ public class UposCommandTests
         depositControllerMock.Verify(c => c.BeginDeposit(), Times.Once);
     }
 
-    /// <summary>BeginDepositCommand の検証処理がメディエータを介して行われることを検証します。.</summary>
+    /// <summary>BeginDepositCommand の検証処理がメディエータを介して行われることを検証します。</summary>
     [Fact]
     public void BeginDepositCommandVerifyShouldCallMediator()
     {
@@ -56,7 +56,7 @@ public class UposCommandTests
         mediatorMock.Verify(m => m.VerifyState(true, false, false), Times.Once);
     }
 
-    /// <summary>FixDepositCommand の実行がコントローラへ委譲されることを検証します。.</summary>
+    /// <summary>FixDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
     public void FixDepositCommandExecuteShouldCallController()
     {
@@ -65,7 +65,7 @@ public class UposCommandTests
         depositControllerMock.Verify(c => c.FixDeposit(), Times.Once);
     }
 
-    /// <summary>EndDepositCommand の実行がコントローラへ委譲されることを検証します。.</summary>
+    /// <summary>EndDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
     public void EndDepositCommandExecuteShouldCallController()
     {
@@ -75,7 +75,7 @@ public class UposCommandTests
         depositControllerMock.Verify(c => c.EndDepositAsync(It.IsAny<DepositAction>()), Times.Once);
     }
 
-    /// <summary>PauseDepositCommand の実行がコントローラへ委譲されることを検証します。.</summary>
+    /// <summary>PauseDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
     public void PauseDepositCommandExecuteShouldCallController()
     {
@@ -85,7 +85,7 @@ public class UposCommandTests
         depositControllerMock.Verify(c => c.PauseDeposit(It.IsAny<DeviceDepositPause>()), Times.Once);
     }
 
-    /// <summary>RepayDepositCommand の実行がコントローラへ委譲されることを検証します。.</summary>
+    /// <summary>RepayDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
     public void RepayDepositCommandExecuteShouldCallController()
     {
@@ -94,7 +94,7 @@ public class UposCommandTests
         depositControllerMock.Verify(c => c.RepayDepositAsync(), Times.Once);
     }
 
-    /// <summary>ReadCashCountsCommand の実行により在庫カウントが取得できることを検証します。.</summary>
+    /// <summary>ReadCashCountsCommand の実行により在庫カウントが取得できることを検証します。</summary>
     [Fact]
     public void ReadCashCountsCommandExecuteShouldReturnCounts()
     {
@@ -104,7 +104,7 @@ public class UposCommandTests
         command.Result.Counts.ShouldNotBeNull();
     }
 
-    /// <summary>AdjustCashCountsCommand の実行により在庫の更新が行われることを検証します。.</summary>
+    /// <summary>AdjustCashCountsCommand の実行により在庫の更新が行われることを検証します。</summary>
     [Fact]
     public void AdjustCashCountsCommandExecuteShouldCallInventory()
     {
@@ -117,7 +117,7 @@ public class UposCommandTests
         inventoryMock.Verify(i => i.SetCount(It.IsAny<DenominationKey>(), It.IsAny<int>()), Times.AtMostOnce());
     }
 
-    /// <summary>PurgeCashCommand の実行がマネージャへ委譲されることを検証します。.</summary>
+    /// <summary>PurgeCashCommand の実行がマネージャへ委譲されることを検証します。</summary>
     [Fact]
     public void PurgeCashCommandExecuteShouldCallManager()
     {
@@ -127,7 +127,7 @@ public class UposCommandTests
         managerMock.Verify(m => m.PurgeCash(), Times.Once);
     }
 
-    /// <summary>CheckHealthCommand の実行により診断レポートが返却されることを検証します。.</summary>
+    /// <summary>CheckHealthCommand の実行により診断レポートが返却されることを検証します。</summary>
     [Fact]
     public void CheckHealthCommandExecuteShouldReturnReport()
     {
@@ -140,7 +140,7 @@ public class UposCommandTests
         command.Result.ShouldBe("OK");
     }
 
-    /// <summary>RetrieveStatisticsCommand の実行により統計 XML が返却されることを検証します。.</summary>
+    /// <summary>RetrieveStatisticsCommand の実行により統計 XML が返却されることを検証します。</summary>
     [Fact]
     public void RetrieveStatisticsCommandExecuteShouldReturnXml()
     {
@@ -153,7 +153,7 @@ public class UposCommandTests
         command.Result.ShouldBe("<xml/>");
     }
 
-    /// <summary>UpdateStatisticsCommand の実行が正常に終了することを検証します。.</summary>
+    /// <summary>UpdateStatisticsCommand の実行が正常に終了することを検証します。</summary>
     [Fact]
     public void UpdateStatisticsCommandExecuteShouldWork()
     {
@@ -161,7 +161,7 @@ public class UposCommandTests
         command.Execute(); // Should not throw
     }
 
-    /// <summary>ResetStatisticsCommand の実行が正常に終了することを検証します。.</summary>
+    /// <summary>ResetStatisticsCommand の実行が正常に終了することを検証します。</summary>
     [Fact]
     public void ResetStatisticsCommandExecuteShouldWork()
     {
@@ -169,7 +169,7 @@ public class UposCommandTests
         command.Execute(); // Should not throw
     }
 
-    /// <summary>DispenseChangeCommand の実行がコントローラへ委譲されることを検証します。.</summary>
+    /// <summary>DispenseChangeCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
     public void DispenseChangeCommandExecuteShouldCallController()
     {
@@ -185,7 +185,7 @@ public class UposCommandTests
         controllerMock.Verify(c => c.DispenseChangeAsync(1000, false, null), Times.Once);
     }
 
-    /// <summary>DispenseCashCommand の実行がコントローラへ委譲されることを検証します。.</summary>
+    /// <summary>DispenseCashCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
     public void DispenseCashCommandExecuteShouldCallController()
     {
@@ -203,7 +203,7 @@ public class UposCommandTests
         controllerMock.Verify(c => c.DispenseCashAsync((IReadOnlyDictionary<DenominationKey, int>)counts, false), Times.Once);
     }
 
-    /// <summary>ClearOutputCommand の実行がコントローラへ委譲されることを検証します。.</summary>
+    /// <summary>ClearOutputCommand の実行がコントローラへ委譲されることを検証します。</summary>
     [Fact]
     public void ClearOutputCommandExecuteShouldCallController()
     {

@@ -11,10 +11,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>非同期モードにおけるデバイス動作の信頼性と状態の整合性を検証するテストクラス。.</summary>
+/// <summary>非同期モードにおけるデバイス動作の信頼性と状態の整合性を検証するテストクラス。</summary>
 /// <remarks>
 /// 非同期払い出し操作において、完了イベントが通知された瞬間の内部状態（Status, ResultCode）が
-/// 規約通りであることをタイムクリティカルな条件下で検証します。.
+/// 規約通りであることをタイムクリティカルな条件下で検証します。
 /// </remarks>
 public class AsyncModeReliabilityTests
 {
@@ -50,7 +50,7 @@ public class AsyncModeReliabilityTests
         public bool WaitForEvent(int timeoutMs) => CompletionSignal.Wait(timeoutMs);
     }
 
-    /// <summary>非同期出金処理において、完了イベント通知時の内部状態が正しいことを検証します。.</summary>
+    /// <summary>非同期出金処理において、完了イベント通知時の内部状態が正しいことを検証します。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task AsyncDispenseShouldHaveCorrectStateWhenEventFires()

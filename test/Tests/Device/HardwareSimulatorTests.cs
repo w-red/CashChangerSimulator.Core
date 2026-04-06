@@ -5,10 +5,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>ハードウェアシミュレータの動作を検証するテストクラス。.</summary>
+/// <summary>ハードウェアシミュレータの動作を検証するテストクラス。</summary>
 public class HardwareSimulatorTests
 {
-    /// <summary>シミュレータが設定された遅延時間分待機することを検証する。.</summary>
+    /// <summary>シミュレータが設定された遅延時間分待機することを検証する。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task SimulateDispenseAsyncShouldDelayByConfiguredAmount()
@@ -30,7 +30,7 @@ public class HardwareSimulatorTests
         sw.ElapsedMilliseconds.ShouldBeLessThan(1000); // 異常に長くないこと
     }
 
-    /// <summary>遅延時間が0の場合、即座に完了することを検証する。.</summary>
+    /// <summary>遅延時間が0の場合、即座に完了することを検証する。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task SimulateDispenseAsyncShouldCompleteImmediatelyWhenDelayIsZero()

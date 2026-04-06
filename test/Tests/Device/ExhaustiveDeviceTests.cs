@@ -15,7 +15,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>CashChangerSimulator.Device のカバレッジを 100% にするための網羅的テストクラス。.</summary>
+/// <summary>CashChangerSimulator.Device のカバレッジを 100% にするための網羅的テストクラス。</summary>
 public class ExhaustiveDeviceTests : IDisposable
 {
     private readonly Inventory inventory;

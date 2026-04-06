@@ -12,7 +12,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>マルチ通貨（JPY/USD切り替え、フィルタリング、小数の名目値）の検証テスト。.</summary>
+/// <summary>マルチ通貨（JPY/USD切り替え、フィルタリング、小数の名目値）の検証テスト。</summary>
 public class MultiCurrencyTests
 {
     private static InternalSimulatorCashChanger CreateDevice()
@@ -69,7 +69,7 @@ public class MultiCurrencyTests
         return device;
     }
 
-    /// <summary>サポートされている通貨コードのリストが正しく取得できることを検証する。.</summary>
+    /// <summary>サポートされている通貨コードのリストが正しく取得できることを検証する。</summary>
     [Fact]
     public void CurrencyCodeListShouldContainConfiguredCurrencies()
     {
@@ -79,7 +79,7 @@ public class MultiCurrencyTests
         device.DepositCodeList.ShouldBe(device.CurrencyCodeList);
     }
 
-    /// <summary>CurrencyCode を切り替えることで、報告される金種情報が正しくフィルタリングされることを検証する。.</summary>
+    /// <summary>CurrencyCode を切り替えることで、報告される金種情報が正しくフィルタリングされることを検証する。</summary>
     [Fact]
     public void SwitchingCurrencyCodeShouldFilterCashCounts()
     {
@@ -102,7 +102,7 @@ public class MultiCurrencyTests
         usdCounts.Counts[0].NominalValue.ShouldBe(50);
     }
 
-    /// <summary>USドルのような小数を含む額面が、正しくスケール調整されて報告されることを検証する。.</summary>
+    /// <summary>USドルのような小数を含む額面が、正しくスケール調整されて報告されることを検証する。</summary>
     [Fact]
     public void UsdDecimalScalingVerification()
     {
@@ -114,7 +114,7 @@ public class MultiCurrencyTests
         counts.Counts[0].NominalValue.ShouldBe(50);
     }
 
-    /// <summary>サポートされていない通貨コードを設定しようとした際に例外がスローされることを検証する。.</summary>
+    /// <summary>サポートされていない通貨コードを設定しようとした際に例外がスローされることを検証する。</summary>
     [Fact]
     public void SettingInvalidCurrencyCodeShouldThrow()
     {

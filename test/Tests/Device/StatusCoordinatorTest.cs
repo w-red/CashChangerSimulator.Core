@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
@@ -12,7 +12,7 @@ using Moq;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>StatusCoordinator の動作を検証するテストクラス。.</summary>
+/// <summary>StatusCoordinator の動作を検証するテストクラス。</summary>
 public class StatusCoordinatorTest
 {
     private readonly Mock<ICashChangerStatusSink> mockSink;
@@ -21,7 +21,7 @@ public class StatusCoordinatorTest
     private readonly DepositController depositController;
     private readonly DispenseController dispenseController;
 
-    /// <summary>Initializes a new instance of the <see cref="StatusCoordinatorTest"/> class.StatusCoordinatorTest の新しいインスタンスを初期化します。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="StatusCoordinatorTest"/> class.StatusCoordinatorTest の新しいインスタンスを初期化します。</summary>
     public StatusCoordinatorTest()
     {
         mockSink = new Mock<ICashChangerStatusSink>();
@@ -36,7 +36,7 @@ public class StatusCoordinatorTest
         dispenseController = new DispenseController(manager, hardwareStatusManager);
     }
 
-    /// <summary>ジャム状態が変化した際に適切なステータス更新イベントが発生することを確認します。.</summary>
+    /// <summary>ジャム状態が変化した際に適切なステータス更新イベントが発生することを確認します。</summary>
     [Fact]
     public void JamStatusShouldFireStatusUpdateEvent()
     {

@@ -7,7 +7,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>DeviceLifecycleManager（State パターン）の遷移を検証するテストクラス。.</summary>
+/// <summary>DeviceLifecycleManager（State パターン）の遷移を検証するテストクラス。</summary>
 public class DeviceLifecycleStateTest
 {
     private readonly HardwareStatusManager hardwareStatusManager = new();
@@ -16,14 +16,14 @@ public class DeviceLifecycleStateTest
     private readonly DeviceLifecycleContext context;
     private IDeviceState state;
 
-    /// <summary>Initializes a new instance of the <see cref="DeviceLifecycleStateTest"/> class.DeviceLifecycleStateTest の新しいインスタンスを初期化します。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="DeviceLifecycleStateTest"/> class.DeviceLifecycleStateTest の新しいインスタンスを初期化します。</summary>
     public DeviceLifecycleStateTest()
     {
         context = new DeviceLifecycleContext(hardwareStatusManager, mockLogger.Object, v => deviceEnabled = v);
         state = new ClosedState();
     }
 
-    /// <summary>Closed 状態で Open を呼ぶと Opened 状態に遷移することを確認します。.</summary>
+    /// <summary>Closed 状態で Open を呼ぶと Opened 状態に遷移することを確認します。</summary>
     [Fact]
     public void ClosedStateOpenShouldTransitionToOpened()
     {
@@ -32,21 +32,21 @@ public class DeviceLifecycleStateTest
         hardwareStatusManager.IsConnected.Value.ShouldBeTrue();
     }
 
-    /// <summary>Closed 状態で Close を呼ぶと例外がスローされることを確認します。.</summary>
+    /// <summary>Closed 状態で Close を呼ぶと例外がスローされることを確認します。</summary>
     [Fact]
     public void ClosedStateCloseShouldThrow()
     {
         Should.Throw<PosControlException>(() => state.Close(context));
     }
 
-    /// <summary>Closed 状態で Claim を呼ぶと例外がスローされることを確認します。.</summary>
+    /// <summary>Closed 状態で Claim を呼ぶと例外がスローされることを確認します。</summary>
     [Fact]
     public void ClosedStateClaimShouldThrow()
     {
         Should.Throw<PosControlException>(() => state.Claim(context, 1000));
     }
 
-    /// <summary>Opened 状態で Claim を呼ぶと Claimed 状態に遷移することを確認します。.</summary>
+    /// <summary>Opened 状態で Claim を呼ぶと Claimed 状態に遷移することを確認します。</summary>
     [Fact]
     public void OpenedStateClaimShouldTransitionToClaimed()
     {
@@ -55,7 +55,7 @@ public class DeviceLifecycleStateTest
         state.ShouldBeOfType<ClaimedState>();
     }
 
-    /// <summary>Opened 状態で Close を呼ぶと Closed 状態に戻ることを確認します。.</summary>
+    /// <summary>Opened 状態で Close を呼ぶと Closed 状態に戻ることを確認します。</summary>
     [Fact]
     public void OpenedStateCloseShouldTransitionToClosed()
     {
@@ -65,7 +65,7 @@ public class DeviceLifecycleStateTest
         hardwareStatusManager.IsConnected.Value.ShouldBeFalse();
     }
 
-    /// <summary>Claimed 状態で Release を呼ぶと Opened 状態に戻ることを確認します。.</summary>
+    /// <summary>Claimed 状態で Release を呼ぶと Opened 状態に戻ることを確認します。</summary>
     [Fact]
     public void ClaimedStateReleaseShouldTransitionToOpened()
     {
@@ -75,7 +75,7 @@ public class DeviceLifecycleStateTest
         state.ShouldBeOfType<OpenedState>();
     }
 
-    /// <summary>Claimed 状態で Close を呼ぶと自動的に Release されて Closed に戻ることを確認します。.</summary>
+    /// <summary>Claimed 状態で Close を呼ぶと自動的に Release されて Closed に戻ることを確認します。</summary>
     [Fact]
     public void ClaimedStateCloseShouldReleaseAndTransitionToClosed()
     {
@@ -85,7 +85,7 @@ public class DeviceLifecycleStateTest
         state.ShouldBeOfType<ClosedState>();
     }
 
-    /// <summary>Opened 状態で重複 Open を呼ぶとそのまま Opened を返すことを確認します。.</summary>
+    /// <summary>Opened 状態で重複 Open を呼ぶとそのまま Opened を返すことを確認します。</summary>
     [Fact]
     public void OpenedStateOpenShouldReturnSameState()
     {

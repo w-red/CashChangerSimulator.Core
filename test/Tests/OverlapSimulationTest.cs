@@ -7,10 +7,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests;
 
-/// <summary>重なりエラー（Overlap Error）のシミュレーションを検証するテストクラス。.</summary>
+/// <summary>重なりエラー（Overlap Error）のシミュレーションを検証するテストクラス。</summary>
 public class OverlapSimulationTest
 {
-    /// <summary>重なりエラー発生時に FixDeposit は成功するが、EndDeposit(NoChange) は失敗することを検証する。.</summary>
+    /// <summary>重なりエラー発生時に FixDeposit は成功するが、EndDeposit(NoChange) は失敗することを検証する。</summary>
     [Fact]
     public void FixDepositShouldSucceedButEndDepositNoChangeShouldThrowWhenOverlapped()
     {
@@ -42,7 +42,7 @@ public class OverlapSimulationTest
         hardwareManager.IsOverlapped.Value.ShouldBeTrue();
     }
 
-    /// <summary>BeginDeposit を呼び出すと重なりエラーの場合は例外が発生することを検証する。.</summary>
+    /// <summary>BeginDeposit を呼び出すと重なりエラーの場合は例外が発生することを検証する。</summary>
     [Fact]
     public void BeginDepositThrowsWhenOverlapped()
     {

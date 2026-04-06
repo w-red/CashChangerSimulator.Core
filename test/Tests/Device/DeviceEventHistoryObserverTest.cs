@@ -8,11 +8,11 @@ namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>
 /// <see cref="DeviceEventHistoryObserver"/> の動作を検証するテストクラス。
-/// デバイス層の DataEvent が TransactionHistory に委譲記述されるかをテストします。.
+/// デバイス層の DataEvent が TransactionHistory に委譲記述されるかをテストします。
 /// </summary>
 public class DeviceEventHistoryObserverTest
 {
-    /// <summary>DataEventArgs を伴うデバイスイベントが発生した際、履歴に追加されることを検証します。.</summary>
+    /// <summary>DataEventArgs を伴うデバイスイベントが発生した際、履歴に追加されることを検証します。</summary>
     [Fact]
     public void HandleDeviceEventWhenDataEventArgsRecordsToHistory()
     {
@@ -37,7 +37,7 @@ public class DeviceEventHistoryObserverTest
         entry.Counts.ShouldBeEmpty();
     }
 
-    /// <summary>StatusUpdateEventArgs(Ok=0) が ErrorRecovery として履歴に記録されることを検証します。.</summary>
+    /// <summary>StatusUpdateEventArgs(Ok=0) が ErrorRecovery として履歴に記録されることを検証します。</summary>
     [Fact]
     public void HandleDeviceEventWhenStatusOkRecordsErrorRecovery()
     {
@@ -55,7 +55,7 @@ public class DeviceEventHistoryObserverTest
         history.Entries[0].Type.ShouldBe(TransactionType.ErrorRecovery);
     }
 
-    /// <summary>StatusUpdateEventArgs(Jam=31) が HardwareError として履歴に記録されることを検証します。.</summary>
+    /// <summary>StatusUpdateEventArgs(Jam=31) が HardwareError として履歴に記録されることを検証します。</summary>
     [Fact]
     public void HandleDeviceEventWhenStatusJamRecordsHardwareError()
     {
@@ -73,7 +73,7 @@ public class DeviceEventHistoryObserverTest
         history.Entries[0].Type.ShouldBe(TransactionType.HardwareError);
     }
 
-    /// <summary>未対応のステータスコードではエントリが追加されないことを検証します。.</summary>
+    /// <summary>未対応のステータスコードではエントリが追加されないことを検証します。</summary>
     [Fact]
     public void HandleDeviceEventWhenUnhandledStatusDoesNotRecord()
     {

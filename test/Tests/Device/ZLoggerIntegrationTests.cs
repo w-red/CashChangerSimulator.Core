@@ -6,7 +6,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>ZLogger による非同期例外の出力およびスタックトレースの保持を検証するテストクラス。.</summary>
+/// <summary>ZLogger による非同期例外の出力およびスタックトレースの保持を検証するテストクラス。</summary>
 public class ZLoggerIntegrationTests : IDisposable
 {
     private readonly string testLogDir;

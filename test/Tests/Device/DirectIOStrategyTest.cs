@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>DirectIO コマンドの各戦略（Strategy）を検証するテストクラス。.</summary>
+/// <summary>DirectIO コマンドの各戦略（Strategy）を検証するテストクラス。</summary>
 public class DirectIOStrategyTest
 {
     private readonly InternalSimulatorCashChanger device;
@@ -22,7 +22,7 @@ public class DirectIOStrategyTest
         device.Claim(0);
     }
 
-    /// <summary>SetOverlapStrategy が HardwareStatus の重なり状態を正しく更新することを検証する。.</summary>
+    /// <summary>SetOverlapStrategy が HardwareStatus の重なり状態を正しく更新することを検証する。</summary>
     [Fact]
     public void SetOverlapStrategyShouldUpdateHardwareStatus()
     {
@@ -37,7 +37,7 @@ public class DirectIOStrategyTest
         device.HardwareStatus.IsOverlapped.Value.ShouldBeTrue();
     }
 
-    /// <summary>SetJamStrategy が箇所指定付きでジャム状態を正しく更新することを検証する。.</summary>
+    /// <summary>SetJamStrategy が箇所指定付きでジャム状態を正しく更新することを検証する。</summary>
     [Fact]
     public void SetJamStrategyShouldUpdateHardwareStatusWithLocation()
     {
@@ -53,7 +53,7 @@ public class DirectIOStrategyTest
         device.HardwareStatus.JamLocation.Value.ShouldBe(JamLocation.BillCassette1);
     }
 
-    /// <summary>GetJamLocation コマンドが現在のジャム箇所を文字列で返却することを検証する。.</summary>
+    /// <summary>GetJamLocation コマンドが現在のジャム箇所を文字列で返却することを検証する。</summary>
     [Fact]
     public void GetJamLocationShouldReturnCurrentLocation()
     {
@@ -67,7 +67,7 @@ public class DirectIOStrategyTest
         result.Object.ShouldBe("Inlet");
     }
 
-    /// <summary>DirectIO メソッド経由で各戦略が正しく呼び出されることを検証する。.</summary>
+    /// <summary>DirectIO メソッド経由で各戦略が正しく呼び出されることを検証する。</summary>
     [Fact]
     public void DirectIOShouldUseStrategies()
     {

@@ -10,11 +10,11 @@ namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>
 /// <see cref="DepositController"/> が直接在庫を更新せず、
-/// <see cref="CashChangerManager"/> に入金履歴の記録と在庫の更新を委譲することを検証するテストクラス。.
+/// <see cref="CashChangerManager"/> に入金履歴の記録と在庫の更新を委譲することを検証するテストクラス。
 /// </summary>
 public class DepositControllerDelegationTest
 {
-    /// <summary>EndDeposit(Store) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。.</summary>
+    /// <summary>EndDeposit(Store) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。</summary>
     [Fact]
     public void EndDepositStoreShouldDelegateToCashChangerManagerDeposit()
     {

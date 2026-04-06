@@ -12,7 +12,7 @@ using Moq;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>各機能ファサード（DepositFacade, InventoryFacade等）がメディエータを介してコマンドを正しく発行することを検証するテストクラス。.</summary>
+/// <summary>各機能ファサード（DepositFacade, InventoryFacade等）がメディエータを介してコマンドを正しく発行することを検証するテストクラス。</summary>
 public class FacadeTests
 {
     private readonly Mock<IUposMediator> mediatorMock;
@@ -43,7 +43,7 @@ public class FacadeTests
         diagnosticControllerMock = new Mock<DiagnosticController>(inventory, hardwareStatusManager);
     }
 
-    /// <summary>DepositFacade.BeginDeposit が対応するプロトコルコマンドを実行することを検証します。.</summary>
+    /// <summary>DepositFacade.BeginDeposit が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
     public void DepositFacadeBeginDepositShouldExecuteCommand()
     {
@@ -57,7 +57,7 @@ public class FacadeTests
         mediatorMock.Verify(m => m.Execute(It.IsAny<BeginDepositCommand>()), Times.Once);
     }
 
-    /// <summary>InventoryFacade.ReadCashCounts が対応するプロトコルコマンドを実行することを検証します。.</summary>
+    /// <summary>InventoryFacade.ReadCashCounts が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
     public void InventoryFacadeReadCashCountsShouldExecuteCommand()
     {
@@ -71,7 +71,7 @@ public class FacadeTests
         mediatorMock.Verify(m => m.Execute(It.IsAny<ReadCashCountsCommand>()), Times.Once);
     }
 
-    /// <summary>DiagnosticsFacade.CheckHealth が対応するプロトコルコマンドを実行することを検証します。.</summary>
+    /// <summary>DiagnosticsFacade.CheckHealth が対応するプロトコルコマンドを実行することを検証します。</summary>
     [Fact]
     public void DiagnosticsFacadeCheckHealthShouldExecuteCommand()
     {

@@ -27,7 +27,7 @@ public class CustomLogger<T> : ILogger<T>
     }
 }
 
-/// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。.</summary>
+/// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。</summary>
 [Collection("GlobalLock")]
 public class UposLifecycleTests
 {
@@ -65,7 +65,7 @@ public class UposLifecycleTests
 
     private static InternalSimulatorCashChanger CreateCashChanger() => CreateCashChangerWithLogger().cc;
 
-    /// <summary>占有されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。.</summary>
+    /// <summary>占有されていない状態で DispenseChange を呼び出すと例外がスローされることを検証する。</summary>
     [Fact]
     public void DispenseChangeShouldThrowWhenNotClaimed()
     {
@@ -73,7 +73,7 @@ public class UposLifecycleTests
         Should.Throw<PosControlException>(() => cc.DispenseChange(100));
     }
 
-    /// <summary>占有されていない状態で BeginDeposit を呼び出すと例外がスローされることを検証する。.</summary>
+    /// <summary>占有されていない状態で BeginDeposit を呼び出すと例外がスローされることを検証する。</summary>
     [Fact]
     public void BeginDepositShouldThrowWhenNotClaimed()
     {
@@ -82,7 +82,7 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>占有されていない状態で ReadCashCounts を呼び出すと例外がスローされることを検証する。.</summary>
+    /// <summary>占有されていない状態で ReadCashCounts を呼び出すと例外がスローされることを検証する。</summary>
     [Fact]
     public void ReadCashCountsShouldThrowWhenNotClaimed()
     {
@@ -91,7 +91,7 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>デバイスがオープンされる前に占有（Claim）を試みると例外がスローされることを検証する。.</summary>
+    /// <summary>デバイスがオープンされる前に占有（Claim）を試みると例外がスローされることを検証する。</summary>
     [Fact]
     public void ClaimBeforeOpenShouldSucceedInWaitState()
     {
@@ -100,7 +100,7 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>正常な Open/Claim シーケンスがエラーなく完了することを検証する。.</summary>
+    /// <summary>正常な Open/Claim シーケンスがエラーなく完了することを検証する。</summary>
     [Fact]
     public void SuccessfulLifecycle()
     {
@@ -109,7 +109,7 @@ public class UposLifecycleTests
         cc.Claim(1000);
     }
 
-    /// <summary>健康状態確認（CheckHealth）が常に OK を返すことを検証する。.</summary>
+    /// <summary>健康状態確認（CheckHealth）が常に OK を返すことを検証する。</summary>
     [Fact]
     public void CheckHealthShouldReturnOk()
     {
@@ -117,7 +117,7 @@ public class UposLifecycleTests
         cc.CheckHealth((HealthCheckLevel)DeviceHealthCheckLevel.Internal).ShouldContain("OK");
     }
 
-    /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する（NRE回避の確認）。.</summary>
+    /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する（NRE回避の確認）。</summary>
     [Fact]
     public void SkipStateVerificationShouldBypassFramework()
     {
@@ -134,7 +134,7 @@ public class UposLifecycleTests
         cc.Claimed.ShouldBeTrue();
     }
 
-    /// <summary>プロパティ変更時にハンドラーが即座に切り替わることを検証する。.</summary>
+    /// <summary>プロパティ変更時にハンドラーが即座に切り替わることを検証する。</summary>
     [Fact]
     public void HandlerShouldSwitchWhenPropertyChanges()
     {

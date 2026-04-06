@@ -4,10 +4,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UposCurrencyHelper の動作を検証するテストクラス。.</summary>
+/// <summary>UposCurrencyHelper の動作を検証するテストクラス。</summary>
 public class UposCurrencyHelperTest
 {
-    /// <summary>指定された通貨コードに対する係数が正しく取得できるかを確認します。.</summary>
+    /// <summary>指定された通貨コードに対する係数が正しく取得できるかを確認します。</summary>
     [Theory]
     [InlineData("USD", 100)]
     [InlineData("EUR", 100)]
@@ -20,7 +20,7 @@ public class UposCurrencyHelperTest
         factor.ShouldBe(expectedFactor);
     }
 
-    /// <summary>DenominationKey から NominalValue が正しく計算されるかを確認します。.</summary>
+    /// <summary>DenominationKey から NominalValue が正しく計算されるかを確認します。</summary>
     [Fact]
     public void GetNominalValueShouldCalculateCorrectly()
     {
@@ -33,7 +33,7 @@ public class UposCurrencyHelperTest
         valUsd.ShouldBe(500); // 5 * 100
     }
 
-    /// <summary>在庫から指定した通貨の CashUnits が正しく生成されるかを確認します。.</summary>
+    /// <summary>在庫から指定した通貨の CashUnits が正しく生成されるかを確認します。</summary>
     [Fact]
     public void BuildCashUnitsShouldBuildCorrectly()
     {

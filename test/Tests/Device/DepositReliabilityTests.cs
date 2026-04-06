@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>入金（Deposit）処理の非同期動作における信頼性と整合性を検証するテストクラス。.</summary>
+/// <summary>入金（Deposit）処理の非同期動作における信頼性と整合性を検証するテストクラス。</summary>
 public class DepositReliabilityTests
 {
     private class DepositReliabilityChanger : InternalSimulatorCashChanger
@@ -30,7 +30,7 @@ public class DepositReliabilityTests
         }
     }
 
-    /// <summary>バックグラウンドでの入金挿入と、メインスレッドでの確定操作が競合した場合に DataEvent が正しく1回だけ発行されることを検証します。.</summary>
+    /// <summary>バックグラウンドでの入金挿入と、メインスレッドでの確定操作が競合した場合に DataEvent が正しく1回だけ発行されることを検証します。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task DataEvent_Consistency_Under_Concurrent_Track_And_Fix()
@@ -91,7 +91,7 @@ public class DepositReliabilityTests
         changer.Close();
     }
 
-    /// <summary>入金セッションのライフサイクル（Begin->Track->Fix->End）を高頻度で繰り返し、状態の破損や整合性エラーが発生しないことを検証します。.</summary>
+    /// <summary>入金セッションのライフサイクル（Begin->Track->Fix->End）を高頻度で繰り返し、状態の破損や整合性エラーが発生しないことを検証します。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task Rapid_Session_Lifecycle_Reliability()
@@ -134,7 +134,7 @@ public class DepositReliabilityTests
         changer.Close();
     }
 
-    /// <summary>一時停止（Pause）の切り替えと入金挿入が並行して発生した場合に、停止中の挿入が無視され、状態が整合していることを検証します。.</summary>
+    /// <summary>一時停止（Pause）の切り替えと入金挿入が並行して発生した場合に、停止中の挿入が無視され、状態が整合していることを検証します。</summary>
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task Pause_Resume_Race_Condition()

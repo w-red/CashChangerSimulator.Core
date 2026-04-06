@@ -9,7 +9,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>SimulatorCashChanger の各メソッド実行後に ResultCode が正しく更新されるかを検証するテスト。.</summary>
+/// <summary>SimulatorCashChanger の各メソッド実行後に ResultCode が正しく更新されるかを検証するテスト。</summary>
 public class ResultCodeVerificationTests
 {
     private readonly Inventory inventory;
@@ -41,7 +41,7 @@ public class ResultCodeVerificationTests
         return changer;
     }
 
-    /// <summary>Open 実行後に ResultCode が Success にセットされることを検証します。.</summary>
+    /// <summary>Open 実行後に ResultCode が Success にセットされることを検証します。</summary>
     [Fact]
     public void OpenShouldSetResultCodeToSuccess()
     {
@@ -56,7 +56,7 @@ public class ResultCodeVerificationTests
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 
-    /// <summary>Claim 実行後に ResultCode が Success にセットされることを検証します。.</summary>
+    /// <summary>Claim 実行後に ResultCode が Success にセットされることを検証します。</summary>
     [Fact]
     public void ClaimShouldSetResultCodeToSuccess()
     {
@@ -72,7 +72,7 @@ public class ResultCodeVerificationTests
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 
-    /// <summary>BeginDeposit 実行後に ResultCode が Success にセットされることを検証します。.</summary>
+    /// <summary>BeginDeposit 実行後に ResultCode が Success にセットされることを検証します。</summary>
     [Fact]
     public void BeginDepositShouldSetResultCodeToSuccess()
     {
@@ -90,7 +90,7 @@ public class ResultCodeVerificationTests
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 
-    /// <summary>EndDeposit 実行後に ResultCode が Success にセットされることを検証します。.</summary>
+    /// <summary>EndDeposit 実行後に ResultCode が Success にセットされることを検証します。</summary>
     [Fact]
     public void EndDepositShouldSetResultCodeToSuccess()
     {
@@ -110,7 +110,7 @@ public class ResultCodeVerificationTests
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 
-    /// <summary>AdjustCashCounts 実行後に ResultCode が Success にセットされることを検証します。.</summary>
+    /// <summary>AdjustCashCounts 実行後に ResultCode が Success にセットされることを検証します。</summary>
     [Fact]
     public void AdjustCashCountsShouldSetResultCodeToSuccess()
     {
@@ -128,7 +128,7 @@ public class ResultCodeVerificationTests
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);
     }
 
-    /// <summary>DirectIO 実行後に ResultCode が Success にセットされることを検証します。.</summary>
+    /// <summary>DirectIO 実行後に ResultCode が Success にセットされることを検証します。</summary>
     [Fact]
     public void DirectIOShouldSetResultCodeToSuccess()
     {
