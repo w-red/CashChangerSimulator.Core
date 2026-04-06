@@ -87,8 +87,8 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
         symbolPrefix = new BindableReactiveProperty<string>(string.Empty);
         symbolSuffix = new BindableReactiveProperty<string>(string.Empty);
 
-        SymbolPrefix = symbolPrefix.ToReadOnlyReactiveProperty();
-        SymbolSuffix = symbolSuffix.ToReadOnlyReactiveProperty();
+        SymbolPrefix = symbolPrefix.ToReadOnlyReactiveProperty().AddTo(disposables);
+        SymbolSuffix = symbolSuffix.ToReadOnlyReactiveProperty().AddTo(disposables);
 
         UpdateMetadata(initialConfig);
 
