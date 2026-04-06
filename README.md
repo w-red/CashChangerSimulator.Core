@@ -9,8 +9,7 @@ This repository contains the core logic and hardware device emulation for the Ca
 
 The following packages are maintained in this repository:
 
-- **CashChangerSimulator.Core**: Platform-independent core logic, currency calculation, and managers.
-- **CashChangerSimulator.Device**: Abstract device interfaces and common simulation infrastructure.
+- **CashChangerSimulator.Core**: Platform-independent core logic, currency calculation, and hardware event abstraction.
 - **CashChangerSimulator.Device.Virtual**: Pure C# virtual hardware simulation (works on Web/Linux/Windows, .NET 10).
 - **CashChangerSimulator.Device.PosForDotNet**: Windows-specific UPOS (POS for .NET) adapter for legacy integration.
 
@@ -22,10 +21,11 @@ The following packages are maintained in this repository:
 
 ## Key Features (Platform-Independent Core)
 
-- **Decoupled Architecture**: Strictly separates business logic (`Core`), simulation logic (`Device.Virtual`), and hardware interface adapters (`Device.PosForDotNet`).
+- **Reactive Messaging (R3)**: Uses [**R3**](https://github.com/Cysharp/R3) for consistent state management (`IsBusy`, `State`) and asynchronous hardware event notifications.
+- **Zero-Dependency Event Abstraction**: High-layer components (Core/Cli) depend on abstracted event definitions, completely decoupled from Windows-specific libraries.
 - **UPOS Compliant Behavior**: Emulates `DispenseChange`, `DispenseCash`, and the full deposit cycle through a virtual device layer.
 - **Multi-Platform Ready**: The Core and Virtual Device projects have zero dependency on Windows-specific libraries, enabling use in Web APIs, CLIs, or Linux environments.
-- **Inventory & Transaction Logic**: Robust state management for cash inventory and deposit tracking using platform-independent types.
+- **Reliable Lifecycle Management**: Implements `CompositeDisposable` patterns for robust resource cleanup and memory leak prevention.
 
 ## Setup
 
@@ -35,7 +35,7 @@ You can install the official packages via NuGet.org or GitHub Packages:
 
 ```powershell
 dotnet add package CashChangerSimulator.Core
-dotnet add package CashChangerSimulator.Device
+dotnet add package CashChangerSimulator.Device.Virtual
 ```
 
 ### Local Build
