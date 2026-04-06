@@ -5,23 +5,13 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>ヘルスチェック操作をカプセル化するコマンド。</summary>
-public class CheckHealthCommand : IUposCommand
+public class CheckHealthCommand(DiagnosticController controller, HealthCheckLevel level) : IUposCommand
 {
-    private readonly DiagnosticController controller;
-    private readonly HealthCheckLevel level;
-
-    /// <summary><see cref="CheckHealthCommand"/> クラスの新しいインスタンスを初期化します。</summary>
-    /// <param name="controller">診断コントローラー。</param>
-    /// <param name="level">ヘルスチェックのレベル。</param>
-    public CheckHealthCommand(DiagnosticController controller, HealthCheckLevel level)
-    {
-        this.controller = controller;
-        this.level = level;
-        Result = string.Empty;
-    }
+    private readonly DiagnosticController controller = controller;
+    private readonly HealthCheckLevel level = level;
 
     /// <summary>診断の実行結果を取得します。</summary>
-    public string Result { get; private set; }
+    public string Result { get; private set; } = string.Empty;
 
     /// <inheritdoc/>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
