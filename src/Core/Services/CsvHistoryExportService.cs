@@ -1,10 +1,11 @@
+using System.Globalization;
 using System.Text;
 using CashChangerSimulator.Core.Transactions;
 
 namespace CashChangerSimulator.Core.Services;
 
 /// <summary>
-/// 取引履歴を CSV 形式にエクスポートするサービスの実装。
+/// 取引履歴を CSV 形式にエクスポートするサービスの実装。.
 /// </summary>
 public class CsvHistoryExportService : IHistoryExportService
 {
@@ -22,9 +23,9 @@ public class CsvHistoryExportService : IHistoryExportService
         {
             var details = string.Join("|", entry.Counts.Select(c => $"{c.Key.CurrencyCode}-{c.Key.ToDenominationString()}:{c.Value}"));
 
-            sb.Append(entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")).Append(",");
-            sb.Append(entry.Type).Append(",");
-            sb.Append(entry.Amount).Append(",");
+            sb.Append(entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)).Append(',');
+            sb.Append(entry.Type).Append(',');
+            sb.Append(entry.Amount.ToString(CultureInfo.InvariantCulture)).Append(',');
             sb.Append(details);
             sb.AppendLine();
         }

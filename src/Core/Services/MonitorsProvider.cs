@@ -5,47 +5,50 @@ using R3;
 
 namespace CashChangerSimulator.Core.Services;
 
-/// <summary>全金種の CashStatusMonitor インスタンスを提供するプロバイダー。</summary>
-public class MonitorsProvider
+/// <summary>全金種の CashStatusMonitor インスタンスを提供するプロバイダー。.</summary>
+public class MonitorsProvider : IDisposable
 {
-    private readonly Inventory _inventory;
-    private readonly ConfigurationProvider _configProvider;
-    private readonly ICurrencyMetadataProvider _metadataProvider;
-    private List<CashStatusMonitor> _monitors = [];
-    private readonly Subject<Unit> _changed = new();
-    private readonly CompositeDisposable _disposables = [];
+    private readonly Inventory inventory;
+    private readonly ConfigurationProvider configProvider;
+    private readonly ICurrencyMetadataProvider metadataProvider;
+    private readonly Subject<Unit> changed = new();
+    private readonly CompositeDisposable disposables = [];
+    private List<CashStatusMonitor> monitors = [];
 
-    /// <summary>生成されたモニターのリスト。</summary>
-    public IReadOnlyList<CashStatusMonitor> Monitors => _monitors;
-
-    /// <summary>モニターリストが変更されたときに通知されるストリーム。</summary>
-    public Observable<Unit> Changed => _changed;
-
-    /// <summary>在庫と設定を元に、全金種のモニターを初期化する。</summary>
+    /// <summary>Initializes a new instance of the <see cref="MonitorsProvider"/> class.在庫と設定を元に、全金種のモニターを初期化する。.</summary>
+    /// <param name="inventory">在庫マネージャー。.</param>
+    /// <param name="configProvider">設定プロバイダー。.</param>
+    /// <param name="metadataProvider">通貨メタデータプロバイダー。.</param>
     public MonitorsProvider(Inventory inventory, ConfigurationProvider configProvider, ICurrencyMetadataProvider metadataProvider)
     {
         ArgumentNullException.ThrowIfNull(inventory);
         ArgumentNullException.ThrowIfNull(configProvider);
         ArgumentNullException.ThrowIfNull(metadataProvider);
 
-        _inventory = inventory;
-        _configProvider = configProvider;
-        _metadataProvider = metadataProvider;
+        this.inventory = inventory;
+        this.configProvider = configProvider;
+        this.metadataProvider = metadataProvider;
 
         RefreshMonitors();
 
         // 構成変更時またはメタデータ変更時（通貨変更時など）にモニターリストも更新する
-        _configProvider.Reloaded.Subscribe(_ => RefreshMonitors()).AddTo(_disposables);
-        _metadataProvider.Changed.Subscribe(_ => RefreshMonitors()).AddTo(_disposables);
+        configProvider.Reloaded.Subscribe(_ => RefreshMonitors()).AddTo(disposables);
+        metadataProvider.Changed.Subscribe(_ => RefreshMonitors()).AddTo(disposables);
     }
 
-    /// <summary>現在の通貨設定に基づいてモニターリストを再構築する。</summary>
+    /// <summary>Gets 生成されたモニターのリスト。.</summary>
+    public IReadOnlyList<CashStatusMonitor> Monitors => monitors;
+
+    /// <summary>Gets モニターリストが変更されたときに通知されるストリーム。.</summary>
+    public Observable<Unit> Changed => changed;
+
+    /// <summary>現在の通貨設定に基づいてモニターリストを再構築する。.</summary>
     public void RefreshMonitors()
     {
-        var config = _configProvider.Config;
-        var keys = _metadataProvider.SupportedDenominations;
+        var config = configProvider.Config;
+        var keys = metadataProvider.SupportedDenominations;
 
-        _monitors = keys.Select(k =>
+        monitors = keys.Select(k =>
         {
             var activeCurrency = config.System.CurrencyCode ?? "JPY";
             var keyStr = k.ToDenominationString();
@@ -54,7 +57,7 @@ public class MonitorsProvider
                 inventorySettings.Denominations.TryGetValue(keyStr, out var setting))
             {
                 return new CashStatusMonitor(
-                    _inventory,
+                    inventory,
                     k,
                     setting.IsRecyclable ? setting.NearEmpty : -1,
                     setting.IsRecyclable ? setting.NearFull : -1,
@@ -64,17 +67,18 @@ public class MonitorsProvider
 
             var globalSetting = config.GetDenominationSetting(k);
             return new CashStatusMonitor(
-                _inventory,
+                inventory,
                 k,
                 globalSetting.IsRecyclable ? config.Thresholds.NearEmpty : -1,
                 globalSetting.IsRecyclable ? config.Thresholds.NearFull : -1,
                 globalSetting.IsRecyclable ? config.Thresholds.Full : -1,
                 globalSetting.IsRecyclable);
         }).ToList();
-        _changed.OnNext(Unit.Default);
+        changed.OnNext(Unit.Default);
     }
 
-    /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する（ホットリロード用）。</summary>
+    /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する（ホットリロード用）。.</summary>
+    /// <param name="config">更新に使用する設定オブジェクト。.</param>
     public void UpdateThresholdsFromConfig(SimulatorConfiguration config)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -103,19 +107,30 @@ public class MonitorsProvider
         }
     }
 
-    /// <summary>テスト用：手動で変更通知を発火させます。</summary>
-    public void TriggerChanged() => _changed.OnNext(Unit.Default);
+    /// <summary>テスト用：手動で変更通知を発火させます。.</summary>
+    public void TriggerChanged() => changed.OnNext(Unit.Default);
 
-    /// <summary>リソースを解放します。</summary>
+    /// <inheritdoc/>
     public void Dispose()
     {
-        _disposables.Dispose();
-        _changed.Dispose();
-        foreach (var monitor in _monitors)
-        {
-            monitor.Dispose();
-        }
-        _monitors.Clear();
+        Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>リソースを解放します。.</summary>
+    /// <param name="disposing">明示的な破棄かどうか。.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            disposables.Dispose();
+            changed.Dispose();
+            foreach (var monitor in monitors)
+            {
+                monitor.Dispose();
+            }
+
+            monitors.Clear();
+        }
     }
 }
