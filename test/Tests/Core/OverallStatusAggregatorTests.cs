@@ -5,10 +5,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>OverallStatusAggregator の集約ロジックを検証するテスト。.</summary>
+/// <summary>OverallStatusAggregator の集約ロジックを検証するテスト。</summary>
 public class OverallStatusAggregatorTests
 {
-    /// <summary>各金種のステータスに基づき、全体のステータスが正しく集約されることを検証する。.</summary>
+    /// <summary>各金種のステータスに基づき、全体のステータスが正しく集約されることを検証する。</summary>
     [Fact]
     public void OverallStatusAggregatorShouldAggregateIndividualStatuses()
     {
@@ -63,7 +63,7 @@ public class OverallStatusAggregatorTests
         deviceStatus.ShouldBe(CashStatus.Empty);
     }
 
-    /// <summary>多数のモニターを扱う際に正しく集約されることを検証する。.</summary>
+    /// <summary>多数のモニターを扱う際に正しく集約されることを検証する。</summary>
     [Fact]
     public void AggregatorShouldHandleManyMonitors()
     {
@@ -93,7 +93,7 @@ public class OverallStatusAggregatorTests
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
     }
 
-    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。.</summary>
+    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。</summary>
     [Fact]
     public void DisposeShouldWork()
     {
@@ -104,7 +104,7 @@ public class OverallStatusAggregatorTests
         Should.NotThrow(() => aggregator.Dispose());
     }
 
-    /// <summary>Refresh 呼び出しにより監視対象が更新され、集約結果が再計算されることを検証する。.</summary>
+    /// <summary>Refresh 呼び出しにより監視対象が更新され、集約結果が再計算されることを検証する。</summary>
     [Fact]
     public void RefreshShouldUpdateMonitorsAndRecalculate()
     {
@@ -130,7 +130,7 @@ public class OverallStatusAggregatorTests
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
     }
 
-    /// <summary>非リサイクル金種のステータスが、全体のステータス集計から除外されることを検証する。.</summary>
+    /// <summary>非リサイクル金種のステータスが、全体のステータス集計から除外されることを検証する。</summary>
     [Fact]
     public void AggregatorShouldIgnoreNonRecyclableMonitors()
     {

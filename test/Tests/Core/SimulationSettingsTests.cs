@@ -3,10 +3,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>シミュレーション設定の動作を検証するテストクラス。.</summary>
+/// <summary>シミュレーション設定の動作を検証するテストクラス。</summary>
 public class SimulationSettingsTests
 {
-    /// <summary>SimulationSettings がデフォルト値を保持していることを検証する。.</summary>
+    /// <summary>SimulationSettings がデフォルト値を保持していることを検証する。</summary>
     [Fact]
     public void SimulationSettingsShouldMaintainDefaultValues()
     {
@@ -14,7 +14,7 @@ public class SimulationSettingsTests
         settings.DispenseDelayMs.ShouldBe(500);
     }
 
-    /// <summary>SimulationSettings にカスタム値を設定できることを検証する。.</summary>
+    /// <summary>SimulationSettings にカスタム値を設定できることを検証する。</summary>
     [Fact]
     public void SimulationSettingsShouldStoreCustomValues()
     {

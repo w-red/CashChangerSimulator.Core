@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>CashChangerSimulator.Core のカバレッジを 100% にするための網羅的テストクラス。.</summary>
+/// <summary>CashChangerSimulator.Core のカバレッジを 100% にするための網羅的テストクラス。</summary>
 public class ExhaustiveCoreTests : IDisposable
 {
     public ExhaustiveCoreTests()
@@ -22,7 +22,7 @@ public class ExhaustiveCoreTests : IDisposable
         LogProvider.Dispose();
     }
 
-    /// <summary>LogProvider の各設定パス（コンソール、ファイル、ログレベル）を網羅的に検証します。.</summary>
+    /// <summary>LogProvider の各設定パス（コンソール、ファイル、ログレベル）を網羅的に検証します。</summary>
     [Fact]
     public void LogProviderShouldCoverageAllPaths()
     {
@@ -57,7 +57,7 @@ public class ExhaustiveCoreTests : IDisposable
         LogProvider.Dispose();
     }
 
-    /// <summary>DenominationKey の等価性、ハッシュ、文字列変換、パースの網羅的検証を行います。.</summary>
+    /// <summary>DenominationKey の等価性、ハッシュ、文字列変換、パースの網羅的検証を行います。</summary>
     [Fact]
     public void DenominationKeyExhaustiveTests()
     {
@@ -99,7 +99,7 @@ public class ExhaustiveCoreTests : IDisposable
         key1.CurrencyCode.ShouldBe("JPY");
     }
 
-    /// <summary>Inventory の各種加算メソッド、クリア、辞書からのロード等の網羅的検証を行います。.</summary>
+    /// <summary>Inventory の各種加算メソッド、クリア、辞書からのロード等の網羅的検証を行います。</summary>
     [Fact]
     public void InventoryDeepCoverage()
     {
@@ -159,7 +159,7 @@ public class ExhaustiveCoreTests : IDisposable
         inventory.Add(key, -999);
     }
 
-    /// <summary>ConfigurationLoader のロード、保存、異常系（破損ファイル）の網羅的検証を行います。.</summary>
+    /// <summary>ConfigurationLoader のロード、保存、異常系（破損ファイル）の網羅的検証を行います。</summary>
     [Fact]
     public void ConfigurationLoaderExhaustive()
     {
@@ -217,7 +217,7 @@ public class ExhaustiveCoreTests : IDisposable
         }
     }
 
-    /// <summary>GlobalLockManager のロック取得、競合、解放、異常系の網羅的検証を行います。.</summary>
+    /// <summary>GlobalLockManager のロック取得、競合、解放、異常系の網羅的検証を行います。</summary>
     [Fact]
     public void GlobalLockManagerExhaustive()
     {
@@ -273,7 +273,7 @@ public class ExhaustiveCoreTests : IDisposable
         }
     }
 
-    /// <summary>TransactionEntry のプロパティ保持を検証します。.</summary>
+    /// <summary>TransactionEntry のプロパティ保持を検証します。</summary>
     [Fact]
     public void TransactionEntryCoverage()
     {

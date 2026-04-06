@@ -5,10 +5,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>CashStatusMonitor の状態遷移を検証するテスト。.</summary>
+/// <summary>CashStatusMonitor の状態遷移を検証するテスト。</summary>
 public class CashStatusMonitorTests
 {
-    /// <summary>在庫の枚数に応じてステータスが正しく遷移することを検証する。.</summary>
+    /// <summary>在庫の枚数に応じてステータスが正しく遷移することを検証する。</summary>
     [Fact]
     public void MonitorShouldTransitionStatusBasedOnInventory()
     {
@@ -42,7 +42,7 @@ public class CashStatusMonitorTests
         currentStatus.ShouldBe(CashStatus.Full);
     }
 
-    /// <summary>しきい値を動的に更新した際、ステータスが再計算されることを検証する。.</summary>
+    /// <summary>しきい値を動的に更新した際、ステータスが再計算されることを検証する。</summary>
     [Fact]
     public void UpdateThresholdsShouldRecalculateStatus()
     {
@@ -66,7 +66,7 @@ public class CashStatusMonitorTests
         monitor.Status.CurrentValue.ShouldBe(CashStatus.Full);
     }
 
-    /// <summary>Dispose 呼び出しにより購読が解除されることを検証する。.</summary>
+    /// <summary>Dispose 呼び出しにより購読が解除されることを検証する。</summary>
     [Fact]
     public void DisposeShouldUnsubscribe()
     {
@@ -88,7 +88,7 @@ public class CashStatusMonitorTests
         monitor.Status.CurrentValue.ShouldBe(CashStatus.Empty);
     }
 
-    /// <summary>しきい値に -1 を設定した場合、そのステータス判定をスキップすることを検証する。.</summary>
+    /// <summary>しきい値に -1 を設定した場合、そのステータス判定をスキップすることを検証する。</summary>
     [Fact]
     public void ThresholdOfMinusOneShouldDisableStatusCheck()
     {

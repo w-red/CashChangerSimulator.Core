@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core;
+using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -11,10 +11,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>SimulatorServices の DI 抽象レイヤーを検証するテストクラス (TDD)。.</summary>
+/// <summary>SimulatorServices の DI 抽象レイヤーを検証するテストクラス (TDD)。</summary>
 public class SimulatorServicesTests : IDisposable
 {
-    /// <summary>Initializes a new instance of the <see cref="SimulatorServicesTests"/> class.SimulatorServicesTests の新しいインスタンスを初期化します。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="SimulatorServicesTests"/> class.SimulatorServicesTests の新しいインスタンスを初期化します。</summary>
     public SimulatorServicesTests()
     {
         // 各テスト開始時にプロバイダーをクリア
@@ -28,7 +28,7 @@ public class SimulatorServicesTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>プロバイダーが設定されていない場合に TryResolve が null を返すことを検証する。.</summary>
+    /// <summary>プロバイダーが設定されていない場合に TryResolve が null を返すことを検証する。</summary>
     [Fact]
     public void TryResolveShouldReturnNullWhenProviderNotSet()
     {
@@ -36,7 +36,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeNull();
     }
 
-    /// <summary>プロバイダーが設定されている場合に TryResolve がインスタンスを返すことを検証する。.</summary>
+    /// <summary>プロバイダーが設定されている場合に TryResolve がインスタンスを返すことを検証する。</summary>
     [Fact]
     public void TryResolveShouldReturnInstanceWhenProviderIsSet()
     {
@@ -47,7 +47,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeSameAs(inventory);
     }
 
-    /// <summary>サービスプロバイダーが例外をスローした場合に、TryResolve が null を返すことを検証します。.</summary>
+    /// <summary>サービスプロバイダーが例外をスローした場合に、TryResolve が null を返すことを検証します。</summary>
     [Fact]
     public void TryResolveProviderThrowsShouldReturnNull()
     {
@@ -58,7 +58,7 @@ public class SimulatorServicesTests : IDisposable
         SimulatorServices.TryResolve<Inventory>().ShouldBeNull();
     }
 
-    /// <summary>プロバイダーが未設定の状態で Resolve を呼び出した際に InvalidOperationException が発生することを検証します。.</summary>
+    /// <summary>プロバイダーが未設定の状態で Resolve を呼び出した際に InvalidOperationException が発生することを検証します。</summary>
     [Fact]
     public void ResolveNotRegisteredShouldThrow()
     {
@@ -66,7 +66,7 @@ public class SimulatorServicesTests : IDisposable
         Should.Throw<InvalidOperationException>(() => SimulatorServices.Resolve<Inventory>());
     }
 
-    /// <summary>InternalSimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証する。.</summary>
+    /// <summary>InternalSimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証する。</summary>
     [Fact]
     public void SimulatorCashChangerShouldUseProviderInstancesWhenAvailable()
     {
@@ -107,7 +107,7 @@ public class SimulatorServicesTests : IDisposable
         ex.ErrorCode.ShouldBe(Microsoft.PointOfService.ErrorCode.Closed);
     }
 
-    /// <summary>テスト用の ISimulatorServiceProvider 実装。.</summary>
+    /// <summary>テスト用の ISimulatorServiceProvider 実装。</summary>
     private class TestServiceProvider : ISimulatorServiceProvider
     {
         private readonly Dictionary<Type, object> services = [];

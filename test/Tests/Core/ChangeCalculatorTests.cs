@@ -6,10 +6,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>出金計算ロジック（最適な金種構成の算出、通貨フィルタ等）を検証するテストクラス。.</summary>
+/// <summary>出金計算ロジック（最適な金種構成の算出、通貨フィルタ等）を検証するテストクラス。</summary>
 public class ChangeCalculatorTests
 {
-    /// <summary>通貨コード指定のフィルタが正しく機能し、指定通貨のみで出金計算が行われることを検証します。.</summary>
+    /// <summary>通貨コード指定のフィルタが正しく機能し、指定通貨のみで出金計算が行われることを検証します。</summary>
     [Fact]
     public void CalculateWithCurrencyFilterShouldWork()
     {
@@ -22,7 +22,7 @@ public class ChangeCalculatorTests
         result.Keys.First().CurrencyCode.ShouldBe("JPY");
     }
 
-    /// <summary>カスタムフィルタ（例：紙幣のみ）が指定された際に、条件に合う金種のみで計算されることを検証します。.</summary>
+    /// <summary>カスタムフィルタ（例：紙幣のみ）が指定された際に、条件に合う金種のみで計算されることを検証します。</summary>
     [Fact]
     public void CalculateWithCustomFilterShouldWork()
     {
@@ -34,7 +34,7 @@ public class ChangeCalculatorTests
         Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(inv, 1500, filter: k => k.Type == CurrencyCashType.Bill));
     }
 
-    /// <summary>在庫不足により出金計算が不可能な場合に InsufficientCashException がスローされることを検証します。.</summary>
+    /// <summary>在庫不足により出金計算が不可能な場合に InsufficientCashException がスローされることを検証します。</summary>
     [Fact]
     public void CalculateInsufficientCashShouldThrow()
     {
@@ -44,7 +44,7 @@ public class ChangeCalculatorTests
         Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(inv, 1500));
     }
 
-    /// <summary>Inventory クラス以外の IReadOnlyInventory 実装を渡した際のエラーハンドリングを検証します。.</summary>
+    /// <summary>Inventory クラス以外の IReadOnlyInventory 実装を渡した際のエラーハンドリングを検証します。</summary>
     [Fact]
     public void CalculateWithNonInventoryTypeShouldReturnEmpty()
     {

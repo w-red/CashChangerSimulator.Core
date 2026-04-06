@@ -4,13 +4,13 @@ using Tomlyn;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>ConfigurationLoader の永続化とエラーハンドリングを検証するテスト。.</summary>
+/// <summary>ConfigurationLoader の永続化とエラーハンドリングを検証するテスト。</summary>
 public class ConfigurationLoaderTests : IDisposable
 {
     private readonly string testConfigPath = "test_config.toml";
     private readonly string testInventoryPath = "inventory.toml"; // Fixed path in loader
 
-    /// <summary>Initializes a new instance of the <see cref="ConfigurationLoaderTests"/> class.ConfigurationLoaderTests の新しいインスタンスを初期化します。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="ConfigurationLoaderTests"/> class.ConfigurationLoaderTests の新しいインスタンスを初期化します。</summary>
     public ConfigurationLoaderTests()
     {
         CleanupFiles();
@@ -36,7 +36,7 @@ public class ConfigurationLoaderTests : IDisposable
         }
     }
 
-    /// <summary>設定ファイルが存在しない場合にデフォルト値が返されることを検証する。.</summary>
+    /// <summary>設定ファイルが存在しない場合にデフォルト値が返されることを検証する。</summary>
     [Fact]
     public void LoadConfigShouldReturnDefaultsWhenFileNotFound()
     {
@@ -49,7 +49,7 @@ public class ConfigurationLoaderTests : IDisposable
         File.Exists(testConfigPath).ShouldBeTrue(); // Created default
     }
 
-    /// <summary>設定ファイルが破損している場合にデフォルト値が返されることを検証する。.</summary>
+    /// <summary>設定ファイルが破損している場合にデフォルト値が返されることを検証する。</summary>
     [Fact]
     public void LoadConfigShouldReturnDefaultsWhenCorrupted()
     {
@@ -64,7 +64,7 @@ public class ConfigurationLoaderTests : IDisposable
         config.System.CurrencyCode.ShouldBe("JPY"); // Fallback to default
     }
 
-    /// <summary>設定の保存と読み込みで値が維持されることを検証する。.</summary>
+    /// <summary>設定の保存と読み込みで値が維持されることを検証する。</summary>
     [Fact]
     public void SaveAndLoadConfigShouldMaintainValues()
     {
@@ -82,7 +82,7 @@ public class ConfigurationLoaderTests : IDisposable
         loaded.Inventory.ContainsKey("USD").ShouldBeTrue();
     }
 
-    /// <summary>在庫状態ファイルが存在しない場合に空の状態が返されることを検証する。.</summary>
+    /// <summary>在庫状態ファイルが存在しない場合に空の状態が返されることを検証する。</summary>
     [Fact]
     public void LoadInventoryStateShouldReturnEmptyWhenFileNotFound()
     {
@@ -94,7 +94,7 @@ public class ConfigurationLoaderTests : IDisposable
         state.Counts.ShouldBeEmpty();
     }
 
-    /// <summary>在庫状態の保存と読み込みで値が維持されることを検証する。.</summary>
+    /// <summary>在庫状態の保存と読み込みで値が維持されることを検証する。</summary>
     [Fact]
     public void SaveAndLoadInventoryStateShouldMaintainValues()
     {
@@ -110,7 +110,7 @@ public class ConfigurationLoaderTests : IDisposable
         loaded.Counts["JPY:B1000"].ShouldBe(10);
     }
 
-    /// <summary>設定ファイルが構文エラーなどで破損している場合に、デフォルトの設定が返されることを検証します。.</summary>
+    /// <summary>設定ファイルが構文エラーなどで破損している場合に、デフォルトの設定が返されることを検証します。</summary>
     [Fact]
     public void LoadCorruptedFileShouldReturnDefault()
     {
@@ -120,7 +120,7 @@ public class ConfigurationLoaderTests : IDisposable
         config.Inventory.ShouldNotBeEmpty();
     }
 
-    /// <summary>カスタムパスを指定して設定を保存および読み込んだ際に、データが正しく保持されることを検証します。.</summary>
+    /// <summary>カスタムパスを指定して設定を保存および読み込んだ際に、データが正しく保持されることを検証します。</summary>
     [Fact]
     public void SaveAndLoadShouldPreserveData()
     {
@@ -134,7 +134,7 @@ public class ConfigurationLoaderTests : IDisposable
         File.Delete(path);
     }
 
-    /// <summary>存在しないパスから在庫状態を読み込もうとした際に、空の状態が返されることを検証します。.</summary>
+    /// <summary>存在しないパスから在庫状態を読み込もうとした際に、空の状態が返されることを検証します。</summary>
     [Fact]
     public void LoadInventoryStateNonExistentShouldReturnEmpty()
     {
@@ -144,7 +144,7 @@ public class ConfigurationLoaderTests : IDisposable
         state.Counts.ShouldBeEmpty();
     }
 
-    /// <summary>Tomlyn のシリアライズとデシリアライズの挙動を詳細に検証します。.</summary>
+    /// <summary>Tomlyn のシリアライズとデシリアライズの挙動を詳細に検証します。</summary>
     [Fact]
     public void DiagnosticTomlynTest()
     {

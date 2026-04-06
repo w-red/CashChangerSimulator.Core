@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -8,10 +8,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>CashChangerManager のビジネスロジックを検証するテスト。.</summary>
+/// <summary>CashChangerManager のビジネスロジックを検証するテスト。</summary>
 public class CashChangerManagerTests
 {
-    /// <summary>入金時に在庫と履歴が正しく更新されることを検証する。.</summary>
+    /// <summary>入金時に在庫と履歴が正しく更新されることを検証する。</summary>
     [Fact]
     public void DepositShouldUpdateInventoryAndHistory()
     {
@@ -40,7 +40,7 @@ public class CashChangerManagerTests
         entry.Counts[c100].ShouldBe(5);
     }
 
-    /// <summary>払出時に在庫と履歴が正しく更新されることを検証する。.</summary>
+    /// <summary>払出時に在庫と履歴が正しく更新されることを検証する。</summary>
     [Fact]
     public void DispenseShouldUpdateInventoryAndHistory()
     {
@@ -65,7 +65,7 @@ public class CashChangerManagerTests
         entry.Amount.ShouldBe(3000m);
     }
 
-    /// <summary>金額指定の払出時に計算、在庫更新、履歴記録が正しく行われることを検証する。.</summary>
+    /// <summary>金額指定の払出時に計算、在庫更新、履歴記録が正しく行われることを検証する。</summary>
     [Fact]
     public void DispenseByAmountShouldCalculateUpdateAndRecord()
     {
@@ -92,7 +92,7 @@ public class CashChangerManagerTests
         history.Entries[0].Counts[c100].ShouldBe(2);
     }
 
-    /// <summary>多通貨（USD）での入金と履歴記録を検証する。.</summary>
+    /// <summary>多通貨（USD）での入金と履歴記録を検証する。</summary>
     [Fact]
     public void DepositWithOtherCurrencyShouldStoreCorrectCurrencyCode()
     {
@@ -112,7 +112,7 @@ public class CashChangerManagerTests
         history.Entries[0].Counts.Keys.ShouldContain(k => k.CurrencyCode == "USD");
     }
 
-    /// <summary>在庫不足時に払出が失敗し、在庫と履歴が更新されないことを検証する。.</summary>
+    /// <summary>在庫不足時に払出が失敗し、在庫と履歴が更新されないことを検証する。</summary>
     [Fact]
     public void DispenseByAmountWithInsufficientCashShouldThrowAndNotModifyState()
     {
@@ -128,7 +128,7 @@ public class CashChangerManagerTests
         history.Entries.ShouldBeEmpty();
     }
 
-    /// <summary>非リサイクル金種が入金時に回収庫へ振り分けられることを検証する。.</summary>
+    /// <summary>非リサイクル金種が入金時に回収庫へ振り分けられることを検証する。</summary>
     [Fact]
     public void DepositNonRecyclableShouldGoToCollection()
     {
@@ -153,7 +153,7 @@ public class CashChangerManagerTests
         inventory.CalculateTotal().ShouldBe(6000m);
     }
 
-    /// <summary>金額指定の出金時に非リサイクル金種がスキップされることを検証する。.</summary>
+    /// <summary>金額指定の出金時に非リサイクル金種がスキップされることを検証する。</summary>
     [Fact]
     public void DispenseByAmountShouldSkipNonRecyclable()
     {
@@ -181,7 +181,7 @@ public class CashChangerManagerTests
         inventory.GetCount(b2000).ShouldBe(10);
     }
 
-    /// <summary>入金時に満廃しきい値を超えた分が回収庫へ振り分けられることを検証する。.</summary>
+    /// <summary>入金時に満廃しきい値を超えた分が回収庫へ振り分けられることを検証する。</summary>
     [Fact]
     public void DepositShouldHandleOverflow()
     {
