@@ -61,6 +61,9 @@ public interface IUposMediator
 
     // 他のコンポーネントからの通知
 
+    /// <summary>IsBusy の変更を通知するストリームを取得します。</summary>
+    R3.ReadOnlyReactiveProperty<bool> IsBusyProperty { get; }
+
     /// <summary>コマンドを実行し、結果を反映します。</summary>
     void Execute(IUposCommand command);
 }

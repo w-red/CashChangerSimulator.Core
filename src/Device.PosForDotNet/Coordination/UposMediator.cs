@@ -1,10 +1,12 @@
 using System.Threading;
 using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
+using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
@@ -17,6 +19,7 @@ public class UposMediator : IUposMediator
     private int resultCodeExtended;
     private int asyncResultCode;
     private int asyncResultCodeExtended;
+    private readonly ReactiveProperty<bool> isBusyProperty = new(false);
 
     private ICashChangerStatusSink? sink;
     private ILogger? logger;
@@ -95,6 +98,9 @@ public class UposMediator : IUposMediator
     }
 
     /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<bool> IsBusyProperty => isBusyProperty;
+
+    /// <inheritdoc/>
     public bool IsBusy
     {
         get
@@ -109,6 +115,7 @@ public class UposMediator : IUposMediator
             lock (stateLock)
             {
                 isBusy = value;
+                isBusyProperty.Value = value;
                 if (isBusy)
                 {
                     resultCode = (int)ErrorCode.Busy;

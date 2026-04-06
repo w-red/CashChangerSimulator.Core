@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
@@ -16,7 +17,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
     private readonly IDeviceStateProvider stateProvider;
     private readonly ILogger<UposConfigurationManager> logger = LogProvider.CreateLogger<UposConfigurationManager>();
     private string activeCurrencyCode = "JPY";
-    private readonly IDisposable subscription;
+    private readonly CompositeDisposable disposables = [];
 
     /// <summary><see cref="UposConfigurationManager"/> クラスの新しいインスタンスを初期化します。</summary>
     /// <param name="configProvider">構成プロバイダー。</param>
@@ -30,8 +31,8 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         this.configProvider = configProvider;
         this.inventory = inventory;
         this.stateProvider = stateProvider;
-
-        subscription = this.configProvider.Reloaded.Subscribe(_ => OnConfigurationReloaded());
+ 
+        this.configProvider.Reloaded.Subscribe(_ => OnConfigurationReloaded()).AddTo(disposables);
     }
 
     /// <summary>現在の通貨コードを取得または設定します。</summary>
@@ -125,7 +126,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         }
 
         disposed = true;
-        subscription.Dispose();
+        disposables.Dispose();
         GC.SuppressFinalize(this);
     }
 }
