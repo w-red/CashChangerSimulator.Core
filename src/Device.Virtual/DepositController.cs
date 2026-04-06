@@ -470,11 +470,10 @@ public class DepositController : IDisposable
             lock (stateLock)
             {
                 isBusy = false;
-            }
-
-            if (!disposed)
-            {
-                changed.OnNext(Unit.Default);
+                if (!disposed)
+                {
+                    changed.OnNext(Unit.Default);
+                }
             }
         }
     }
@@ -666,9 +665,14 @@ public class DepositController : IDisposable
     /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (disposed)
+        lock (stateLock)
         {
-            return;
+            if (disposed)
+            {
+                return;
+            }
+
+            disposed = true;
         }
 
         if (disposing)
@@ -686,7 +690,5 @@ public class DepositController : IDisposable
 
             // Note: Injected dependencies (inventory, hardwareStatusManager) should not be disposed here.
         }
-
-        disposed = true;
     }
 }

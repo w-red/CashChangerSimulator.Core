@@ -17,6 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Tomlyn" Version="2.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Reference Include="Microsoft.PointOfService">
             <HintPath>..\..\libs\POSforNET\Microsoft.PointOfService.dll</HintPath>
         </Reference>
