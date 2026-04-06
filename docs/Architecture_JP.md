@@ -18,8 +18,8 @@ graph TD
         Manager["CashChangerManager"]
         Inventory["在庫管理 (Inventory)"]
         History["取引履歴"]
-        Calc["釣銭計算アルゴリズム"]
-        DeviceEnums["共通 Enum / Exception"]
+        DeviceEvents["抽象化されたイベント定義"]
+        ReactiveState["リアクティブ状態 (R3)"]
     end
     class Manager,Inventory,History,Calc,DeviceEnums coreLayer
 
@@ -51,7 +51,8 @@ graph TD
 
 - **役割**: ハードウェアや UI に依存しない、釣銭機の基本的なデータ構造とビジネスロジックを保持します。
 - **プラットフォーム非依存**: `Microsoft.PointOfService` への依存を一切持たず、純粋な .NET ライブラリとして動作します。
-- **共通定義**: デバイスの状態を表す `DeviceControlState` や、結果コード `DeviceErrorCode` などを定義し、全プロジェクトの共通言語となります。
+- **リアクティブ機能**: R3 の `ReadOnlyReactiveProperty` を活用し、内部ロジックの状態変化を上位層へ効率的に伝搬。
+- **抽象イベントの導入**: Core 側に独自のイベント引数型を導入することで、上位コンポーネントを Windows SDK から完全にデカップリング。
 
 ### 2. 仮想デバイス層 (`CashChangerSimulator.Device.Virtual`)
 
@@ -75,9 +76,10 @@ graph TD
 
 本プロジェクトでは、特に非同期操作（出金など）における信頼性を重視しています。
 
-- **確定的な状態遷移**: `DispenseController` は内部状態を更新した直後にコールバックを呼び出し、`UposMediator` がイベントを発火する前にすべてのプロパティ（`AsyncResultCode` 等）を確定させます。
-- **レースコンディションの排除**: イベント通知のタイミングとプロパティの読み取りが原子的に行われるよう同期を強化しており、高負荷なテスト環境下でも安定した動作を実現しています。
-- **UPOS 準拠のエラーマッピング**: `DeviceErrorCode` は UPOS/OPOS 標準の整数値に厳密に準拠しており、外部サービスオブジェクト（SO）としての互換性を最大化しています。
+- **確定的な状態遷移**: `DispenseController` は内部状態を更新した直後にコールバックを呼び出し、アダプター層がイベントを発行する前にすべてのプロパティが最新であることを保証。
+- **R3 によるリアクティブ同期**: ハードウェア状態はストリームを通じて同期され、UI や外部インターフェースが常に一貫性のあるスナップショットを参照できる状態を維持。
+- **リソース管理の徹底**: 全コンポーネントで `CompositeDisposable` パターンを採用し、ポーリングやバックグラウンドタスクが破棄時に即座かつ確実に停止することを保証。
+- **UPOS 準拠のエラーマッピング**: `DeviceErrorCode` は UPOS/OPOS 標準の整数値に厳密に準拠。
 
 ---
 

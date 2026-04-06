@@ -18,8 +18,8 @@ graph TD
         Manager["CashChangerManager"]
         Inventory["Inventory Management"]
         History["Transaction History"]
-        Calc["Change Calculation Algorithm"]
-        DeviceEnums["Common Enums / Exceptions"]
+        DeviceEvents["Abstract Event Definitions"]
+        ReactiveState["Reactive State (R3)"]
     end
     class Manager,Inventory,History,Calc,DeviceEnums coreLayer
 
@@ -51,7 +51,8 @@ graph TD
 
 - **Role**: Maintains fundamental cash changer data structures and business logic independent of hardware or UI.
 - **Platform Independence**: Operates as a pure .NET library with zero dependency on `Microsoft.PointOfService`.
-- **Common Definitions**: Defines standard types like `DeviceControlState` and `DeviceErrorCode`, serving as the common language for all projects.
+- **Reactive Features**: Leverages R3's `ReadOnlyReactiveProperty` for elegant state propagation from internal logic to outer layers.
+- **Abstract Event Support**: Introduced Core-side event types to further decouple logic from platform-specific SDKs.
 
 ### 2. Virtual Device Layer (`CashChangerSimulator.Device.Virtual`)
 
@@ -75,9 +76,10 @@ graph TD
 
 The project prioritizes reliability, especially during asynchronous operations like cash dispensing.
 
-- **Deterministic State Transitions**: `DispenseController` ensures that internal state updates occur precisely before invoking completion callbacks, allowing `UposMediator` to finalize all properties (e.g., `AsyncResultCode`) before firing events.
-- **Race Condition Elimination**: Synchronization mechanisms have been hardened to ensure that event notifications and property reads occur atomically, maintaining stability even under high-load testing environments.
-- **UPOS-Compliant Error Mapping**: `DeviceErrorCode` strictly adheres to UPOS/OPOS standard integer values, maximizing compatibility as an external Service Object (SO).
+- **Deterministic State Transitions**: `DispenseController` ensures that internal state updates occur precisely before invoking completion callbacks, allowing `UposMediator` to finalize all properties before firing events.
+- **R3 Reactive Sync**: Hardware states are synchronized through observable streams, ensuring UI and infrastructure layers always see a consistent snapshot of the machine.
+- **Resource Discipline**: Every component follows the `CompositeDisposable` pattern, guaranteeing that hardware polling or background tasks are terminated immediately upon disposal.
+- **UPOS-Compliant Error Mapping**: `DeviceErrorCode` strictly adheres to UPOS/OPOS standard values.
 
 ---
 *For the Japanese version, see [Architecture_JP.md](Architecture_JP.md).*
