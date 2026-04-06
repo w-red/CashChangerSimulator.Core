@@ -20,13 +20,13 @@ public class DepositFacade(
 {
     // ========== Properties ==========
 
-    /// <summary>Gets 現在投入されている現金の合計金額を取得します。</summary>
+    /// <summary>現在投入されている現金の合計金額を取得します。</summary>
     public decimal DepositAmount => depositController.DepositAmount;
 
-    /// <summary>Gets 現在投入されている現金の金種別枚数を取得します。</summary>
+    /// <summary>現在投入されている現金の金種別枚数を取得します。</summary>
     public IReadOnlyDictionary<DenominationKey, int> DepositCounts => depositController.DepositCounts;
 
-    /// <summary>Gets 現在の入金処理の状態を取得します。</summary>
+    /// <summary>現在の入金処理の状態を取得します。</summary>
     public CashDepositStatus DepositStatus => depositController.DepositStatus switch
     {
         DeviceDepositStatus.Counting => (CashDepositStatus)1, // STATUS_DEPOSIT_COUNTING
@@ -35,10 +35,10 @@ public class DepositFacade(
         _ => CashDepositStatus.None // 0 (None)
     };
 
-    /// <summary>Gets a value indicating whether 入金処理が進行中かどうかを取得します。</summary>
+    /// <summary>入金処理が進行中かどうかを取得します。</summary>
     public bool IsDepositInProgress => depositController.IsDepositInProgress;
 
-    /// <summary>Gets or sets a value indicating whether リアルタイム入金通知が有効かどうかを取得または設定します。</summary>
+    /// <summary>リアルタイム入金通知が有効かどうかを取得または設定します。</summary>
     public bool RealTimeDataEnabled
     {
         get => depositController.RealTimeDataEnabled;

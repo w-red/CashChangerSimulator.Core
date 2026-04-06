@@ -75,9 +75,9 @@ public class InventoryFacade(Inventory inventory, CashChangerManager manager, IU
 
     // ========== Properties ==========
 
-    /// <summary>Gets a value indicating whether 現在の在庫に不一致があるかどうかを取得します。</summary>
+    /// <summary>現在の在庫に不一致があるかどうかを取得します。</summary>
     public bool HasDiscrepancy => inventory.HasDiscrepancy;
 
-    /// <summary>Gets アクティブな通貨のすべての現金単位のキーを取得します。</summary>
+    /// <summary>アクティブな通貨のすべての現金単位のキーを取得します。</summary>
     public IEnumerable<DenominationKey> AllDenominationKeys => inventory.AllCounts.Select(kv => kv.Key);
 }

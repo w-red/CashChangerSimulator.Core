@@ -35,7 +35,8 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     private string checkHealthText = "OK";
     private bool disposedValue;
 
-    /// <summary>Initializes a new instance of the <see cref="SimulatorCashChanger"/> class.シミュレータの依存関係を注入して初期化します。</summary>
+    /// <summary><see cref="SimulatorCashChanger"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="deps">シミュレータの依存関係。</param>
     /// <remarks>各種マネージャーやコントローラーが未指定の場合は、デフォルトの実装を生成して使用します。</remarks>
     public SimulatorCashChanger(SimulatorDependencies deps)
     {
@@ -61,9 +62,10 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         DevicePath = "SimulatorCashChanger";
     }
 
-    /// <inheritdoc/>
+    /// <summary>ハードウェア状態マネージャーを取得します。</summary>
     public HardwareStatusManager HardwareStatus => HardwareStatusManager;
-    /// <inheritdoc/>
+
+    /// <summary>シミュレータのコンテキストを取得します。</summary>
     public SimulatorContext Context => ctx;
     /// <inheritdoc/>
     public override bool Claimed => ctx.LifecycleManager.Claimed;
@@ -154,7 +156,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <inheritdoc/>
     public bool IsDepositInProgress => DepositController.IsDepositInProgress;
 
-    /// <summary>Gets or sets a value indicating whether 状態検証（Open, Claim 等のシーケンスチェック）をスキップするかどうかを取得または設定します。</summary>
+    /// <summary>状態検証（Open, Claim 等のシーケンスチェック）をスキップするかどうかを取得または設定します。</summary>
     /// <remarks>シミュレータとしての利便性を優先する場合に true に設定します。</remarks>
     public bool SkipStateVerification
     {
@@ -171,7 +173,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         }
     }
 
-    /// <summary>Gets 入金状態の変更を通知するストリームを取得します。</summary>
+    /// <summary>入金状態の変更を通知するストリームを取得します。</summary>
     public Observable<Unit> DepositChanged => DepositController.Changed;
 
     internal Inventory Inventory => ctx.Inventory;

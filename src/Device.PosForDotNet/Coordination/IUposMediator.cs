@@ -22,41 +22,41 @@ public interface IUposMediator
     /// <remarks>ResultCode と ResultCodeExtended に指定されたエラー情報を設定します。</remarks>
     void SetFailure(ErrorCode code, int codeEx = 0);
 
-    /// <summary>Gets 現在の操作の完了コード。</summary>
+    /// <summary>現在の操作の完了コードを取得します。</summary>
     int ResultCode { get; }
 
-    /// <summary>Gets 現在の操作の拡張完了コード。</summary>
+    /// <summary>現在の操作の拡張完了コードを取得します。</summary>
     int ResultCodeExtended { get; }
 
     /// <summary>現在のデバイス状態が操作可能か検証します。</summary>
     /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。</remarks>
     void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false);
 
-    /// <summary>Gets or sets a value indicating whether デバイスが有効（Enable）かどうか。</summary>
+    /// <summary>デバイスが有効（Enable）かどうかを取得または設定します。</summary>
     bool DeviceEnabled { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether データイベントを通知するかどうか。</summary>
+    /// <summary>データイベントを通知するかどうかを取得または設定します。</summary>
     bool DataEventEnabled { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether デバイスが占有（Claim）されているかどうか。</summary>
+    /// <summary>デバイスが占有（Claim）されているかどうかを取得または設定します。</summary>
     bool Claimed { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether 他者によってデバイスが占有されているかどうか。</summary>
+    /// <summary>他者によってデバイスが占有されているかどうかを取得または設定します。</summary>
     bool ClaimedByAnother { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether 状態検証（VerifyState）をスキップするかどうか。</summary>
+    /// <summary>状態検証（VerifyState）をスキップするかどうかを取得または設定します。</summary>
     bool SkipStateVerification { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether 非同期処理中かどうか。</summary>
+    /// <summary>非同期処理中かどうかを取得または設定します。</summary>
     bool IsBusy { get; set; }
 
-    /// <summary>Gets or sets 非同期操作の完了コード。</summary>
+    /// <summary>非同期操作の完了コードを取得または設定します。</summary>
     int AsyncResultCode { get; set; }
 
-    /// <summary>Gets or sets 非同期操作の拡張完了コード。</summary>
+    /// <summary>非同期操作の拡張完了コードを取得または設定します。</summary>
     int AsyncResultCodeExtended { get; set; }
 
-    /// <summary>Gets イベント通知の送り先となるシンク。</summary>
+    /// <summary>イベント通知の送り先となるシンクを取得します。</summary>
     IUposEventSink? EventSink { get; }
 
     // 他のコンポーネントからの通知

@@ -18,7 +18,10 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
     private string activeCurrencyCode = "JPY";
     private readonly IDisposable subscription;
 
-    /// <inheritdoc/>
+    /// <summary><see cref="UposConfigurationManager"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="configProvider">構成プロバイダー。</param>
+    /// <param name="inventory">現金在庫。</param>
+    /// <param name="stateProvider">デバイス状態プロバイダー。</param>
     public UposConfigurationManager(
         ConfigurationProvider configProvider,
         Inventory inventory,
@@ -31,7 +34,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         subscription = this.configProvider.Reloaded.Subscribe(_ => OnConfigurationReloaded());
     }
 
-    /// <inheritdoc/>
+    /// <summary>現在の通貨コードを取得または設定します。</summary>
     public string CurrencyCode
     {
         get => activeCurrencyCode;
@@ -46,18 +49,19 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>サポートされている通貨コードのリストを取得します。</summary>
     public string[] CurrencyCodeList => configProvider.Config.Inventory.Keys.ToArray();
-    /// <inheritdoc/>
+
+    /// <summary>入金可能な通貨コードのリストを取得します。</summary>
     public string[] DepositCodeList => CurrencyCodeList;
 
-    /// <inheritdoc/>
+    /// <summary>現在の通貨に対応する現金単位を取得します。</summary>
     public CashUnits CurrencyCashList => UposCurrencyHelper.BuildCashUnits(inventory, activeCurrencyCode);
 
-    /// <inheritdoc/>
+    /// <summary>入金に対応する現金単位を取得します。</summary>
     public CashUnits DepositCashList => CurrencyCashList;
 
-    /// <inheritdoc/>
+    /// <summary>構成マネージャーを初期化します。</summary>
     public void Initialize()
     {
         activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
@@ -65,7 +69,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
 
     private bool disposed;
 
-    /// <inheritdoc/>
+    /// <summary>構成情報を再読み込みします。</summary>
     public void Reload()
     {
         if (disposed)
@@ -112,7 +116,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         logger.ZLogInformation($"Simulator state updated. Active Currency: {activeCurrencyCode}");
     }
 
-    /// <inheritdoc/>
+    /// <summary>リソースを解放します。</summary>
     public void Dispose()
     {
         if (disposed)

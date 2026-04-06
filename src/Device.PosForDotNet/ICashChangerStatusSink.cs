@@ -11,27 +11,27 @@ public interface ICashChangerStatusSink
     /// <summary>非同期処理中かどうかを設定します。</summary>
     void SetAsyncProcessing(bool isBusy);
 
-    /// <summary>Gets デバイスの状態（POS for .NET 標準）。</summary>
+    /// <summary>デバイスの状態（POS for .NET 標準）。</summary>
     ControlState State { get; }
 
-    /// <summary>Gets or sets a value indicating whether デバイスが占有されているかどうか。</summary>
+    /// <summary>デバイスが占有されているかどうかを取得または設定します。</summary>
     bool Claimed { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether 他プロセスで占有されているかどうか。</summary>
+    /// <summary>他プロセスで占有されているかどうかを取得または設定します。</summary>
     bool ClaimedByAnother { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether デバイスが有効化されているかどうか。</summary>
+    /// <summary>デバイスが有効化されているかどうかを取得または設定します。</summary>
     bool DeviceEnabled { get; set; }
 
-    /// <summary>Gets a value indicating whether データイベントが有効かどうか。</summary>
+    /// <summary>データイベントが有効かどうかを取得します。</summary>
     bool DataEventEnabled { get; }
 
-    /// <summary>Gets a value indicating whether リアルタイムデータ通知が有効かどうか。</summary>
+    /// <summary>リアルタイムデータ通知が有効かどうかを取得します。</summary>
     bool RealTimeDataEnabled { get; }
 
-    /// <summary>Gets or sets 非同期処理の実行結果。</summary>
+    /// <summary>非同期処理の実行結果を取得または設定します。</summary>
     int AsyncResultCode { get; set; }
 
-    /// <summary>Gets or sets 非同期処理の拡張エラーコード。</summary>
+    /// <summary>非同期処理の拡張エラーコードを取得または設定します。</summary>
     int AsyncResultCodeExtended { get; set; }
 }

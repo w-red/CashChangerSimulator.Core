@@ -5,7 +5,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 /// <summary>DirectIO コマンドの各戦略を表すインターフェース。</summary>
 public interface IDirectIOCommand
 {
-    /// <summary>Gets この戦略が対応するコマンドコード。</summary>
+    /// <summary>この戦略が対応するコマンドコードを取得します。</summary>
     int CommandCode { get; }
 
     /// <summary>コマンドを実行します。</summary>

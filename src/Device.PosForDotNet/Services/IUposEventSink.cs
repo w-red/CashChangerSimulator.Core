@@ -9,37 +9,37 @@ namespace CashChangerSimulator.Device.PosForDotNet.Services;
 /// </remarks>
 public interface IUposEventSink
 {
-    /// <summary>Gets デバイスの状態（POS for .NET 標準）。</summary>
+    /// <summary>デバイスの状態（POS for .NET 標準）。</summary>
     ControlState State { get; }
 
-    /// <summary>Gets or sets a value indicating whether デバイスが占有されているかどうか。</summary>
+    /// <summary>デバイスが占有されているかどうかを取得または設定します。</summary>
     bool Claimed { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether 他プロセスで占有されているかどうか。</summary>
+    /// <summary>他プロセスで占有されているかどうかを取得または設定します。</summary>
     bool ClaimedByAnother { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether デバイスが有効化されているかどうか。</summary>
+    /// <summary>デバイスが有効化されているかどうかを取得または設定します。</summary>
     bool DeviceEnabled { get; set; }
 
-    /// <summary>Gets a value indicating whether dataEvent が有効かどうか。</summary>
+    /// <summary>dataEvent が有効かどうかを取得します。</summary>
     bool DataEventEnabled { get; }
 
-    /// <summary>Gets a value indicating whether 入金データイベントをサポートしているか。</summary>
+    /// <summary>入金データイベントをサポートしているかを取得します。</summary>
     bool CapDepositDataEvent { get; }
 
-    /// <summary>Gets a value indicating whether 状態検証をスキップするかどうか。</summary>
+    /// <summary>状態検証をスキップするかどうかを取得します。</summary>
     bool SkipStateVerification { get; }
 
-    /// <summary>Gets a value indicating whether リアルタイムデータ通知が有効かどうか。</summary>
+    /// <summary>リアルタイムデータ通知が有効かどうかを取得します。</summary>
     bool RealTimeDataEnabled { get; }
 
-    /// <summary>Gets a value indicating whether pOS.NET の内部イベントキューイングを無効化するかどうかを取得します。</summary>
+    /// <summary>pOS.NET の内部イベントキューイングを無効化するかどうかを取得します。</summary>
     bool DisableUposEventQueuing { get; }
 
-    /// <summary>Gets or sets 非同期処理の実行結果。</summary>
+    /// <summary>非同期処理の実行結果を取得または設定します。</summary>
     int AsyncResultCode { get; set; }
 
-    /// <summary>Gets or sets 非同期処理の拡張エラーコード。</summary>
+    /// <summary>非同期処理の拡張エラーコードを取得または設定します。</summary>
     int AsyncResultCodeExtended { get; set; }
 
     /// <summary>イベントを通知し、必要に応じてキューに追加します。</summary>
@@ -54,7 +54,7 @@ public interface IUposEventSink
     /// <param name="e">イベント引数。</param>
     void QueueDataEvent(DataEventArgs e);
 
-    /// <summary>Gets 入金状態の変更を通知するストリームを取得します。</summary>
+    /// <summary>入金状態の変更を通知するストリームを取得します。</summary>
     Observable<Unit> DepositChanged { get; }
 
     /// <summary>ステータス更新イベントをキューに追加します。</summary>

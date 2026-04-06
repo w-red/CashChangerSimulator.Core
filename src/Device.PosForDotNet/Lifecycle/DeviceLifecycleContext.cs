@@ -9,12 +9,12 @@ public class DeviceLifecycleContext(
     ILogger logger,
     Action<bool> setDeviceEnabled)
 {
-    /// <summary>Gets ハードウェアステータスマネージャー。</summary>
+    /// <summary>ハードウェアステータスマネージャーを取得します。</summary>
     public HardwareStatusManager HardwareStatusManager => hardwareStatusManager;
 
-    /// <summary>Gets ロガー。</summary>
+    /// <summary>ロガーを取得します。</summary>
     public ILogger Logger => logger;
 
-    /// <summary>Gets deviceEnabled プロパティを設定するデリゲート。</summary>
+    /// <summary>deviceEnabled プロパティを設定するデリゲートを取得します。</summary>
     public Action<bool> SetDeviceEnabled => setDeviceEnabled;
 }

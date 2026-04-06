@@ -21,10 +21,10 @@ public class StatusCoordinator(
     private bool isStarted;
     private bool wasFixed;
 
-    /// <summary>Gets 現在のデバイスステータス。</summary>
+    /// <summary>現在のデバイスステータスを取得します。</summary>
     public CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerStatus.OK;
 
-    /// <summary>Gets 現在のフルステータス。</summary>
+    /// <summary>現在のフルステータスを取得します。</summary>
     public CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerFullStatus.OK;
 
     /// <inheritdoc/>

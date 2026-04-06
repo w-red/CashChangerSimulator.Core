@@ -9,7 +9,7 @@ public static class SimulatorTestingExtensions
 {
     extension(SimulatorCashChanger sim)
     {
-        /// <summary>Gets or sets a value indicating whether 状態検証をスキップするかどうかを取得または設定します。</summary>
+        /// <summary>状態検証をスキップするかどうかを取得または設定します。</summary>
         /// <remarks>
         /// テストセットアップ用。
         /// true を設定すると、UPOS の状態遷移ルールを無視して、任意のタイミングでテストデータの投入が可能になります。
