@@ -29,6 +29,8 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
 
     private readonly ReactiveProperty<DeviceControlState> state = new(DeviceControlState.Closed);
     private readonly ReactiveProperty<bool> isBusy = new(false);
+    private readonly ReadOnlyReactiveProperty<DeviceControlState> stateReadOnly;
+    private readonly ReadOnlyReactiveProperty<bool> isBusyReadOnly;
 
     private bool hasMutex;
     private bool disposed;
@@ -74,13 +76,16 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         this.hardwareStatus.IsConnected
             .Subscribe(_ => UpdateCompositeStatus())
             .AddTo(this.disposables);
+
+        this.isBusyReadOnly = this.isBusy.ToReadOnlyReactiveProperty().AddTo(this.disposables);
+        this.stateReadOnly = this.state.ToReadOnlyReactiveProperty().AddTo(this.disposables);
     }
 
     /// <inheritdoc/>
-    public ReadOnlyReactiveProperty<bool> IsBusy => isBusy.ToReadOnlyReactiveProperty();
+    public ReadOnlyReactiveProperty<bool> IsBusy => isBusyReadOnly;
 
     /// <inheritdoc/>
-    public ReadOnlyReactiveProperty<DeviceControlState> State => state.ToReadOnlyReactiveProperty();
+    public ReadOnlyReactiveProperty<DeviceControlState> State => stateReadOnly;
 
     /// <inheritdoc/>
     public Observable<DeviceDataEventArgs> DataEvents => depositController.DataEvents;
@@ -284,6 +289,8 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         disposables.Dispose();
 
         // ReactiveProperty の型が IDisposable を実装している場合は破棄が必要
+        stateReadOnly.Dispose();
+        isBusyReadOnly.Dispose();
         state.Dispose();
         isBusy.Dispose();
 
