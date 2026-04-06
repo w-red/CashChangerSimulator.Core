@@ -26,6 +26,9 @@ public interface ICashChangerStatusSink
     /// <summary>データイベントが有効かどうかを取得します。</summary>
     bool DataEventEnabled { get; }
 
+    /// <summary>入金データイベントをサポートしているかを取得します。</summary>
+    bool CapDepositDataEvent { get; }
+
     /// <summary>リアルタイムデータ通知が有効かどうかを取得します。</summary>
     bool RealTimeDataEnabled { get; }
 

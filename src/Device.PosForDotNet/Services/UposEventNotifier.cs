@@ -47,15 +47,21 @@ public class UposEventNotifier : IUposEventNotifier
         }
         else if (args is DataEventArgs dataArgs)
         {
-            // [FIX] Specific queueing for DataEventArgs
-            // [修正] DataEventArgs 用の特定のキューイング
-            sink?.QueueDataEvent(dataArgs);
+            // [FIX] Specific queueing for DataEventArgs with filtering
+            // [修正] フィルタリング付きの DataEventArgs 用の特定のキューイング
+            if (DataEventEnabled && CapDepositDataEvent)
+            {
+                sink?.QueueDataEvent(dataArgs);
+            }
         }
         else
         {
             sink?.QueueEvent(args);
         }
     }
+
+    /// <inheritdoc/>
+    public bool CapDepositDataEvent => sink?.CapDepositDataEvent ?? false;
 
     /// <inheritdoc/>
     public void SetAsyncProcessing(bool isBusy)
