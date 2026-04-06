@@ -5,19 +5,12 @@ using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>投入返却操作をカプセル化するコマンド。</summary>
-public class RepayDepositCommand : IUposCommand
+public class RepayDepositCommand(DepositController controller) : IUposCommand
 {
-    private readonly DepositController controller;
+    private readonly DepositController controller = controller;
     private IUposMediator? mediator;
 
-    /// <summary><see cref="RepayDepositCommand"/> クラスの新しいインスタンスを初期化します。</summary>
-    /// <param name="controller">入金コントローラー。</param>
-    public RepayDepositCommand(DepositController controller)
-    {
-        this.controller = controller;
-    }
-
-    /// <summary>コマンドを実行します。</summary>
+    /// <inheritdoc/>
     public void Execute()
     {
         ExecuteAsync().GetAwaiter().GetResult();
@@ -27,13 +20,13 @@ public class RepayDepositCommand : IUposCommand
         }
     }
 
-    /// <summary>コマンドを非同期で実行します。</summary>
+    /// <inheritdoc/>
     public async Task ExecuteAsync()
     {
         await controller.RepayDepositAsync().ConfigureAwait(false);
     }
 
-    /// <summary>コマンドの実行条件を検証します。</summary>
+    /// <inheritdoc/>
     public void Verify(IUposMediator mediator)
     {
         this.mediator = mediator;
