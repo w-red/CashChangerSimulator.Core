@@ -1,15 +1,18 @@
 using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
+using R3;
 
 namespace CashChangerSimulator.Tests.Device;
 
+/// <summary>DepositController の受入制御ロジックを網羅的に検証するテストクラス。</summary>
 public class DepositControllerCoverageTests
 {
-    private static (DepositController Controller, Inventory Inventory) CreateController()
+    private static (DepositController Controller, Inventory Inventory, HardwareStatusManager Hardware) CreateController()
     {
         var inventory = new Inventory();
         var hw = new HardwareStatusManager();
@@ -17,28 +20,35 @@ public class DepositControllerCoverageTests
         var config = new ConfigurationProvider();
         
         var controller = new DepositController(inventory, hw, null, config);
-        return (controller, inventory);
+        return (controller, inventory, hw);
     }
 
+    /// <summary>IsBusy プロパティが初期状態で偽であることを検証する。</summary>
     [Fact]
-    public void Property_IsBusy_ShouldReturnExpectedValue()
+    public void PropertyIsBusyShouldReturnExpectedValue()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
         controller.IsBusy.ShouldBeFalse();
     }
 
+    /// <summary>RequiredAmount プロパティの設定と取得が正しく行われることを検証する。</summary>
     [Fact]
-    public void Property_RequiredAmount_CanBeSetAndRetrieved()
+    public void PropertyRequiredAmountCanBeSetAndRetrieved()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
+        controller.RequiredAmount = 1500m;
+        controller.RequiredAmount.ShouldBe(1500m);
+        
+        // Coverage for same value branch
         controller.RequiredAmount = 1500m;
         controller.RequiredAmount.ShouldBe(1500m);
     }
 
+    /// <summary>リジェクト金額の取得と加算が受入中のみ有効であることを検証する。</summary>
     [Fact]
-    public void Property_RejectAmount_And_TrackReject_ShouldWorkCorrectly()
+    public void PropertyRejectAmountAndTrackRejectShouldWorkCorrectly()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         
         controller.RejectAmount.ShouldBe(0m);
@@ -46,51 +56,213 @@ public class DepositControllerCoverageTests
         controller.RejectAmount.ShouldBe(500m);
     }
 
+    /// <summary>受入中でない場合のリジェクト加算が無視されることを検証する。</summary>
     [Fact]
-    public void TrackReject_ShouldDoNothing_WhenDepositNotInProgress()
+    public void TrackRejectShouldDoNothingWhenDepositNotInProgress()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
         controller.TrackReject(500m);
         controller.RejectAmount.ShouldBe(0m);
     }
 
+    /// <summary>RepayDepositAsync が状態をクリアし終了イベントを発火することを検証する。</summary>
     [Fact]
-    public async Task RepayDeposit_ShouldClearState_AndRaiseEvent()
+    public async Task RepayDepositShouldClearStateAndRaiseEvent()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.TrackReject(100m);
         
         await controller.RepayDepositAsync();
         
-        // Assertions match actual internal state behavior at the end of RepayDeposit
         controller.DepositAmount.ShouldBe(0m);
         controller.RejectAmount.ShouldBe(100m);
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
     }
 
+    /// <summary>Dispose を複数回呼び出しても例外が発生しないことを検証する。</summary>
     [Fact]
-    public void Dispose_WhenCalledMultipleTimes_ShouldNotThrow()
+    public void DisposeWhenCalledMultipleTimesShouldNotThrow()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
         controller.Dispose();
         Should.NotThrow(() => controller.Dispose());
     }
 
+    /// <summary>一時停止と再開が受入処理に正しく反映されることを検証する。</summary>
     [Fact]
-    public void PauseDeposit_ShouldHandleEdgeCases()
+    public void PauseDepositShouldHandleEdgeCases()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
 
         controller.PauseDeposit(DeviceDepositPause.Pause);
         
-        controller.TrackDeposit(new DenominationKey(100, CurrencyCashType.Coin));
+        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill));
         controller.DepositAmount.ShouldBe(0m);
         
         controller.PauseDeposit(DeviceDepositPause.Resume);
         
-        controller.TrackDeposit(new DenominationKey(100, CurrencyCashType.Coin));
-        controller.DepositAmount.ShouldBe(100m);
+        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill));
+        controller.DepositAmount.ShouldBe(1000m);
+    }
+
+    /// <summary>詰まり発生中に入金を開始しようとすると例外が発生することを検証する。</summary>
+    [Fact]
+    public void BeginDepositWhenJammedShouldThrow()
+    {
+        var (controller, _, hw) = CreateController();
+        hw.SetJammed(true);
+        Should.Throw<DeviceException>(() => controller.BeginDeposit())
+            .ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
+    }
+
+    /// <summary>重なり発生中に入金を開始しようとすると例外が発生することを検証する。</summary>
+    [Fact]
+    public void BeginDepositWhenOverlappedShouldThrow()
+    {
+        var (controller, _, hw) = CreateController();
+        hw.SetOverlapped(true);
+        Should.Throw<DeviceException>(() => controller.BeginDeposit())
+            .ErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
+    }
+
+    /// <summary>一時停止中にバルク入金を行っても金額が反映されないことを検証する。</summary>
+    [Fact]
+    public void TrackBulkDepositWhenPausedShouldIgnore()
+    {
+        var (controller, _, _) = CreateController();
+        controller.BeginDeposit();
+        controller.PauseDeposit(DeviceDepositPause.Pause);
+        
+        controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> 
+        { 
+            { new DenominationKey(1000, CurrencyCashType.Bill), 1 } 
+        });
+        
+        controller.DepositAmount.ShouldBe(0m);
+    }
+
+    /// <summary>受入確定後にバルク入金を行おうとすると例外が発生することを検証する。</summary>
+    [Fact]
+    public void TrackBulkDepositWhenFixedShouldThrow()
+    {
+        var (controller, _, _) = CreateController();
+        controller.BeginDeposit();
+        controller.FixDeposit();
+        
+        Should.Throw<DeviceException>(() => controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> 
+        { 
+            { new DenominationKey(1000, CurrencyCashType.Bill), 1 } 
+        }))
+        .ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
+    }
+
+    /// <summary>確定前に EndDeposit を呼び出そうとすると例外が発生することを検証する。</summary>
+    [Fact]
+    public async Task EndDepositWithoutFixShouldThrow()
+    {
+        var (controller, _, _) = CreateController();
+        controller.BeginDeposit();
+        
+        (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.Store)))
+            .ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
+    }
+
+    /// <summary>同期版の RepayDeposit が正しく動作することを検証する。</summary>
+    [Fact]
+    public void RepayDepositSynchronousShouldWork()
+    {
+        var (controller, _, _) = CreateController();
+        controller.BeginDeposit();
+        Should.NotThrow(() => controller.RepayDeposit());
+        controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
+    }
+
+    /// <summary>入金中に EndDepositAsync を呼び出すと Busy エラーが発生することを検証する。</summary>
+    [Fact]
+    public async Task EndDepositAsyncWhenAlreadyBusyShouldThrow()
+    {
+        var (controller, _, _) = CreateController();
+        controller.BeginDeposit();
+        controller.FixDeposit();
+        
+        // Start an operation that sets isBusy = true
+        var task = controller.EndDepositAsync(DepositAction.Store);
+        
+        // Concurrent call should throw Busy
+        (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.Store)))
+            .ErrorCode.ShouldBe(DeviceErrorCode.Busy);
+        
+        await task;
+    }
+
+    /// <summary>入金中に BeginDeposit を呼び出すと Busy エラーが発生することを検証する。</summary>
+    [Fact]
+    public async Task BeginDepositWhenBusyShouldThrow()
+    {
+        var (controller, _, _) = CreateController();
+        controller.BeginDeposit();
+        controller.FixDeposit();
+        
+        // Start an operation that sets isBusy = true
+        var task = controller.EndDepositAsync(DepositAction.Store);
+
+        // While EndDepositAsync is running, isBusy is true
+        Should.Throw<DeviceException>(() => controller.BeginDeposit())
+            .ErrorCode.ShouldBe(DeviceErrorCode.Busy);
+
+        await task;
+    }
+
+    /// <summary>EndDepositAsync 実行中に Overlapped が検出されて例外が発生することを検証する。</summary>
+    [Fact]
+    public async Task EndDepositAsyncShouldCatchOverlappedException()
+    {
+        var (controller, _, hw) = CreateController();
+
+        controller.BeginDeposit();
+        controller.FixDeposit();
+
+        var task = controller.EndDepositAsync(DepositAction.Store);
+        
+        // Wait briefly for Task.Delay(500)
+        await Task.Delay(100).ConfigureAwait(false);
+        hw.SetOverlapped(true);
+
+        await task;
+
+        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
+    }
+
+    /// <summary>EndDepositAsync 実行中にキャンセルが発生することを検証する。</summary>
+    [Fact]
+    public async Task EndDepositAsyncShouldHandleCancellation()
+    {
+        var (controller, _, _) = CreateController();
+        controller.BeginDeposit();
+        controller.FixDeposit();
+
+        var task = controller.EndDepositAsync(DepositAction.Store);
+        
+        // Wait briefly to ensure Task.Delay started
+        await Task.Delay(50);
+        
+        controller.Dispose(); // This cancels the internal CTS
+        
+        await task;
+        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
+    }
+
+    /// <summary>既に確定（Fixed）した状態で入金を追跡しようとし、警告が想定通りに処理されることを検証する。</summary>
+    [Fact]
+    public void TrackDepositWhenFixedShouldThrow()
+    {
+        var (controller, _, _) = CreateController();
+        controller.BeginDeposit();
+        controller.FixDeposit();
+
+        Should.Throw<DeviceException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)))
+            .ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 }

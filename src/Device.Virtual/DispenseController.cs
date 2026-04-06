@@ -146,7 +146,6 @@ public class DispenseController : IDisposable
 
         if (asyncMode)
         {
-#pragma warning disable CA2016
             _ = Task.Run(
                 async () =>
                 {
@@ -154,15 +153,12 @@ public class DispenseController : IDisposable
                     {
                         await ExecuteDispense(() => manager.Dispense(amount, currencyCode), token).ConfigureAwait(false);
                     }
-#pragma warning disable CA1031
                     catch (Exception ex)
-#pragma warning restore CA1031
                     {
                         logger.ZLogError(ex, $"Background dispense error: {ex.Message}");
                     }
                 },
                 token);
-#pragma warning restore CA2016
         }
         else
         {
@@ -219,7 +215,6 @@ public class DispenseController : IDisposable
 
         if (asyncMode)
         {
-#pragma warning disable CA2016
             _ = Task.Run(
                 async () =>
                 {
@@ -227,15 +222,12 @@ public class DispenseController : IDisposable
                     {
                         await ExecuteDispense(() => manager.Dispense(counts), token).ConfigureAwait(false);
                     }
-#pragma warning disable CA1031
                     catch (Exception ex)
-#pragma warning restore CA1031
                     {
                         logger.ZLogError(ex, $"Background dispense error: {ex.Message}");
                     }
                 },
                 token);
-#pragma warning restore CA2016
         }
         else
         {
@@ -323,9 +315,7 @@ public class DispenseController : IDisposable
             codeEx = dex.ErrorCodeExtended;
             logger.ZLogError(dex, $"Dispense failed with device error: {dex.Message}");
         }
-#pragma warning disable CA1031
         catch (Exception ex)
-#pragma warning restore CA1031
         {
             isError = true;
             code = DeviceErrorCode.Failure;

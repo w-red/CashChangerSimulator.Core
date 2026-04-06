@@ -444,9 +444,7 @@ public class DepositController : IDisposable
                 lastErrorCodeExtended = dex.ErrorCodeExtended;
             }
         }
-#pragma warning disable CA1031
         catch (Exception ex)
-#pragma warning restore CA1031
         {
             logger.ZLogError(ex, $"EndDeposit failed with unexpected error.");
             lock (stateLock)
@@ -462,7 +460,10 @@ public class DepositController : IDisposable
                 isBusy = false;
             }
 
-            changed.OnNext(Unit.Default);
+            if (!disposed)
+            {
+                changed.OnNext(Unit.Default);
+            }
         }
     }
 
@@ -549,6 +550,11 @@ public class DepositController : IDisposable
                 || depositPaused)
             {
                 return;
+            }
+
+            if (depositFixed)
+            {
+                throw new DeviceException("Deposit is already fixed.", DeviceErrorCode.Illegal);
             }
 
             if (hardwareStatusManager.IsJammed.Value)
