@@ -3,19 +3,19 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
 
-/// <summary>UPOSの文字列形式を解析し、CashCount のリストに変換するパーサクラス。.</summary>
+/// <summary>UPOSの文字列形式を解析し、CashCount のリストに変換するパーサクラス。</summary>
 /// <remarks>
 /// 例: "100,500:5;1000:10" のような形式を解析します。
-/// セミコロン区切りで硬貨(Coins)と紙幣(Bills)を識別します。.
+/// セミコロン区切りで硬貨(Coins)と紙幣(Bills)を識別します。
 /// </remarks>
 public static class CashCountParser
 {
-    /// <summary>文字列をパースし、現在の Inventory 定義と照らし合わせて CashCount リストを生成します。.</summary>
+    /// <summary>文字列をパースし、現在の Inventory 定義と照らし合わせて CashCount リストを生成します。</summary>
     /// <param name="input">UPOS形式の文字列 (例: "50,100:10;1000:5").</param>
     /// <param name="activeKeys">現在インベントリに登録されている有効な金種キーのリスト.</param>
     /// <param name="currencyFactor">通貨の係数（USDなら100, JPYなら1）.</param>
     /// <returns>パースされた CashCount のリスト.</returns>
-    /// <exception cref="ArgumentException">フォーマットが不正な場合、または曖昧な値の場合にスローされます。.</exception>
+    /// <exception cref="ArgumentException">フォーマットが不正な場合、または曖昧な値の場合にスローされます。</exception>
     public static IEnumerable<CashCount> Parse(string input, IEnumerable<DenominationKey> activeKeys, decimal currencyFactor)
     {
         ArgumentNullException.ThrowIfNull(activeKeys);

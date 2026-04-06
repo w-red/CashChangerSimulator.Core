@@ -4,7 +4,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>デバイスの装着(INSERTED)をエミュレートする戦略。.</summary>
+/// <summary>デバイスの装着(INSERTED)をエミュレートする戦略。</summary>
 public class SimulateInsertedStrategy : IDirectIOCommand
 {
     /// <inheritdoc/>

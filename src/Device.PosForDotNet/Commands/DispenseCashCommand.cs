@@ -8,7 +8,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>金種指定出金操作をカプセル化するコマンド。.</summary>
+/// <summary>金種指定出金操作をカプセル化するコマンド。</summary>
 public class DispenseCashCommand : IUposCommand
 {
     private readonly DispenseController controller;
@@ -19,13 +19,13 @@ public class DispenseCashCommand : IUposCommand
     private readonly bool async;
     private IUposMediator? mediator;
 
-    /// <summary>Initializes a new instance of the <see cref="DispenseCashCommand"/> class.金種指定出金コマンドのインスタンスを初期化します。.</summary>
-    /// <param name="controller">出金制御を司るコントローラー。.</param>
-    /// <param name="inventory">在庫情報を管理するインベントリ。.</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態を管理するマネージャー。.</param>
-    /// <param name="depositController">入金状態を確認するためのコントローラー。.</param>
-    /// <param name="counts">出金する金種と枚数のセット。.</param>
-    /// <param name="async">非同期実行するかどうか。.</param>
+    /// <summary>Initializes a new instance of the <see cref="DispenseCashCommand"/> class.金種指定出金コマンドのインスタンスを初期化します。</summary>
+    /// <param name="controller">出金制御を司るコントローラー。</param>
+    /// <param name="inventory">在庫情報を管理するインベントリ。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態を管理するマネージャー。</param>
+    /// <param name="depositController">入金状態を確認するためのコントローラー。</param>
+    /// <param name="counts">出金する金種と枚数のセット。</param>
+    /// <param name="async">非同期実行するかどうか。</param>
     public DispenseCashCommand(
         DispenseController controller,
         Inventory inventory,
@@ -42,7 +42,7 @@ public class DispenseCashCommand : IUposCommand
         this.async = async;
     }
 
-    /// <summary>金種指定出金操作を実行します。.</summary>
+    /// <summary>金種指定出金操作を実行します。</summary>
     public void Execute()
     {
         ExecuteAsync().GetAwaiter().GetResult();
@@ -52,7 +52,7 @@ public class DispenseCashCommand : IUposCommand
         }
     }
 
-    /// <summary>金種指定出金操作を非同期で実行します。.</summary>
+    /// <summary>金種指定出金操作を非同期で実行します。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task ExecuteAsync()
     {
@@ -64,8 +64,8 @@ public class DispenseCashCommand : IUposCommand
         await controller.DispenseCashAsync(counts, async).ConfigureAwait(false);
     }
 
-    /// <summary>コマンド実行前の状態および事前条件（在庫やハードウェア状態）を検証します。.</summary>
-    /// <param name="mediator">検証に使用するメディエーター。.</param>
+    /// <summary>コマンド実行前の状態および事前条件（在庫やハードウェア状態）を検証します。</summary>
+    /// <param name="mediator">検証に使用するメディエーター。</param>
     public void Verify(IUposMediator mediator)
     {
         this.mediator = mediator;

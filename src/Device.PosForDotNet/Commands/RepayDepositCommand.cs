@@ -4,7 +4,7 @@ using CashChangerSimulator.Device.Virtual;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>投入返却操作をカプセル化するコマンド。.</summary>
+/// <summary>投入返却操作をカプセル化するコマンド。</summary>
 public class RepayDepositCommand : IUposCommand
 {
     private readonly DepositController controller;

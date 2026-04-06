@@ -8,7 +8,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。.</summary>
+/// <summary>UPOS サービスオブジェクトの操作に関する共通の検証と結果処理を支援するクラス。</summary>
 public class UposMediator : IUposMediator
 {
     private readonly Lock stateLock = new();
@@ -23,7 +23,7 @@ public class UposMediator : IUposMediator
     private StatusCoordinator? coordinator;
     private HardwareStatusManager? hardwareStatusManager;
 
-    /// <summary>Initializes a new instance of the <see cref="UposMediator"/> class.依存関係を指定せずに初期化します（後で Initialize を呼ぶ必要があります）。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="UposMediator"/> class.依存関係を指定せずに初期化します（後で Initialize を呼ぶ必要があります）。</summary>
     public UposMediator()
     {
     }
@@ -168,11 +168,11 @@ public class UposMediator : IUposMediator
     /// <inheritdoc/>
     public IUposEventSink? EventSink => sink as IUposEventSink;
 
-    /// <summary>検証規則に基づき、現在の状態をチェックします。.</summary>
-    /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。.</remarks>
-    /// <param name="mustBeClaimed">排他占有（Claim）が必要かどうか。.</param>
-    /// <param name="mustBeEnabled">デバイス有効化（Enabled）が必要かどうか。.</param>
-    /// <param name="mustNotBeBusy">ビジー状態であってはならないかどうか。.</param>
+    /// <summary>検証規則に基づき、現在の状態をチェックします。</summary>
+    /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。</remarks>
+    /// <param name="mustBeClaimed">排他占有（Claim）が必要かどうか。</param>
+    /// <param name="mustBeEnabled">デバイス有効化（Enabled）が必要かどうか。</param>
+    /// <param name="mustNotBeBusy">ビジー状態であってはならないかどうか。</param>
     public void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false)
     {
         if (SkipStateVerification)

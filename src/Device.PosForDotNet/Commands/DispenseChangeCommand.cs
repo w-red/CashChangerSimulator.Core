@@ -7,7 +7,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>出金確定操作をカプセル化するコマンド。.</summary>
+/// <summary>出金確定操作をカプセル化するコマンド。</summary>
 public class DispenseChangeCommand : IUposCommand
 {
     private readonly DispenseController controller;
@@ -17,12 +17,12 @@ public class DispenseChangeCommand : IUposCommand
     private readonly bool async;
     private IUposMediator? mediator;
 
-    /// <summary>Initializes a new instance of the <see cref="DispenseChangeCommand"/> class.金額指定出金コマンドのインスタンスを初期化します。.</summary>
-    /// <param name="controller">出金制御を司るコントローラー。.</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態を管理するマネージャー。.</param>
-    /// <param name="depositController">入金状態を確認するためのコントローラー。.</param>
-    /// <param name="amount">出金する金額。.</param>
-    /// <param name="asyncMode">非同期実行するかどうか。.</param>
+    /// <summary>Initializes a new instance of the <see cref="DispenseChangeCommand"/> class.金額指定出金コマンドのインスタンスを初期化します。</summary>
+    /// <param name="controller">出金制御を司るコントローラー。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態を管理するマネージャー。</param>
+    /// <param name="depositController">入金状態を確認するためのコントローラー。</param>
+    /// <param name="amount">出金する金額。</param>
+    /// <param name="asyncMode">非同期実行するかどうか。</param>
     public DispenseChangeCommand(
         DispenseController controller,
         HardwareStatusManager hardwareStatusManager,
@@ -37,7 +37,7 @@ public class DispenseChangeCommand : IUposCommand
         async = asyncMode;
     }
 
-    /// <summary>金額指定出金操作を実行します。.</summary>
+    /// <summary>金額指定出金操作を実行します。</summary>
     public void Execute()
     {
         ExecuteAsync().GetAwaiter().GetResult();
@@ -59,8 +59,8 @@ public class DispenseChangeCommand : IUposCommand
         await controller.DispenseChangeAsync(amountAsInt, async).ConfigureAwait(false);
     }
 
-    /// <summary>コマンド実行前の状態および事前条件（ハードウェア状態）を検証します。.</summary>
-    /// <param name="mediator">検証に使用するメディエーター。.</param>
+    /// <summary>コマンド実行前の状態および事前条件（ハードウェア状態）を検証します。</summary>
+    /// <param name="mediator">検証に使用するメディエーター。</param>
     public void Verify(IUposMediator mediator)
     {
         this.mediator = mediator;

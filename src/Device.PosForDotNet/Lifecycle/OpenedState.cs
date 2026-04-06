@@ -3,7 +3,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Lifecycle;
 
-/// <summary>デバイスが接続済み（Opened）で、未 Claim の状態を表します。.</summary>
+/// <summary>デバイスが接続済み（Opened）で、未 Claim の状態を表します。</summary>
 public class OpenedState : IDeviceState
 {
     /// <inheritdoc/>

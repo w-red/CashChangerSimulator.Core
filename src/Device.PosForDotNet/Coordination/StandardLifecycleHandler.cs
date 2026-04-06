@@ -7,7 +7,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>標準的な UPOS ライフサイクル（状態検証あり）を実装するクラス。.</summary>
+/// <summary>標準的な UPOS ライフサイクル（状態検証あり）を実装するクラス。</summary>
 public class StandardLifecycleHandler(
     HardwareStatusManager hardware,
     IUposMediator mediator,

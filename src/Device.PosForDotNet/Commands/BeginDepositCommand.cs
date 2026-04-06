@@ -3,7 +3,7 @@ using CashChangerSimulator.Device.Virtual;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>投入開始操作をカプセル化するコマンド。.</summary>
+/// <summary>投入開始操作をカプセル化するコマンド。</summary>
 public class BeginDepositCommand : IUposCommand
 {
     private readonly DepositController controller;

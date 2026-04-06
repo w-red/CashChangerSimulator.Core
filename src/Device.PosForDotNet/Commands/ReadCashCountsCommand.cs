@@ -4,7 +4,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>在庫読み取り操作をカプセル化するコマンド。.</summary>
+/// <summary>在庫読み取り操作をカプセル化するコマンド。</summary>
 public class ReadCashCountsCommand : IUposCommand
 {
     private readonly Inventory inventory;

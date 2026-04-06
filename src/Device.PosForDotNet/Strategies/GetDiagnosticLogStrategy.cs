@@ -3,7 +3,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>診断ログを取得するための DirectIOStrategy。.</summary>
+/// <summary>診断ログを取得するための DirectIOStrategy。</summary>
 public class GetDiagnosticLogStrategy : IDirectIOCommand
 {
     /// <inheritdoc/>

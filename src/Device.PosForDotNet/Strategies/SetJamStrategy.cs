@@ -4,7 +4,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>メカニカルジャム（Jam）エラー状態を設定または解除する戦略。.</summary>
+/// <summary>メカニカルジャム（Jam）エラー状態を設定または解除する戦略。</summary>
 public class SetJamStrategy : IDirectIOCommand
 {
     /// <inheritdoc/>

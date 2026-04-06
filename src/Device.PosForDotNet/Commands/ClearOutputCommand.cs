@@ -3,7 +3,7 @@ using CashChangerSimulator.Device.Virtual;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>出金キャンセル操作をカプセル化するコマンド。.</summary>
+/// <summary>出金キャンセル操作をカプセル化するコマンド。</summary>
 public class ClearOutputCommand : IUposCommand
 {
     private readonly DispenseController controller;

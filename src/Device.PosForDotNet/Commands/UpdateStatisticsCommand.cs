@@ -3,7 +3,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>統計情報更新操作をカプセル化するコマンド。.</summary>
+/// <summary>統計情報更新操作をカプセル化するコマンド。</summary>
 public class UpdateStatisticsCommand : IUposCommand
 {
     private readonly Statistic[] statistics;

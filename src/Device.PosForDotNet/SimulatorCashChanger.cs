@@ -13,11 +13,11 @@ using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
 
-/// <summary>Microsoft POS for .NET (OPOS) に準拠した仮想現金入出金機のシミュレータクラス。.</summary>
+/// <summary>Microsoft POS for .NET (OPOS) に準拠した仮想現金入出金機のシミュレータクラス。</summary>
 /// <remarks>
 /// Microsoft Point of Service SDK を通じて、標準的な OPOS インターフェースを提供します。
 /// 内部的には複数の Facade と Controller を使用して、在庫管理、入金処理、出金処理、および診断機能を提供し、
-/// 物理デバイスなしでのアプリケーション開発とテストを支援します。.
+/// 物理デバイスなしでのアプリケーション開発とテストを支援します。
 /// </remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
 public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceStateProvider, ICashChangerStatusSink, IDisposable
@@ -35,8 +35,8 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     private string checkHealthText = "OK";
     private bool disposedValue;
 
-    /// <summary>Initializes a new instance of the <see cref="SimulatorCashChanger"/> class.シミュレータの依存関係を注入して初期化します。.</summary>
-    /// <remarks>各種マネージャーやコントローラーが未指定の場合は、デフォルトの実装を生成して使用します。.</remarks>
+    /// <summary>Initializes a new instance of the <see cref="SimulatorCashChanger"/> class.シミュレータの依存関係を注入して初期化します。</summary>
+    /// <remarks>各種マネージャーやコントローラーが未指定の場合は、デフォルトの実装を生成して使用します。</remarks>
     public SimulatorCashChanger(SimulatorDependencies deps)
     {
         ArgumentNullException.ThrowIfNull(deps);
@@ -154,8 +154,8 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <inheritdoc/>
     public bool IsDepositInProgress => DepositController.IsDepositInProgress;
 
-    /// <summary>Gets or sets a value indicating whether 状態検証（Open, Claim 等のシーケンスチェック）をスキップするかどうかを取得または設定します。.</summary>
-    /// <remarks>シミュレータとしての利便性を優先する場合に true に設定します。.</remarks>
+    /// <summary>Gets or sets a value indicating whether 状態検証（Open, Claim 等のシーケンスチェック）をスキップするかどうかを取得または設定します。</summary>
+    /// <remarks>シミュレータとしての利便性を優先する場合に true に設定します。</remarks>
     public bool SkipStateVerification
     {
         get => ctx.Mediator.SkipStateVerification;
@@ -171,7 +171,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         }
     }
 
-    /// <summary>Gets 入金状態の変更を通知するストリームを取得します。.</summary>
+    /// <summary>Gets 入金状態の変更を通知するストリームを取得します。</summary>
     public Observable<Unit> DepositChanged => DepositController.Changed;
 
     internal Inventory Inventory => ctx.Inventory;

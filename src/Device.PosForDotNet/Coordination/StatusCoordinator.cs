@@ -7,8 +7,8 @@ using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>釣銭機の各コンポーネントからの通知を集約する調整クラス。.</summary>
-/// <remarks>内部状態の変化を UPOS イベントへ変換して通知します。.</remarks>
+/// <summary>釣銭機の各コンポーネントからの通知を集約する調整クラス。</summary>
+/// <remarks>内部状態の変化を UPOS イベントへ変換して通知します。</remarks>
 public class StatusCoordinator(
     ICashChangerStatusSink sink,
     OverallStatusAggregator statusAggregator,
@@ -21,10 +21,10 @@ public class StatusCoordinator(
     private bool isStarted;
     private bool wasFixed;
 
-    /// <summary>Gets 現在のデバイスステータス。.</summary>
+    /// <summary>Gets 現在のデバイスステータス。</summary>
     public CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerStatus.OK;
 
-    /// <summary>Gets 現在のフルステータス。.</summary>
+    /// <summary>Gets 現在のフルステータス。</summary>
     public CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerFullStatus.OK;
 
     /// <inheritdoc/>

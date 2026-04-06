@@ -8,7 +8,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Services;
 
-/// <summary>シミュレータの設定と言語・通貨状態を管理するクラス。.</summary>
+/// <summary>シミュレータの設定と言語・通貨状態を管理するクラス。</summary>
 public class UposConfigurationManager : IUposConfigurationManager, IDisposable
 {
     private readonly ConfigurationProvider configProvider;

@@ -3,7 +3,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>現在発生中のジャム箇所を取得する戦略。.</summary>
+/// <summary>現在発生中のジャム箇所を取得する戦略。</summary>
 public class GetJamLocationStrategy : IDirectIOCommand
 {
     /// <inheritdoc/>

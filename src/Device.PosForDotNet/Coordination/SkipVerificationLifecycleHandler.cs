@@ -7,7 +7,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>検証をスキップするシミュレータ用の UPOS ライフサイクルを実装するクラス。.</summary>
+/// <summary>検証をスキップするシミュレータ用の UPOS ライフサイクルを実装するクラス。</summary>
 public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, TransactionHistory history, ILogger logger) : IUposLifecycleHandler
 {
     /// <inheritdoc/>

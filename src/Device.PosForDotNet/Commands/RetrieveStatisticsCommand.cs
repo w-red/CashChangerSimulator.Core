@@ -3,7 +3,7 @@ using CashChangerSimulator.Device.Virtual;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>統計情報取得操作をカプセル化するコマンド。.</summary>
+/// <summary>統計情報取得操作をカプセル化するコマンド。</summary>
 public class RetrieveStatisticsCommand : IUposCommand
 {
     private readonly DiagnosticController controller;

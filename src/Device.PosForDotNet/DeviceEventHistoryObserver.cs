@@ -8,14 +8,14 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 /// <summary>
 /// UPOSデバイス (SimulatorCashChanger) から発火されるイベントを購読し、
 /// UIのActivity Feed等に表示するための取引履歴 (TransactionHistory) を記録するオブザーバー層。
-/// デバイス層が上位のUI履歴要件に依存しないように隔離するためのクラスです。.
+/// デバイス層が上位のUI履歴要件に依存しないように隔離するためのクラスです。
 /// </summary>
 public class DeviceEventHistoryObserver : IDisposable
 {
     private readonly InternalSimulatorCashChanger device;
     private readonly TransactionHistory history;
 
-    /// <summary>Initializes a new instance of the <see cref="DeviceEventHistoryObserver"/> class.オブザーバーを初期化し、イベントを購読します。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="DeviceEventHistoryObserver"/> class.オブザーバーを初期化し、イベントを購読します。</summary>
     public DeviceEventHistoryObserver(InternalSimulatorCashChanger device, TransactionHistory history)
     {
         this.device = device ?? throw new ArgumentNullException(nameof(device));
@@ -55,7 +55,7 @@ public class DeviceEventHistoryObserver : IDisposable
         }
     }
 
-    /// <summary>イベントの購読を解除します。.</summary>
+    /// <summary>イベントの購読を解除します。</summary>
     public void Dispose()
     {
         device.OnEventQueued -= HandleDeviceEvent;

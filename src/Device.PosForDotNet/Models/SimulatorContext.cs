@@ -11,9 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Models;
 
-/// <summary>シミュレータの構成要素（マネージャー、コントローラー、各種ステータスなど）を集約して管理するコンテキストクラス。.</summary>
+/// <summary>シミュレータの構成要素（マネージャー、コントローラー、各種ステータスなど）を集約して管理するコンテキストクラス。</summary>
 /// <remarks>
-/// 実行時に必要なオブジェクトを一元管理し、<see cref="SimulatorCashChanger"/> 内部でのデータ共有やイベント通知を円滑にします。.
+/// 実行時に必要なオブジェクトを一元管理し、<see cref="SimulatorCashChanger"/> 内部でのデータ共有やイベント通知を円滑にします。
 /// </remarks>
 public class SimulatorContext : IDisposable
 {
@@ -66,7 +66,7 @@ public class SimulatorContext : IDisposable
         }
     }
 
-    /// <summary>シミュレータの依存関係を解決してコンテキストを生成します。.</summary>
+    /// <summary>シミュレータの依存関係を解決してコンテキストを生成します。</summary>
     /// <returns>シミュレータコンテキスト。</returns>
     public static SimulatorContext Create(SimulatorDependencies deps, ICashChangerStatusSink sink, ILogger logger)
     {

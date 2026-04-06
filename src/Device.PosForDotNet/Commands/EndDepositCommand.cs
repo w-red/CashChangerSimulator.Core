@@ -5,7 +5,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
-/// <summary>投入終了操作をカプセル化するコマンド。.</summary>
+/// <summary>投入終了操作をカプセル化するコマンド。</summary>
 public class EndDepositCommand : IUposCommand
 {
     private readonly DepositController controller;

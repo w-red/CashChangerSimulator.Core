@@ -3,14 +3,14 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
 
-/// <summary>UPOS CashCount と内部 DenominationKey 間の変換を担うアダプター。.</summary>
+/// <summary>UPOS CashCount と内部 DenominationKey 間の変換を担うアダプター。</summary>
 /// <remarks>
 /// UPOS 標準のデータ構造（CashCount）と、シミュレータ内部で管理する金種キー（DenominationKey）の相互変換を提供します。
-/// 通貨コードや通貨換算係数（factor）を考慮して、正確な金額計算を行います。.
+/// 通貨コードや通貨換算係数（factor）を考慮して、正確な金額計算を行います。
 /// </remarks>
 public static class CashCountAdapter
 {
-    /// <summary>CashCount を DenominationKey に変換します。.</summary>
+    /// <summary>CashCount を DenominationKey に変換します。</summary>
     /// <returns></returns>
     public static DenominationKey ToDenominationKey(CashCount cc, string currencyCode, decimal factor)
     {
@@ -19,7 +19,7 @@ public static class CashCountAdapter
         return new DenominationKey(value, type, currencyCode);
     }
 
-    /// <summary>DenominationKey を CashCount に変換します。.</summary>
+    /// <summary>DenominationKey を CashCount に変換します。</summary>
     /// <returns></returns>
     public static CashCount ToCashCount(DenominationKey key, int count, decimal factor)
     {
@@ -28,7 +28,7 @@ public static class CashCountAdapter
         return new CashCount(type, nominalValue, count);
     }
 
-    /// <summary>CashCount 配列を DenominationKey→枚数の辞書に一括変換します。.</summary>
+    /// <summary>CashCount 配列を DenominationKey→枚数の辞書に一括変換します。</summary>
     /// <returns></returns>
     public static Dictionary<DenominationKey, int> ToDenominationDict(
         IEnumerable<CashCount> cashCounts, string currencyCode, decimal factor)
@@ -42,7 +42,7 @@ public static class CashCountAdapter
     }
 
     /// <summary>
-    /// 文字列形式の金種・枚数リスト ("denom:count,denom:count") を CashCount 配列に変換します。.
+    /// 文字列形式の金種・枚数リスト ("denom:count,denom:count") を CashCount 配列に変換します。
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<CashCount> ParseCashCounts(string countsStr, string currencyCode, decimal factor, IEnumerable<DenominationKey> availableKeys)
@@ -71,7 +71,7 @@ public static class CashCountAdapter
     }
 
     /// <summary>
-    /// CashCount 配列を文字列形式 ("denom:count,denom:count") に変換します。.
+    /// CashCount 配列を文字列形式 ("denom:count,denom:count") に変換します。
     /// </summary>
     /// <returns></returns>
     public static string FormatCashCounts(IEnumerable<CashCount> cashCounts)

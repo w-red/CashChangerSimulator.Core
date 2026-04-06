@@ -2,17 +2,17 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Services;
 
-/// <summary>UPOS デバイスからのイベント通知を管理・抽象化するクラス。.</summary>
+/// <summary>UPOS デバイスからのイベント通知を管理・抽象化するクラス。</summary>
 public class UposEventNotifier : IUposEventNotifier
 {
     private IUposEventSink? sink;
 
-    /// <summary>Initializes a new instance of the <see cref="UposEventNotifier"/> class.イベント通知先を指定せずに初期化します（後で Initialize を呼ぶ必要があります）。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="UposEventNotifier"/> class.イベント通知先を指定せずに初期化します（後で Initialize を呼ぶ必要があります）。</summary>
     public UposEventNotifier()
     {
     }
 
-    /// <summary>Initializes a new instance of the <see cref="UposEventNotifier"/> class.イベント通知先を指定して初期化します。.</summary>
+    /// <summary>Initializes a new instance of the <see cref="UposEventNotifier"/> class.イベント通知先を指定して初期化します。</summary>
     public UposEventNotifier(IUposEventSink sink)
     {
         this.sink = sink;
