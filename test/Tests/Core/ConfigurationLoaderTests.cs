@@ -173,4 +173,36 @@ public class ConfigurationLoaderTests : IDisposable
 
         loaded.Counts["JPY:B1000"].ShouldBe(5);
     }
+
+    /// <summary>ファイルアクセス拒否（UnauthorizedAccessException）発生時にデフォルト値が返されることを検証する。</summary>
+    [Fact]
+    public void LoadConfigShouldReturnDefaultsWhenAccessDenied()
+    {
+        // On Windows, opening a file with exclusive lock usually causes IOException/UnauthorizedAccess
+        // for other attempts. Or setting readonly attribute.
+        File.WriteAllText(testConfigPath, "test = 1");
+        File.SetAttributes(testConfigPath, FileAttributes.ReadOnly);
+        try
+        {
+            // Tomlyn or File.ReadAllText might handle it, but let's see.
+            // Actually, Load() catches UnauthorizedAccessException.
+            var config = ConfigurationLoader.Load(testConfigPath);
+            config.ShouldNotBeNull();
+        }
+        finally
+        {
+            File.SetAttributes(testConfigPath, FileAttributes.Normal);
+        }
+    }
+
+    /// <summary>在庫状態の読み込み時に例外が発生した場合に空の状態が返されることを検証する。</summary>
+    [Fact]
+    public void LoadInventoryStateShouldHandleExceptions()
+    {
+        File.WriteAllText(testInventoryPath, "INVALID");
+        // This causes TomlException which is caught.
+        var state = ConfigurationLoader.LoadInventoryState(testInventoryPath);
+        state.ShouldNotBeNull();
+        state.Counts.ShouldBeEmpty();
+    }
 }

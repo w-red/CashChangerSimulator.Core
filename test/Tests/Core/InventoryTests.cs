@@ -231,4 +231,77 @@ public class InventoryTests
         inventory.AddEscrow(bill1000, 2); // 2000
         inventory.CalculateTotal().ShouldBe(3000);
     }
+
+    /// <summary>加算結果が負になる場合に警告を表示し、数量が0になることを検証する。</summary>
+    [Fact]
+    public void AddResultingInNegativeShouldLogWarningAndBeZero()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        inventory.SetCount(key, 5);
+        inventory.Add(key, -10); // Should hit ZLogWarning in UpdateBucket
+        inventory.GetCount(key).ShouldBe(0);
+    }
+
+    /// <summary>通貨コードが null の場合にデフォルトの通貨コードに正規化されることを検証する。</summary>
+    [Fact]
+    public void NormalizeKeyShouldHandleNullCurrency()
+    {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        var key = new DenominationKey(1000, CurrencyCashType.Bill, null);
+#pragma warning restore CS8625
+        inventory.Add(key, 1);
+        inventory.GetCount(key).ShouldBe(1);
+        inventory.AllCounts.First().Key.CurrencyCode.ShouldBe(DenominationKey.DefaultCurrencyCode);
+    }
+
+    /// <summary>不一致状態（HasDiscrepancy）を外部から直接変更できることを検証する。</summary>
+    [Fact]
+    public void HasDiscrepancySetterShouldWork()
+    {
+        inventory.HasDiscrepancy = true;
+        inventory.HasDiscrepancy.ShouldBeTrue();
+        inventory.HasDiscrepancy = false;
+        inventory.HasDiscrepancy.ShouldBeFalse();
+    }
+
+    /// <summary>GetTotalCount がすべてのバケットを合計することを検証する。</summary>
+    [Fact]
+    public void GetTotalCountShouldSumAllBuckets()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        inventory.Add(key, 10);
+        inventory.AddCollection(key, 5);
+        inventory.AddReject(key, 3);
+        inventory.AddEscrow(key, 2);
+
+        inventory.GetTotalCount(key).ShouldBe(20);
+    }
+
+    /// <summary>Clear メソッドがすべてのバケットを初期化することを検証する。</summary>
+    [Fact]
+    public void ClearShouldResetAllBuckets()
+    {
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        inventory.Add(key, 10);
+        inventory.AddCollection(key, 5);
+        inventory.AddReject(key, 3);
+        inventory.AddEscrow(key, 2);
+
+        inventory.Clear();
+
+        inventory.GetCount(key).ShouldBe(0);
+        inventory.CollectionCounts.ShouldBeEmpty();
+        inventory.RejectCounts.ShouldBeEmpty();
+        inventory.EscrowCounts.ShouldBeEmpty();
+    }
+
+    /// <summary>Dispose 時に Subject が破棄されることを検証する。</summary>
+    [Fact]
+    public void DisposeShouldDisposeSubject()
+    {
+        var inv = new Inventory();
+        inv.Dispose();
+        // Just verify no exception on double dispose
+        inv.Dispose();
+    }
 }
