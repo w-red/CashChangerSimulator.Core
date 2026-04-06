@@ -6,10 +6,10 @@ namespace CashChangerSimulator.Device;
 /// <summary>現金入出金機の基本操作と状態監視を定義する抽象インターフェース。</summary>
 public interface ICashChangerDevice : IDisposable
 {
-    /// <summary>Gets デバイスが現在ビジー状態かどうか。</summary>
+    /// <summary>デバイスが現在ビジー状態かどうか。</summary>
     ReadOnlyReactiveProperty<bool> IsBusy { get; }
 
-    /// <summary>Gets デバイスの現在の制御状態。</summary>
+    /// <summary>デバイスの現在の制御状態。</summary>
     ReadOnlyReactiveProperty<DeviceControlState> State { get; }
 
     /// <summary>デバイスを非同期でオープンします。</summary>
