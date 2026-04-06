@@ -1,4 +1,4 @@
-namespace CashChangerSimulator.Device;
+namespace CashChangerSimulator.Core.Models;
 
 /// <summary>デバイス操作の共通エラーコード。</summary>
 public enum DeviceErrorCode
