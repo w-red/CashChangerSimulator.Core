@@ -71,13 +71,13 @@ public class DepositController : IDisposable
         this.manager = manager;
     }
 
-    /// <summary>Gets a value indicating whether 状態が変更されたときに通知されるストリーム。</summary>
+    /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public virtual Observable<Unit> Changed => changed;
 
-    /// <summary>Gets or sets a value indicating whether リアルタイムデータの通知。上位層（アダプター等）が利用します。</summary>
+    /// <summary>リアルタイムデータの通知。上位層（アダプター等）が利用します。</summary>
     public bool RealTimeDataEnabled { get; set; }
 
-    /// <summary>Gets 投入された合計金額を取得します。</summary>
+    /// <summary>投入された合計金額を取得します。</summary>
     public virtual decimal DepositAmount
     {
         get
@@ -89,7 +89,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets オーバーフロー（満杯等により収納不可）した金額を取得します。</summary>
+    /// <summary>オーバーフロー（満杯等により収納不可）した金額を取得します。</summary>
     public virtual decimal OverflowAmount
     {
         get
@@ -101,7 +101,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets リジェクト（偽札、汚れ等により返却）された金額を取得します。</summary>
+    /// <summary>リジェクト（偽札、汚れ等により返却）された金額を取得します。</summary>
     public virtual decimal RejectAmount
     {
         get
@@ -113,7 +113,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 投入された各種金種の枚数を取得します。</summary>
+    /// <summary>投入された各種金種の枚数を取得します。</summary>
     public virtual IReadOnlyDictionary<DenominationKey, int> DepositCounts
     {
         get
@@ -125,7 +125,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 現在の預入状態を取得します。</summary>
+    /// <summary>現在の預入状態を取得します。</summary>
     public virtual DeviceDepositStatus DepositStatus
     {
         get
@@ -137,7 +137,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether 入金処理が進行中かどうかを取得します。</summary>
+    /// <summary>入金処理が進行中かどうかを取得します。</summary>
     public virtual bool IsDepositInProgress
     {
         get
@@ -149,7 +149,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether 入金処理が一時停止中かどうかを取得します。</summary>
+    /// <summary>入金処理が一時停止中かどうかを取得します。</summary>
     public virtual bool IsPaused
     {
         get
@@ -161,7 +161,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether 入金が確定（Fixed）されたかどうかを取得します。</summary>
+    /// <summary>入金が確定（Fixed）されたかどうかを取得します。</summary>
     public virtual bool IsFixed
     {
         get
@@ -173,7 +173,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether デバイスがビジー状態かどうかを取得します。</summary>
+    /// <summary>デバイスがビジー状態かどうかを取得します。</summary>
     public virtual bool IsBusy
     {
         get
@@ -185,7 +185,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に発生したエラーコードを取得します。</summary>
+    /// <summary>直近に発生したエラーコードを取得します。</summary>
     public virtual DeviceErrorCode LastErrorCode
     {
         get
@@ -197,7 +197,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に発生した拡張エラーコードを取得します。</summary>
+    /// <summary>直近に発生した拡張エラーコードを取得します。</summary>
     public virtual int LastErrorCodeExtended
     {
         get
@@ -209,7 +209,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に投入された紙幣のシリアル番号のリストを取得します。</summary>
+    /// <summary>直近に投入された紙幣のシリアル番号のリストを取得します。</summary>
     public virtual IReadOnlyList<string> LastDepositedSerials
     {
         get

@@ -47,10 +47,10 @@ public class DispenseController : IDisposable
         this.simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
     }
 
-    /// <summary>Gets 状態が変更されたときに通知されるストリーム。</summary>
+    /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public virtual Observable<Unit> Changed => changed;
 
-    /// <summary>Gets 現在の出金状態を取得します。</summary>
+    /// <summary>現在の出金状態を取得します。</summary>
     public virtual CashDispenseStatus Status
     {
         get
@@ -62,7 +62,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>Gets a value indicating whether デバイスがビジー状態かどうかを取得します。</summary>
+    /// <summary>デバイスがビジー状態かどうかを取得します。</summary>
     public virtual bool IsBusy
     {
         get
@@ -74,7 +74,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に発生したエラーコードを取得します。</summary>
+    /// <summary>直近に発生したエラーコードを取得します。</summary>
     public virtual DeviceErrorCode LastErrorCode
     {
         get
@@ -86,7 +86,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>Gets 直近に発生した拡張エラーコードを取得します。</summary>
+    /// <summary>直近に発生した拡張エラーコードを取得します。</summary>
     public virtual int LastErrorCodeExtended
     {
         get
