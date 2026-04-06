@@ -12,7 +12,7 @@ public class HistoryPersistenceServiceTests : IDisposable
     private readonly HistoryPersistenceService service;
     private readonly TransactionHistory history;
 
-    /// <summary>Initializes a new instance of the <see cref="HistoryPersistenceServiceTests"/> class.HistoryPersistenceServiceTests の新しいインスタンスを初期化します。</summary>
+    /// <summary>HistoryPersistenceServiceTests の新しいインスタンスを初期化します。</summary>
     public HistoryPersistenceServiceTests()
     {
         testPath = Path.Combine(Path.GetTempPath(), $"history_test_{Guid.NewGuid()}.bin");
@@ -59,7 +59,6 @@ public class HistoryPersistenceServiceTests : IDisposable
     }
 
     /// <summary>オートセーブが有効な際、履歴の追加に伴い自動的に保存が行われることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
     [Fact]
     public async Task AutoSaveShouldTriggerWhenEntryAdded()
     {
