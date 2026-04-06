@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual.Services;
 using Shouldly;
 

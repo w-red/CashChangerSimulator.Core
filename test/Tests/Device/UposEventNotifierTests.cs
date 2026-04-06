@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.PointOfService;
 using Moq;

@@ -1,6 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.PointOfService;
 using Moq;
@@ -58,7 +58,7 @@ public class UposConfigurationManagerTests
     [Fact]
     public void ReloadShouldManuallyTriggerUpdate()
     {
-        stateProvider.Setup(s => s.State).Returns(CashChangerSimulator.Device.DeviceControlState.Idle);
+        stateProvider.Setup(s => s.State).Returns(DeviceControlState.Idle);
         inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
 
         manager.Reload();

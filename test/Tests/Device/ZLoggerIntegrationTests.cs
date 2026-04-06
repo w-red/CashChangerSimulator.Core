@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using Microsoft.Extensions.Logging;

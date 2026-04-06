@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Models;
 using System.Diagnostics;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device.Virtual;

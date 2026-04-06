@@ -3,7 +3,6 @@
     <Project Path="src/Core/CashChangerSimulator.Core.csproj" />
     <Project Path="src/Device.PosForDotNet/CashChangerSimulator.Device.PosForDotNet.csproj" />
     <Project Path="src/Device.Virtual/CashChangerSimulator.Device.Virtual.csproj" />
-    <Project Path="src/Device/CashChangerSimulator.Device.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Tests/CashChangerSimulator.Tests.csproj" />

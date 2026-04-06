@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Configuration;
 using Shouldly;
 using Tomlyn;

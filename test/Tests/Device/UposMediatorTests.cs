@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
