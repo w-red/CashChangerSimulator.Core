@@ -4,16 +4,9 @@ using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>投入開始操作をカプセル化するコマンド。</summary>
-public class BeginDepositCommand : IUposCommand
+public class BeginDepositCommand(DepositController controller) : IUposCommand
 {
-    private readonly DepositController controller;
-
-    /// <summary><see cref="BeginDepositCommand"/> クラスの新しいインスタンスを初期化します。</summary>
-    /// <param name="controller">入金コントローラー。</param>
-    public BeginDepositCommand(DepositController controller)
-    {
-        this.controller = controller;
-    }
+    private readonly DepositController controller = controller;
 
     /// <inheritdoc/>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
