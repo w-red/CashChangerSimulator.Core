@@ -1,3 +1,5 @@
+using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using R3;
 
 namespace CashChangerSimulator.Core.Managers;
@@ -13,6 +15,9 @@ public class HardwareStatusManager : IDisposable
 
     /// <summary>他のプロセスやインスタンスによってデバイスが占有されているかどうかを保持するプロパティ。</summary>
     public BindableReactiveProperty<bool> IsClaimedByAnother { get; } = new(false);
+
+    /// <summary>デバイスが有効化されているかどうか。</summary>
+    public BindableReactiveProperty<bool> DeviceEnabled { get; } = new(false);
 
     /// <summary>ジャムが発生しているかどうか。</summary>
     public BindableReactiveProperty<bool> IsJammed { get; } = new(false);
@@ -37,6 +42,12 @@ public class HardwareStatusManager : IDisposable
 
     /// <summary>現在発生中のデバイスエラーの ErrorCodeExtended 値。</summary>
     public BindableReactiveProperty<int> CurrentErrorCodeExtended { get; } = new(0);
+
+    /// <summary>ステータス情報の更新通知イベント。</summary>
+    public Observable<DeviceStatusUpdateEventArgs> StatusUpdateEvents =>
+        Observable.Merge(
+            IsConnected.Select(c => new DeviceStatusUpdateEventArgs((int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
+            IsJammed.Select(j => new DeviceStatusUpdateEventArgs((int)(j ? DeviceStatus.JournalEmpty : DeviceStatus.JournalOk)))); // 簡易的なマッピング
 
     /// <summary>このインスタンスが破棄されているかどうかを取得します。</summary>
     public bool IsDisposed { get; private set; }
@@ -77,6 +88,18 @@ public class HardwareStatusManager : IDisposable
         }
 
         IsConnected.Value = connected;
+    }
+
+    /// <summary>デバイスの有効状態を切り替えます。</summary>
+    /// <param name="enabled">有効な場合は true。</param>
+    public void SetDeviceEnabled(bool enabled)
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        DeviceEnabled.Value = enabled;
     }
 
     /// <summary>回収庫の取り外し状態を設定します。</summary>
