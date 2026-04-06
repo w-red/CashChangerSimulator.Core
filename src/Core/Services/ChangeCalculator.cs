@@ -5,22 +5,22 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Services;
 
-/// <summary>お釣りの金種組み合わせを計算するクラス。.</summary>
+/// <summary>お釣りの金種組み合わせを計算するクラス。</summary>
 /// <remarks>
 /// 指定された在庫情報と金額から、最適な払い出し内訳（Greedy アルゴリズム）を算出します。
-/// 在庫不足や端数の不一致が発生した場合には例外（InsufficientCashException）をスローします。.
+/// 在庫不足や端数の不一致が発生した場合には例外（InsufficientCashException）をスローします。
 /// </remarks>
 public static class ChangeCalculator
 {
     private static readonly ILogger Logger = LogProvider.CreateLogger<Inventory>();
 
-    /// <summary>指定された在庫から、支払額に応じた金種の組み合わせを算出します。.</summary>
-    /// <param name="inventory">現在の在庫。.</param>
-    /// <param name="targetAmount">支払いたい合計金額。.</param>
-    /// <param name="currencyCode">フィルタリングする通貨コード（任意）。.</param>
-    /// <param name="filter">追加の金種フィルタ。.</param>
-    /// <returns>金種キーと枚数のディクショナリ。.</returns>
-    /// <exception cref="InsufficientCashException">在庫不足や端数不一致により計算できない場合。.</exception>
+    /// <summary>指定された在庫から、支払額に応じた金種の組み合わせを算出します。</summary>
+    /// <param name="inventory">現在の在庫。</param>
+    /// <param name="targetAmount">支払いたい合計金額。</param>
+    /// <param name="currencyCode">フィルタリングする通貨コード（任意）。</param>
+    /// <param name="filter">追加の金種フィルタ。</param>
+    /// <returns>金種キーと枚数のディクショナリ。</returns>
+    /// <exception cref="InsufficientCashException">在庫不足や端数不一致により計算できない場合。</exception>
     public static IReadOnlyDictionary<DenominationKey, int> Calculate(IReadOnlyInventory inventory, decimal targetAmount, string? currencyCode = null, Func<DenominationKey, bool>? filter = null)
     {
         ArgumentNullException.ThrowIfNull(inventory);

@@ -6,7 +6,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Transactions;
 
-/// <summary>取引履歴の永続化を担当するサービス。.</summary>
+/// <summary>取引履歴の永続化を担当するサービス。</summary>
 public class HistoryPersistenceService : IDisposable
 {
     private readonly TransactionHistory history;
@@ -18,8 +18,8 @@ public class HistoryPersistenceService : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="HistoryPersistenceService"/> class.
     /// </summary>
-    /// <param name="history">取引履歴オブジェクト。.</param>
-    /// <param name="filePath">保存先のファイルパス。null の場合はデフォルトパスが使用される。.</param>
+    /// <param name="history">取引履歴オブジェクト。</param>
+    /// <param name="filePath">保存先のファイルパス。null の場合はデフォルトパスが使用される。</param>
     public HistoryPersistenceService(TransactionHistory history, string? filePath = null)
     {
         this.history = history;
@@ -27,8 +27,8 @@ public class HistoryPersistenceService : IDisposable
         logger = LogProvider.CreateLogger<HistoryPersistenceService>();
     }
 
-    /// <summary>履歴ファイルを読み込みます。.</summary>
-    /// <returns>読み込まれた履歴の状態。ファイルがない場合は空の状態を返す。.</returns>
+    /// <summary>履歴ファイルを読み込みます。</summary>
+    /// <returns>読み込まれた履歴の状態。ファイルがない場合は空の状態を返す。</returns>
     public HistoryState Load()
     {
         if (!File.Exists(filePath))
@@ -59,8 +59,8 @@ public class HistoryPersistenceService : IDisposable
         }
     }
 
-    /// <summary>履歴ファイルを保存します。.</summary>
-    /// <param name="state">保存する履歴の状態。.</param>
+    /// <summary>履歴ファイルを保存します。</summary>
+    /// <param name="state">保存する履歴の状態。</param>
     public void Save(HistoryState state)
     {
         ArgumentNullException.ThrowIfNull(state);
@@ -79,7 +79,7 @@ public class HistoryPersistenceService : IDisposable
         }
     }
 
-    /// <summary>オートセーブを開始します。取引が追加されるたびに保存されます。.</summary>
+    /// <summary>オートセーブを開始します。取引が追加されるたびに保存されます。</summary>
     public void StartAutoSave()
     {
         history.Added
@@ -97,8 +97,8 @@ public class HistoryPersistenceService : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを解放します。.</summary>
-    /// <param name="disposing">明示的な破棄かどうか。.</param>
+    /// <summary>リソースを解放します。</summary>
+    /// <param name="disposing">明示的な破棄かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)

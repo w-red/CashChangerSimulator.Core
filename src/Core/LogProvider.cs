@@ -5,17 +5,17 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core;
 
-/// <summary>アプリケーション全体で共有される ILoggerFactory を管理するクラス。.</summary>
+/// <summary>アプリケーション全体で共有される ILoggerFactory を管理するクラス。</summary>
 public static class LogProvider
 {
     private static ILoggerFactory? factory;
     private static LoggingSettings currentSettings = new() { LogLevel = "Information", EnableConsole = true };
 
-    /// <summary>Gets 全体で共有するロガーファクトリ。初期化前は NullLoggerFactory を返します。.</summary>
+    /// <summary>Gets 全体で共有するロガーファクトリ。初期化前は NullLoggerFactory を返します。</summary>
     public static ILoggerFactory Factory => factory ?? NullLoggerFactory.Instance;
 
-    /// <summary>ロギング設定に基づいて LogProvider を初期化します。.</summary>
-    /// <param name="settings">ロギング設定。.</param>
+    /// <summary>ロギング設定に基づいて LogProvider を初期化します。</summary>
+    /// <param name="settings">ロギング設定。</param>
     public static void Initialize(LoggingSettings settings)
     {
         currentSettings = settings;
@@ -70,20 +70,20 @@ public static class LogProvider
         });
     }
 
-    /// <summary>ログレベルのみを動的に変更します。.</summary>
-    /// <param name="level">設定するログレベル文字列。.</param>
+    /// <summary>ログレベルのみを動的に変更します。</summary>
+    /// <param name="level">設定するログレベル文字列。</param>
     public static void SetLogLevel(string level)
     {
         currentSettings.LogLevel = level;
         Initialize(currentSettings);
     }
 
-    /// <summary>指定された型のロガーを生成します。.</summary>
-    /// <typeparam name="T">ロガーを使用するクラスの型。.</typeparam>
-    /// <returns>ILogger インスタンス。.</returns>
+    /// <summary>指定された型のロガーを生成します。</summary>
+    /// <typeparam name="T">ロガーを使用するクラスの型。</typeparam>
+    /// <returns>ILogger インスタンス。</returns>
     public static ILogger<T> CreateLogger<T>() => Factory.CreateLogger<T>();
 
-    /// <summary>ロガーファクトリを破棄し、保留中のログをフラッシュします。.</summary>
+    /// <summary>ロガーファクトリを破棄し、保留中のログをフラッシュします。</summary>
     public static void Dispose()
     {
         factory?.Dispose();

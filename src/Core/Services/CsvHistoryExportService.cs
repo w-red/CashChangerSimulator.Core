@@ -5,7 +5,7 @@ using CashChangerSimulator.Core.Transactions;
 namespace CashChangerSimulator.Core.Services;
 
 /// <summary>
-/// 取引履歴を CSV 形式にエクスポートするサービスの実装。.
+/// 取引履歴を CSV 形式にエクスポートするサービスの実装。
 /// </summary>
 public class CsvHistoryExportService : IHistoryExportService
 {

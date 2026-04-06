@@ -3,7 +3,7 @@ using R3;
 
 namespace CashChangerSimulator.Core.Monitoring;
 
-/// <summary>特定の金種の枚数を監視し、しきい値に基づいた状態（CashStatus）を通知する。.</summary>
+/// <summary>特定の金種の枚数を監視し、しきい値に基づいた状態（CashStatus）を通知する。</summary>
 public class CashStatusMonitor : IDisposable
 {
     private readonly IReadOnlyInventory inventory;
@@ -11,13 +11,13 @@ public class CashStatusMonitor : IDisposable
     private readonly IDisposable subscription;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="CashStatusMonitor"/> class.在庫、金種キー、各種しきい値を指定してインスタンスを初期化する。.</summary>
-    /// <param name="inventory">監視対象の在庫。.</param>
-    /// <param name="key">監視対象の金種キー。.</param>
-    /// <param name="nearEmptyThreshold">ニアエンプティしきい値。.</param>
-    /// <param name="nearFullThreshold">ニアフルしきい値。.</param>
-    /// <param name="fullThreshold">フルしきい値。.</param>
-    /// <param name="isRecyclable">この金種がリサイクル可能かどうか。.</param>
+    /// <summary>Initializes a new instance of the <see cref="CashStatusMonitor"/> class.在庫、金種キー、各種しきい値を指定してインスタンスを初期化する。</summary>
+    /// <param name="inventory">監視対象の在庫。</param>
+    /// <param name="key">監視対象の金種キー。</param>
+    /// <param name="nearEmptyThreshold">ニアエンプティしきい値。</param>
+    /// <param name="nearFullThreshold">ニアフルしきい値。</param>
+    /// <param name="fullThreshold">フルしきい値。</param>
+    /// <param name="isRecyclable">この金種がリサイクル可能かどうか。</param>
     public CashStatusMonitor(IReadOnlyInventory inventory, DenominationKey key, int nearEmptyThreshold, int nearFullThreshold, int fullThreshold, bool isRecyclable = true)
     {
         ArgumentNullException.ThrowIfNull(inventory);
@@ -39,28 +39,28 @@ public class CashStatusMonitor : IDisposable
             .Subscribe(_ => UpdateStatus());
     }
 
-    /// <summary>Gets a value indicating whether この金種がリサイクル可能かどうか。.</summary>
+    /// <summary>Gets a value indicating whether この金種がリサイクル可能かどうか。</summary>
     public bool IsRecyclable { get; }
 
-    /// <summary>Gets ニアエンプティしきい値。.</summary>
+    /// <summary>Gets ニアエンプティしきい値。</summary>
     public int NearEmptyThreshold { get; private set; }
 
-    /// <summary>Gets ニアフルしきい値。.</summary>
+    /// <summary>Gets ニアフルしきい値。</summary>
     public int NearFullThreshold { get; private set; }
 
-    /// <summary>Gets フルしきい値。.</summary>
+    /// <summary>Gets フルしきい値。</summary>
     public int FullThreshold { get; private set; }
 
-    /// <summary>Gets 現在の状態を流すイベントストリーム。.</summary>
+    /// <summary>Gets 現在の状態を流すイベントストリーム。</summary>
     public ReadOnlyReactiveProperty<CashStatus> Status => status;
 
-    /// <summary>Gets 監視する金種キー。.</summary>
+    /// <summary>Gets 監視する金種キー。</summary>
     public DenominationKey Key { get; }
 
-    /// <summary>しきい値を動的に更新し、状態を再計算します。.</summary>
-    /// <param name="nearEmpty">新しいニアエンプティしきい値。.</param>
-    /// <param name="nearFull">新しいニアフルしきい値。.</param>
-    /// <param name="full">新しいフルしきい値。.</param>
+    /// <summary>しきい値を動的に更新し、状態を再計算します。</summary>
+    /// <param name="nearEmpty">新しいニアエンプティしきい値。</param>
+    /// <param name="nearFull">新しいニアフルしきい値。</param>
+    /// <param name="full">新しいフルしきい値。</param>
     public void UpdateThresholds(int nearEmpty, int nearFull, int full)
     {
         NearEmptyThreshold = nearEmpty;
@@ -76,8 +76,8 @@ public class CashStatusMonitor : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを破棄します。.</summary>
-    /// <param name="disposing">マネージリソースを破棄する場合は true。.</param>
+    /// <summary>リソースを破棄します。</summary>
+    /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)

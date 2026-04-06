@@ -10,16 +10,19 @@ insert_final_newline = true
 
 [*.cs]
 # Core EditorConfig Options
-dotnet_diagnostic.SA1633.severity = none # File header not required
+dotnet_diagnostic.SA0001.severity = none # XML comment analysis
 dotnet_diagnostic.SA1101.severity = none # 'this.' prefix not required
 dotnet_diagnostic.SA1200.severity = none # Using directives position (allow outside namespace)
+dotnet_diagnostic.SA1215.severity = none
+dotnet_diagnostic.SA1413.severity = none # Trailing comma in multi-line initializers
+dotnet_diagnostic.SA1516.severity = none # Elements should be separated by blank line
 dotnet_diagnostic.SA1600.severity = none # Documentation not required for all elements (we will selectively enable)
 dotnet_diagnostic.SA1601.severity = none
 dotnet_diagnostic.SA1602.severity = none
+dotnet_diagnostic.SA1623.severity = none
+dotnet_diagnostic.SA1629.severity = none
+dotnet_diagnostic.SA1633.severity = none # File header not required
 dotnet_diagnostic.SA1649.severity = none # File name match type name (sometimes we have multiple)
-dotnet_diagnostic.SA1413.severity = none # Trailing comma in multi-line initializers
-dotnet_diagnostic.SA1516.severity = none # Elements should be separated by blank line
-dotnet_diagnostic.SA0001.severity = none # XML comment analysis
 
 # Enforce some good ones
 dotnet_diagnostic.SA1000.severity = error

@@ -2,7 +2,7 @@ using R3;
 
 namespace CashChangerSimulator.Core.Monitoring;
 
-/// <summary>釣銭機全体のステータスを集約管理するクラス。.</summary>
+/// <summary>釣銭機全体のステータスを集約管理するクラス。</summary>
 public class OverallStatusAggregator : IDisposable
 {
     private readonly BindableReactiveProperty<CashStatus> deviceStatus = new(CashStatus.Unknown);
@@ -11,8 +11,8 @@ public class OverallStatusAggregator : IDisposable
     private IDisposable? currentSubscription;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="OverallStatusAggregator"/> class.監視対象のモニター一覧を指定して初期化します。.</summary>
-    /// <param name="monitors">監視対象のモニター一覧。.</param>
+    /// <summary>Initializes a new instance of the <see cref="OverallStatusAggregator"/> class.監視対象のモニター一覧を指定して初期化します。</summary>
+    /// <param name="monitors">監視対象のモニター一覧。</param>
     public OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
     {
         this.monitors = monitors;
@@ -22,14 +22,14 @@ public class OverallStatusAggregator : IDisposable
         Refresh(monitors);
     }
 
-    /// <summary>Gets 空・ニアエンプティに関する集約ステータス。.</summary>
+    /// <summary>Gets 空・ニアエンプティに関する集約ステータス。</summary>
     public ReadOnlyReactiveProperty<CashStatus> DeviceStatus { get; }
 
-    /// <summary>Gets 満杯・ニアフルに関する集約ステータス。.</summary>
+    /// <summary>Gets 満杯・ニアフルに関する集約ステータス。</summary>
     public ReadOnlyReactiveProperty<CashStatus> FullStatus { get; }
 
-    /// <summary>金種モニターのリストを更新し、集計ロジックを再構築します。.</summary>
-    /// <param name="monitors">新しく監視対象とするモニター一覧。.</param>
+    /// <summary>金種モニターのリストを更新し、集計ロジックを再構築します。</summary>
+    /// <param name="monitors">新しく監視対象とするモニター一覧。</param>
     public void Refresh(IEnumerable<CashStatusMonitor> monitors)
     {
         currentSubscription?.Dispose();
@@ -61,8 +61,8 @@ public class OverallStatusAggregator : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを破棄します。.</summary>
-    /// <param name="disposing">マネージリソースを破棄する場合は true。.</param>
+    /// <summary>リソースを破棄します。</summary>
+    /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)

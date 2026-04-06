@@ -5,11 +5,11 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>金種ごとの在庫枚数を管理する実体クラス。.</summary>
+/// <summary>金種ごとの在庫枚数を管理する実体クラス。</summary>
 /// <remarks>
 /// 通常庫（リサイクル用）、回収庫（オーバーフロー用）、およびリジェクト庫（汚損・不明用）の
 /// 3つの論理的なバケットで現金の枚数を管理します。
-/// 在庫の変化は <see cref="Changed"/> ストリームを通じてリアクティブに通知されます。.
+/// 在庫の変化は <see cref="Changed"/> ストリームを通じてリアクティブに通知されます。
 /// </remarks>
 public class Inventory : IReadOnlyInventory, IDisposable
 {
@@ -27,8 +27,8 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <inheritdoc/>
     public virtual Observable<DenominationKey> Changed => changed;
 
-    /// <summary>Gets or sets a value indicating whether 在庫の不一致が発生しているかどうかを取得または設定します。.</summary>
-    /// <remarks>通常、回収庫またはリジェクト庫に現金がある場合に不一致と見なされます。手動での設定も可能です。.</remarks>
+    /// <summary>Gets or sets a value indicating whether 在庫の不一致が発生しているかどうかを取得または設定します。</summary>
+    /// <remarks>通常、回収庫またはリジェクト庫に現金がある場合に不一致と見なされます。手動での設定も可能です。</remarks>
     public virtual bool HasDiscrepancy
     {
         get
@@ -47,7 +47,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>Gets 通常庫（リサイクル可能）の全枚数。.</summary>
+    /// <summary>Gets 通常庫（リサイクル可能）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts
     {
         get
@@ -59,7 +59,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>Gets 回収庫（オーバーフロー等）の全枚数。.</summary>
+    /// <summary>Gets 回収庫（オーバーフロー等）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts
     {
         get
@@ -71,7 +71,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>Gets リジェクト庫（汚損等）の全枚数。.</summary>
+    /// <summary>Gets リジェクト庫（汚損等）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts
     {
         get
@@ -83,7 +83,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>Gets 入金トレイ（エスクロー）の全枚数。.</summary>
+    /// <summary>Gets 入金トレイ（エスクロー）の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts
     {
         get
@@ -95,24 +95,24 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>指定された金種の枚数を追加します。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <param name="count">追加する枚数（負の値も可）。.</param>
+    /// <summary>指定された金種の枚数を追加します。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <param name="count">追加する枚数（負の値も可）。</param>
     /// <remarks>
     /// 金種キーを正規化し、指定された枚数を通常庫に加算します。
-    /// 正負両方の値を許容しますが、最終的な在庫数が負にならないよう内部で正規化されます。.
+    /// 正負両方の値を許容しますが、最終的な在庫数が負にならないよう内部で正規化されます。
     /// </remarks>
     public virtual void Add(DenominationKey key, int count)
     {
         UpdateBucket(counts, key, count, "Inventory.Add");
     }
 
-    /// <summary>指定された金種の枚数を上書き設定します。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <param name="count">設定する枚数。.</param>
+    /// <summary>指定された金種の枚数を上書き設定します。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <param name="count">設定する枚数。</param>
     /// <remarks>
     /// 既存の値を破棄し、指定された枚数で通常庫を更新します。
-    /// 不の枚数が指定された場合は 0 として扱われます。.
+    /// 不の枚数が指定された場合は 0 として扱われます。
     /// </remarks>
     public virtual void SetCount(DenominationKey key, int count)
     {
@@ -132,31 +132,31 @@ public class Inventory : IReadOnlyInventory, IDisposable
         changed.OnNext(key);
     }
 
-    /// <summary>指定された金種の枚数を回収庫に追加する。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <param name="count">追加する枚数。.</param>
+    /// <summary>指定された金種の枚数を回収庫に追加する。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <param name="count">追加する枚数。</param>
     public virtual void AddCollection(DenominationKey key, int count)
     {
         UpdateBucket(collectionCounts, key, count, "Inventory.AddCollection");
     }
 
-    /// <summary>指定された金種の枚数をリジェクト庫に追加する。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <param name="count">追加する枚数。.</param>
+    /// <summary>指定された金種の枚数をリジェクト庫に追加する。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <param name="count">追加する枚数。</param>
     public virtual void AddReject(DenominationKey key, int count)
     {
         UpdateBucket(rejectCounts, key, count, "Inventory.AddReject");
     }
 
-    /// <summary>指定された金種の枚数を入金トレイ（エスクロー）に追加する。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <param name="count">追加する枚数。.</param>
+    /// <summary>指定された金種の枚数を入金トレイ（エスクロー）に追加する。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <param name="count">追加する枚数。</param>
     public virtual void AddEscrow(DenominationKey key, int count)
     {
         UpdateBucket(escrowCounts, key, count, "Inventory.AddEscrow");
     }
 
-    /// <summary>入金トレイ（エスクロー）をクリアします。.</summary>
+    /// <summary>入金トレイ（エスクロー）をクリアします。</summary>
     public virtual void ClearEscrow()
     {
         List<DenominationKey> keys;
@@ -174,9 +174,9 @@ public class Inventory : IReadOnlyInventory, IDisposable
         logger.ZLogDebug($"Inventory.ClearEscrow finished.");
     }
 
-    /// <summary>在庫の枚数を取得します。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <returns>在庫枚数。.</returns>
+    /// <summary>在庫の枚数を取得します。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <returns>在庫枚数。</returns>
     public virtual int GetCount(DenominationKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
@@ -186,9 +186,9 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>全庫（還流・回収・リジェクト）の合計枚数を取得します。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <returns>合計枚数。.</returns>
+    /// <summary>全庫（還流・回収・リジェクト）の合計枚数を取得します。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <returns>合計枚数。</returns>
     public virtual int GetTotalCount(DenominationKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
@@ -202,7 +202,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>在庫をすべてクリアします。.</summary>
+    /// <summary>在庫をすべてクリアします。</summary>
     public void Clear()
     {
         lock (@lock)
@@ -214,10 +214,10 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>現在の在庫の合計金額を計算します。.</summary>
-    /// <param name="currencyCode">フィルタリングする通貨コード（任意）。.</param>
-    /// <remarks>通常庫、回収庫、リジェクト庫のすべての合計を計算します。.</remarks>
-    /// <returns>合計金額。.</returns>
+    /// <summary>現在の在庫の合計金額を計算します。</summary>
+    /// <param name="currencyCode">フィルタリングする通貨コード（任意）。</param>
+    /// <remarks>通常庫、回収庫、リジェクト庫のすべての合計を計算します。</remarks>
+    /// <returns>合計金額。</returns>
     public virtual decimal CalculateTotal(string? currencyCode = null)
     {
         lock (@lock)
@@ -229,8 +229,8 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>現在の在庫を保存用のデータ形式に変換します。.</summary>
-    /// <returns>保存用ディクショナリ。.</returns>
+    /// <summary>現在の在庫を保存用のデータ形式に変換します。</summary>
+    /// <returns>保存用ディクショナリ。</returns>
     public Dictionary<string, int> ToDictionary()
     {
         lock (@lock)
@@ -252,8 +252,8 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>文字列キーのディクショナリから在庫を復元します。.</summary>
-    /// <param name="data">復元元データ。.</param>
+    /// <summary>文字列キーのディクショナリから在庫を復元します。</summary>
+    /// <param name="data">復元元データ。</param>
     public void LoadFromDictionary(IReadOnlyDictionary<string, int> data)
     {
         ArgumentNullException.ThrowIfNull(data);
@@ -303,8 +303,8 @@ public class Inventory : IReadOnlyInventory, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを解放します。.</summary>
-    /// <param name="disposing">明示的な破棄かどうか。.</param>
+    /// <summary>リソースを解放します。</summary>
+    /// <param name="disposing">明示的な破棄かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)

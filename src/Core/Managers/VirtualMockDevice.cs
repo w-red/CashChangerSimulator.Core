@@ -8,7 +8,7 @@ using ZLogger;
 namespace CashChangerSimulator.Core.Managers;
 
 /// <summary>
-/// POS SDK に依存せず、純粋なロジックとして釣銭機の動作をエミュレートする仮想デバイス実装。.
+/// POS SDK に依存せず、純粋なロジックとして釣銭機の動作をエミュレートする仮想デバイス実装。
 /// </summary>
 public class VirtualMockDevice : ICashChangerDevice
 {
@@ -22,11 +22,11 @@ public class VirtualMockDevice : ICashChangerDevice
     private bool hasMutex;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="VirtualMockDevice"/> class.仮想デバイスを初期化する。.</summary>
-    /// <param name="manager">釣銭機マネージャー。.</param>
-    /// <param name="inventory">在庫。.</param>
-    /// <param name="statusManager">ハードウェアステータスマネージャー。.</param>
-    /// <param name="logger">ロガー。.</param>
+    /// <summary>Initializes a new instance of the <see cref="VirtualMockDevice"/> class.仮想デバイスを初期化する。</summary>
+    /// <param name="manager">釣銭機マネージャー。</param>
+    /// <param name="inventory">在庫。</param>
+    /// <param name="statusManager">ハードウェアステータスマネージャー。</param>
+    /// <param name="logger">ロガー。</param>
     public VirtualMockDevice(
         CashChangerManager manager,
         Inventory inventory,
@@ -39,23 +39,23 @@ public class VirtualMockDevice : ICashChangerDevice
         this.logger = logger;
     }
 
-    /// <summary>Gets a value indicating whether デバイスがオープンされているかどうかを取得します。.</summary>
+    /// <summary>Gets a value indicating whether デバイスがオープンされているかどうかを取得します。</summary>
     public bool IsConnected => statusManager.IsConnected.Value;
 
-    /// <summary>Gets a value indicating whether デバイスが排他権（Claim）を取得しているかどうかを取得します。.</summary>
+    /// <summary>Gets a value indicating whether デバイスが排他権（Claim）を取得しているかどうかを取得します。</summary>
     public bool Claimed { get; private set; }
 
-    /// <summary>Gets a value indicating whether デバイスが有効化（Enable）されているかどうかを取得します。.</summary>
+    /// <summary>Gets a value indicating whether デバイスが有効化（Enable）されているかどうかを取得します。</summary>
     public bool DeviceEnabled { get; private set; }
 
-    /// <summary>デバイスをプログラム的にオープンします。.</summary>
+    /// <summary>デバイスをプログラム的にオープンします。</summary>
     public void Open()
     {
         statusManager.SetConnected(true);
         logger.ZLogInformation($"VirtualMockDevice Opened.");
     }
 
-    /// <summary>デバイスをクローズし、リソースを解放します。.</summary>
+    /// <summary>デバイスをクローズし、リソースを解放します。</summary>
     public void Close()
     {
         Disable();
@@ -64,8 +64,8 @@ public class VirtualMockDevice : ICashChangerDevice
         logger.ZLogInformation($"VirtualMockDevice Closed.");
     }
 
-    /// <summary>デバイスの排他権を取得します。.</summary>
-    /// <param name="timeout">タイムアウト（ミリ秒）。.</param>
+    /// <summary>デバイスの排他権を取得します。</summary>
+    /// <param name="timeout">タイムアウト（ミリ秒）。</param>
     public void Claim(int timeout)
     {
         if (!IsConnected)
@@ -94,7 +94,7 @@ public class VirtualMockDevice : ICashChangerDevice
         }
     }
 
-    /// <summary>デバイスの排他権を解放します。.</summary>
+    /// <summary>デバイスの排他権を解放します。</summary>
     public void Release()
     {
         if (hasMutex)
@@ -107,7 +107,7 @@ public class VirtualMockDevice : ICashChangerDevice
         logger.ZLogInformation($"VirtualMockDevice Released.");
     }
 
-    /// <summary>デバイスを有効化し、入排金操作を可能にします。.</summary>
+    /// <summary>デバイスを有効化し、入排金操作を可能にします。</summary>
     public void Enable()
     {
         if (!Claimed)
@@ -119,15 +119,15 @@ public class VirtualMockDevice : ICashChangerDevice
         logger.ZLogInformation($"VirtualMockDevice Enabled.");
     }
 
-    /// <summary>デバイスを無効化します。.</summary>
+    /// <summary>デバイスを無効化します。</summary>
     public void Disable()
     {
         DeviceEnabled = false;
         logger.ZLogInformation($"VirtualMockDevice Disabled.");
     }
 
-    /// <summary>現金を投入します。.</summary>
-    /// <param name="counts">投入する金種と枚数。.</param>
+    /// <summary>現金を投入します。</summary>
+    /// <param name="counts">投入する金種と枚数。</param>
     public void Deposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
         if (!DeviceEnabled)
@@ -138,9 +138,9 @@ public class VirtualMockDevice : ICashChangerDevice
         manager.Deposit(counts);
     }
 
-    /// <summary>現金を払い出します。.</summary>
-    /// <param name="amount">払い出す合計金額。.</param>
-    /// <param name="currencyCode">通貨コード（任意）。.</param>
+    /// <summary>現金を払い出します。</summary>
+    /// <param name="amount">払い出す合計金額。</param>
+    /// <param name="currencyCode">通貨コード（任意）。</param>
     public void Dispense(decimal amount, string? currencyCode = null)
     {
         if (!DeviceEnabled)
@@ -151,8 +151,8 @@ public class VirtualMockDevice : ICashChangerDevice
         manager.Dispense(amount, currencyCode);
     }
 
-    /// <summary>現在の在庫情報を取得します。.</summary>
-    /// <returns>在庫情報のコピー。.</returns>
+    /// <summary>現在の在庫情報を取得します。</summary>
+    /// <returns>在庫情報のコピー。</returns>
     public IReadOnlyDictionary<DenominationKey, int> GetInventory()
     {
         return inventory.AllCounts.ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -165,8 +165,8 @@ public class VirtualMockDevice : ICashChangerDevice
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを解放します。.</summary>
-    /// <param name="disposing">明示的な破棄かどうか。.</param>
+    /// <summary>リソースを解放します。</summary>
+    /// <param name="disposing">明示的な破棄かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)

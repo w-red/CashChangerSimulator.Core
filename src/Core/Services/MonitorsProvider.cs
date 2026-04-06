@@ -5,7 +5,7 @@ using R3;
 
 namespace CashChangerSimulator.Core.Services;
 
-/// <summary>全金種の CashStatusMonitor インスタンスを提供するプロバイダー。.</summary>
+/// <summary>全金種の CashStatusMonitor インスタンスを提供するプロバイダー。</summary>
 public class MonitorsProvider : IDisposable
 {
     private readonly Inventory inventory;
@@ -15,10 +15,10 @@ public class MonitorsProvider : IDisposable
     private readonly CompositeDisposable disposables = [];
     private List<CashStatusMonitor> monitors = [];
 
-    /// <summary>Initializes a new instance of the <see cref="MonitorsProvider"/> class.在庫と設定を元に、全金種のモニターを初期化する。.</summary>
-    /// <param name="inventory">在庫マネージャー。.</param>
-    /// <param name="configProvider">設定プロバイダー。.</param>
-    /// <param name="metadataProvider">通貨メタデータプロバイダー。.</param>
+    /// <summary>Initializes a new instance of the <see cref="MonitorsProvider"/> class.在庫と設定を元に、全金種のモニターを初期化する。</summary>
+    /// <param name="inventory">在庫マネージャー。</param>
+    /// <param name="configProvider">設定プロバイダー。</param>
+    /// <param name="metadataProvider">通貨メタデータプロバイダー。</param>
     public MonitorsProvider(Inventory inventory, ConfigurationProvider configProvider, ICurrencyMetadataProvider metadataProvider)
     {
         ArgumentNullException.ThrowIfNull(inventory);
@@ -36,13 +36,13 @@ public class MonitorsProvider : IDisposable
         metadataProvider.Changed.Subscribe(_ => RefreshMonitors()).AddTo(disposables);
     }
 
-    /// <summary>Gets 生成されたモニターのリスト。.</summary>
+    /// <summary>Gets 生成されたモニターのリスト。</summary>
     public IReadOnlyList<CashStatusMonitor> Monitors => monitors;
 
-    /// <summary>Gets モニターリストが変更されたときに通知されるストリーム。.</summary>
+    /// <summary>Gets モニターリストが変更されたときに通知されるストリーム。</summary>
     public Observable<Unit> Changed => changed;
 
-    /// <summary>現在の通貨設定に基づいてモニターリストを再構築する。.</summary>
+    /// <summary>現在の通貨設定に基づいてモニターリストを再構築する。</summary>
     public void RefreshMonitors()
     {
         var config = configProvider.Config;
@@ -77,8 +77,8 @@ public class MonitorsProvider : IDisposable
         changed.OnNext(Unit.Default);
     }
 
-    /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する（ホットリロード用）。.</summary>
-    /// <param name="config">更新に使用する設定オブジェクト。.</param>
+    /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する（ホットリロード用）。</summary>
+    /// <param name="config">更新に使用する設定オブジェクト。</param>
     public void UpdateThresholdsFromConfig(SimulatorConfiguration config)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -107,7 +107,7 @@ public class MonitorsProvider : IDisposable
         }
     }
 
-    /// <summary>テスト用：手動で変更通知を発火させます。.</summary>
+    /// <summary>テスト用：手動で変更通知を発火させます。</summary>
     public void TriggerChanged() => changed.OnNext(Unit.Default);
 
     /// <inheritdoc/>
@@ -117,8 +117,8 @@ public class MonitorsProvider : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを解放します。.</summary>
-    /// <param name="disposing">明示的な破棄かどうか。.</param>
+    /// <summary>リソースを解放します。</summary>
+    /// <param name="disposing">明示的な破棄かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)

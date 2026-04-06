@@ -4,7 +4,7 @@ using R3;
 
 namespace CashChangerSimulator.Core.Services;
 
-/// <summary>通貨コードに基づいて通貨のメタデータを提供するサービス。.</summary>
+/// <summary>通貨コードに基づいて通貨のメタデータを提供するサービス。</summary>
 public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
 {
     // ハードコードされた主要通貨の金種定義
@@ -75,8 +75,8 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
     private readonly Subject<Unit> changed = new();
     private readonly CompositeDisposable disposables = [];
 
-    /// <summary>Initializes a new instance of the <see cref="CurrencyMetadataProvider"/> class.設定プロバイダーを指定してメタデータプロバイダーを初期化する。.</summary>
-    /// <param name="configProvider">設定プロバイダー。.</param>
+    /// <summary>Initializes a new instance of the <see cref="CurrencyMetadataProvider"/> class.設定プロバイダーを指定してメタデータプロバイダーを初期化する。</summary>
+    /// <param name="configProvider">設定プロバイダー。</param>
     public CurrencyMetadataProvider(ConfigurationProvider configProvider)
     {
         ArgumentNullException.ThrowIfNull(configProvider);
@@ -101,34 +101,34 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
     /// <inheritdoc/>
     public Observable<Unit> Changed => changed;
 
-    /// <summary>Gets 通貨コード（例: "JPY"）。.</summary>
+    /// <summary>Gets 通貨コード（例: "JPY"）。</summary>
     public string CurrencyCode => currencyCodeProperty.Value;
 
-    /// <summary>Gets 通貨記号（プレフィックス優先）。.</summary>
+    /// <summary>Gets 通貨記号（プレフィックス優先）。</summary>
     public string Symbol => !string.IsNullOrEmpty(symbolPrefix.Value) ? symbolPrefix.Value : symbolSuffix.Value;
 
-    /// <summary>Gets 通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。.</summary>
+    /// <summary>Gets 通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolPrefix { get; }
 
-    /// <summary>Gets 通貨記号のサフィックス（例: "円"）。通常、金額の後ろに表示されます。.</summary>
+    /// <summary>Gets 通貨記号のサフィックス（例: "円"）。通常、金額の後ろに表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolSuffix { get; }
 
-    /// <summary>Gets この通貨でサポートされている全金種のリスト（額面の降順）。.</summary>
+    /// <summary>Gets この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
     public IReadOnlyList<DenominationKey> SupportedDenominations { get; private set; } = [];
 
-    /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <returns>表示名。.</returns>
+    /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <returns>表示名。</returns>
     public string GetDenominationName(DenominationKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
         return GetDenominationName(key, cultureCodeProperty.Value);
     }
 
-    /// <summary>指定された金種とカルチャの表示名を取得する。.</summary>
-    /// <param name="key">金種キー。.</param>
-    /// <param name="cultureCode">カルチャコード。.</param>
-    /// <returns>表示名。.</returns>
+    /// <summary>指定された金種とカルチャの表示名を取得する。</summary>
+    /// <param name="key">金種キー。</param>
+    /// <param name="cultureCode">カルチャコード。</param>
+    /// <returns>表示名。</returns>
     public string GetDenominationName(DenominationKey key, string cultureCode)
     {
         ArgumentNullException.ThrowIfNull(key);
@@ -194,8 +194,8 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>リソースを解放します。.</summary>
-    /// <param name="disposing">明示的な破棄かどうか。.</param>
+    /// <summary>リソースを解放します。</summary>
+    /// <param name="disposing">明示的な破棄かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)

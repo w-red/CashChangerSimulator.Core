@@ -3,10 +3,10 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Managers;
 
-/// <summary>OS レベルのファイルロックを利用して、プロセス間でのデバイス占有（Claim）を制御するマネージャー。.</summary>
+/// <summary>OS レベルのファイルロックを利用して、プロセス間でのデバイス占有（Claim）を制御するマネージャー。</summary>
 /// <remarks>
 /// .NET の FileShare.None を利用して、ファイルを「開きっぱなし」にすることでロックを維持します。
-/// プロセスがクラッシュした場合は OS が自動的にハンドルを閉じるため、ゴーストロックが発生しません。.
+/// プロセスがクラッシュした場合は OS が自動的にハンドルを閉じるため、ゴーストロックが発生しません。
 /// </remarks>
 public sealed class GlobalLockManager : IDisposable
 {
@@ -15,9 +15,9 @@ public sealed class GlobalLockManager : IDisposable
     private FileStream? lockStream;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="GlobalLockManager"/> class.指定されたファイルパスを使用してロックマネージャーを初期化します。.</summary>
-    /// <param name="lockFilePath">ロックに使用するファイルパス。.</param>
-    /// <param name="logger">ロガー。.</param>
+    /// <summary>Initializes a new instance of the <see cref="GlobalLockManager"/> class.指定されたファイルパスを使用してロックマネージャーを初期化します。</summary>
+    /// <param name="lockFilePath">ロックに使用するファイルパス。</param>
+    /// <param name="logger">ロガー。</param>
     public GlobalLockManager(string lockFilePath, ILogger logger)
     {
         this.lockFilePath = lockFilePath;
@@ -31,8 +31,8 @@ public sealed class GlobalLockManager : IDisposable
         }
     }
 
-    /// <summary>現在、他者（別プロセスまたは別ハンドル）によってロックが保持されているかどうかを確認します。.</summary>
-    /// <returns>既に他者が保持している場合は true。.</returns>
+    /// <summary>現在、他者（別プロセスまたは別ハンドル）によってロックが保持されているかどうかを確認します。</summary>
+    /// <returns>既に他者が保持している場合は true。</returns>
     public bool IsLockHeldByAnother()
     {
         if (lockStream != null)
@@ -71,8 +71,8 @@ public sealed class GlobalLockManager : IDisposable
         return false;
     }
 
-    /// <summary>排他的なロックを取得しようと試みます。.</summary>
-    /// <returns>取得に成功した場合は true、既に他者が保持している場合は false。.</returns>
+    /// <summary>排他的なロックを取得しようと試みます。</summary>
+    /// <returns>取得に成功した場合は true、既に他者が保持している場合は false。</returns>
     public bool TryAcquire()
     {
         if (lockStream != null)
@@ -98,7 +98,7 @@ public sealed class GlobalLockManager : IDisposable
         }
     }
 
-    /// <summary>現在保持しているロックを解放します。.</summary>
+    /// <summary>現在保持しているロックを解放します。</summary>
     public void Release()
     {
         if (lockStream != null)
