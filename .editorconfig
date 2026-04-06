@@ -22,6 +22,7 @@ dotnet_diagnostic.SA1602.severity = none
 dotnet_diagnostic.SA1623.severity = none
 dotnet_diagnostic.SA1629.severity = none
 dotnet_diagnostic.SA1633.severity = none # File header not required
+dotnet_diagnostic.SA1642.severity = none
 dotnet_diagnostic.SA1649.severity = none # File name match type name (sometimes we have multiple)
 
 # Enforce some good ones
