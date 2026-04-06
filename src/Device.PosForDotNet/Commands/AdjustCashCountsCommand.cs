@@ -15,7 +15,12 @@ public class AdjustCashCountsCommand : IUposCommand
     private readonly decimal currencyFactor;
     private readonly HardwareStatusManager hardwareStatusManager;
 
-    /// <inheritdoc/>
+    /// <summary><see cref="AdjustCashCountsCommand"/> クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="inventory">現金在庫。</param>
+    /// <param name="cashCounts">調整する金種と枚数のリスト。</param>
+    /// <param name="currencyCode">通貨コード。</param>
+    /// <param name="currencyFactor">通貨係数。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
     public AdjustCashCountsCommand(
         Inventory inventory,
         IEnumerable<CashCount> cashCounts,
@@ -31,7 +36,8 @@ public class AdjustCashCountsCommand : IUposCommand
     }
 
     /// <inheritdoc/>
-    public void Execute() => ExecuteAsync().GetAwaiter().GetResult();
+    public void Execute() =>
+        ExecuteAsync().GetAwaiter().GetResult();
 
     /// <inheritdoc/>
     public Task ExecuteAsync()
@@ -54,8 +60,10 @@ public class AdjustCashCountsCommand : IUposCommand
     }
 
     /// <inheritdoc/>
-    public void Verify(IUposMediator mediator)
-    {
-        mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
-    }
+    public void Verify(IUposMediator mediator) =>
+        mediator
+        .VerifyState(
+            mustBeClaimed: true,
+            mustBeEnabled: true,
+            mustNotBeBusy: true);
 }
