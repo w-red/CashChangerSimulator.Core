@@ -1,11 +1,11 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Core/CashChangerSimulator.Core.csproj" />
+    <Project Path="src/CashChangerSimulator.Core/CashChangerSimulator.Core.csproj" />
     <Project Path="src/Device.PosForDotNet/CashChangerSimulator.Device.PosForDotNet.csproj" />
     <Project Path="src/Device.Virtual/CashChangerSimulator.Device.Virtual.csproj" />
   </Folder>
   <Folder Name="/test/">
-    <Project Path="test/Tests/CashChangerSimulator.Tests.csproj" />
+    <Project Path="test/CashChangerSimulator.Tests.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />

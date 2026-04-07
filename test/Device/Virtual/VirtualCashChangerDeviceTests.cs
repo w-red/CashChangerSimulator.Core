@@ -14,7 +14,7 @@ using Xunit;
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>VirtualCashChangerDevice の機能検証テスト。</summary>
-public class VirtualCashChangerDeviceTests
+public class VirtualCashChangerDeviceTests : IDisposable
 {
     private readonly ICashChangerDevice device1;
     private readonly ICashChangerDevice device2;
@@ -51,13 +51,13 @@ public class VirtualCashChangerDeviceTests
         await device2.OpenAsync();
 
         // Act & Assert
-        await device1.ClaimAsync(100);
+        await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
 
         // 別タスクで device2.Claim を実行し、例外を確認する
-        var task = Task.Run(() => device2.ClaimAsync(100));
+        var task = Task.Run(() => device2.ClaimAsync(TestTimingConstants.ShortDelayMs));
 
         // Assert: 別タスクからの Claim は失敗するはず
-        var ex = await Should.ThrowAsync<Exception>(async () => await task.WaitAsync(TimeSpan.FromMilliseconds(500)));
+        var ex = await Should.ThrowAsync<Exception>(async () => await task.WaitAsync(TimeSpan.FromMilliseconds(TestTimingConstants.DefaultTimeoutMs)));
         // Note: Mutex 経由で DeviceException や その内部の例外がスローされる可能性がある
     }
 
@@ -70,11 +70,11 @@ public class VirtualCashChangerDeviceTests
         await device2.OpenAsync();
 
         // Act
-        await device1.ClaimAsync(100);
+        await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.ReleaseAsync();
 
         // Assert
-        await device2.ClaimAsync(100);
+        await device2.ClaimAsync(TestTimingConstants.ShortDelayMs);
         // Exception が投げられないことで成功を確認
     }
 
@@ -92,7 +92,7 @@ public class VirtualCashChangerDeviceTests
     public async Task CloseShouldSetDisconnectedAndDisabled()
     {
         await device1.OpenAsync();
-        await device1.ClaimAsync(100);
+        await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.EnableAsync();
 
         await device1.CloseAsync();
@@ -107,7 +107,7 @@ public class VirtualCashChangerDeviceTests
     public async Task EnableShouldSucceedWhenClaimed()
     {
         await device1.OpenAsync();
-        await device1.ClaimAsync(100);
+        await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.EnableAsync();
         statusManager.DeviceEnabled.Value.ShouldBeTrue();
         device1.State.CurrentValue.ShouldBe(DeviceControlState.Idle);
@@ -126,7 +126,7 @@ public class VirtualCashChangerDeviceTests
     public async Task DepositShouldThrowWhenNotEnabled()
     {
         await device1.OpenAsync();
-        await device1.ClaimAsync(100);
+        await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
 
         // Not enabled
         await Should.ThrowAsync<DeviceException>(async () => await device1.BeginDepositAsync());
@@ -137,7 +137,7 @@ public class VirtualCashChangerDeviceTests
     public async Task DispenseShouldThrowWhenNotEnabled()
     {
         await device1.OpenAsync();
-        await device1.ClaimAsync(100);
+        await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
 
         // Not enabled
         await Should.ThrowAsync<DeviceException>(async () => await device1.DispenseChangeAsync(1000));
@@ -149,7 +149,7 @@ public class VirtualCashChangerDeviceTests
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         await device1.OpenAsync();
-        await device1.ClaimAsync(100);
+        await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.EnableAsync();
         
         // DepositController 経由で預け入れを行う（VirtualCashChangerDevice のメソッドを使用）
@@ -162,4 +162,14 @@ public class VirtualCashChangerDeviceTests
         var inventory = await device1.ReadInventoryAsync();
         inventory.ShouldNotBeNull();
     }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        device1.Dispose();
+        device2.Dispose();
+        disposables.Dispose();
+    }
+
+    private readonly CompositeDisposable disposables = [];
 }
