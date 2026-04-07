@@ -12,11 +12,6 @@ namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 public class UposMediator : IUposMediator
 {
     private readonly Lock stateLock = new();
-    private bool isBusy;
-    private int resultCode;
-    private int resultCodeExtended;
-    private int asyncResultCode;
-    private int asyncResultCodeExtended;
     private readonly ReactiveProperty<bool> isBusyProperty = new(false);
 
     private ICashChangerStatusSink? sink;
@@ -45,14 +40,14 @@ public class UposMediator : IUposMediator
         {
             lock (stateLock)
             {
-                return resultCode;
+                return field;
             }
         }
         private set
         {
             lock (stateLock)
             {
-                resultCode = value;
+                field = value;
             }
         }
     }
@@ -64,14 +59,14 @@ public class UposMediator : IUposMediator
         {
             lock (stateLock)
             {
-                return resultCodeExtended;
+                return field;
             }
         }
         private set
         {
             lock (stateLock)
             {
-                resultCodeExtended = value;
+                field = value;
             }
         }
     }
@@ -108,23 +103,23 @@ public class UposMediator : IUposMediator
         {
             lock (stateLock)
             {
-                return isBusy;
+                return field;
             }
         }
         set
         {
             lock (stateLock)
             {
-                isBusy = value;
+                field = value;
                 isBusyProperty.Value = value;
-                if (isBusy)
+                if (field)
                 {
-                    resultCode = (int)ErrorCode.Busy;
+                    ResultCode = (int)ErrorCode.Busy;
                 }
                 else
                 {
                     // When busy is cleared, we assume back to success unless explicitly failed
-                    resultCode = (int)ErrorCode.Success;
+                    ResultCode = (int)ErrorCode.Success;
                 }
             }
 
@@ -139,14 +134,14 @@ public class UposMediator : IUposMediator
         {
             lock (stateLock)
             {
-                return asyncResultCode;
+                return field;
             }
         }
         set
         {
             lock (stateLock)
             {
-                asyncResultCode = value;
+                field = value;
             }
         }
     }
@@ -158,14 +153,14 @@ public class UposMediator : IUposMediator
         {
             lock (stateLock)
             {
-                return asyncResultCodeExtended;
+                return field;
             }
         }
         set
         {
             lock (stateLock)
             {
-                asyncResultCodeExtended = value;
+                field = value;
             }
         }
     }
@@ -257,8 +252,8 @@ public class UposMediator : IUposMediator
     {
         lock (stateLock)
         {
-            resultCode = (int)ErrorCode.Success;
-            resultCodeExtended = 0;
+            ResultCode = (int)ErrorCode.Success;
+            ResultCodeExtended = 0;
         }
     }
 
@@ -267,8 +262,8 @@ public class UposMediator : IUposMediator
     {
         lock (stateLock)
         {
-            resultCode = (int)code;
-            resultCodeExtended = codeEx;
+            ResultCode = (int)code;
+            ResultCodeExtended = codeEx;
         }
     }
 
