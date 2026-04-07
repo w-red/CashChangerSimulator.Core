@@ -244,7 +244,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     public Task DispenseChangeAsync(int amount)
     {
         EnsureEnabled();
-        return dispenseController.DispenseChangeAsync(amount, true);
+        return dispenseController.DispenseChangeAsync(amount, false);
     }
 
     /// <inheritdoc/>
@@ -254,7 +254,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         var dict = counts.ToDictionary(
             c => FindKey(c.Denomination),
             c => c.Count);
-        return dispenseController.DispenseCashAsync(dict, true);
+        return dispenseController.DispenseCashAsync(dict, false);
     }
 
     /// <inheritdoc/>
