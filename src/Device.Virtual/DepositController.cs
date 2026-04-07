@@ -255,9 +255,12 @@ public class DepositController : IDisposable
                 }
 
                 requiredAmount = value;
-            }
 
-            changed.OnNext(Unit.Default);
+                if (!disposed)
+                {
+                    changed.OnNext(Unit.Default);
+                }
+            }
         }
     }
 
@@ -296,9 +299,11 @@ public class DepositController : IDisposable
 
             depositStatus = DeviceDepositStatus.Counting;
             inventory.ClearEscrow();
+            if (!disposed)
+            {
+                changed.OnNext(Unit.Default);
+            }
         }
-
-        changed.OnNext(Unit.Default);
     }
 
     /// <summary>投入された金額を確定させます。</summary>
@@ -314,9 +319,11 @@ public class DepositController : IDisposable
             depositFixed = true;
             lastDepositedSerials.Clear();
             lastDepositedSerials.AddRange(depositedSerials);
+            if (!disposed)
+            {
+                changed.OnNext(Unit.Default);
+            }
         }
-
-        changed.OnNext(Unit.Default);
     }
 
     /// <summary>入金処理を非同期で終了します。</summary>
@@ -341,7 +348,14 @@ public class DepositController : IDisposable
             lastErrorCodeExtended = 0;
         }
 
-        changed.OnNext(Unit.Default);
+        lock (stateLock)
+        {
+            if (!disposed)
+            {
+                changed.OnNext(Unit.Default);
+            }
+        }
+
         await Task.Yield();
 
         if (depositCts != null)
@@ -477,7 +491,10 @@ public class DepositController : IDisposable
             {
                 lastErrorCode = dex.ErrorCode;
                 lastErrorCodeExtended = dex.ErrorCodeExtended;
-                errorEvents.OnNext(new DeviceErrorEventArgs(lastErrorCode, lastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                if (!disposed)
+                {
+                    errorEvents.OnNext(new DeviceErrorEventArgs(lastErrorCode, lastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                }
             }
         }
         catch (Exception ex)
@@ -487,7 +504,10 @@ public class DepositController : IDisposable
             {
                 lastErrorCode = DeviceErrorCode.Failure;
                 lastErrorCodeExtended = 0;
-                errorEvents.OnNext(new DeviceErrorEventArgs(lastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                if (!disposed)
+                {
+                    errorEvents.OnNext(new DeviceErrorEventArgs(lastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                }
             }
         }
         finally
@@ -563,7 +583,13 @@ public class DepositController : IDisposable
             depositPaused = requestedPause;
         }
 
-        changed.OnNext(Unit.Default);
+        lock (stateLock)
+        {
+            if (!disposed)
+            {
+                changed.OnNext(Unit.Default);
+            }
+        }
     }
 
     /// <summary>単一の金種の投入を追跡します。</summary>
@@ -648,13 +674,16 @@ public class DepositController : IDisposable
                 inventory.AddEscrow(kv.Key, kv.Value);
             }
 
-            if (RealTimeDataEnabled)
+            if (RealTimeDataEnabled && !disposed)
             {
                 dataEvents.OnNext(new DeviceDataEventArgs(0));
             }
-        }
 
-        changed.OnNext(Unit.Default);
+            if (!disposed)
+            {
+                changed.OnNext(Unit.Default);
+            }
+        }
     }
 
     /// <summary>指定された金額に近い金種をリジェクト庫（返却用）に投入します。</summary>
@@ -669,14 +698,16 @@ public class DepositController : IDisposable
             }
 
             rejectAmount += amount;
-        }
+            if (RealTimeDataEnabled && !disposed)
+            {
+                dataEvents.OnNext(new DeviceDataEventArgs(0));
+            }
 
-        if (RealTimeDataEnabled)
-        {
-            dataEvents.OnNext(new DeviceDataEventArgs(0));
+            if (!disposed)
+            {
+                changed.OnNext(Unit.Default);
+            }
         }
-
-        changed.OnNext(Unit.Default);
     }
 
     /// <inheritdoc/>

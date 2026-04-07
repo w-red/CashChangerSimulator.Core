@@ -26,6 +26,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     private readonly Mutex deviceMutex;
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
+    private readonly string mutexName;
 
     private readonly ReactiveProperty<DeviceControlState> state = new(DeviceControlState.Closed);
     private readonly ReactiveProperty<bool> isBusy = new(false);
@@ -63,6 +64,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.mutexName = mutexName;
         this.deviceMutex = new Mutex(false, mutexName);
         this.isBusyReadOnly = this.isBusy.ToReadOnlyReactiveProperty().AddTo(this.disposables);
         this.stateReadOnly = this.state.ToReadOnlyReactiveProperty().AddTo(this.disposables);
@@ -127,7 +129,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     }
 
     /// <inheritdoc/>
-    public async Task CloseAsync()
+    public Task CloseAsync()
     {
         lock (stateLock)
         {
@@ -142,11 +144,11 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
 
         UpdateCompositeStatus();
         logger.ZLogInformation($"VirtualCashChangerDevice Closed.");
-        await Task.Yield();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    public async Task ClaimAsync(int timeout)
+    public Task ClaimAsync(int timeout)
     {
         if (!hardwareStatus.IsConnected.Value)
         {
@@ -158,19 +160,19 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             hasMutex = deviceMutex.WaitOne(timeout);
             if (!hasMutex)
             {
-                throw new DeviceException("The device is already claimed by another process or instance.", DeviceErrorCode.Claimed);
+                throw new DeviceException($"The device is already claimed. Mutex: {mutexName}", DeviceErrorCode.Claimed);
             }
 
-            logger.ZLogInformation($"VirtualCashChangerDevice Claimed.");
+            logger.ZLogInformation($"VirtualCashChangerDevice Claimed. Mutex: {mutexName}");
         }
         catch (AbandonedMutexException)
         {
             hasMutex = true;
-            logger.ZLogWarning($"VirtualCashChangerDevice Claimed (AbandonedMutex rescued).");
+            logger.ZLogWarning($"VirtualCashChangerDevice Claimed (AbandonedMutex rescued). Mutex: {mutexName}");
         }
 
         UpdateCompositeStatus();
-        await Task.Yield();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -181,7 +183,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     }
 
     /// <inheritdoc/>
-    public async Task EnableAsync()
+    public Task EnableAsync()
     {
         if (!hasMutex)
         {
@@ -191,16 +193,16 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         hardwareStatus.SetDeviceEnabled(true);
         logger.ZLogInformation($"VirtualCashChangerDevice Enabled.");
         UpdateCompositeStatus();
-        await Task.Yield();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    public async Task DisableAsync()
+    public Task DisableAsync()
     {
         hardwareStatus.SetDeviceEnabled(false);
         logger.ZLogInformation($"VirtualCashChangerDevice Disabled.");
         UpdateCompositeStatus();
-        await Task.Yield();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -335,7 +337,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             }
 
             hasMutex = false;
-            logger.ZLogInformation($"VirtualCashChangerDevice Released.");
+            logger.ZLogInformation($"VirtualCashChangerDevice Released. Mutex: {mutexName}");
         }
     }
 
