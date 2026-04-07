@@ -31,11 +31,12 @@ public class EndDepositCommand(DepositController controller, CashDepositAction a
 
         var coreAction = actionText switch
         {
-            "Change" => DepositAction.Store,
-            "NoChange" => DepositAction.Store,
+            "Change" => DepositAction.Change,
+            "NoChange" => DepositAction.NoChange,
+            "Store" => DepositAction.NoChange, // Backward compatibility or synonym
             "Repay" => DepositAction.Repay,
             _ when actionValue == 3 || actionValue == 4 => DepositAction.Repay,
-            _ => DepositAction.Store
+            _ => DepositAction.NoChange
         };
         await controller.EndDepositAsync(coreAction).ConfigureAwait(false);
     }
