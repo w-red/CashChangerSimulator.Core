@@ -1,5 +1,3 @@
-using System;
-
 namespace CashChangerSimulator.Core.Services.DeviceEventTypes;
 
 /// <summary>

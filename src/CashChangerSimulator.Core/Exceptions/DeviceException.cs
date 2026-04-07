@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Services;
 
 namespace CashChangerSimulator.Core.Exceptions;
 
