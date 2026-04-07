@@ -361,9 +361,9 @@ public class DepositController : IDisposable
                     logger.ZLogInformation($"Deposit Repay: Returning cash from escrow.");
                     inventory.ClearEscrow();
                 }
-                else
+                else if (action == DepositAction.Change)
                 {
-                    decimal changeAmount = (RequiredAmount > 0) ? Math.Max(0, depositAmount - RequiredAmount) : 0;
+                    decimal changeAmount = Math.Max(0, depositAmount - RequiredAmount);
                     var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
 
                     if (changeAmount > 0)
@@ -403,6 +403,27 @@ public class DepositController : IDisposable
                     {
                         inventory.ClearEscrow();
                     }
+
+                    if (manager != null)
+                    {
+                        manager.Deposit(new Dictionary<DenominationKey, int>(storeCounts));
+                    }
+                    else
+                    {
+                        foreach (var kv in storeCounts)
+                        {
+                            if (kv.Value > 0)
+                            {
+                                inventory.Add(kv.Key, kv.Value);
+                            }
+                        }
+                    }
+                }
+                else // NoChange (or None)
+                {
+                    logger.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
+                    var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
+                    inventory.ClearEscrow();
 
                     if (manager != null)
                     {
