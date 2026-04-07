@@ -13,8 +13,6 @@ public class DiagnosticController : IDisposable
 {
     private readonly Inventory inventory;
     private readonly HardwareStatusManager hardwareStatusManager;
-    private int successfulDepletionCount;
-    private int failedDepletionCount;
     private bool disposed;
 
     /// <summary>
@@ -27,6 +25,12 @@ public class DiagnosticController : IDisposable
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
     }
+
+    /// <summary>入金成功回数を取得します。</summary>
+    public int SuccessfulDepletionCount { get; private set; }
+
+    /// <summary>入金失敗回数を取得します。</summary>
+    public int FailedDepletionCount { get; private set; }
 
     /// <summary>健康状態の報告書を作成します。</summary>
     /// <param name="level">ヘルスチェックのレベル。</param>
@@ -66,12 +70,12 @@ public class DiagnosticController : IDisposable
         sb.AppendLine("<CommonStatistics>");
         if (statistics.Contains("*") || statistics.Contains("SuccessfulDepletionCount"))
         {
-            sb.AppendFormat(CultureInfo.InvariantCulture, "  <SuccessfulDepletionCount>{0}</SuccessfulDepletionCount>{1}", successfulDepletionCount, Environment.NewLine);
+            sb.AppendFormat(CultureInfo.InvariantCulture, "  <SuccessfulDepletionCount>{0}</SuccessfulDepletionCount>{1}", SuccessfulDepletionCount, Environment.NewLine);
         }
 
         if (statistics.Contains("*") || statistics.Contains("FailedDepletionCount"))
         {
-            sb.AppendFormat(CultureInfo.InvariantCulture, "  <FailedDepletionCount>{0}</FailedDepletionCount>{1}", failedDepletionCount, Environment.NewLine);
+            sb.AppendFormat(CultureInfo.InvariantCulture, "  <FailedDepletionCount>{0}</FailedDepletionCount>{1}", FailedDepletionCount, Environment.NewLine);
         }
 
         sb.AppendLine("</CommonStatistics>");
@@ -79,10 +83,10 @@ public class DiagnosticController : IDisposable
     }
 
     /// <summary>入金成功回数をカウントアップします。</summary>
-    public virtual void IncrementSuccessfulDepletion() => successfulDepletionCount++;
+    public virtual void IncrementSuccessfulDepletion() => SuccessfulDepletionCount++;
 
     /// <summary>入金失敗回数をカウントアップします。</summary>
-    public virtual void IncrementFailedDepletion() => failedDepletionCount++;
+    public virtual void IncrementFailedDepletion() => FailedDepletionCount++;
 
     /// <inheritdoc/>
     public void Dispose()
