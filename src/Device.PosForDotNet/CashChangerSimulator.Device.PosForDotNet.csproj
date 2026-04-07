@@ -30,7 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Core\CashChangerSimulator.Core.csproj" />
+        <ProjectReference Include="..\CashChangerSimulator.Core\CashChangerSimulator.Core.csproj" />
         <ProjectReference Include="..\Device.Virtual\CashChangerSimulator.Device.Virtual.csproj" />
     </ItemGroup>
 
