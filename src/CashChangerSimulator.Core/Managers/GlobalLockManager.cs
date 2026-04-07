@@ -18,9 +18,11 @@ public sealed class GlobalLockManager : IDisposable
     /// <summary>Initializes a new instance of the <see cref="GlobalLockManager"/> class.指定されたファイルパスを使用してロックマネージャーを初期化します。</summary>
     /// <param name="lockFilePath">ロックに使用するファイルパス。</param>
     /// <param name="logger">ロガー。</param>
-    public GlobalLockManager(string lockFilePath, ILogger logger)
+    public GlobalLockManager(string? lockFilePath, ILogger logger)
     {
-        this.lockFilePath = lockFilePath;
+        this.lockFilePath = string.IsNullOrEmpty(lockFilePath)
+            ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "device.lock")
+            : lockFilePath;
         this.logger = logger;
 
         // Ensure directory exists
