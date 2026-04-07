@@ -3,13 +3,19 @@ namespace CashChangerSimulator.Core.Configuration;
 /// <summary>シミュレーション動作の設定を保持するクラス。</summary>
 public class SimulationSettings
 {
-    private int dispenseDelayMs = 500;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SimulationSettings"/> class.
+    /// </summary>
+    public SimulationSettings()
+    {
+        DispenseDelayMs = 500;
+    }
 
     /// <summary>払い出し操作にかかる遅延時間（ミリ秒）。</summary>
     public int DispenseDelayMs
     {
-        get => dispenseDelayMs;
-        set => dispenseDelayMs = value >= 0
+        get => field;
+        set => field = value >= 0
             ? value
             : throw new ArgumentOutOfRangeException(
                 nameof(value),
