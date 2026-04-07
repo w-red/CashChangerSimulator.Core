@@ -31,7 +31,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         this.configProvider = configProvider;
         this.inventory = inventory;
         this.stateProvider = stateProvider;
- 
+
         this.configProvider.Reloaded.Subscribe(_ => OnConfigurationReloaded()).AddTo(disposables);
     }
 

@@ -41,19 +41,25 @@ public class LifecycleManager : IUposLifecycleHandler
 
     /// <inheritdoc/>
     public ControlState State => handler?.State ?? ControlState.Closed;
+
     /// <inheritdoc/>
     public bool Claimed => handler?.Claimed ?? false;
+
     /// <inheritdoc/>
     public bool DeviceEnabled { get => handler.DeviceEnabled; set => handler.DeviceEnabled = value; }
+
     /// <inheritdoc/>
     public bool DataEventEnabled { get => handler.DataEventEnabled; set => handler.DataEventEnabled = value; }
 
     /// <inheritdoc/>
     public void Open(Action baseOpen) => handler.Open(baseOpen);
+
     /// <inheritdoc/>
     public void Close(Action baseClose) => handler.Close(baseClose);
+
     /// <inheritdoc/>
     public void Claim(int timeout, Action<int> baseClaim) => handler.Claim(timeout, baseClaim);
+
     /// <inheritdoc/>
     public void Release(Action baseRelease) => handler.Release(baseRelease);
 }

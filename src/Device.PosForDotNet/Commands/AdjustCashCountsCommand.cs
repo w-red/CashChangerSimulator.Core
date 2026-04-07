@@ -14,7 +14,6 @@ public class AdjustCashCountsCommand(
     decimal currencyFactor,
     HardwareStatusManager hardwareStatusManager) : IUposCommand
 {
-
     /// <inheritdoc/>
     public void Execute() =>
         ExecuteAsync().GetAwaiter().GetResult();

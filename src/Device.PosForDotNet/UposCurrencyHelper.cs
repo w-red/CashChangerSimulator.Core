@@ -58,6 +58,7 @@ public static class UposCurrencyHelper
     }
 
     /// <summary>CashDenominationCount を POS for .NET の CashCount に変換します。</summary>
+    /// <returns></returns>
     public static Microsoft.PointOfService.CashCount ToCashCount(CashDenominationCount c, IEnumerable<DenominationKey> availableKeys)
     {
         ArgumentNullException.ThrowIfNull(c);

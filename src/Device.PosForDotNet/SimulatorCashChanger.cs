@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.PosForDotNet.Services;
@@ -77,7 +76,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         ctx.HardwareStatusManager.IsConnected
             .Subscribe(v => logger.ZLogDebug($"Hardware connection: {v}"))
             .AddTo(disposables);
- 
+
         stateProperty = new ReactiveProperty<DeviceControlState>(MapToDeviceControlState(State)).AddTo(disposables);
     }
 
@@ -101,16 +100,16 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     /// <inheritdoc/>
     public Observable<CoreDeviceEventTypes.DeviceDataEventArgs> DataEvents => dataEvents;
- 
+
     /// <inheritdoc/>
     public Observable<CoreDeviceEventTypes.DeviceErrorEventArgs> ErrorEvents => errorEvents;
- 
+
     /// <inheritdoc/>
     public Observable<CoreDeviceEventTypes.DeviceStatusUpdateEventArgs> StatusUpdateEvents => statusUpdateEvents;
- 
+
     /// <inheritdoc/>
     public Observable<CoreDeviceEventTypes.DeviceDirectIOEventArgs> DirectIOEvents => directIOEvents;
- 
+
     /// <inheritdoc/>
     public Observable<CoreDeviceEventTypes.DeviceOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEvents;
 
@@ -121,6 +120,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     ReadOnlyReactiveProperty<DeviceControlState> ICashChangerDevice.State => stateProperty;
 
     // Capabilities (Delegated)
+
     /// <inheritdoc/>
     public override bool CapDeposit => capFacade.CapDeposit;
 
@@ -167,6 +167,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override string CheckHealthText => checkHealthText;
 
     // Infrastructure Properties
+
     /// <inheritdoc/>
     public override string DeviceName => "SimulatorCashChanger";
 
@@ -222,6 +223,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override int DeviceExits => capFacade.DeviceExits;
 
     // Extra Public Properties
+
     /// <inheritdoc/>
     public int ResultCode { get => ctx.Mediator.ResultCode; set => ctx.Mediator.SetFailure((ErrorCode)value); }
 
@@ -323,6 +325,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     };
 
     // Lifecycle Methods
+
     /// <inheritdoc/>
     public override void Open()
     {
@@ -358,6 +361,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public Task DisableAsync() => Task.Run(() => DeviceEnabled = false);
 
     // Core Operations Methods
+
     /// <inheritdoc/>
     public override void BeginDeposit() => depositFacade.BeginDeposit();
 
@@ -448,6 +452,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public virtual void PurgeCash() => inventoryFacade.PurgeCash();
 
     // Diagnostics & Stats Methods
+
     /// <inheritdoc/>
     public override string CheckHealth(HealthCheckLevel level) => checkHealthText = diagnosticsFacade.CheckHealth(level);
 
@@ -473,6 +478,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     }
 
     // DirectIO Method
+
     /// <inheritdoc/>
     public override DirectIOData DirectIO(int command, int data, object obj)
     {
@@ -483,6 +489,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     }
 
     // Event Management Methods
+
     /// <inheritdoc/>
     public void FireEvent(EventArgs e)
     {
@@ -574,7 +581,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
         // Trigger native POS for .NET events using QueueEvent (via IUposEventSink implementation)
         ((IUposEventSink)this).QueueEvent(e);
- 
+
         // Re-emit as abstracted events
         if (e is Microsoft.PointOfService.DataEventArgs de)
         {
@@ -600,7 +607,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         {
             outputCompleteEvents.OnNext(new CoreDeviceEventTypes.DeviceOutputCompleteEventArgs(oce.OutputId));
         }
- 
+
         stateProperty.Value = MapToDeviceControlState(State);
     }
 
@@ -609,6 +616,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     internal void FireEventInternal(EventArgs e) => NotifyEvent(e);
 
     // IDisposable Implementation
+
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)
     {
@@ -636,9 +644,9 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
                 try
                 {
                     if (DeviceEnabled)
-{
-    DeviceEnabled = false;
-}
+                    {
+                        DeviceEnabled = false;
+                    }
                 }
                 catch
                 {

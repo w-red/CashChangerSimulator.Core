@@ -1,8 +1,6 @@
-using System.Threading;
 using CashChangerSimulator.Core.Exceptions;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
@@ -80,10 +78,13 @@ public class UposMediator : IUposMediator
 
     /// <inheritdoc/>
     public bool DeviceEnabled { get; set; }
+
     /// <inheritdoc/>
     public bool DataEventEnabled { get; set; }
+
     /// <inheritdoc/>
     public bool Claimed { get; set; }
+
     /// <inheritdoc/>
     public bool ClaimedByAnother
     {

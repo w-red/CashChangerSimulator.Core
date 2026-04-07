@@ -1,7 +1,6 @@
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
-using CashChangerSimulator.Core.Models;
 
 /// <summary>統計情報リセット操作をカプセル化するコマンド。</summary>
 public class ResetStatisticsCommand(string[] statistics) : IUposCommand

@@ -1,6 +1,6 @@
 using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;

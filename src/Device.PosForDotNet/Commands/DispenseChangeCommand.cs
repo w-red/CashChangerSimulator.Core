@@ -1,7 +1,7 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;

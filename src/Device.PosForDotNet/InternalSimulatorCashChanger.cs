@@ -17,12 +17,16 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulator
 {
     // テスト用に内部コンポーネントを公開
+
     /// <inheritdoc/>
     public new Inventory Inventory => base.Inventory;
+
     /// <inheritdoc/>
     public new HardwareStatusManager HardwareStatusManager => base.HardwareStatusManager;
+
     /// <inheritdoc/>
     public new DepositController DepositController => base.DepositController;
+
     /// <inheritdoc/>
     public DispenseController DispenseController => Context.DispenseController;
 

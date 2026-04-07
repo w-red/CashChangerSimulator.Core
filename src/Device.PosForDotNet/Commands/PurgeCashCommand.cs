@@ -1,7 +1,5 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
-
-using CashChangerSimulator.Core.Models;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>在庫回収操作をカプセル化するコマンド。</summary>
