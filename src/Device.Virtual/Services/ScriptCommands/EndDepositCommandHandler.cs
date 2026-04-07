@@ -26,7 +26,10 @@ public class EndDepositCommandHandler(DepositController depositController) : ISc
         var action = cmd.Action?.ToUpperInvariant() switch
         {
             "REPAY" => DepositAction.Repay,
-            _ => DepositAction.Store
+            "CHANGE" => DepositAction.Change,
+            "NOCHANGE" => DepositAction.NoChange,
+            "STORE" => DepositAction.NoChange,
+            _ => DepositAction.NoChange
         };
         logger.ZLogDebug($"EndDeposit Action: {action}");
         await depositController.EndDepositAsync(action).ConfigureAwait(false);
