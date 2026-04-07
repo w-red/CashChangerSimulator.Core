@@ -320,6 +320,7 @@ public class DispenseController : IDisposable
             code = DeviceErrorCode.Extended;
             codeEx = 201;
             logger.ZLogError(ex, $"Insufficient cash: {ex.Message}");
+            throw; // 再スローして Task に反映させる
         }
         catch (DeviceException dex)
         {
@@ -327,6 +328,7 @@ public class DispenseController : IDisposable
             code = dex.ErrorCode;
             codeEx = dex.ErrorCodeExtended;
             logger.ZLogError(dex, $"Dispense failed with device error: {dex.Message}");
+            throw; // 再スローして Task に反映させる
         }
         catch (Exception ex)
         {
@@ -359,6 +361,7 @@ public class DispenseController : IDisposable
             }
 
             logger.ZLogError(ex, $"Dispense failed: {ex.Message}");
+            throw; // 再スローして Task に反映させる
         }
         finally
         {
