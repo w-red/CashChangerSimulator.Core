@@ -34,7 +34,7 @@ public class ErrorScenarioTests
             configProvider.Config.Inventory["USD"] = usdSettings;
         }
 
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
 
         // Initialize inventory with keys from config for JPY and USD
         foreach (var currency in configProvider.Config.Inventory)
@@ -50,9 +50,9 @@ public class ErrorScenarioTests
 
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
-        var hardware = new HardwareStatusManager();
-        var metadataProvider = new CurrencyMetadataProvider(configProvider);
-        var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
+        var hardware = HardwareStatusManager.Create();
+        var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
+        var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hardware);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);

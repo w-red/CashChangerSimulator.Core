@@ -18,8 +18,8 @@ public class BulkOperationTests
     public async Task ExecuteScriptAsyncShouldUpdateInventoryCorrectly()
     {
         // Arrange
-        var inv = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
@@ -49,8 +49,8 @@ public class BulkOperationTests
     public async Task ExecuteScriptAsyncRepayActionShouldNotUpdateInventory()
     {
         // Arrange
-        var inv = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);

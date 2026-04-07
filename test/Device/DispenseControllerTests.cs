@@ -23,8 +23,8 @@ public class DispenseControllerTests
 
     public DispenseControllerTests()
     {
-        inventory = new Inventory();
-        hw = new HardwareStatusManager();
+        inventory = Inventory.Create();
+        hw = HardwareStatusManager.Create();
         mockManager = new Mock<CashChangerManager>(inventory, new TransactionHistory(), null);
         mockSimulator = new Mock<IDeviceSimulator>();
         controller = new DispenseController(mockManager.Object, hw, mockSimulator.Object);

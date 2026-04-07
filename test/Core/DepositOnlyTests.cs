@@ -14,7 +14,7 @@ public class DepositOnlyTests
     public void DepositWhenIsDepositableIsFalseShouldNotAddAnyCount()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var configProvider = new ConfigurationProvider();
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
 
@@ -38,7 +38,7 @@ public class DepositOnlyTests
     public void DepositWhenIsRecyclableIsFalseButIsDepositableIsTrueShouldGoToCollection()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var configProvider = new ConfigurationProvider();
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
 

@@ -29,7 +29,7 @@ public class MultiCurrencyTests
         configProvider.Config.Inventory["USD"] = usdSettings;
 
         // Build inventory explicitly
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         foreach (var currencyEntry in configProvider.Config.Inventory)
         {
             foreach (var item in currencyEntry.Value.Denominations)
@@ -41,11 +41,11 @@ public class MultiCurrencyTests
             }
         }
 
-        var hardware = new HardwareStatusManager();
+        var hardware = HardwareStatusManager.Create();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
-        var metadataProvider = new CurrencyMetadataProvider(configProvider);
-        var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
+        var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
+        var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hardware);
         var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);

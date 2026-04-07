@@ -35,7 +35,7 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
     public List<EventArgs> QueuedEvents { get; } = [];
 
     public TestSimulatorCashChanger(Inventory inv, CashChangerManager manager, IDeviceSimulator? deviceSimulator = null)
-        : this(inv, manager, new HardwareStatusManager(), deviceSimulator)
+        : this(inv, manager, HardwareStatusManager.Create(), deviceSimulator)
     {
     }
 
@@ -47,7 +47,7 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
             manager,
             new DepositController(inv, hw),
             new DispenseController(manager, hw, deviceSimulator ?? new Mock<IDeviceSimulator>().Object),
-            new OverallStatusAggregatorProvider(new MonitorsProvider(inv, new ConfigurationProvider(), new CurrencyMetadataProvider(new ConfigurationProvider()))),
+            new OverallStatusAggregatorProvider(MonitorsProvider.Create(inv, new ConfigurationProvider(), CurrencyMetadataProvider.Create(new ConfigurationProvider()))),
             hw))
     {
     }
@@ -69,7 +69,7 @@ public class DispenseAsyncTests
     public async Task AsyncDispenseShouldNotBlockAndFireEvent()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
@@ -114,7 +114,7 @@ public class DispenseAsyncTests
     public async Task DispenseDuringAsyncShouldThrowBusy()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
@@ -148,7 +148,7 @@ public class DispenseAsyncTests
     public async Task ReadCountsDuringAsyncShouldThrowBusy()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
         var changer = new TestSimulatorCashChanger(inventory, manager)
@@ -180,7 +180,7 @@ public class DispenseAsyncTests
     public async Task ClearOutputShouldCancelAsyncDispense()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
 
@@ -245,7 +245,7 @@ public class DispenseAsyncTests
     public async Task AsyncDispenseFailureShouldSetAsyncResultCodeExtended()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
 

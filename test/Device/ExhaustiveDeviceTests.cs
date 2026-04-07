@@ -25,10 +25,10 @@ public class ExhaustiveDeviceTests : IDisposable
 
     public ExhaustiveDeviceTests()
     {
-        inventory = new Inventory();
+        inventory = Inventory.Create();
         var history = new TransactionHistory();
         manager = new CashChangerManager(inventory, history, (object?)null, null);
-        hardwareStatusManager = new HardwareStatusManager();
+        hardwareStatusManager = HardwareStatusManager.Create();
         simulatorMock = new Mock<IDeviceSimulator>();
         controller = new DispenseController(manager, hardwareStatusManager, simulatorMock.Object);
 

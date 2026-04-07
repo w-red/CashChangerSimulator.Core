@@ -76,7 +76,7 @@ public class CoreCoverageTests
     {
         // Arrange
         var config = new ConfigurationProvider();
-        var provider = new CurrencyMetadataProvider(config);
+        var provider = CurrencyMetadataProvider.Create(config);
 
         // Act
         var symbol = provider.Symbol;
@@ -95,7 +95,7 @@ public class CoreCoverageTests
         // 設定を直接書き換える
         config.Config.System.CurrencyCode = "USD";
 
-        var provider = new CurrencyMetadataProvider(config);
+        var provider = CurrencyMetadataProvider.Create(config);
 
         // Act
         var usdKey = new DenominationKey(1.00m, CurrencyCashType.Coin, "USD");
@@ -111,9 +111,9 @@ public class CoreCoverageTests
     {
         // Arrange
         var config = new ConfigurationProvider();
-        var inventory = new Inventory();
-        var metadata = new CurrencyMetadataProvider(config);
-        var monitorsProvider = new MonitorsProvider(inventory, config, metadata);
+        var inventory = Inventory.Create();
+        var metadata = CurrencyMetadataProvider.Create(config);
+        var monitorsProvider = MonitorsProvider.Create(inventory, config, metadata);
 
         // AggregatorProvider requires a MonitorsProvider
         using var provider = new OverallStatusAggregatorProvider(monitorsProvider);
@@ -129,7 +129,7 @@ public class CoreCoverageTests
         // Arrange
         var config = new ConfigurationProvider();
         config.Config.System.CurrencyCode = "USD";
-        var provider = new CurrencyMetadataProvider(config);
+        var provider = CurrencyMetadataProvider.Create(config);
 
         // Act & Assert
         provider.GetDenominationName(new DenominationKey(1m, CurrencyCashType.Coin, "USD")).ShouldBe("$1 Coin");
@@ -144,9 +144,9 @@ public class CoreCoverageTests
     {
         // Arrange
         var configProvider = new ConfigurationProvider();
-        var inventory = new Inventory();
-        var metadata = new CurrencyMetadataProvider(configProvider);
-        var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadata);
+        var inventory = Inventory.Create();
+        var metadata = CurrencyMetadataProvider.Create(configProvider);
+        var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadata);
 
         // 既存のモニターの中の1つの設定を構成から削除する
         var firstMonitor = monitorsProvider.Monitors[0];
@@ -164,7 +164,7 @@ public class CoreCoverageTests
     public void OverallStatusAggregatorAggregationPathsShouldWork()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var key1 = new DenominationKey(100m, CurrencyCashType.Coin, "JPY");
         var key2 = new DenominationKey(500m, CurrencyCashType.Coin, "JPY");
         inventory.SetCount(key1, 0);
@@ -175,7 +175,7 @@ public class CoreCoverageTests
         var m2 = new CashStatusMonitor(inventory, key2, 5, 50, 100, true);
         var monitors = new List<CashStatusMonitor> { m1, m2 };
 
-        using var aggregator = new OverallStatusAggregator(monitors);
+        using var aggregator = OverallStatusAggregator.Create(monitors);
 
         // 初期：空 (Empty) - 両方の残高が0
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
@@ -246,7 +246,7 @@ public class CoreCoverageTests
     public void OverallStatusAggregatorEmptyAndLowStatusShouldWork()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var key = new DenominationKey(100m, CurrencyCashType.Coin, "JPY");
         inventory.SetCount(key, 0);
 
@@ -254,7 +254,7 @@ public class CoreCoverageTests
         var m1 = new CashStatusMonitor(inventory, key, 5, 50, 100, true);
         var monitors = new List<CashStatusMonitor> { m1 };
 
-        using var aggregator = new OverallStatusAggregator(monitors);
+        using var aggregator = OverallStatusAggregator.Create(monitors);
 
         // 1. 最初は空 (Empty)
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);

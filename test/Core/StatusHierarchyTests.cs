@@ -12,7 +12,7 @@ public class StatusHierarchyTests
     public void StatusHierarchyEmptyShouldNotBeMaskedByFullInDifferentSlots()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var d1 = new DenominationKey(1000, CurrencyCashType.Bill);
         var d2 = new DenominationKey(5000, CurrencyCashType.Bill);
 
@@ -22,7 +22,7 @@ public class StatusHierarchyTests
             new(inventory, d2, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)
         };
 
-        var aggregator = new OverallStatusAggregator(monitors);
+        var aggregator = OverallStatusAggregator.Create(monitors);
 
         // Act: d1 is Empty, d2 is Full
         inventory.SetCount(d1, 0);

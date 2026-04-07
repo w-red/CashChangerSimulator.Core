@@ -18,8 +18,8 @@ public class AdvancedScriptingTests
     public async Task ExecuteScriptAsyncRepeatShouldExecuteMultipleTimes()
     {
         // Arrange
-        var inv = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
@@ -59,8 +59,8 @@ public class AdvancedScriptingTests
     public async Task ExecuteScriptAsyncSetVariableShouldAllowDynamicParameters()
     {
         // Arrange
-        var inv = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
@@ -95,8 +95,8 @@ public class AdvancedScriptingTests
     public async Task ExecuteScriptAsyncInjectErrorShouldChangeHardwareState()
     {
         // Arrange
-        var inv = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
@@ -122,8 +122,8 @@ public class AdvancedScriptingTests
     public async Task ExecuteScriptAsyncAssertShouldVerifyInventory()
     {
         // Arrange
-        var inv = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
@@ -155,8 +155,8 @@ public class AdvancedScriptingTests
     public async Task ExecuteScriptAsyncInjectErrorJamLocationShouldUpdateHardware()
     {
         // Arrange
-        var inv = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
@@ -183,8 +183,8 @@ public class AdvancedScriptingTests
     public async Task ExecuteScriptAsyncInjectErrorDeviceShouldUpdateHardware()
     {
         // Arrange
-        var inv = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         hardware.SetConnected(true);
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);

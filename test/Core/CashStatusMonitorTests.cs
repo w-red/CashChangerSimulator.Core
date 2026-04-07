@@ -13,7 +13,7 @@ public class CashStatusMonitorTests
     public void MonitorShouldTransitionStatusBasedOnInventory()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // しきい値設定: Empty=0, NearEmpty=2, NearFull=8, Full=10
@@ -47,7 +47,7 @@ public class CashStatusMonitorTests
     public void UpdateThresholdsShouldRecalculateStatus()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
         inventory.SetCount(denomination, 5); // 5枚
 
@@ -71,7 +71,7 @@ public class CashStatusMonitorTests
     public void DisposeShouldUnsubscribe()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
         var monitor = new CashStatusMonitor(inventory, denomination, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10);
 
@@ -93,7 +93,7 @@ public class CashStatusMonitorTests
     public void ThresholdOfMinusOneShouldDisableStatusCheck()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var denomination = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // すべてのしきい値を -1 (無効) に設定

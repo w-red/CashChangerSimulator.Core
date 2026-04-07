@@ -13,7 +13,7 @@ public class OverallStatusAggregatorTests
     public void OverallStatusAggregatorShouldAggregateIndividualStatuses()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var denominations = new[]
         {
             new DenominationKey(1000, CurrencyCashType.Bill),
@@ -24,7 +24,7 @@ public class OverallStatusAggregatorTests
         var monitors = denominations.Select(d =>
             new CashStatusMonitor(inventory, d, nearEmptyThreshold: 2, nearFullThreshold: 8, fullThreshold: 10)).ToList();
 
-        var aggregator = new OverallStatusAggregator(monitors);
+        var aggregator = OverallStatusAggregator.Create(monitors);
 
         CashStatus deviceStatus = CashStatus.Unknown;
         CashStatus fullStatus = CashStatus.Unknown;
@@ -68,7 +68,7 @@ public class OverallStatusAggregatorTests
     public void AggregatorShouldHandleManyMonitors()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var monitors = new List<CashStatusMonitor>();
         for (int i = 1; i <= 5; i++)
         {
@@ -77,7 +77,7 @@ public class OverallStatusAggregatorTests
             monitors.Add(new CashStatusMonitor(inventory, key, 2, 8, 10));
         }
 
-        var aggregator = new OverallStatusAggregator(monitors);
+        var aggregator = OverallStatusAggregator.Create(monitors);
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);
 
         // Act: One becomes NearEmpty
@@ -98,7 +98,7 @@ public class OverallStatusAggregatorTests
     public void DisposeShouldWork()
     {
         // Arrange
-        var aggregator = new OverallStatusAggregator([]);
+        var aggregator = OverallStatusAggregator.Create([]);
 
         // Act & Assert
         Should.NotThrow(() => aggregator.Dispose());
@@ -109,7 +109,7 @@ public class OverallStatusAggregatorTests
     public void RefreshShouldUpdateMonitorsAndRecalculate()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var k1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         var k5000 = new DenominationKey(5000, CurrencyCashType.Bill);
 
@@ -117,7 +117,7 @@ public class OverallStatusAggregatorTests
         inventory.SetCount(k5000, 0); // Empty
 
         var monitor1000 = new CashStatusMonitor(inventory, k1000, 2, 8, 10);
-        var aggregator = new OverallStatusAggregator([monitor1000]);
+        var aggregator = OverallStatusAggregator.Create([monitor1000]);
 
         // 初期状態: 1000円しか監視していないので Normal
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);
@@ -135,7 +135,7 @@ public class OverallStatusAggregatorTests
     public void AggregatorShouldIgnoreNonRecyclableMonitors()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var kRecyclable = new DenominationKey(1000, CurrencyCashType.Bill);
         var kNonRecyclable = new DenominationKey(2000, CurrencyCashType.Bill);
 
@@ -145,7 +145,7 @@ public class OverallStatusAggregatorTests
         var monitorRecyclable = new CashStatusMonitor(inventory, kRecyclable, 2, 8, 10, isRecyclable: true);
         var monitorNonRecyclable = new CashStatusMonitor(inventory, kNonRecyclable, 2, 8, 10, isRecyclable: false);
 
-        var aggregator = new OverallStatusAggregator([monitorRecyclable, monitorNonRecyclable]);
+        var aggregator = OverallStatusAggregator.Create([monitorRecyclable, monitorNonRecyclable]);
 
         // Assert: 2000円札が Empty だが、非リサイクルなので DeviceStatus は Normal のはず
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);

@@ -22,8 +22,8 @@ public class UposCommandTests
         mediatorMock = new Mock<IUposMediator>();
 
         // DepositController needs Inventory and HardwareStatusManager
-        var inventory = new Inventory();
-        var hardware = new HardwareStatusManager();
+        var inventory = Inventory.Create();
+        var hardware = HardwareStatusManager.Create();
         depositControllerMock = new Mock<DepositController>(inventory, hardware, null!, null!);
     }
 
@@ -97,7 +97,7 @@ public class UposCommandTests
     [Fact]
     public void ReadCashCountsCommandExecuteShouldReturnCounts()
     {
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var command = new ReadCashCountsCommand(inventory, "JPY", 1.0m);
         command.Execute();
         command.Result.Counts.ShouldNotBeNull();
@@ -120,7 +120,7 @@ public class UposCommandTests
     [Fact]
     public void PurgeCashCommandExecuteShouldCallManager()
     {
-        var managerMock = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), null);
+        var managerMock = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
         var command = new PurgeCashCommand(managerMock.Object);
         command.Execute();
         managerMock.Verify(m => m.PurgeCash(), Times.Once);
@@ -130,7 +130,7 @@ public class UposCommandTests
     [Fact]
     public void CheckHealthCommandExecuteShouldReturnReport()
     {
-        var diagMock = new Mock<DiagnosticController>(new Inventory(), new HardwareStatusManager());
+        var diagMock = new Mock<DiagnosticController>(Inventory.Create(), HardwareStatusManager.Create());
         diagMock.Setup(d => d.GetHealthReport(DeviceHealthCheckLevel.Internal)).Returns("OK");
         var command = new CheckHealthCommand(diagMock.Object, HealthCheckLevel.Internal);
 
@@ -143,7 +143,7 @@ public class UposCommandTests
     [Fact]
     public void RetrieveStatisticsCommandExecuteShouldReturnXml()
     {
-        var diagMock = new Mock<DiagnosticController>(new Inventory(), new HardwareStatusManager());
+        var diagMock = new Mock<DiagnosticController>(Inventory.Create(), HardwareStatusManager.Create());
         diagMock.Setup(d => d.RetrieveStatistics(It.IsAny<string[]>())).Returns("<xml/>");
         var command = new RetrieveStatisticsCommand(diagMock.Object, ["*"]);
 
@@ -172,9 +172,9 @@ public class UposCommandTests
     [Fact]
     public void DispenseChangeCommandExecuteShouldCallController()
     {
-        var manager = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), null);
-        var hw = new HardwareStatusManager();
-        var deposit = new Mock<DepositController>(new Inventory(), hw, null!, null!);
+        var manager = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
+        var hw = HardwareStatusManager.Create();
+        var deposit = new Mock<DepositController>(Inventory.Create(), hw, null!, null!);
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
         var command = new DispenseChangeCommand(controllerMock.Object, hw, deposit.Object, 1000m, false);
@@ -188,9 +188,9 @@ public class UposCommandTests
     [Fact]
     public void DispenseCashCommandExecuteShouldCallController()
     {
-        var manager = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), null);
-        var inv = new Inventory();
-        var hw = new HardwareStatusManager();
+        var manager = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
+        var inv = Inventory.Create();
+        var hw = HardwareStatusManager.Create();
         var deposit = new Mock<DepositController>(inv, hw, null!, null!);
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
@@ -206,8 +206,8 @@ public class UposCommandTests
     [Fact]
     public void ClearOutputCommandExecuteShouldCallController()
     {
-        var manager = new Mock<CashChangerManager>(new Inventory(), new TransactionHistory(), null);
-        var hw = new HardwareStatusManager();
+        var manager = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
+        var hw = HardwareStatusManager.Create();
         var sim = new Mock<IDeviceSimulator>();
         var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
         var command = new ClearOutputCommand(controllerMock.Object);

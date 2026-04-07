@@ -11,8 +11,8 @@ public class DiagnosticControllerCoverageTests
     [Fact]
     public void IncrementFailedDepletionShouldIncreaseValue()
     {
-        var hw = new HardwareStatusManager();
-        var controller = new DiagnosticController(new Inventory(), hw);
+        var hw = HardwareStatusManager.Create();
+        var controller = new DiagnosticController(Inventory.Create(), hw);
 
         Should.NotThrow(() => controller.IncrementFailedDepletion());
     }
@@ -21,8 +21,8 @@ public class DiagnosticControllerCoverageTests
     [Fact]
     public void GetHealthReportWithVariousLevelsShouldIncludeDetails()
     {
-        var hw = new HardwareStatusManager();
-        var controller = new DiagnosticController(new Inventory(), hw);
+        var hw = HardwareStatusManager.Create();
+        var controller = new DiagnosticController(Inventory.Create(), hw);
 
         var report1 = controller.GetHealthReport(DeviceHealthCheckLevel.External);
         report1.ShouldContain("Jam Status: Normal");
@@ -36,8 +36,8 @@ public class DiagnosticControllerCoverageTests
     [Fact]
     public void DisposeWhenCalledMultipleTimesShouldNotThrow()
     {
-        var hw = new HardwareStatusManager();
-        var controller = new DiagnosticController(new Inventory(), hw);
+        var hw = HardwareStatusManager.Create();
+        var controller = new DiagnosticController(Inventory.Create(), hw);
         controller.Dispose();
         Should.NotThrow(() => controller.Dispose());
     }

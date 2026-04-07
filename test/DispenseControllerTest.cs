@@ -25,13 +25,13 @@ public class DispenseControllerTest
     public async Task DispenseChangeAsyncShouldTransitionToBusyAndBackToIdle()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inventory.SetCount(key, 10);
         var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
-        var hw = new HardwareStatusManager();
+        var hw = HardwareStatusManager.Create();
         hw.SetConnected(true);
-        var controller = new DispenseController(manager, hw, new HardwareSimulator(new ConfigurationProvider()));
+        var controller = new DispenseController(manager, hw, HardwareSimulator.Create(new ConfigurationProvider()));
 
         DeviceErrorCode resultCode = DeviceErrorCode.Failure;
 
@@ -52,11 +52,11 @@ public class DispenseControllerTest
     public async Task DispenseChangeAsyncShouldThrowIfBusy()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
-        var hw = new HardwareStatusManager();
+        var hw = HardwareStatusManager.Create();
         hw.SetConnected(true);
-        var controller = new DispenseController(manager, hw, new HardwareSimulator(new ConfigurationProvider()));
+        var controller = new DispenseController(manager, hw, HardwareSimulator.Create(new ConfigurationProvider()));
 
         // Act & Assert
         // Start first dispense (async mode keeps it in BUSY)
@@ -75,13 +75,13 @@ public class DispenseControllerTest
     public async Task DispenseChangeAsyncShouldCallSimulator()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inventory.SetCount(key, 10);
         var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
         var mockSimulator = new Mock<IDeviceSimulator>();
 
-        var hw = new HardwareStatusManager();
+        var hw = HardwareStatusManager.Create();
         hw.SetConnected(true);
         var controller = new DispenseController(manager, hw, mockSimulator.Object);
 

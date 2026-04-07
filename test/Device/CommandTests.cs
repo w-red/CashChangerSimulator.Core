@@ -18,8 +18,8 @@ public class CommandTests
 
     public CommandTests()
     {
-        inventory = new Inventory();
-        hardware = new HardwareStatusManager();
+        inventory = Inventory.Create();
+        hardware = HardwareStatusManager.Create();
         mediator = new Mock<IUposMediator>();
     }
 

@@ -18,7 +18,7 @@ public class SkipVerificationLifecycleHandlerTests
 
     public SkipVerificationLifecycleHandlerTests()
     {
-        hardware = new HardwareStatusManager();
+        hardware = HardwareStatusManager.Create();
         mediator = new Mock<IUposMediator>();
         history = new TransactionHistory();
         handler = new SkipVerificationLifecycleHandler(hardware, mediator.Object, history, NullLogger.Instance);

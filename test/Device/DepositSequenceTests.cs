@@ -13,10 +13,10 @@ public class DepositSequenceTests
 {
     private static (DepositController Controller, Inventory Inventory) CreateController()
     {
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var history = new TransactionHistory();
         _ = new CashChangerManager(inventory, history, (object?)null, null);
-        var hw = new HardwareStatusManager();
+        var hw = HardwareStatusManager.Create();
         hw.SetConnected(true);
         var controller = new DepositController(inventory, hw);
         return (controller, inventory);
@@ -176,8 +176,8 @@ public class DepositSequenceTests
     public void TrackDepositShouldOverflow_WhenInventoryIsFull()
     {
         // Arrange
-        var inventory = new Inventory();
-        var hw = new HardwareStatusManager();
+        var inventory = Inventory.Create();
+        var hw = HardwareStatusManager.Create();
         hw.SetConnected(true);
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 

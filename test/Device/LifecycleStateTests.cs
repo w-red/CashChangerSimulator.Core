@@ -14,7 +14,7 @@ public class LifecycleStateTests
 
     public LifecycleStateTests()
     {
-        var hw = new HardwareStatusManager();
+        var hw = HardwareStatusManager.Create();
         context = new DeviceLifecycleContext(hw, NullLogger.Instance, enabled => deviceEnabled = enabled);
     }
 

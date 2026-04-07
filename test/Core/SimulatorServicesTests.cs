@@ -40,7 +40,7 @@ public class SimulatorServicesTests : IDisposable
     [Fact]
     public void TryResolveShouldReturnInstanceWhenProviderIsSet()
     {
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var provider = new TestServiceProvider(inventory: inventory);
         SimulatorServices.Provider = provider;
 
@@ -63,7 +63,7 @@ public class SimulatorServicesTests : IDisposable
     public void ResolveShouldReturnInstanceWhenProviderIsSet()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var provider = new TestServiceProvider(inventory: inventory);
         SimulatorServices.Provider = provider;
 
@@ -84,12 +84,12 @@ public class SimulatorServicesTests : IDisposable
     public void SimulatorCashChangerShouldUseProviderInstancesWhenAvailable()
     {
         var configProvider = new ConfigurationProvider();
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var history = new TransactionHistory();
-        var hw = new HardwareStatusManager();
+        var hw = HardwareStatusManager.Create();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
-        var metadataProvider = new CurrencyMetadataProvider(configProvider);
-        var monitorsProvider = new MonitorsProvider(inventory, configProvider, metadataProvider);
+        var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
+        var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);

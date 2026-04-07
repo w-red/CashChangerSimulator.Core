@@ -106,7 +106,7 @@ public class ExhaustiveCoreTests : IDisposable
     [Fact]
     public void InventoryDeepCoverage()
     {
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // 1. UpdateBucket - Zero count (early return)

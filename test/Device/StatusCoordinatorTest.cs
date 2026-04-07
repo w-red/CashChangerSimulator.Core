@@ -24,10 +24,10 @@ public class StatusCoordinatorTest
     public StatusCoordinatorTest()
     {
         mockSink = new Mock<ICashChangerStatusSink>();
-        hardwareStatusManager = new HardwareStatusManager();
-        statusAggregator = new OverallStatusAggregator(new List<CashStatusMonitor>());
+        hardwareStatusManager = HardwareStatusManager.Create();
+        statusAggregator = OverallStatusAggregator.Create(new List<CashStatusMonitor>());
 
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
 

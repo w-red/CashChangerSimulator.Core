@@ -18,7 +18,7 @@ public class StandardLifecycleHandlerTests
 
     public StandardLifecycleHandlerTests()
     {
-        hardware = new HardwareStatusManager();
+        hardware = HardwareStatusManager.Create();
         mediator = new Mock<IUposMediator>();
         mediator.SetupAllProperties(); // [FIX] Ensure properties act as variables
         history = new TransactionHistory();

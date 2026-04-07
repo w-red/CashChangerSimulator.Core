@@ -32,11 +32,11 @@ public class StatusUpdateEventTests
         jpySettings.Denominations.Add("C100", new() { InitialCount = 50, NearEmpty = nearEmpty, NearFull = nearFull, Full = full });
         configProvider.Config.Inventory["JPY"] = jpySettings;
 
-        var inv = new Inventory();
-        var hw = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hw = HardwareStatusManager.Create();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inv, history, (object?)null, null);
-        var metadataProvider = new CurrencyMetadataProvider(configProvider);
+        var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
 
         // Initialize all denominations to 50 to ensure they are NOT Empty/NearEmpty initially
         foreach (var key in metadataProvider.SupportedDenominations)
@@ -44,7 +44,7 @@ public class StatusUpdateEventTests
             inv.SetCount(key, 50);
         }
 
-        var monitorsProvider = new MonitorsProvider(inv, configProvider, metadataProvider);
+        var monitorsProvider = MonitorsProvider.Create(inv, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inv, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);

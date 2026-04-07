@@ -14,8 +14,8 @@ public class OverlapSimulationTest
     public void FixDepositShouldSucceedButEndDepositNoChangeShouldThrowWhenOverlapped()
     {
         // Arrange
-        var inventory = new Inventory();
-        var hardwareManager = new HardwareStatusManager();
+        var inventory = Inventory.Create();
+        var hardwareManager = HardwareStatusManager.Create();
         var controller = new DepositController(inventory, hardwareManager);
 
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
@@ -46,10 +46,10 @@ public class OverlapSimulationTest
     public void BeginDepositShouldThrowWhenOverlapped()
     {
         // Arrange
-        var hardwareManager = new HardwareStatusManager();
+        var hardwareManager = HardwareStatusManager.Create();
         hardwareManager.SetOverlapped(true);
 
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var controller = new DepositController(inventory, hardwareManager);
 
         hardwareManager.SetConnected(true);

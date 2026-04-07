@@ -23,9 +23,9 @@ public class VirtualCashChangerDeviceTests : IDisposable
     /// <summary>テスト用のインスタンスを初期化します。</summary>
     public VirtualCashChangerDeviceTests()
     {
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var history = new TransactionHistory();
-        statusManager = new HardwareStatusManager();
+        statusManager = HardwareStatusManager.Create();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
 
         loggerFactoryMock = new Mock<ILoggerFactory>();

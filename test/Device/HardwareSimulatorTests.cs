@@ -16,7 +16,7 @@ public class HardwareSimulatorTests
         // Arrange
         var configProvider = new ConfigurationProvider();
         configProvider.Config.Simulation = new SimulationSettings { DispenseDelayMs = 200 };
-        var simulator = new HardwareSimulator(configProvider);
+        var simulator = HardwareSimulator.Create(configProvider);
         var sw = new Stopwatch();
 
         // Act
@@ -38,7 +38,7 @@ public class HardwareSimulatorTests
         // Arrange
         var configProvider = new ConfigurationProvider();
         configProvider.Config.Simulation = new SimulationSettings { DispenseDelayMs = 0 };
-        var simulator = new HardwareSimulator(configProvider);
+        var simulator = HardwareSimulator.Create(configProvider);
         var sw = new Stopwatch();
 
         // Act
@@ -55,7 +55,7 @@ public class HardwareSimulatorTests
     public void ConstructorShouldInitializeWithDefaultConfig()
     {
         // Act
-        using var simulator = new HardwareSimulator();
+        using var simulator = HardwareSimulator.Create();
 
         // Assert
         simulator.ShouldNotBeNull();
@@ -67,7 +67,7 @@ public class HardwareSimulatorTests
     {
         // Arrange
         var configProvider = new ConfigurationProvider();
-        var simulator = new HardwareSimulator(configProvider);
+        var simulator = HardwareSimulator.Create(configProvider);
 
         // Act
         simulator.Dispose();

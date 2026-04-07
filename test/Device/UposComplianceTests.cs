@@ -21,7 +21,7 @@ public class UposComplianceTests
 
     public UposComplianceTests()
     {
-        inventory = new Inventory();
+        inventory = Inventory.Create();
 
         // Pre-fill inventory with some denominations so ParseCashCounts can find them
         inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 0);
@@ -36,7 +36,7 @@ public class UposComplianceTests
             new Mock<TransactionHistory>().Object,
             null,
             new ConfigurationProvider());
-        hardwareStatusManager = new HardwareStatusManager();
+        hardwareStatusManager = HardwareStatusManager.Create();
         facade = new InventoryFacade(inventory, managerMock.Object, mediatorMock.Object);
     }
 

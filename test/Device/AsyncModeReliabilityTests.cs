@@ -60,11 +60,11 @@ public class AsyncModeReliabilityTests
         var config = new SimulatorConfiguration(); // Use default in-memory config
         configProvider.Update(config);
 
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin, "JPY"), 10);
 
         var manager = new MockCashChangerManager(inventory, configProvider); // This mock uses base.Dispense
-        var hardwareStatus = new HardwareStatusManager();
+        var hardwareStatus = HardwareStatusManager.Create();
 
         var hardwareSim = new Mock<IDeviceSimulator>();
         hardwareSim.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))

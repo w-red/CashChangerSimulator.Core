@@ -13,7 +13,7 @@ public class ChangeCalculatorTests
     [Fact]
     public void CalculateWithCurrencyFilterShouldWork()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         inv.Add(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 10);
         inv.Add(new DenominationKey(1, CurrencyCashType.Bill, "USD"), 10);
 
@@ -26,7 +26,7 @@ public class ChangeCalculatorTests
     [Fact]
     public void CalculateWithCustomFilterShouldWork()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         inv.Add(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 10);
         inv.Add(new DenominationKey(500, CurrencyCashType.Coin, "JPY"), 10);
 
@@ -38,7 +38,7 @@ public class ChangeCalculatorTests
     [Fact]
     public void CalculateInsufficientCashShouldThrow()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         inv.Add(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 1);
 
         Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(inv, 1500));

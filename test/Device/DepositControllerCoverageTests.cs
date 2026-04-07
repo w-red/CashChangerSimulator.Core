@@ -12,8 +12,8 @@ public class DepositControllerCoverageTests
 {
     private static (DepositController Controller, Inventory Inventory, HardwareStatusManager Hardware) CreateController()
     {
-        var inventory = new Inventory();
-        var hw = new HardwareStatusManager();
+        var inventory = Inventory.Create();
+        var hw = HardwareStatusManager.Create();
         hw.SetConnected(true);
         var config = new ConfigurationProvider();
 

@@ -6,7 +6,7 @@ namespace CashChangerSimulator.Tests.Core;
 /// <summary>在庫管理（Inventory）の加算、設定、集計、シリアライズ機能を検証するためのテストクラス。</summary>
 public class InventoryTests
 {
-    private readonly Inventory inventory = new();
+    private readonly Inventory inventory = Inventory.Create();
 
     /// <summary>指定された金種の数量を増加させることができることを検証する。</summary>
     [Fact]
@@ -178,7 +178,7 @@ public class InventoryTests
         dict["COL:JPY:B1000"].ShouldBe(2);
         dict["REJ:JPY:B1000"].ShouldBe(3);
 
-        var newInventory = new Inventory();
+        var newInventory = Inventory.Create();
         newInventory.LoadFromDictionary(dict);
         newInventory.GetCount(pay).ShouldBe(1);
         newInventory.CollectionCounts.First(kv => kv.Key == pay).Value.ShouldBe(2);
@@ -299,7 +299,7 @@ public class InventoryTests
     [Fact]
     public void DisposeShouldDisposeSubject()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         inv.Dispose();
 
         // Just verify no exception on double dispose

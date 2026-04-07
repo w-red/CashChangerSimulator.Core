@@ -37,7 +37,7 @@ public class UposCurrencyHelperTest
     [Fact]
     public void BuildCashUnitsShouldBuildCorrectly()
     {
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 1);
         inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 1);
         inventory.SetCount(new DenominationKey(10m, CurrencyCashType.Bill, "USD"), 1); // Should be ignored since active currency is JPY

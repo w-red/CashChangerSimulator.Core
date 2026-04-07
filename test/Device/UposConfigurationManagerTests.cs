@@ -19,7 +19,7 @@ public class UposConfigurationManagerTests
     public UposConfigurationManagerTests()
     {
         configProvider = new ConfigurationProvider();
-        inventory = new Inventory();
+        inventory = Inventory.Create();
         stateProvider = new Mock<IDeviceStateProvider>();
         manager = new UposConfigurationManager(configProvider, inventory, stateProvider.Object);
     }

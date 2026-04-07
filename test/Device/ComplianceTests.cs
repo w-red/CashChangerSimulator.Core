@@ -19,8 +19,8 @@ public class ComplianceTests
 {
     private static (InternalSimulatorCashChanger changer, DepositController controller, Inventory inventory, CashChangerSimulator.Core.Transactions.TransactionHistory history, DeviceEventHistoryObserver observer) CreateChanger()
     {
-        var inventory = new Inventory();
-        var hardwareStatusManager = new HardwareStatusManager();
+        var inventory = Inventory.Create();
+        var hardwareStatusManager = HardwareStatusManager.Create();
         hardwareStatusManager.SetConnected(true);
         var history = new CashChangerSimulator.Core.Transactions.TransactionHistory();
         var controller = new DepositController(inventory, hardwareStatusManager);

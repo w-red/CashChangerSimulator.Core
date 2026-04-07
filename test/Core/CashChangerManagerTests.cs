@@ -15,7 +15,7 @@ public class CashChangerManagerTests
     public void DepositShouldUpdateInventoryAndHistory()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
@@ -44,7 +44,7 @@ public class CashChangerManagerTests
     public void DispenseShouldUpdateInventoryAndHistory()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         inventory.SetCount(b1000, 10);
         var history = new TransactionHistory();
@@ -69,7 +69,7 @@ public class CashChangerManagerTests
     public void DispenseByAmountShouldCalculateUpdateAndRecord()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         var c100 = new DenominationKey(100, CurrencyCashType.Coin);
         inventory.SetCount(b1000, 5);
@@ -96,7 +96,7 @@ public class CashChangerManagerTests
     public void DepositWithOtherCurrencyShouldStoreCorrectCurrencyCode()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
         var usd20 = new DenominationKey(20, CurrencyCashType.Bill, "USD");
@@ -116,7 +116,7 @@ public class CashChangerManagerTests
     public void DispenseByAmountWithInsufficientCashShouldThrowAndNotModifyState()
     {
         // Arrange
-        var inventory = new Inventory(); // Empty
+        var inventory = Inventory.Create(); // Empty
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
 
@@ -132,7 +132,7 @@ public class CashChangerManagerTests
     public void DepositNonRecyclableShouldGoToCollection()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var configProvider = new ConfigurationProvider();
 
         // 2000円札を非リサイクルとして明示的に設定
@@ -157,7 +157,7 @@ public class CashChangerManagerTests
     public void DispenseByAmountShouldSkipNonRecyclable()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
@@ -185,7 +185,7 @@ public class CashChangerManagerTests
     public void DepositShouldHandleOverflow()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // 1000円札の Full しきい値はデフォルトで 100 枚とする
@@ -209,7 +209,7 @@ public class CashChangerManagerTests
     public void DepositShouldSkipWhenNotDepositable()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var configProvider = new ConfigurationProvider();
         
         // 10000円札を入金不可に設定
@@ -231,7 +231,7 @@ public class CashChangerManagerTests
     public void PurgeCashShouldMoveRecyclableInventoryToCollection()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         inventory.SetCount(b1000, 50);
         
@@ -253,7 +253,7 @@ public class CashChangerManagerTests
     public void AdjustShouldSetInventoryCounts()
     {
         // Arrange
-        var inventory = new Inventory();
+        var inventory = Inventory.Create();
         var manager = new CashChangerManager(inventory, new TransactionHistory());
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         

@@ -18,8 +18,8 @@ public class ResultCodeVerificationTests
 
     public ResultCodeVerificationTests()
     {
-        inventory = new Inventory();
-        hardwareStatusManager = new HardwareStatusManager();
+        inventory = Inventory.Create();
+        hardwareStatusManager = HardwareStatusManager.Create();
         configProvider = new ConfigurationProvider();
     }
 

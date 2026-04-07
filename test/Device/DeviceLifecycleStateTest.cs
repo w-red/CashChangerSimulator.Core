@@ -10,7 +10,7 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>DeviceLifecycleManager（State パターン）の遷移を検証するテストクラス。</summary>
 public class DeviceLifecycleStateTest
 {
-    private readonly HardwareStatusManager hardwareStatusManager = new();
+    private readonly HardwareStatusManager hardwareStatusManager = HardwareStatusManager.Create();
     private readonly Mock<ILogger> mockLogger = new();
     private bool deviceEnabled;
     private readonly DeviceLifecycleContext context;

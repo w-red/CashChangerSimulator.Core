@@ -38,12 +38,12 @@ public class UposLifecycleTests
         jpySettings.Denominations.Add("C100", new() { InitialCount = 50 });
         configProvider.Config.Inventory["JPY"] = jpySettings;
 
-        var inv = new Inventory();
-        var hw = new HardwareStatusManager();
+        var inv = Inventory.Create();
+        var hw = HardwareStatusManager.Create();
         var history = new TransactionHistory();
         var manager = new CashChangerManager(inv, history, (object?)null, null);
-        var metadataProvider = new CurrencyMetadataProvider(configProvider);
-        var monitorsProvider = new MonitorsProvider(inv, configProvider, metadataProvider);
+        var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
+        var monitorsProvider = MonitorsProvider.Create(inv, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inv, hw);
         var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);

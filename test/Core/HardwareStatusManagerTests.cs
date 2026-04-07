@@ -9,7 +9,7 @@ namespace CashChangerSimulator.Tests.Core;
 /// <summary>HardwareStatusManager の各状態遷移、エラー設定、およびグローバルロック連携を検証するテストクラス。</summary>
 public class HardwareStatusManagerTests
 {
-    private readonly HardwareStatusManager manager = new();
+    private readonly HardwareStatusManager manager = HardwareStatusManager.Create();
 
     /// <summary>ジャム状態と発生箇所を正しく設定・解除できることを検証する。</summary>
     [Fact]

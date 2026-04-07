@@ -24,11 +24,11 @@ public class UposDispenseFacadeTest
     /// <summary>Initializes a new instance of the <see cref="UposDispenseFacadeTest"/> class.UposDispenseFacadeTest の新しいインスタンスを初期化します。</summary>
     public UposDispenseFacadeTest()
     {
-        inventory = new Inventory();
+        inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(1000m, CurrencyCashType.Bill, "JPY"), 10);
         inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 20);
 
-        hardwareStatusManager = new HardwareStatusManager();
+        hardwareStatusManager = HardwareStatusManager.Create();
         hardwareStatusManager.SetConnected(true);
         var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
         depositController = new DepositController(inventory, hardwareStatusManager);

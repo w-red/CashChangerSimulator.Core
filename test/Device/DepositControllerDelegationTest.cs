@@ -17,8 +17,8 @@ public class DepositControllerDelegationTest
     public void EndDepositNoChangeShouldDelegateToCashChangerManagerDeposit()
     {
         // Arrange
-        var inventory = new Inventory();
-        var hardwareManager = new HardwareStatusManager();
+        var inventory = Inventory.Create();
+        var hardwareManager = HardwareStatusManager.Create();
         hardwareManager.SetConnected(true);
         var managerMock =
             new Mock<CashChangerManager>(

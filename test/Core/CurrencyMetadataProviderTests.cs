@@ -15,7 +15,7 @@ public class CurrencyMetadataProviderTests
     public CurrencyMetadataProviderTests()
     {
         configProvider = new ConfigurationProvider();
-        provider = new CurrencyMetadataProvider(configProvider);
+        provider = CurrencyMetadataProvider.Create(configProvider);
     }
 
     /// <summary>コンストラクタ実行時にデフォルトの通貨（JPY）で初期化されることを検証します。</summary>

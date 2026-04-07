@@ -14,10 +14,10 @@ public class MonitorsProviderTests
     [Fact]
     public void UpdateThresholdsFromConfigShouldUpdateCorrectly()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         var configProvider = new ConfigurationProvider();
-        var metadata = new CurrencyMetadataProvider(configProvider);
-        var provider = new MonitorsProvider(inv, configProvider, metadata);
+        var metadata = CurrencyMetadataProvider.Create(configProvider);
+        var provider = MonitorsProvider.Create(inv, configProvider, metadata);
 
         var monitor = provider.Monitors.First(m => m.Key.Value == 1000);
         monitor.NearEmptyThreshold.ShouldBe(configProvider.Config.Thresholds.NearEmpty);
@@ -35,14 +35,14 @@ public class MonitorsProviderTests
     [Fact]
     public void RefreshMonitorsShouldHandleNonRecyclable()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         var configProvider = new ConfigurationProvider();
-        var metadata = new CurrencyMetadataProvider(configProvider);
+        var metadata = CurrencyMetadataProvider.Create(configProvider);
 
         // Disable recycling for 2000 Yen in config
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
 
-        var provider = new MonitorsProvider(inv, configProvider, metadata);
+        var provider = MonitorsProvider.Create(inv, configProvider, metadata);
         var monitor2000 = provider.Monitors.First(m => m.Key.Value == 2000);
 
         monitor2000.NearEmptyThreshold.ShouldBe(-1);
@@ -53,15 +53,15 @@ public class MonitorsProviderTests
     [Fact]
     public void RefreshMonitorsShouldFallbackToGlobalWhenSpecificCurrencyNotFound()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         var configProvider = new ConfigurationProvider();
-        var metadata = new CurrencyMetadataProvider(configProvider);
+        var metadata = CurrencyMetadataProvider.Create(configProvider);
 
         // Set an unknown currency
         configProvider.Config.System.CurrencyCode = "USD";
         configProvider.Config.Thresholds.NearEmpty = 123;
 
-        var provider = new MonitorsProvider(inv, configProvider, metadata);
+        var provider = MonitorsProvider.Create(inv, configProvider, metadata);
         var monitor = provider.Monitors.First(m => m.Key.Value == 1000);
 
         // Should use global threshold since "USD" isn't in config.Inventory
@@ -72,10 +72,10 @@ public class MonitorsProviderTests
     [Fact]
     public void TriggerChangedShouldNotifyObservers()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         var configProvider = new ConfigurationProvider();
-        var metadata = new CurrencyMetadataProvider(configProvider);
-        var provider = new MonitorsProvider(inv, configProvider, metadata);
+        var metadata = CurrencyMetadataProvider.Create(configProvider);
+        var provider = MonitorsProvider.Create(inv, configProvider, metadata);
         var called = false;
 
         provider.Changed.Subscribe(_ => called = true);
@@ -88,10 +88,10 @@ public class MonitorsProviderTests
     [Fact]
     public void DisposeShouldClearMonitors()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         var configProvider = new ConfigurationProvider();
-        var metadata = new CurrencyMetadataProvider(configProvider);
-        var provider = new MonitorsProvider(inv, configProvider, metadata);
+        var metadata = CurrencyMetadataProvider.Create(configProvider);
+        var provider = MonitorsProvider.Create(inv, configProvider, metadata);
 
         provider.Monitors.ShouldNotBeEmpty();
         provider.Dispose();
@@ -102,10 +102,10 @@ public class MonitorsProviderTests
     [Fact]
     public void ReloadShouldRefreshMonitors()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         var configProvider = new ConfigurationProvider();
-        var metadata = new CurrencyMetadataProvider(configProvider);
-        var provider = new MonitorsProvider(inv, configProvider, metadata);
+        var metadata = CurrencyMetadataProvider.Create(configProvider);
+        var provider = MonitorsProvider.Create(inv, configProvider, metadata);
 
         var newConfig = new SimulatorConfiguration();
         newConfig.Inventory.Clear(); // Clear defaults to ensure fallback to global Thresholds
@@ -119,13 +119,13 @@ public class MonitorsProviderTests
     [Fact]
     public void MetadataChangeShouldRefreshMonitors()
     {
-        var inv = new Inventory();
+        var inv = Inventory.Create();
         var configProvider = new ConfigurationProvider();
         var metadata = new Mock<ICurrencyMetadataProvider>();
         metadata.Setup(m => m.SupportedDenominations).Returns([new DenominationKey(100, CurrencyCashType.Coin)]);
         metadata.Setup(m => m.Changed).Returns(new Subject<Unit>());
 
-        var provider = new MonitorsProvider(inv, configProvider, metadata.Object);
+        var provider = MonitorsProvider.Create(inv, configProvider, metadata.Object);
         provider.Monitors.Count.ShouldBe(1);
 
         // Update mock and trigger change

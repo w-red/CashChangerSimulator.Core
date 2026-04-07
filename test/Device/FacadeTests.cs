@@ -24,8 +24,8 @@ public class FacadeTests
     {
         mediatorMock = new Mock<IUposMediator>();
 
-        var inventory = new Inventory();
-        var hardwareStatusManager = new HardwareStatusManager();
+        var inventory = Inventory.Create();
+        var hardwareStatusManager = HardwareStatusManager.Create();
 
         // Mocking classes with dependencies, providing real objects for required parameters
         depositControllerMock = new Mock<DepositController>(

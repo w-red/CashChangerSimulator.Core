@@ -14,7 +14,7 @@ public class CommandHandlerCoverageTests
     [Fact]
     public async Task AssertCommandHandlerWhenTargetIsInvalidShouldHandleGracefully()
     {
-        var handler = new AssertCommandHandler(new Inventory());
+        var handler = new AssertCommandHandler(Inventory.Create());
         var cmd = new ScriptCommand { Target = "UNKNOWN_TARGET", Value = "Value" };
         var context = new ScriptExecutionContext();
 
@@ -27,7 +27,7 @@ public class CommandHandlerCoverageTests
     [Fact]
     public async Task EnableCommandHandlerWhenActionIsInvalidShouldDoNothingOrLog()
     {
-        var handler = new EnableCommandHandler(new HardwareStatusManager());
+        var handler = new EnableCommandHandler(HardwareStatusManager.Create());
         var cmd = new ScriptCommand { Action = "INVALID_ACTION" };
         var context = new ScriptExecutionContext();
 
