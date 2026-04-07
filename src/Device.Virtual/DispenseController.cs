@@ -112,6 +112,7 @@ public class DispenseController : IDisposable
     /// <param name="asyncMode">非同期実行モードかどうか。</param>
     /// <param name="currencyCode">通貨コード（任意）。</param>
     /// <returns>完了を示すタスク。</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Safety boundary for background/asynchronous operations.")]
     public virtual async Task DispenseChangeAsync(int amount, bool asyncMode, string? currencyCode = null)
     {
         lock (stateLock)
@@ -179,6 +180,7 @@ public class DispenseController : IDisposable
     /// <param name="counts">払い出す金種と枚数。</param>
     /// <param name="asyncMode">非同期実行モードかどうか。</param>
     /// <returns>完了を示すタスク。</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Safety boundary for background/asynchronous operations.")]
     public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> counts, bool asyncMode)
     {
         ArgumentNullException.ThrowIfNull(counts);
@@ -314,14 +316,6 @@ public class DispenseController : IDisposable
         {
             // Canceled: status back to Idle without specific error result.
         }
-        catch (InsufficientCashException ex)
-        {
-            isError = true;
-            code = DeviceErrorCode.Extended;
-            codeEx = 201;
-            logger.ZLogError(ex, $"Insufficient cash: {ex.Message}");
-            throw; // 再スローして Task に反映させる
-        }
         catch (DeviceException dex)
         {
             isError = true;
@@ -360,7 +354,7 @@ public class DispenseController : IDisposable
                 }
             }
 
-            logger.ZLogError(ex, $"Dispense failed: {ex.Message}");
+            logger.ZLogError(ex, $"Dispense failed with unexpected error: {ex.Message}");
             throw; // 再スローして Task に反映させる
         }
         finally

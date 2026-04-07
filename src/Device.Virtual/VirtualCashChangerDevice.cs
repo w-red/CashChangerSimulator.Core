@@ -127,7 +127,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     }
 
     /// <inheritdoc/>
-    public Task CloseAsync()
+    public async Task CloseAsync()
     {
         lock (stateLock)
         {
@@ -140,12 +140,13 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             ReleaseInternal();
         }
 
+        UpdateCompositeStatus();
         logger.ZLogInformation($"VirtualCashChangerDevice Closed.");
-        return Task.CompletedTask;
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
-    public Task ClaimAsync(int timeout)
+    public async Task ClaimAsync(int timeout)
     {
         if (!hardwareStatus.IsConnected.Value)
         {
@@ -169,7 +170,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         }
 
         UpdateCompositeStatus();
-        return Task.CompletedTask;
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
@@ -180,7 +181,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     }
 
     /// <inheritdoc/>
-    public Task EnableAsync()
+    public async Task EnableAsync()
     {
         if (!hasMutex)
         {
@@ -190,40 +191,43 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         hardwareStatus.SetDeviceEnabled(true);
         logger.ZLogInformation($"VirtualCashChangerDevice Enabled.");
         UpdateCompositeStatus();
-        return Task.CompletedTask;
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
-    public Task DisableAsync()
+    public async Task DisableAsync()
     {
         hardwareStatus.SetDeviceEnabled(false);
         logger.ZLogInformation($"VirtualCashChangerDevice Disabled.");
         UpdateCompositeStatus();
-        return Task.CompletedTask;
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
-    public Task BeginDepositAsync()
+    public async Task BeginDepositAsync()
     {
         EnsureEnabled();
         depositController.BeginDeposit();
-        return Task.CompletedTask;
+        UpdateCompositeStatus();
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
-    public Task FixDepositAsync()
+    public async Task FixDepositAsync()
     {
         EnsureEnabled();
         depositController.FixDeposit();
-        return Task.CompletedTask;
+        UpdateCompositeStatus();
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
-    public Task PauseDepositAsync(DeviceDepositPause control)
+    public async Task PauseDepositAsync(DeviceDepositPause control)
     {
         EnsureEnabled();
         depositController.PauseDeposit(control);
-        return Task.CompletedTask;
+        UpdateCompositeStatus();
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
@@ -264,21 +268,23 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     }
 
     /// <inheritdoc/>
-    public Task AdjustInventoryAsync(IEnumerable<CashDenominationCount> counts)
+    public async Task AdjustInventoryAsync(IEnumerable<CashDenominationCount> counts)
     {
         EnsureEnabled();
         manager.Adjust(counts.ToDictionary(
             c => FindKey(c.Denomination),
             c => c.Count));
-        return Task.CompletedTask;
+        UpdateCompositeStatus();
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
-    public Task PurgeCashAsync()
+    public async Task PurgeCashAsync()
     {
         EnsureEnabled();
         manager.PurgeCash();
-        return Task.CompletedTask;
+        UpdateCompositeStatus();
+        await Task.Yield();
     }
 
     /// <inheritdoc/>

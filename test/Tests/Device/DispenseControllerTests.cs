@@ -61,7 +61,8 @@ public class DispenseControllerTests
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new InsufficientCashException("Shortage"));
 
-        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
+        await Should.ThrowAsync<InsufficientCashException>(() =>
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
 
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Extended);
         controller.LastErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
@@ -138,7 +139,8 @@ public class DispenseControllerTests
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new InvalidOperationException("Unexpected"));
 
-        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
+        await Should.ThrowAsync<Exception>(() =>
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
 
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Failure);
         controller.Status.ShouldBe(CashDispenseStatus.Error);
@@ -151,7 +153,8 @@ public class DispenseControllerTests
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new Exception("Fail"));
 
-        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
+        await Should.ThrowAsync<Exception>(() =>
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
         controller.Status.ShouldBe(CashDispenseStatus.Error);
 
         controller.ClearOutput();
@@ -165,7 +168,8 @@ public class DispenseControllerTests
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new PosControlException("Explicit error", ErrorCode.Illegal, 123));
 
-        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
+        await Should.ThrowAsync<Exception>(() =>
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
 
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Illegal);
         controller.LastErrorCodeExtended.ShouldBe(123);
@@ -215,7 +219,8 @@ public class DispenseControllerTests
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>()))
             .Throws(new DeviceException("Internal Jam", DeviceErrorCode.Jammed, 456));
 
-        await controller.DispenseChangeAsync(100, false).ConfigureAwait(false);
+        await Should.ThrowAsync<DeviceException>(() =>
+            controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
 
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Jammed);
         controller.LastErrorCodeExtended.ShouldBe(456);
