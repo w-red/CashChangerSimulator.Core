@@ -64,6 +64,8 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.deviceMutex = new Mutex(false, mutexName);
+        this.isBusyReadOnly = this.isBusy.ToReadOnlyReactiveProperty().AddTo(this.disposables);
+        this.stateReadOnly = this.state.ToReadOnlyReactiveProperty().AddTo(this.disposables);
 
         // 状態の統合監視
         Observable.CombineLatest(
@@ -76,10 +78,19 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         this.hardwareStatus.IsConnected
             .Subscribe(_ => UpdateCompositeStatus())
             .AddTo(this.disposables);
-
-        this.isBusyReadOnly = this.isBusy.ToReadOnlyReactiveProperty().AddTo(this.disposables);
-        this.stateReadOnly = this.state.ToReadOnlyReactiveProperty().AddTo(this.disposables);
     }
+
+    /// <summary>入金コントローラーを取得します。</summary>
+    public DepositController DepositController => depositController;
+
+    /// <summary>出金コントローラーを取得します。</summary>
+    public DispenseController DispenseController => dispenseController;
+
+    /// <summary>診断コントローラーを取得します。</summary>
+    public DiagnosticController DiagnosticController => diagnosticController;
+
+    /// <summary>ハードウェア状態管理を取得します。</summary>
+    public HardwareStatusManager HardwareStatus => hardwareStatus;
 
     /// <inheritdoc/>
     public ReadOnlyReactiveProperty<bool> IsBusy => isBusyReadOnly;
@@ -308,7 +319,15 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     {
         if (hasMutex)
         {
-            deviceMutex.ReleaseMutex();
+            try
+            {
+                deviceMutex.ReleaseMutex();
+            }
+            catch (ApplicationException ex)
+            {
+                logger.ZLogWarning($"Failed to release mutex: {ex.Message}");
+            }
+
             hasMutex = false;
             logger.ZLogInformation($"VirtualCashChangerDevice Released.");
         }
