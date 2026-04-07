@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging.Abstractions;
+using R3;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;
@@ -44,6 +45,17 @@ public class HardwareStatusManagerTests
         manager.IsConnected.Value.ShouldBeTrue();
         manager.SetConnected(false);
         manager.IsConnected.Value.ShouldBeFalse();
+    }
+
+    /// <summary>デバイスの有効化状態を設定・取得できることを検証する。</summary>
+    [Fact]
+    public void SetDeviceEnabledShouldUpdateState()
+    {
+        manager.DeviceEnabled.Value.ShouldBeFalse();
+        manager.SetDeviceEnabled(true);
+        manager.DeviceEnabled.Value.ShouldBeTrue();
+        manager.SetDeviceEnabled(false);
+        manager.DeviceEnabled.Value.ShouldBeFalse();
     }
 
     /// <summary>回収庫の取り外し状態を設定・取得できることを検証する。</summary>
@@ -96,21 +108,22 @@ public class HardwareStatusManagerTests
         manager.CurrentErrorCode.Value.ShouldBeNull();
     }
 
-    /// <summary>GlobalLockManager が未設定の場合の RefreshClaimedStatus を検証する。</summary>
+    /// <summary>GlobalLockManager が未設定の場合の動作を検証する。</summary>
     [Fact]
-    public void RefreshClaimedStatusWithoutLockManagerShouldReturnCurrentValue()
+    public void OperationsWithoutLockManagerShouldWork()
     {
         manager.SetClaimedByAnother(true);
         manager.RefreshClaimedStatus().ShouldBeTrue();
-        manager.SetClaimedByAnother(false);
-        manager.RefreshClaimedStatus().ShouldBeFalse();
+        manager.TryAcquireGlobalLock().ShouldBeTrue();
+        manager.ReleaseGlobalLock(); // No throw
     }
 
-    /// <summary>GlobalLockManager 連携時の RefreshClaimedStatus とロック取得を検証する。</summary>
+    /// <summary>GlobalLockManager 連携時の成否を検証する。</summary>
     [Fact]
     public void GlobalLockIntegrationShouldWork()
     {
-        using var lockManager = new GlobalLockManager("TestLock_" + Guid.NewGuid(), NullLogger.Instance);
+        var lockName = "TestLock_" + Guid.NewGuid();
+        using var lockManager = new GlobalLockManager(lockName, NullLogger.Instance);
         manager.SetGlobalLockManager(lockManager);
 
         // 自インスタンスがロックを持っていない状態
@@ -120,8 +133,34 @@ public class HardwareStatusManagerTests
         manager.TryAcquireGlobalLock().ShouldBeTrue();
         manager.IsClaimedByAnother.Value.ShouldBeFalse();
 
+        // 別マネージャーでロックを奪い合う
+        using var anotherLock = new GlobalLockManager(lockName, NullLogger.Instance);
+        anotherLock.TryAcquire().ShouldBeFalse(); // Already held by lockManager
+
         // ロック解放
         manager.ReleaseGlobalLock();
+        anotherLock.TryAcquire().ShouldBeTrue();
+
+        manager.RefreshClaimedStatus().ShouldBeTrue(); // Now held by anotherLock
+    }
+
+    /// <summary>ステータス変更イベントが正しく通知されることを検証します。</summary>
+    [Fact]
+    public void StatusUpdateEventsShouldNotify()
+    {
+        // Arrange
+        int callCount = 0;
+        using var d = manager.StatusUpdateEvents.Subscribe(_ => callCount++);
+
+        // Act
+        manager.SetConnected(true);
+        manager.SetJammed(true);
+
+        // Assert
+        // Initial values are notified if they are reactive properties triggering on subscribe
+        // R3 properties notify initial value on Subscribe by default? 
+        // Actually, Observable.Merge of Selects will notify whenever any underlying property changes.
+        callCount.ShouldBeGreaterThanOrEqualTo(2);
     }
 
     /// <summary>破棄（Dispose）後の状態設定が無視されることを検証する。</summary>
@@ -131,9 +170,11 @@ public class HardwareStatusManagerTests
         manager.Dispose();
         manager.IsDisposed.ShouldBeTrue();
 
-        // 操作しても値が変わらないこと（または例外が出ないこと）を確認
         manager.SetConnected(true);
         manager.IsConnected.Value.ShouldBeFalse();
+
+        manager.SetDeviceEnabled(true);
+        manager.DeviceEnabled.Value.ShouldBeFalse();
 
         manager.SetJammed(true);
         manager.IsJammed.Value.ShouldBeFalse();
@@ -145,6 +186,7 @@ public class HardwareStatusManagerTests
         manager.IsClaimedByAnother.Value.ShouldBeFalse();
 
         manager.RefreshClaimedStatus().ShouldBeFalse();
+        manager.SetGlobalLockManager(new GlobalLockManager("test", NullLogger.Instance)); // Should be ignored
 
         // Double dispose
         manager.Dispose();

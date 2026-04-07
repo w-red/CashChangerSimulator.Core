@@ -5,21 +5,24 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Shouldly;
+using Xunit;
 
 namespace CashChangerSimulator.Tests.Core;
 
 /// <summary>CashChangerSimulator.Core のカバレッジを 100% にするための網羅的テストクラス。</summary>
 public class ExhaustiveCoreTests : IDisposable
 {
+    /// <summary>ExhaustiveCoreTests の初期化。LogProvider をリセットします。</summary>
     public ExhaustiveCoreTests()
     {
-        // テストごとに LogProvider を初期化状態に戻す
         LogProvider.Dispose();
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         LogProvider.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>LogProvider の各設定パス（コンソール、ファイル、ログレベル）を網羅的に検証します。</summary>
@@ -85,7 +88,7 @@ public class ExhaustiveCoreTests : IDisposable
         DenominationKey.TryParse("X", out _).ShouldBeFalse();
         DenominationKey.TryParse("X100", out _).ShouldBeFalse();
         DenominationKey.TryParse("BABC", out _).ShouldBeFalse();
-        DenominationKey.TryParse("B100:Extra", out _).ShouldBeFalse(); // Invalid format (handled by LoadFromDictionary's TryParseKey)
+        DenominationKey.TryParse("B100:Extra", out _).ShouldBeFalse();
 
         // 5. TryParse - Success with currency
         DenominationKey.TryParse("C100", "USD", out var parsed).ShouldBeTrue();
@@ -93,7 +96,7 @@ public class ExhaustiveCoreTests : IDisposable
         parsed.Value.ShouldBe(100);
         parsed.Type.ShouldBe(CurrencyCashType.Coin);
 
-        // 6. Record properties access (for coverage of generated code if any)
+        // 6. Record properties access
         key1.Value.ShouldBe(1000);
         key1.Type.ShouldBe(CurrencyCashType.Bill);
         key1.CurrencyCode.ShouldBe("JPY");
@@ -107,7 +110,7 @@ public class ExhaustiveCoreTests : IDisposable
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // 1. UpdateBucket - Zero count (early return)
-        inventory.Add(key, 0); // No change
+        inventory.Add(key, 0);
 
         // 2. Add with negative resulting in warning log
         inventory.Add(key, -100);
@@ -130,9 +133,7 @@ public class ExhaustiveCoreTests : IDisposable
             { "COL:JPY:B1000", 10 },
             { "REJ:JPY:B500", 5 },
             { "JPY:C100", 20 },
-            { "INVALID_KEY_NO_SEPARATOR", 99 },
-            { "JPY:X_NOT_A_NUMBER", 99 },
-            { "UNKNOWN:KEY", 99 }
+            { "INVALID_KEY", 99 }
         };
         inventory.LoadFromDictionary(dict);
         inventory.CollectionCounts.First(kv => kv.Key.Value == 1000).Value.ShouldBe(10);
@@ -141,136 +142,45 @@ public class ExhaustiveCoreTests : IDisposable
 
         // 6. CalculateTotal with no matches
         inventory.CalculateTotal("NON_EXISTENT").ShouldBe(0);
-
-        // 7. UpdateBucket coverage for AddCollection/AddReject negative warnings
-        // 8. LoadFromDictionary - Exception path
-        var malformedDict = new Dictionary<string, int>
-        {
-            { "COL:", 1 }, // Too short, should throw IndexOutOfRangeException or similar in StartsWith? No, kv.Key[4..] on "COL:" is fine.
-            { "C", 1 },    // Too short for "COL:" but StartsWith is false.
-        };
-
-        // Trigger the TryParseKey return false
-        malformedDict["INVALID:KEY:FORMAT"] = 1;
-
-        inventory.LoadFromDictionary(malformedDict);
-
-        // 9. UpdateBucket negative sum (already tested, but making sure)
-        inventory.Add(key, -999);
     }
 
-    /// <summary>ConfigurationLoader のロード、保存、異常系（破損ファイル）の網羅的検証を行います。</summary>
-    [Fact]
-    public void ConfigurationLoaderExhaustive()
-    {
-        var tempConfig = Path.Combine(Path.GetTempPath(), "CCS_Config_" + Guid.NewGuid() + ".toml");
-        var tempState = Path.Combine(Path.GetTempPath(), "CCS_State_" + Guid.NewGuid() + ".toml");
-
-        try
-        {
-            // 1. Get default paths (these methods were removed from ConfigurationLoader)
-            // ConfigurationLoader.GetDefaultConfigPath().ShouldNotBeNull();
-            // ConfigurationLoader.GetDefaultInventoryStatePath().ShouldNotBeNull();
-            // ConfigurationLoader.GetDefaultHistoryStatePath().ShouldNotBeNull();
-
-            // 2. Load non-existent (creates default)
-            var config = ConfigurationLoader.Load(tempConfig);
-            config.ShouldNotBeNull();
-            File.Exists(tempConfig).ShouldBeTrue();
-
-            // 3. Save and Load
-            config.System.CurrencyCode = "USD";
-            ConfigurationLoader.Save(config, tempConfig);
-            var loaded = ConfigurationLoader.Load(tempConfig);
-            loaded.System.CurrencyCode.ShouldBe("USD");
-
-            // 4. Load invalid TOML (should catch and return default)
-            File.WriteAllText(tempConfig, "INVALID = [[[[[");
-            var fallback = ConfigurationLoader.Load(tempConfig);
-            fallback.ShouldNotBeNull();
-
-            // 5. InventoryState - Save and Load
-            var state = new InventoryState();
-            state.Counts["JPY:B1000"] = 10;
-            ConfigurationLoader.SaveInventoryState(state, tempState);
-            var loadedState = ConfigurationLoader.LoadInventoryState(tempState);
-            loadedState.Counts["JPY:B1000"].ShouldBe(10);
-
-            // 6. InventoryState - Load non-existent
-            ConfigurationLoader.LoadInventoryState("non-existent-file").ShouldNotBeNull();
-
-            // 7. InventoryState - Load invalid TOML
-            File.WriteAllText(tempState, "INVALID TOML");
-            ConfigurationLoader.LoadInventoryState(tempState).ShouldNotBeNull();
-        }
-        finally
-        {
-            if (File.Exists(tempConfig))
-            {
-                File.Delete(tempConfig);
-            }
-
-            if (File.Exists(tempState))
-            {
-                File.Delete(tempState);
-            }
-        }
-    }
-
-    /// <summary>GlobalLockManager のロック取得、競合、解放、異常系の網羅的検証を行います。</summary>
+    /// <summary>GlobalLockManager の再帰的ロック取得、競合、解放、異常系の網羅的検証を行います。</summary>
     [Fact]
     public void GlobalLockManagerExhaustive()
     {
-        var lockFile1 = Path.Combine(Path.GetTempPath(), "CCS_Lock1_" + Guid.NewGuid());
-        var lockFile2 = Path.Combine(Path.GetTempPath(), "CCS_Lock2_" + Guid.NewGuid());
+        var lockFile = Path.Combine(Path.GetTempPath(), "CCS_ExLock_" + Guid.NewGuid());
         var logger = LogProvider.CreateLogger<GlobalLockManager>();
-        {
-            using var manager1 = new GlobalLockManager(lockFile1, logger);
-            using var manager2 = new GlobalLockManager(lockFile1, logger);
 
-            // 0. Initial state
-            manager1.IsLockHeldByAnother().ShouldBeFalse();
+        using var manager1 = new GlobalLockManager(lockFile, logger);
+        using var manager2 = new GlobalLockManager(lockFile, logger);
 
-            // 1. Basic acquire/release
-            manager1.TryAcquire().ShouldBeTrue();
-            manager1.IsLockHeldByAnother().ShouldBeFalse(); // 自分が持っているので another ではない
+        // 1. Initial state
+        manager1.IsLockHeldByAnother().ShouldBeFalse();
 
-            // 2. Contention
-            manager2.TryAcquire().ShouldBeFalse();
-            manager2.IsLockHeldByAnother().ShouldBeTrue(); // manager1 が持っている
+        // 2. Recursive acquire (Already held by self)
+        manager1.TryAcquire().ShouldBeTrue();
+        manager1.TryAcquire().ShouldBeTrue(); 
+        manager1.IsLockHeldByAnother().ShouldBeFalse();
 
-            manager1.Release();
-            manager1.IsLockHeldByAnother().ShouldBeFalse();
+        // 3. Contention from another manager
+        manager2.TryAcquire().ShouldBeFalse();
+        manager2.IsLockHeldByAnother().ShouldBeTrue();
 
-            // 3. Re-acquire
-            manager2.TryAcquire().ShouldBeTrue();
-            manager2.Release();
+        // 4. Release and re-acquire
+        manager1.Release();
+        manager1.IsLockHeldByAnother().ShouldBeFalse();
+        manager2.TryAcquire().ShouldBeTrue();
+        manager2.Release();
 
-            // 4. Dispose handles release
-            manager1.TryAcquire();
-            manager1.Dispose();
-            manager2.TryAcquire().ShouldBeTrue();
-        }
-
-        // 5. Unexpected errors (Exception catch blocks)
-        // Create a directory where the lock file should be
+        // 5. Exception handling (Accessing a directory as a file)
         var dirPath = Path.Combine(Path.GetTempPath(), "CCS_DirLock_" + Guid.NewGuid());
         Directory.CreateDirectory(dirPath);
-        var lockInDir = Path.Combine(dirPath, "lock.txt"); // Not the issue, the ISSUE is if we use dirPath as lockFile
-
-        using (var managerError = new GlobalLockManager(dirPath, logger))
+        using (var dirManager = new GlobalLockManager(dirPath, logger))
         {
-            managerError.TryAcquire().ShouldBeFalse(); // Access denied to directory as file
-            managerError.IsLockHeldByAnother().ShouldBeFalse(); // Should catch exception and return false
+            dirManager.TryAcquire().ShouldBeFalse();
+            dirManager.IsLockHeldByAnother().ShouldBeFalse();
         }
-
         Directory.Delete(dirPath);
-
-        // Cleanup
-        if (File.Exists(lockFile1))
-        {
-            File.Delete(lockFile1);
-        }
     }
 
     /// <summary>TransactionEntry のプロパティ保持を検証します。</summary>

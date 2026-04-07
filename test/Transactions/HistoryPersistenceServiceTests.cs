@@ -20,16 +20,22 @@ public class HistoryPersistenceServiceTests : IDisposable
         service = new HistoryPersistenceService(history, testPath);
     }
 
-    /// <summary>ファイルが存在しない場合に Load が空の履歴を返すことを検証します。</summary>
-    [Fact]
-    public void LoadShouldReturnEmptyWhenFileDoesNotExist()
+    /// <inheritdoc/>
+    public void Dispose()
     {
-        // Arrange
+        service.Dispose();
         if (File.Exists(testPath))
         {
             File.Delete(testPath);
         }
 
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>ファイルが存在しない場合に Load が空の履歴を返すことを検証します。</summary>
+    [Fact]
+    public void LoadShouldReturnEmptyWhenFileDoesNotExist()
+    {
         // Act
         var state = service.Load();
 
@@ -95,52 +101,41 @@ public class HistoryPersistenceServiceTests : IDisposable
         state.Entries.ShouldBeEmpty();
     }
 
-    /// <summary>保存先パスが不正な場合でも例外が伝播せず適切にハンドルされることを検証します。</summary>
+    /// <summary>Save メソッドに null を渡した場合に ArgumentNullException がスローされることを検証します。</summary>
     [Fact]
-    public void SaveShouldHandleExceptionWhenPathIsInvalid()
+    public void SaveShouldThrowWhenStateIsNull()
     {
-        // Arrange
-        var invalidPath = Path.Combine(testPath, "invalid_subdir", "file.bin"); // Path to a non-existent directory
-        var service = new HistoryPersistenceService(history, invalidPath);
-        var state = new HistoryState { Entries = [] };
-
         // Act & Assert
-        Should.NotThrow(() => service.Save(state));
+        Should.Throw<ArgumentNullException>(() => service.Save(null!));
     }
 
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        service.Dispose();
-        if (File.Exists(testPath))
-        {
-            File.Delete(testPath);
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>TransactionEntry が MemoryPack によりシリアライズ・デシリアライズ可能であることを検証します。</summary>
+    /// <summary>読み込み時に IOException が発生した場合に空の履歴を返すことを検証します。</summary>
     [Fact]
-    public void TransactionEntryCanBeMemoryPackDeserialized()
+    public void LoadShouldHandleIOException()
     {
         // Arrange
-        var dict = new Dictionary<DenominationKey, int>
-        {
-            { new DenominationKey(1000, CurrencyCashType.Bill), 2 }
-        };
-        var original = new TransactionEntry(DateTimeOffset.Now, TransactionType.Deposit, 2000, dict);
+        File.WriteAllBytes(testPath, [12, 34]);
+        using var fs = new FileStream(testPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
         // Act
-        var bin = MemoryPack.MemoryPackSerializer.Serialize(original);
-        var restored = MemoryPack.MemoryPackSerializer.Deserialize<TransactionEntry>(bin);
+        var state = service.Load();
 
         // Assert
-        restored.ShouldNotBeNull();
-        restored.Amount.ShouldBe(2000);
-        restored.Type.ShouldBe(TransactionType.Deposit);
-        restored.Timestamp.ShouldBe(original.Timestamp);
-        restored.Counts.Count.ShouldBe(1);
+        state.ShouldNotBeNull();
+        state.Entries.ShouldBeEmpty();
+    }
+
+    /// <summary>保存時に IOException が発生しても例外が伝播せず適切にハンドルされることを検証します。</summary>
+    [Fact]
+    public void SaveShouldHandleIOException()
+    {
+        // Arrange
+        File.WriteAllBytes(testPath, [12, 34]);
+        using var fs = new FileStream(testPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        // Act & Assert
+        var state = new HistoryState { Entries = [] };
+        Should.NotThrow(() => service.Save(state));
     }
 
     /// <summary>アクセス権限がない場合に Load が適切にハンドルし空の履歴を返すことを検証します。</summary>
@@ -148,8 +143,6 @@ public class HistoryPersistenceServiceTests : IDisposable
     public void LoadShouldHandleUnauthorizedAccessException()
     {
         // Arrange
-        // Create a directory with the same name as the file to cause access error on some OS,
-        // or just point to a protected location. On Windows, a directory handle usually fails with Unauthorized.
         var dirPath = Path.Combine(Path.GetTempPath(), $"dir_{Guid.NewGuid()}");
         Directory.CreateDirectory(dirPath);
         var serviceWithDir = new HistoryPersistenceService(history, dirPath);

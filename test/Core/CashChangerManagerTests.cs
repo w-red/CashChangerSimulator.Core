@@ -203,4 +203,64 @@ public class CashChangerManagerTests
         inventory.GetCount(b1000).ShouldBe(100);
         inventory.CollectionCounts.ShouldContain(kv => kv.Key == b1000 && kv.Value == 10);
     }
+
+    /// <summary>入金付加（IsDepositable=false）な金種がスキップされることを検証する。</summary>
+    [Fact]
+    public void DepositShouldSkipWhenNotDepositable()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var configProvider = new ConfigurationProvider();
+        
+        // 10000円札を入金不可に設定
+        configProvider.Config.Inventory["JPY"].Denominations["B10000"].IsDepositable = false;
+        
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), null, configProvider);
+        var b10000 = new DenominationKey(10000, CurrencyCashType.Bill);
+        
+        // Act
+        manager.Deposit(new Dictionary<DenominationKey, int> { { b10000, 1 } });
+        
+        // Assert
+        inventory.GetCount(b10000).ShouldBe(0);
+        inventory.CollectionCounts.ShouldBeEmpty();
+    }
+
+    /// <summary>PurgeCash がリサイクル可能な在庫をすべて回収庫へ移動することを検証する。</summary>
+    [Fact]
+    public void PurgeCashShouldMoveRecyclableInventoryToCollection()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        inventory.SetCount(b1000, 50);
+        
+        var history = new TransactionHistory();
+        var manager = new CashChangerManager(inventory, history, (object?)null, null);
+        
+        // Act
+        manager.PurgeCash();
+        
+        // Assert
+        inventory.GetCount(b1000).ShouldBe(0);
+        inventory.CollectionCounts.First(kv => kv.Key == b1000).Value.ShouldBe(50);
+        history.Entries.Count.ShouldBe(1);
+        history.Entries[0].Amount.ShouldBe(50000m);
+    }
+
+    /// <summary>Adjust が在庫枚数を直接設定できることを検証する。</summary>
+    [Fact]
+    public void AdjustShouldSetInventoryCounts()
+    {
+        // Arrange
+        var inventory = new Inventory();
+        var manager = new CashChangerManager(inventory, new TransactionHistory());
+        var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        
+        // Act
+        manager.Adjust(new Dictionary<DenominationKey, int> { { b1000, 123 } });
+        
+        // Assert
+        inventory.GetCount(b1000).ShouldBe(123);
+    }
 }
