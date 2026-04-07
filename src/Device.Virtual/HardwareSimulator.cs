@@ -1,34 +1,54 @@
+using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Services;
+using R3;
 
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>釣銭機ハードウェアの動作をシミュレートするクラス。</summary>
 public class HardwareSimulator : IDeviceSimulator
 {
+    [SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Field is managed via CompositeDisposable in constructors.")]
     private readonly ConfigurationProvider? configProvider;
-    private readonly ConfigurationProvider? internalConfigProvider;
+    private readonly CompositeDisposable disposables = [];
 
     /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.デフォルト設定でシミュレーターを初期化する。</summary>
-    public HardwareSimulator()
+    private HardwareSimulator()
         : this(null)
     {
     }
 
     /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.設定プロバイダーを指定してシミュレーターを初期化する。</summary>
     /// <param name="configProvider">設定プロバイダー。</param>
-    public HardwareSimulator(ConfigurationProvider? configProvider)
+    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
+    [SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Field is disposed via disposables collection.")]
+    private HardwareSimulator(ConfigurationProvider? configProvider)
     {
         if (configProvider == null)
         {
-            this.configProvider = new ConfigurationProvider();
-            internalConfigProvider = this.configProvider;
+            var internalConfig = new ConfigurationProvider();
+            disposables.Add(internalConfig);
+            this.configProvider = internalConfig;
         }
         else
         {
             this.configProvider = configProvider;
-            internalConfigProvider = null;
         }
+    }
+
+    /// <summary>デフォルト設定でシミュレーターを生成・初期化します。</summary>
+    /// <returns>初期化済みの <see cref="HardwareSimulator"/> インスタンス。</returns>
+    public static HardwareSimulator Create()
+    {
+        return new HardwareSimulator(null);
+    }
+
+    /// <summary>設定プロバイダーを指定してシミュレーターを生成・初期化します。</summary>
+    /// <param name="configProvider">設定プロバイダー。</param>
+    /// <returns>初期化済みの <see cref="HardwareSimulator"/> インスタンス。</returns>
+    public static HardwareSimulator Create(ConfigurationProvider? configProvider)
+    {
+        return new HardwareSimulator(configProvider);
     }
 
     /// <inheritdoc/>
@@ -54,12 +74,7 @@ public class HardwareSimulator : IDeviceSimulator
     {
         if (disposing)
         {
-            // internalConfigProvider が非 null の時のみ、自身で生成したインスタンスを破棄する
-            // CA2213 遵守のため、configProvider フィールド経由での呼び出しを明示
-            if (internalConfigProvider != null)
-            {
-                configProvider?.Dispose();
-            }
+            disposables.Dispose();
         }
     }
 }

@@ -24,9 +24,6 @@ public class DepositController : IDisposable
     private readonly CashChangerManager? manager;
     private readonly ILogger<DepositController> logger = LogProvider.CreateLogger<DepositController>();
     private readonly CompositeDisposable disposables = [];
-    private readonly Subject<Unit> changed = new();
-    private readonly Subject<DeviceDataEventArgs> dataEvents = new();
-    private readonly Subject<DeviceErrorEventArgs> errorEvents = new();
     private readonly Lock stateLock = new();
     private readonly Dictionary<DenominationKey, int> depositCounts = [];
     private readonly List<string> depositedSerials = [];
@@ -48,7 +45,7 @@ public class DepositController : IDisposable
         ConfigurationProvider? configProvider = null)
     {
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        this.hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
+        this.hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
         if (configProvider == null)
         {
             this.configProvider = new ConfigurationProvider();
@@ -62,19 +59,29 @@ public class DepositController : IDisposable
 
         this.manager = manager;
 
+        var changedSubject = new Subject<Unit>();
+        disposables.Add(changedSubject);
+        Changed = changedSubject;
+        var dataEventsSubject = new Subject<DeviceDataEventArgs>();
+        disposables.Add(dataEventsSubject);
+        DataEvents = dataEventsSubject;
+        var errorEventsSubject = new Subject<DeviceErrorEventArgs>();
+        disposables.Add(errorEventsSubject);
+        ErrorEvents = errorEventsSubject;
+
         // Initialize properties
         DepositStatus = DeviceDepositStatus.None;
         LastErrorCode = DeviceErrorCode.Success;
     }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public virtual Observable<Unit> Changed => changed;
+    public virtual Observable<Unit> Changed { get; }
 
     /// <summary>データイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceDataEventArgs> DataEvents => dataEvents;
+    public virtual Observable<DeviceDataEventArgs> DataEvents { get; }
 
     /// <summary>エラーイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceErrorEventArgs> ErrorEvents => errorEvents;
+    public virtual Observable<DeviceErrorEventArgs> ErrorEvents { get; }
 
     /// <summary>リアルタイムデータの通知。上位層（アダプター等）が利用します。</summary>
     public bool RealTimeDataEnabled { get; set; }
@@ -322,7 +329,7 @@ public class DepositController : IDisposable
 
                 if (!disposed)
                 {
-                    changed.OnNext(Unit.Default);
+                    ((Subject<Unit>)Changed).OnNext(Unit.Default);
                 }
             }
         }
@@ -365,7 +372,7 @@ public class DepositController : IDisposable
             inventory.ClearEscrow();
             if (!disposed)
             {
-                changed.OnNext(Unit.Default);
+                ((Subject<Unit>)Changed).OnNext(Unit.Default);
             }
         }
     }
@@ -385,7 +392,7 @@ public class DepositController : IDisposable
             lastDepositedSerials.AddRange(depositedSerials);
             if (!disposed)
             {
-                changed.OnNext(Unit.Default);
+                ((Subject<Unit>)Changed).OnNext(Unit.Default);
             }
         }
     }
@@ -416,7 +423,7 @@ public class DepositController : IDisposable
         {
             if (!disposed)
             {
-                changed.OnNext(Unit.Default);
+                ((Subject<Unit>)Changed).OnNext(Unit.Default);
             }
         }
 
@@ -557,7 +564,7 @@ public class DepositController : IDisposable
                 LastErrorCodeExtended = dex.ErrorCodeExtended;
                 if (!disposed)
                 {
-                    errorEvents.OnNext(new DeviceErrorEventArgs(LastErrorCode, LastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(LastErrorCode, LastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
                 }
             }
         }
@@ -570,7 +577,7 @@ public class DepositController : IDisposable
                 LastErrorCodeExtended = 0;
                 if (!disposed)
                 {
-                    errorEvents.OnNext(new DeviceErrorEventArgs(LastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(LastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
                 }
             }
         }
@@ -581,7 +588,7 @@ public class DepositController : IDisposable
                 IsBusy = false;
                 if (!disposed)
                 {
-                    changed.OnNext(Unit.Default);
+                    ((Subject<Unit>)Changed).OnNext(Unit.Default);
                 }
             }
         }
@@ -651,7 +658,7 @@ public class DepositController : IDisposable
         {
             if (!disposed)
             {
-                changed.OnNext(Unit.Default);
+                ((Subject<Unit>)Changed).OnNext(Unit.Default);
             }
         }
     }
@@ -740,12 +747,12 @@ public class DepositController : IDisposable
 
             if (RealTimeDataEnabled && !disposed)
             {
-                dataEvents.OnNext(new DeviceDataEventArgs(0));
+                ((Subject<DeviceDataEventArgs>)DataEvents).OnNext(new DeviceDataEventArgs(0));
             }
 
             if (!disposed)
             {
-                changed.OnNext(Unit.Default);
+                ((Subject<Unit>)Changed).OnNext(Unit.Default);
             }
         }
     }
@@ -764,12 +771,12 @@ public class DepositController : IDisposable
             RejectAmount += amount;
             if (RealTimeDataEnabled && !disposed)
             {
-                dataEvents.OnNext(new DeviceDataEventArgs(0));
+                ((Subject<DeviceDataEventArgs>)DataEvents).OnNext(new DeviceDataEventArgs(0));
             }
 
             if (!disposed)
             {
-                changed.OnNext(Unit.Default);
+                ((Subject<Unit>)Changed).OnNext(Unit.Default);
             }
         }
     }
@@ -800,12 +807,6 @@ public class DepositController : IDisposable
             depositCts?.Cancel();
             depositCts?.Dispose();
             disposables.Dispose();
-            changed.OnCompleted();
-            changed.Dispose();
-            dataEvents.OnCompleted();
-            dataEvents.Dispose();
-            errorEvents.OnCompleted();
-            errorEvents.Dispose();
             internalConfigProvider?.Dispose();
 
             // Note: Injected dependencies (inventory, hardwareStatusManager) should not be disposed here.

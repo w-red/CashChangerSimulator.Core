@@ -22,9 +22,6 @@ public class DispenseController : IDisposable
     private readonly HardwareStatusManager hardwareStatusManager;
     private readonly IDeviceSimulator simulator;
     private readonly ILogger<DispenseController> logger = LogProvider.CreateLogger<DispenseController>();
-    private readonly Subject<Unit> changed = new();
-    private readonly Subject<DeviceOutputCompleteEventArgs> outputCompleteEvents = new();
-    private readonly Subject<DeviceErrorEventArgs> errorEvents = new();
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
     private CancellationTokenSource? dispenseCts;
@@ -42,22 +39,32 @@ public class DispenseController : IDisposable
         IDeviceSimulator? simulator = null)
     {
         this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
-        this.hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
-        this.simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
+        this.hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
+        this.simulator = simulator ?? HardwareSimulator.Create(new ConfigurationProvider());
 
-        // Initialize properties
+        // Initialize properties and register subjects to disposables immediately
+        var changedSubject = new Subject<Unit>();
+        disposables.Add(changedSubject);
+        Changed = changedSubject;
+        var outputCompleteEventsSubject = new Subject<DeviceOutputCompleteEventArgs>();
+        disposables.Add(outputCompleteEventsSubject);
+        OutputCompleteEvents = outputCompleteEventsSubject;
+        var errorEventsSubject = new Subject<DeviceErrorEventArgs>();
+        disposables.Add(errorEventsSubject);
+        ErrorEvents = errorEventsSubject;
+
         Status = CashDispenseStatus.Idle;
         LastErrorCode = DeviceErrorCode.Success;
     }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public virtual Observable<Unit> Changed => changed;
+    public virtual Observable<Unit> Changed { get; }
 
     /// <summary>出力完了イベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEvents;
+    public virtual Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents { get; }
 
     /// <summary>エラーイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceErrorEventArgs> ErrorEvents => errorEvents;
+    public virtual Observable<DeviceErrorEventArgs> ErrorEvents { get; }
 
     /// <summary>現在の出金状態を取得します。</summary>
     public virtual CashDispenseStatus Status
@@ -166,7 +173,7 @@ public class DispenseController : IDisposable
             LastErrorCodeExtended = 0;
         }
 
-        changed.OnNext(Unit.Default);
+        ((Subject<Unit>)Changed).OnNext(Unit.Default);
         await Task.Yield();
 
         if (dispenseCts != null)
@@ -236,7 +243,7 @@ public class DispenseController : IDisposable
             LastErrorCodeExtended = 0;
         }
 
-        changed.OnNext(Unit.Default);
+        ((Subject<Unit>)Changed).OnNext(Unit.Default);
         await Task.Yield();
 
         if (dispenseCts != null)
@@ -281,7 +288,7 @@ public class DispenseController : IDisposable
                 Status = CashDispenseStatus.Idle;
                 LastErrorCode = DeviceErrorCode.Cancelled;
                 LastErrorCodeExtended = 0;
-                changed.OnNext(Unit.Default);
+                ((Subject<Unit>)Changed).OnNext(Unit.Default);
             }
         }
     }
@@ -313,12 +320,6 @@ public class DispenseController : IDisposable
             }
 
             disposables.Dispose();
-            changed.OnCompleted();
-            changed.Dispose();
-            outputCompleteEvents.OnCompleted();
-            outputCompleteEvents.Dispose();
-            errorEvents.OnCompleted();
-            errorEvents.Dispose();
         }
 
         disposed = true;
@@ -391,15 +392,15 @@ public class DispenseController : IDisposable
 
                 if (isError)
                 {
-                    errorEvents.OnNext(new DeviceErrorEventArgs(code, codeEx, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(code, codeEx, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
                 }
                 else
                 {
-                    outputCompleteEvents.OnNext(new DeviceOutputCompleteEventArgs(0));
+                    ((Subject<DeviceOutputCompleteEventArgs>)OutputCompleteEvents).OnNext(new DeviceOutputCompleteEventArgs(0));
                 }
             }
 
-            changed.OnNext(Unit.Default);
+            ((Subject<Unit>)Changed).OnNext(Unit.Default);
         }
     }
 }
