@@ -154,7 +154,10 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return depositStatus is DeviceDepositStatus.Start or DeviceDepositStatus.Counting or DeviceDepositStatus.Validation;
+                return depositStatus is
+                    DeviceDepositStatus.Start or
+                    DeviceDepositStatus.Counting or
+                    DeviceDepositStatus.Validation;
             }
         }
     }
