@@ -37,20 +37,20 @@ public class SimulatorContext : IDisposable
     private SimulatorContext(SimulatorDependencies deps, ICashChangerStatusSink sink, ILogger logger)
     {
         ConfigProvider = deps.ConfigProvider ?? new ConfigurationProvider();
-        Inventory = deps.Inventory ?? new Inventory();
+        Inventory = deps.Inventory ?? Inventory.Create();
         History = deps.History ?? new TransactionHistory();
-        HardwareStatusManager = deps.HardwareStatusManager ?? new HardwareStatusManager();
+        HardwareStatusManager = deps.HardwareStatusManager ?? HardwareStatusManager.Create();
         DiagnosticController = deps.DiagnosticController ?? new DiagnosticController(Inventory, HardwareStatusManager);
 
-        var metadataProvider = new CurrencyMetadataProvider(ConfigProvider);
-        MonitorsProvider = new MonitorsProvider(Inventory, ConfigProvider, metadataProvider);
+        var metadataProvider = CurrencyMetadataProvider.Create(ConfigProvider);
+        MonitorsProvider = MonitorsProvider.Create(Inventory, ConfigProvider, metadataProvider);
 
         // Use the monitors from the MonitorsProvider for aggregation
-        Aggregator = new OverallStatusAggregator(MonitorsProvider.Monitors);
+        Aggregator = OverallStatusAggregator.Create(MonitorsProvider.Monitors);
 
         Manager = deps.Manager ?? new CashChangerManager(Inventory, History, ConfigProvider);
         DepositController = deps.DepositController ?? new DepositController(Inventory, HardwareStatusManager, Manager, ConfigProvider);
-        DispenseController = deps.DispenseController ?? new DispenseController(Manager, HardwareStatusManager, new HardwareSimulator(ConfigProvider));
+        DispenseController = deps.DispenseController ?? new DispenseController(Manager, HardwareStatusManager, HardwareSimulator.Create(ConfigProvider));
 
         Mediator = deps.Mediator ?? new UposMediator();
         EventNotifier = deps.EventNotifier ?? new UposEventNotifier();
