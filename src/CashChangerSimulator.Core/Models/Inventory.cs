@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
@@ -17,14 +18,23 @@ public class Inventory : IReadOnlyInventory, IDisposable
     private readonly Dictionary<DenominationKey, int> collectionCounts = [];
     private readonly Dictionary<DenominationKey, int> rejectCounts = [];
     private readonly Dictionary<DenominationKey, int> escrowCounts = [];
-    private readonly Subject<DenominationKey> changed = new();
+    private readonly CompositeDisposable disposables = [];
     private readonly Lock @lock = new();
 
     private bool disposed;
     private bool isForcedDiscrepancy;
 
     /// <inheritdoc/>
-    public virtual Observable<DenominationKey> Changed => changed;
+    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
+    private Inventory()
+    {
+        var subject = new Subject<DenominationKey>();
+        disposables.Add(subject);
+        Changed = subject;
+    }
+
+    /// <inheritdoc/>
+    public virtual Observable<DenominationKey> Changed { get; }
 
     /// <summary>在庫の不一致が発生しているかどうかを取得または設定します。</summary>
     /// <remarks>通常、回収庫またはリジェクト庫に現金がある場合に不一致と見なされます。手動での設定も可能です。</remarks>
@@ -94,6 +104,13 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
+    /// <summary>在庫管理インスタンスを生成・初期化します。</summary>
+    /// <returns>初期化済みの <see cref="Inventory"/> インスタンス。</returns>
+    public static Inventory Create()
+    {
+        return new Inventory();
+    }
+
     /// <summary>指定された金種の枚数を追加します。</summary>
     /// <param name="key">金種キー。</param>
     /// <param name="count">追加する枚数（負の値も可）。</param>
@@ -128,7 +145,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
             counts[key] = count;
         }
 
-        changed.OnNext(key);
+        ((Subject<DenominationKey>)Changed).OnNext(key);
     }
 
     /// <summary>指定された金種の枚数を回収庫に追加する。</summary>
@@ -167,7 +184,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
 
         foreach (var key in keys)
         {
-            changed.OnNext(key);
+            ((Subject<DenominationKey>)Changed).OnNext(key);
         }
 
         logger.ZLogDebug($"Inventory.ClearEscrow finished.");
@@ -313,7 +330,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
 
         if (disposing)
         {
-            changed.Dispose();
+            disposables.Dispose();
         }
 
         disposed = true;
@@ -365,7 +382,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
             bucket[key] = next;
         }
 
-        changed.OnNext(key);
+        ((Subject<DenominationKey>)Changed).OnNext(key);
         logger.ZLogDebug($"{methodName} finished. New Total: {CalculateTotal()}");
     }
 }

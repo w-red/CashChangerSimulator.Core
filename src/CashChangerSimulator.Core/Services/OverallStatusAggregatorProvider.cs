@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Monitoring;
 using R3;
 
@@ -10,10 +11,11 @@ public class OverallStatusAggregatorProvider : IDisposable
 
     /// <summary>Initializes a new instance of the <see cref="OverallStatusAggregatorProvider"/> class.全体的なステータス集計インスタンスを提供するプロバイダー。</summary>
     /// <param name="monitorsProvider">ステータスモニタープロバイダー。</param>
+    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
     public OverallStatusAggregatorProvider(MonitorsProvider monitorsProvider)
     {
         ArgumentNullException.ThrowIfNull(monitorsProvider);
-        Aggregator = new OverallStatusAggregator(monitorsProvider.Monitors);
+        Aggregator = OverallStatusAggregator.Create(monitorsProvider.Monitors).AddTo(disposables);
         monitorsProvider.Changed.Subscribe(_ => Aggregator.Refresh(monitorsProvider.Monitors)).AddTo(disposables);
     }
 
@@ -34,7 +36,6 @@ public class OverallStatusAggregatorProvider : IDisposable
         if (disposing)
         {
             disposables.Dispose();
-            Aggregator.Dispose();
         }
     }
 }

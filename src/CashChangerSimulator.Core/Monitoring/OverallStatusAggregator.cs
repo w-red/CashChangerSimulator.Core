@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using R3;
 
 namespace CashChangerSimulator.Core.Monitoring;
@@ -5,22 +6,29 @@ namespace CashChangerSimulator.Core.Monitoring;
 /// <summary>釣銭機全体のステータスを集約管理するクラス。</summary>
 public class OverallStatusAggregator : IDisposable
 {
-    private readonly BindableReactiveProperty<CashStatus> deviceStatus = new(CashStatus.Unknown);
-    private readonly BindableReactiveProperty<CashStatus> fullStatus = new(CashStatus.Unknown);
     private readonly CompositeDisposable disposables = [];
     private IEnumerable<CashStatusMonitor> monitors;
-    private IDisposable currentSubscription = Disposable.Empty;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="OverallStatusAggregator"/> class.監視対象のモニター一覧を指定して初期化します。</summary>
-    /// <param name="monitors">監視対象のモニター一覧。</param>
-    public OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
+    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
+    private OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
     {
         this.monitors = monitors;
-        DeviceStatus = deviceStatus.ToReadOnlyReactiveProperty().AddTo(disposables);
-        FullStatus = fullStatus.ToReadOnlyReactiveProperty().AddTo(disposables);
 
-        Refresh(monitors);
+        var deviceStatusProp = new BindableReactiveProperty<CashStatus>(CashStatus.Unknown);
+        disposables.Add(deviceStatusProp);
+        DeviceStatusProperty = deviceStatusProp;
+
+        var fullStatusProp = new BindableReactiveProperty<CashStatus>(CashStatus.Unknown);
+        disposables.Add(fullStatusProp);
+        FullStatusProperty = fullStatusProp;
+
+        var subscriptionDisposable = new SerialDisposable();
+        disposables.Add(subscriptionDisposable);
+        CurrentSubscriptionProperty = subscriptionDisposable;
+
+        DeviceStatus = deviceStatusProp.ToReadOnlyReactiveProperty().AddTo(disposables);
+        FullStatus = fullStatusProp.ToReadOnlyReactiveProperty().AddTo(disposables);
     }
 
     /// <summary>空・ニアエンプティに関する集約ステータス。</summary>
@@ -29,29 +37,43 @@ public class OverallStatusAggregator : IDisposable
     /// <summary>満杯・ニアフルに関する集約ステータス。</summary>
     public ReadOnlyReactiveProperty<CashStatus> FullStatus { get; }
 
+    private Observable<CashStatus> DeviceStatusProperty { get; }
+    private Observable<CashStatus> FullStatusProperty { get; }
+    private IDisposable CurrentSubscriptionProperty { get; }
+
+    /// <summary>監視対象のモニター一覧を指定してインスタンスを生成・初期化します。</summary>
+    /// <param name="monitors">監視対象のモニター一覧。</param>
+    /// <returns>初期化済みの <see cref="OverallStatusAggregator"/> インスタンス。</returns>
+    public static OverallStatusAggregator Create(IEnumerable<CashStatusMonitor> monitors)
+    {
+        var instance = new OverallStatusAggregator(monitors);
+        instance.Refresh(monitors);
+        return instance;
+    }
+
     /// <summary>金種モニターのリストを更新し、集計ロジックを再構築します。</summary>
     /// <param name="monitors">新しく監視対象とするモニター一覧。</param>
     public void Refresh(IEnumerable<CashStatusMonitor> monitors)
     {
-        currentSubscription?.Dispose();
+        ((SerialDisposable)CurrentSubscriptionProperty).Disposable = Disposable.Empty;
         this.monitors = monitors;
 
         if (!this.monitors.Any())
         {
-            deviceStatus.Value = CashStatus.Unknown;
-            fullStatus.Value = CashStatus.Unknown;
+            ((BindableReactiveProperty<CashStatus>)DeviceStatusProperty).Value = CashStatus.Unknown;
+            ((BindableReactiveProperty<CashStatus>)FullStatusProperty).Value = CashStatus.Unknown;
             return;
         }
 
         // 最初の状態を即座に計算する (Initial calculation)
-        deviceStatus.Value = AggregateDevice(this.monitors);
-        fullStatus.Value = AggregateFull(this.monitors);
+        ((BindableReactiveProperty<CashStatus>)DeviceStatusProperty).Value = AggregateDevice(this.monitors);
+        ((BindableReactiveProperty<CashStatus>)FullStatusProperty).Value = AggregateFull(this.monitors);
 
-        currentSubscription = Observable.CombineLatest(this.monitors.Select(m => m.Status.AsObservable()))
+        ((SerialDisposable)CurrentSubscriptionProperty).Disposable = Observable.CombineLatest(this.monitors.Select(m => m.Status.AsObservable()))
             .Subscribe(_ =>
             {
-                deviceStatus.Value = AggregateDevice(this.monitors);
-                fullStatus.Value = AggregateFull(this.monitors);
+                ((BindableReactiveProperty<CashStatus>)DeviceStatusProperty).Value = AggregateDevice(this.monitors);
+                ((BindableReactiveProperty<CashStatus>)FullStatusProperty).Value = AggregateFull(this.monitors);
             });
     }
 
@@ -73,10 +95,7 @@ public class OverallStatusAggregator : IDisposable
 
         if (disposing)
         {
-            currentSubscription.Dispose();
             disposables.Dispose();
-            deviceStatus.Dispose();
-            fullStatus.Dispose();
         }
 
         disposed = true;

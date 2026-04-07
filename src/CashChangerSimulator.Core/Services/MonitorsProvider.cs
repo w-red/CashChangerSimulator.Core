@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
@@ -11,7 +12,6 @@ public class MonitorsProvider : IDisposable
     private readonly Inventory inventory;
     private readonly ConfigurationProvider configProvider;
     private readonly ICurrencyMetadataProvider metadataProvider;
-    private readonly Subject<Unit> changed = new();
     private readonly CompositeDisposable disposables = [];
     private List<CashStatusMonitor> monitors = [];
 
@@ -19,7 +19,8 @@ public class MonitorsProvider : IDisposable
     /// <param name="inventory">在庫マネージャー。</param>
     /// <param name="configProvider">設定プロバイダー。</param>
     /// <param name="metadataProvider">通貨メタデータプロバイダー。</param>
-    public MonitorsProvider(Inventory inventory, ConfigurationProvider configProvider, ICurrencyMetadataProvider metadataProvider)
+    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
+    private MonitorsProvider(Inventory inventory, ConfigurationProvider configProvider, ICurrencyMetadataProvider metadataProvider)
     {
         ArgumentNullException.ThrowIfNull(inventory);
         ArgumentNullException.ThrowIfNull(configProvider);
@@ -28,6 +29,10 @@ public class MonitorsProvider : IDisposable
         this.inventory = inventory;
         this.configProvider = configProvider;
         this.metadataProvider = metadataProvider;
+
+        var changedSubject = new Subject<Unit>();
+        disposables.Add(changedSubject);
+        Changed = changedSubject;
 
         RefreshMonitors();
 
@@ -40,13 +45,29 @@ public class MonitorsProvider : IDisposable
     public IReadOnlyList<CashStatusMonitor> Monitors => monitors;
 
     /// <summary>モニターリストが変更されたときに通知されるストリーム。</summary>
-    public Observable<Unit> Changed => changed;
+    public Observable<Unit> Changed { get; }
+
+    /// <summary>在庫と設定を元に、全金種のモニタープロバイダーを生成・初期化します。</summary>
+    /// <param name="inventory">在庫マネージャー。</param>
+    /// <param name="configProvider">設定プロバイダー。</param>
+    /// <param name="metadataProvider">通貨メタデータプロバイダー。</param>
+    /// <returns>初期化済みの <see cref="MonitorsProvider"/> インスタンス。</returns>
+    public static MonitorsProvider Create(Inventory inventory, ConfigurationProvider configProvider, ICurrencyMetadataProvider metadataProvider)
+    {
+        return new MonitorsProvider(inventory, configProvider, metadataProvider);
+    }
 
     /// <summary>現在の通貨設定に基づいてモニターリストを再構築する。</summary>
     public void RefreshMonitors()
     {
         var config = configProvider.Config;
         var keys = metadataProvider.SupportedDenominations;
+
+        // Dispose existing monitors before refreshing
+        foreach (var monitor in monitors)
+        {
+            monitor.Dispose();
+        }
 
         monitors = keys.Select(k =>
         {
@@ -74,7 +95,7 @@ public class MonitorsProvider : IDisposable
                 globalSetting.IsRecyclable ? config.Thresholds.Full : -1,
                 globalSetting.IsRecyclable);
         }).ToList();
-        changed.OnNext(Unit.Default);
+        ((Subject<Unit>)Changed).OnNext(Unit.Default);
     }
 
     /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する（ホットリロード用）。</summary>
@@ -108,7 +129,7 @@ public class MonitorsProvider : IDisposable
     }
 
     /// <summary>テスト用：手動で変更通知を発火させます。</summary>
-    public void TriggerChanged() => changed.OnNext(Unit.Default);
+    public void TriggerChanged() => ((Subject<Unit>)Changed).OnNext(Unit.Default);
 
     /// <inheritdoc/>
     public void Dispose()
@@ -124,7 +145,6 @@ public class MonitorsProvider : IDisposable
         if (disposing)
         {
             disposables.Dispose();
-            changed.Dispose();
             foreach (var monitor in monitors)
             {
                 monitor.Dispose();

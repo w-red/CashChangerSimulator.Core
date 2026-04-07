@@ -7,6 +7,7 @@ namespace CashChangerSimulator.Core.Monitoring;
 public class CashStatusMonitor : IDisposable
 {
     private readonly IReadOnlyInventory inventory;
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Managed by CompositeDisposable.")]
     private readonly ReactiveProperty<CashStatus> status = new(CashStatus.Unknown);
     private readonly CompositeDisposable disposables = [];
     private bool disposed;
@@ -30,7 +31,7 @@ public class CashStatusMonitor : IDisposable
         NearFullThreshold = nearFullThreshold;
         FullThreshold = fullThreshold;
 
-        // 初回計算
+        status.AddTo(disposables);
         UpdateStatus();
 
         // 在庫変更時の再計算
@@ -53,7 +54,8 @@ public class CashStatusMonitor : IDisposable
     public int FullThreshold { get; private set; }
 
     /// <summary>現在の状態を流すイベントストリーム。</summary>
-    public ReadOnlyReactiveProperty<CashStatus> Status => status;
+    public ReadOnlyReactiveProperty<CashStatus> Status =>
+        status.ToReadOnlyReactiveProperty().AddTo(disposables);
 
     /// <summary>監視する金種キー。</summary>
     public DenominationKey Key { get; }
@@ -89,7 +91,6 @@ public class CashStatusMonitor : IDisposable
         if (disposing)
         {
             disposables.Dispose();
-            status.Dispose();
         }
 
         disposed = true;

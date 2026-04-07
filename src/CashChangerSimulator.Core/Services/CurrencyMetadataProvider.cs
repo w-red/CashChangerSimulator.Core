@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using R3;
@@ -67,28 +68,41 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
         }
     };
 
-    private readonly BindableReactiveProperty<string> symbolPrefix;
-    private readonly BindableReactiveProperty<string> symbolSuffix;
-    private readonly BindableReactiveProperty<string> currencyCodeProperty;
-    private readonly BindableReactiveProperty<string> cultureCodeProperty;
     private readonly ConfigurationProvider configProvider;
-    private readonly Subject<Unit> changed = new();
     private readonly CompositeDisposable disposables = [];
 
     /// <summary>Initializes a new instance of the <see cref="CurrencyMetadataProvider"/> class.設定プロバイダーを指定してメタデータプロバイダーを初期化する。</summary>
     /// <param name="configProvider">設定プロバイダー。</param>
-    public CurrencyMetadataProvider(ConfigurationProvider configProvider)
+    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
+    private CurrencyMetadataProvider(ConfigurationProvider configProvider)
     {
         ArgumentNullException.ThrowIfNull(configProvider);
         this.configProvider = configProvider;
         var initialConfig = configProvider.Config;
-        currencyCodeProperty = new BindableReactiveProperty<string>(string.IsNullOrWhiteSpace(initialConfig.System.CurrencyCode) ? "JPY" : initialConfig.System.CurrencyCode);
-        cultureCodeProperty = new BindableReactiveProperty<string>(initialConfig.System.CultureCode ?? "en-US");
-        symbolPrefix = new BindableReactiveProperty<string>(string.Empty);
-        symbolSuffix = new BindableReactiveProperty<string>(string.Empty);
 
-        SymbolPrefix = symbolPrefix.ToReadOnlyReactiveProperty().AddTo(disposables);
-        SymbolSuffix = symbolSuffix.ToReadOnlyReactiveProperty().AddTo(disposables);
+        // Initialize properties and register to disposables
+        var currencyCodeProp = new BindableReactiveProperty<string>(string.IsNullOrWhiteSpace(initialConfig.System.CurrencyCode) ? "JPY" : initialConfig.System.CurrencyCode);
+        disposables.Add(currencyCodeProp);
+        CurrencyCodeProperty = currencyCodeProp;
+
+        var cultureCodeProp = new BindableReactiveProperty<string>(initialConfig.System.CultureCode ?? "en-US");
+        disposables.Add(cultureCodeProp);
+        CultureCodeProperty = cultureCodeProp;
+
+        var symbolPrefixProp = new BindableReactiveProperty<string>(string.Empty);
+        disposables.Add(symbolPrefixProp);
+        SymbolPrefixProperty = symbolPrefixProp;
+
+        var symbolSuffixProp = new BindableReactiveProperty<string>(string.Empty);
+        disposables.Add(symbolSuffixProp);
+        SymbolSuffixProperty = symbolSuffixProp;
+
+        var changedSubject = new Subject<Unit>();
+        disposables.Add(changedSubject);
+        Changed = changedSubject;
+
+        SymbolPrefix = ((BindableReactiveProperty<string>)SymbolPrefixProperty).ToReadOnlyReactiveProperty().AddTo(disposables);
+        SymbolSuffix = ((BindableReactiveProperty<string>)SymbolSuffixProperty).ToReadOnlyReactiveProperty().AddTo(disposables);
 
         UpdateMetadata(initialConfig);
 
@@ -99,13 +113,13 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
     }
 
     /// <inheritdoc/>
-    public Observable<Unit> Changed => changed;
+    public Observable<Unit> Changed { get; }
 
     /// <summary>通貨コード（例: "JPY"）。</summary>
-    public string CurrencyCode => currencyCodeProperty.Value;
+    public string CurrencyCode => ((BindableReactiveProperty<string>)CurrencyCodeProperty).Value;
 
     /// <summary>通貨記号（プレフィックス優先）。</summary>
-    public string Symbol => !string.IsNullOrEmpty(symbolPrefix.Value) ? symbolPrefix.Value : symbolSuffix.Value;
+    public string Symbol => !string.IsNullOrEmpty(((BindableReactiveProperty<string>)SymbolPrefixProperty).Value) ? ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value : ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value;
 
     /// <summary>通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolPrefix { get; }
@@ -116,13 +130,27 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
     /// <summary>この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
     public IReadOnlyList<DenominationKey> SupportedDenominations { get; private set; } = [];
 
+    /// <summary>Internal access to reactive properties via cast.</summary>
+    private Observable<string> CurrencyCodeProperty { get; }
+    private Observable<string> CultureCodeProperty { get; }
+    private Observable<string> SymbolPrefixProperty { get; }
+    private Observable<string> SymbolSuffixProperty { get; }
+
+    /// <summary>設定プロバイダーを指定してメタデータプロバイダーを生成・初期化します。</summary>
+    /// <param name="configProvider">設定プロバイダー。</param>
+    /// <returns>初期化済みの <see cref="CurrencyMetadataProvider"/> インスタンス。</returns>
+    public static CurrencyMetadataProvider Create(ConfigurationProvider configProvider)
+    {
+        return new CurrencyMetadataProvider(configProvider);
+    }
+
     /// <summary>指定された金種の表示名を取得する。現在のカルチャ設定に従います。</summary>
     /// <param name="key">金種キー。</param>
     /// <returns>表示名。</returns>
     public string GetDenominationName(DenominationKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        return GetDenominationName(key, cultureCodeProperty.Value);
+        return GetDenominationName(key, ((BindableReactiveProperty<string>)CultureCodeProperty).Value);
     }
 
     /// <summary>指定された金種とカルチャの表示名を取得する。</summary>
@@ -201,21 +229,16 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
         if (disposing)
         {
             disposables.Dispose();
-            changed.Dispose();
-            symbolPrefix.Dispose();
-            symbolSuffix.Dispose();
-            currencyCodeProperty.Dispose();
-            cultureCodeProperty.Dispose();
         }
     }
 
     private void UpdateMetadata(SimulatorConfiguration config)
     {
-        currencyCodeProperty.Value = string.IsNullOrWhiteSpace(config.System.CurrencyCode) ? "JPY" : config.System.CurrencyCode;
-        cultureCodeProperty.Value = config.System.CultureCode ?? "en-US";
+        ((BindableReactiveProperty<string>)CurrencyCodeProperty).Value = string.IsNullOrWhiteSpace(config.System.CurrencyCode) ? "JPY" : config.System.CurrencyCode;
+        ((BindableReactiveProperty<string>)CultureCodeProperty).Value = config.System.CultureCode ?? "en-US";
 
-        var currentCurrency = currencyCodeProperty.Value;
-        var currentCulture = cultureCodeProperty.Value;
+        var currentCurrency = ((BindableReactiveProperty<string>)CurrencyCodeProperty).Value;
+        var currentCulture = ((BindableReactiveProperty<string>)CultureCodeProperty).Value;
 
         if (!CurrencyDatabase.TryGetValue(currentCurrency, out var currencyData))
         {
@@ -231,22 +254,22 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
             var isJapanese = currentCulture.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
             if (isJapanese)
             {
-                symbolPrefix.Value = string.Empty;
-                symbolSuffix.Value = "円";
+                ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value = string.Empty;
+                ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value = "円";
             }
             else
             {
-                symbolPrefix.Value = "¥";
-                symbolSuffix.Value = string.Empty;
+                ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value = "¥";
+                ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value = string.Empty;
             }
         }
         else
         {
-            symbolPrefix.Value = rawSymbol;
-            symbolSuffix.Value = string.Empty;
+            ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value = rawSymbol;
+            ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value = string.Empty;
         }
 
         SupportedDenominations = currencyData.Denominations;
-        changed.OnNext(Unit.Default);
+        ((Subject<Unit>)Changed).OnNext(Unit.Default);
     }
 }
