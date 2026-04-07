@@ -419,8 +419,9 @@ public class DepositController : IDisposable
                         }
                     }
                 }
-                else // NoChange (or None)
+                else
                 {
+                    // NoChange (or None)
                     logger.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
                     var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
                     inventory.ClearEscrow();
