@@ -32,16 +32,6 @@ public class DepositController : IDisposable
     private readonly List<string> depositedSerials = [];
     private readonly List<string> lastDepositedSerials = [];
     private CancellationTokenSource? depositCts;
-    private decimal depositAmount;
-    private decimal overflowAmount;
-    private decimal rejectAmount;
-    private DeviceDepositStatus depositStatus = DeviceDepositStatus.None;
-    private bool depositPaused;
-    private bool depositFixed;
-    private bool isBusy;
-    private DeviceErrorCode lastErrorCode = DeviceErrorCode.Success;
-    private int lastErrorCodeExtended;
-    private decimal requiredAmount;
     private bool disposed;
 
     /// <summary>
@@ -71,6 +61,10 @@ public class DepositController : IDisposable
         }
 
         this.manager = manager;
+
+        // Initialize properties
+        DepositStatus = DeviceDepositStatus.None;
+        LastErrorCode = DeviceErrorCode.Success;
     }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
@@ -92,7 +86,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return depositAmount;
+                return field;
+            }
+        }
+
+        set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -104,7 +106,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return overflowAmount;
+                return field;
+            }
+        }
+
+        set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -116,7 +126,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return rejectAmount;
+                return field;
+            }
+        }
+
+        set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -140,7 +158,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return depositStatus;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -152,7 +178,7 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return depositStatus is
+                return DepositStatus is
                     DeviceDepositStatus.Start or
                     DeviceDepositStatus.Counting or
                     DeviceDepositStatus.Validation;
@@ -167,7 +193,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return depositPaused;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -179,7 +213,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return depositFixed;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -191,7 +233,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return isBusy;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -203,7 +253,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return lastErrorCode;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -215,7 +273,15 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return lastErrorCodeExtended;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -239,7 +305,7 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                return requiredAmount;
+                return field;
             }
         }
 
@@ -247,12 +313,12 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                if (requiredAmount == value)
+                if (field == value)
                 {
                     return;
                 }
 
-                requiredAmount = value;
+                field = value;
 
                 if (!disposed)
                 {
@@ -267,9 +333,9 @@ public class DepositController : IDisposable
     {
         lock (stateLock)
         {
-            logger.ZLogInformation($"BeginDeposit called. Current Status: {depositStatus}");
+            logger.ZLogInformation($"BeginDeposit called. Current Status: {DepositStatus}");
 
-            if (isBusy)
+            if (IsBusy)
             {
                 throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             }
@@ -284,18 +350,18 @@ public class DepositController : IDisposable
                 throw new DeviceException("Device has overlapped cash. Cannot begin deposit.", DeviceErrorCode.Overlapped);
             }
 
-            depositAmount = 0m;
-            overflowAmount = 0m;
-            rejectAmount = 0m;
+            DepositAmount = 0m;
+            OverflowAmount = 0m;
+            RejectAmount = 0m;
             depositCounts.Clear();
             depositedSerials.Clear();
-            depositStatus = DeviceDepositStatus.Start;
-            depositPaused = false;
-            depositFixed = false;
-            lastErrorCode = DeviceErrorCode.Success;
-            lastErrorCodeExtended = 0;
+            DepositStatus = DeviceDepositStatus.Start;
+            IsPaused = false;
+            IsFixed = false;
+            LastErrorCode = DeviceErrorCode.Success;
+            LastErrorCodeExtended = 0;
 
-            depositStatus = DeviceDepositStatus.Counting;
+            DepositStatus = DeviceDepositStatus.Counting;
             inventory.ClearEscrow();
             if (!disposed)
             {
@@ -309,12 +375,12 @@ public class DepositController : IDisposable
     {
         lock (stateLock)
         {
-            if (depositStatus != DeviceDepositStatus.Counting)
+            if (DepositStatus != DeviceDepositStatus.Counting)
             {
                 throw new DeviceException("Counting is not in progress.", DeviceErrorCode.Illegal);
             }
 
-            depositFixed = true;
+            IsFixed = true;
             lastDepositedSerials.Clear();
             lastDepositedSerials.AddRange(depositedSerials);
             if (!disposed)
@@ -331,19 +397,19 @@ public class DepositController : IDisposable
     {
         lock (stateLock)
         {
-            if (!depositFixed)
+            if (!IsFixed)
             {
                 throw new DeviceException("Invalid call sequence: FixDeposit must be called before EndDeposit.", DeviceErrorCode.Illegal);
             }
 
-            if (isBusy)
+            if (IsBusy)
             {
                 throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             }
 
-            isBusy = true;
-            lastErrorCode = DeviceErrorCode.Success;
-            lastErrorCodeExtended = 0;
+            IsBusy = true;
+            LastErrorCode = DeviceErrorCode.Success;
+            LastErrorCodeExtended = 0;
         }
 
         lock (stateLock)
@@ -378,7 +444,7 @@ public class DepositController : IDisposable
                 }
                 else if (action == DepositAction.Change)
                 {
-                    decimal changeAmount = Math.Max(0, depositAmount - RequiredAmount);
+                    decimal changeAmount = Math.Max(0, DepositAmount - RequiredAmount);
                     var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
 
                     if (changeAmount > 0)
@@ -462,13 +528,13 @@ public class DepositController : IDisposable
                     throw new DeviceException("Device Error (Overlap). Cannot complete deposit.", DeviceErrorCode.Overlapped);
                 }
 
-                depositStatus = DeviceDepositStatus.End;
-                depositPaused = false;
-                depositFixed = false;
+                DepositStatus = DeviceDepositStatus.End;
+                IsPaused = false;
+                IsFixed = false;
 
                 if (action == DepositAction.Repay)
                 {
-                    depositAmount = 0m;
+                    DepositAmount = 0m;
                     depositCounts.Clear();
                 }
 
@@ -479,7 +545,7 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                lastErrorCode = DeviceErrorCode.Cancelled;
+                LastErrorCode = DeviceErrorCode.Cancelled;
             }
         }
         catch (DeviceException dex)
@@ -487,11 +553,11 @@ public class DepositController : IDisposable
             logger.ZLogError(dex, $"EndDeposit failed with device error.");
             lock (stateLock)
             {
-                lastErrorCode = dex.ErrorCode;
-                lastErrorCodeExtended = dex.ErrorCodeExtended;
+                LastErrorCode = dex.ErrorCode;
+                LastErrorCodeExtended = dex.ErrorCodeExtended;
                 if (!disposed)
                 {
-                    errorEvents.OnNext(new DeviceErrorEventArgs(lastErrorCode, lastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                    errorEvents.OnNext(new DeviceErrorEventArgs(LastErrorCode, LastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
                 }
             }
         }
@@ -500,11 +566,11 @@ public class DepositController : IDisposable
             logger.ZLogError(ex, $"EndDeposit failed with unexpected error.");
             lock (stateLock)
             {
-                lastErrorCode = DeviceErrorCode.Failure;
-                lastErrorCodeExtended = 0;
+                LastErrorCode = DeviceErrorCode.Failure;
+                LastErrorCodeExtended = 0;
                 if (!disposed)
                 {
-                    errorEvents.OnNext(new DeviceErrorEventArgs(lastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                    errorEvents.OnNext(new DeviceErrorEventArgs(LastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
                 }
             }
         }
@@ -512,7 +578,7 @@ public class DepositController : IDisposable
         {
             lock (stateLock)
             {
-                isBusy = false;
+                IsBusy = false;
                 if (!disposed)
                 {
                     changed.OnNext(Unit.Default);
@@ -539,7 +605,7 @@ public class DepositController : IDisposable
         bool needsFix = false;
         lock (stateLock)
         {
-            needsFix = !depositFixed;
+            needsFix = !IsFixed;
         }
 
         if (needsFix)
@@ -573,12 +639,12 @@ public class DepositController : IDisposable
             }
 
             bool requestedPause = control == DeviceDepositPause.Pause;
-            if (depositPaused == requestedPause)
+            if (IsPaused == requestedPause)
             {
                 throw new DeviceException($"Device is already {(requestedPause ? "paused" : "running")}.", DeviceErrorCode.Illegal);
             }
 
-            depositPaused = requestedPause;
+            IsPaused = requestedPause;
         }
 
         lock (stateLock)
@@ -606,13 +672,13 @@ public class DepositController : IDisposable
         ArgumentNullException.ThrowIfNull(counts);
         lock (stateLock)
         {
-            if (depositStatus != DeviceDepositStatus.Counting
-                || depositPaused)
+            if (DepositStatus != DeviceDepositStatus.Counting
+                || IsPaused)
             {
                 return;
             }
 
-            if (depositFixed)
+            if (IsFixed)
             {
                 throw new DeviceException("Deposit is already fixed.", DeviceErrorCode.Illegal);
             }
@@ -657,11 +723,11 @@ public class DepositController : IDisposable
                 int newlyOverflowed = overflowCount - previouslyOverflowed;
 
                 depositCounts[kv.Key] = currentDepositCount + kv.Value;
-                depositAmount += kv.Key.Value * kv.Value;
+                DepositAmount += kv.Key.Value * kv.Value;
 
                 if (newlyOverflowed > 0)
                 {
-                    overflowAmount += kv.Key.Value * newlyOverflowed;
+                    OverflowAmount += kv.Key.Value * newlyOverflowed;
                 }
 
                 for (int i = 0; i < kv.Value; i++)
@@ -690,12 +756,12 @@ public class DepositController : IDisposable
     {
         lock (stateLock)
         {
-            if (!IsDepositInProgress || depositPaused)
+            if (!IsDepositInProgress || IsPaused)
             {
                 return;
             }
 
-            rejectAmount += amount;
+            RejectAmount += amount;
             if (RealTimeDataEnabled && !disposed)
             {
                 dataEvents.OnNext(new DeviceDataEventArgs(0));
