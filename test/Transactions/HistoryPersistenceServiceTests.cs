@@ -59,6 +59,7 @@ public class HistoryPersistenceServiceTests : IDisposable
     }
 
     /// <summary>オートセーブが有効な際、履歴の追加に伴い自動的に保存が行われることを検証します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task AutoSaveShouldTriggerWhenEntryAdded()
     {
@@ -147,7 +148,7 @@ public class HistoryPersistenceServiceTests : IDisposable
     public void LoadShouldHandleUnauthorizedAccessException()
     {
         // Arrange
-        // Create a directory with the same name as the file to cause access error on some OS, 
+        // Create a directory with the same name as the file to cause access error on some OS,
         // or just point to a protected location. On Windows, a directory handle usually fails with Unauthorized.
         var dirPath = Path.Combine(Path.GetTempPath(), $"dir_{Guid.NewGuid()}");
         Directory.CreateDirectory(dirPath);

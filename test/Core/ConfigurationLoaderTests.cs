@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Configuration;
 using Shouldly;
 using Tomlyn;
@@ -201,6 +200,7 @@ public class ConfigurationLoaderTests : IDisposable
     public void LoadInventoryStateShouldHandleExceptions()
     {
         File.WriteAllText(testInventoryPath, "INVALID");
+
         // This causes TomlException which is caught.
         var state = ConfigurationLoader.LoadInventoryState(testInventoryPath);
         state.ShouldNotBeNull();

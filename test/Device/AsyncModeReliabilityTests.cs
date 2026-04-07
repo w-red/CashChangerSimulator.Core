@@ -51,7 +51,7 @@ public class AsyncModeReliabilityTests
     }
 
     /// <summary>非同期出金処理において、完了イベント通知時の内部状態が正しいことを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task AsyncDispenseShouldHaveCorrectStateWhenEventFires()
     {

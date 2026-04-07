@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
 using Moq;
 using Shouldly;
@@ -21,6 +20,7 @@ public class DispenseControllerTest
     }
 
     /// <summary>同期的な払い出し操作でステータスが遷移することを検証します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldTransitionToBusyAndBackToIdle()
     {
@@ -47,6 +47,7 @@ public class DispenseControllerTest
     }
 
     /// <summary>ビジー状態での払い出し呼び出しが例外をスローすることを検証します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowIfBusy()
     {
@@ -69,6 +70,7 @@ public class DispenseControllerTest
     }
 
     /// <summary>払い出し操作中にシミュレーターが呼び出されることを検証します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldCallSimulator()
     {

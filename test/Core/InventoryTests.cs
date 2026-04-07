@@ -301,6 +301,7 @@ public class InventoryTests
     {
         var inv = new Inventory();
         inv.Dispose();
+
         // Just verify no exception on double dispose
         inv.Dispose();
     }

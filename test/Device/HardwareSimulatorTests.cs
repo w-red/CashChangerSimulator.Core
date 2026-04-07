@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Models;
 using System.Diagnostics;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device.Virtual;
@@ -10,7 +9,7 @@ namespace CashChangerSimulator.Tests.Device;
 public class HardwareSimulatorTests
 {
     /// <summary>シミュレータが設定された遅延時間分待機することを検証する。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task SimulateDispenseAsyncShouldDelayByConfiguredAmount()
     {
@@ -32,7 +31,7 @@ public class HardwareSimulatorTests
     }
 
     /// <summary>遅延時間が0の場合、即座に完了することを検証する。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task SimulateDispenseAsyncShouldCompleteImmediatelyWhenDelayIsZero()
     {

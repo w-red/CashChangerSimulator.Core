@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device.PosForDotNet.Lifecycle;
 using Microsoft.Extensions.Logging.Abstractions;

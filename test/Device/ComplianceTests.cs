@@ -76,9 +76,9 @@ public class ComplianceTests
             (e) =>
             {
                 if (e is DataEventArgs)
-{
-    eventCount++;
-}
+                {
+                    eventCount++;
+                }
             };
 
         // Act
@@ -103,9 +103,9 @@ public class ComplianceTests
         changer.OnEventQueued += (e) =>
         {
             if (e is DataEventArgs)
-{
-    eventCount++;
-}
+            {
+                eventCount++;
+            }
         };
 
         // Act
@@ -150,9 +150,9 @@ public class ComplianceTests
         changer.OnEventQueued += (e) =>
         {
             if (e is StatusUpdateEventArgs se)
-{
-    status = se.Status;
-}
+            {
+                status = se.Status;
+            }
         };
 
         // Act

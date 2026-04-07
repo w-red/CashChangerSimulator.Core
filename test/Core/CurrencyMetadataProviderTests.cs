@@ -137,7 +137,7 @@ public class CurrencyMetadataProviderTests
         configProvider.Config.System.CurrencyCode = "JPY";
         configProvider.Config.System.CultureCode = "en-US";
         configProvider.Update(configProvider.Config);
-        
+
         provider.SymbolPrefix.CurrentValue.ShouldBe("¥");
         provider.SymbolSuffix.CurrentValue.ShouldBe(string.Empty);
 
@@ -166,7 +166,8 @@ public class CurrencyMetadataProviderTests
         configProvider.Config.System.CurrencyCode = "XXX";
         configProvider.Config.System.CultureCode = "ja-JP";
         configProvider.Update(configProvider.Config);
-        // Note: XXX doesn't exist in config by default, but GetDenominationSetting returns a default if missing? 
+
+        // Note: XXX doesn't exist in config by default, but GetDenominationSetting returns a default if missing?
         // Let's assume we can add it to inventory if needed, or it fallbacks to "100 (Bill)"-like format.
         var unknownKey = new DenominationKey(100, CurrencyCashType.Bill, "XXX");
         provider.GetDenominationName(unknownKey).ShouldBe("100 (Bill)");

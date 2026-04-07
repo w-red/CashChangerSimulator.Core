@@ -2,11 +2,8 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
-using R3;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -221,7 +218,6 @@ public class DepositSequenceTests
         var ex = Should.Throw<DeviceException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)));
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
     }
-
 
     /// <summary>投入された現金がリアルタイムでエスクロー在庫を更新することを検証します。</summary>
     [Fact]

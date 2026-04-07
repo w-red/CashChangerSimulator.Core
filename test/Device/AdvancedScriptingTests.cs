@@ -13,7 +13,7 @@ namespace CashChangerSimulator.Tests.Device;
 public class AdvancedScriptingTests
 {
     /// <summary>スクリプト内の Repeat（ループ）操作が期待通りに複数回実行されることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncRepeatShouldExecuteMultipleTimes()
     {
@@ -54,7 +54,7 @@ public class AdvancedScriptingTests
     }
 
     /// <summary>スクリプト内で変数をセットし、動的なパラメータとして後続のコマンドで使用できることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncSetVariableShouldAllowDynamicParameters()
     {
@@ -90,7 +90,7 @@ public class AdvancedScriptingTests
     }
 
     /// <summary>スクリプト経由でハードウェアエラーを注入し、デバイス状態が正しく更新されることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncInjectErrorShouldChangeHardwareState()
     {
@@ -117,7 +117,7 @@ public class AdvancedScriptingTests
     }
 
     /// <summary>スクリプト内の Assert 操作により、現在のインベントリ状態が正しく検証されることを確認します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncAssertShouldVerifyInventory()
     {
@@ -150,7 +150,7 @@ public class AdvancedScriptingTests
     }
 
     /// <summary>特定の箇所（Inletなど）へのジャム注入がハードウェア状態に正しく反映されることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncInjectErrorJamLocationShouldUpdateHardware()
     {
@@ -178,7 +178,7 @@ public class AdvancedScriptingTests
     }
 
     /// <summary>汎用デバイスエラーの注入がハードウェア状態およびエラーコードに正しく反映されることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncInjectErrorDeviceShouldUpdateHardware()
     {

@@ -2,10 +2,8 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
-using R3;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -18,7 +16,7 @@ public class DepositControllerCoverageTests
         var hw = new HardwareStatusManager();
         hw.SetConnected(true);
         var config = new ConfigurationProvider();
-        
+
         var controller = new DepositController(inventory, hw, null, config);
         return (controller, inventory, hw);
     }
@@ -38,7 +36,7 @@ public class DepositControllerCoverageTests
         var (controller, _, _) = CreateController();
         controller.RequiredAmount = 1500m;
         controller.RequiredAmount.ShouldBe(1500m);
-        
+
         // Coverage for same value branch
         controller.RequiredAmount = 1500m;
         controller.RequiredAmount.ShouldBe(1500m);
@@ -50,7 +48,7 @@ public class DepositControllerCoverageTests
     {
         var (controller, _, _) = CreateController();
         controller.BeginDeposit();
-        
+
         controller.RejectAmount.ShouldBe(0m);
         controller.TrackReject(500m);
         controller.RejectAmount.ShouldBe(500m);
@@ -66,15 +64,16 @@ public class DepositControllerCoverageTests
     }
 
     /// <summary>RepayDepositAsync が状態をクリアし終了イベントを発火することを検証する。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task RepayDepositShouldClearStateAndRaiseEvent()
     {
         var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.TrackReject(100m);
-        
+
         await controller.RepayDepositAsync();
-        
+
         controller.DepositAmount.ShouldBe(0m);
         controller.RejectAmount.ShouldBe(100m);
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
@@ -97,12 +96,12 @@ public class DepositControllerCoverageTests
         controller.BeginDeposit();
 
         controller.PauseDeposit(DeviceDepositPause.Pause);
-        
+
         controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill));
         controller.DepositAmount.ShouldBe(0m);
-        
+
         controller.PauseDeposit(DeviceDepositPause.Resume);
-        
+
         controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill));
         controller.DepositAmount.ShouldBe(1000m);
     }
@@ -134,12 +133,12 @@ public class DepositControllerCoverageTests
         var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.PauseDeposit(DeviceDepositPause.Pause);
-        
-        controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> 
-        { 
-            { new DenominationKey(1000, CurrencyCashType.Bill), 1 } 
+
+        controller.TrackBulkDeposit(new Dictionary<DenominationKey, int>
+        {
+            { new DenominationKey(1000, CurrencyCashType.Bill), 1 }
         });
-        
+
         controller.DepositAmount.ShouldBe(0m);
     }
 
@@ -150,21 +149,22 @@ public class DepositControllerCoverageTests
         var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.FixDeposit();
-        
-        Should.Throw<DeviceException>(() => controller.TrackBulkDeposit(new Dictionary<DenominationKey, int> 
-        { 
-            { new DenominationKey(1000, CurrencyCashType.Bill), 1 } 
+
+        Should.Throw<DeviceException>(() => controller.TrackBulkDeposit(new Dictionary<DenominationKey, int>
+        {
+            { new DenominationKey(1000, CurrencyCashType.Bill), 1 }
         }))
         .ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
     /// <summary>確定前に EndDeposit を呼び出そうとすると例外が発生することを検証する。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EndDepositWithoutFixShouldThrow()
     {
         var (controller, _, _) = CreateController();
         controller.BeginDeposit();
-        
+
         (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.NoChange)))
             .ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
@@ -180,31 +180,33 @@ public class DepositControllerCoverageTests
     }
 
     /// <summary>入金中に EndDepositAsync を呼び出すと Busy エラーが発生することを検証する。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EndDepositAsyncWhenAlreadyBusyShouldThrow()
     {
         var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.FixDeposit();
-        
+
         // Start an operation that sets isBusy = true
         var task = controller.EndDepositAsync(DepositAction.NoChange);
-        
+
         // Concurrent call should throw Busy
         (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.NoChange)))
             .ErrorCode.ShouldBe(DeviceErrorCode.Busy);
-        
+
         await task;
     }
 
     /// <summary>入金中に BeginDeposit を呼び出すと Busy エラーが発生することを検証する。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task BeginDepositWhenBusyShouldThrow()
     {
         var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.FixDeposit();
-        
+
         // Start an operation that sets isBusy = true
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
@@ -216,6 +218,7 @@ public class DepositControllerCoverageTests
     }
 
     /// <summary>EndDepositAsync 実行中に Overlapped が検出されて例外が発生することを検証する。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EndDepositAsyncShouldCatchOverlappedException()
     {
@@ -225,7 +228,7 @@ public class DepositControllerCoverageTests
         controller.FixDeposit();
 
         var task = controller.EndDepositAsync(DepositAction.NoChange);
-        
+
         // Wait briefly for Task.Delay(500)
         await Task.Delay(100).ConfigureAwait(false);
         hw.SetOverlapped(true);
@@ -236,6 +239,7 @@ public class DepositControllerCoverageTests
     }
 
     /// <summary>EndDepositAsync 実行中にキャンセルが発生することを検証する。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EndDepositAsyncShouldHandleCancellation()
     {
@@ -244,12 +248,12 @@ public class DepositControllerCoverageTests
         controller.FixDeposit();
 
         var task = controller.EndDepositAsync(DepositAction.NoChange);
-        
+
         // Wait briefly to ensure Task.Delay started
         await Task.Delay(50);
-        
+
         controller.Dispose(); // This cancels the internal CTS
-        
+
         await task;
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
     }

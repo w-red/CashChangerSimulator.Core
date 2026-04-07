@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
@@ -38,7 +37,6 @@ public class UposLifecycleTests
         var jpySettings = new InventorySettings();
         jpySettings.Denominations.Add("C100", new() { InitialCount = 50 });
         configProvider.Config.Inventory["JPY"] = jpySettings;
-
 
         var inv = new Inventory();
         var hw = new HardwareStatusManager();

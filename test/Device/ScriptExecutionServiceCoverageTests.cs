@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual.Services;
 using Shouldly;
 
@@ -11,9 +10,9 @@ public class ScriptExecutionServiceCoverageTests
     public void ResolveValueWithUnknownVariableShouldReturnAsIsOrThrow()
     {
         var context = new ScriptExecutionContext();
-        
+
         var method = typeof(ScriptExecutionService).GetMethod("ResolveValue", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-        
+
         if (method != null)
         {
             var result = method.Invoke(null, new object[] { "123", context });

@@ -13,7 +13,7 @@ namespace CashChangerSimulator.Tests.Device;
 public class BulkOperationTests
 {
     /// <summary>複雑な入出金スクリプトを実行し、最終的なインベントリが正しく更新されることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncShouldUpdateInventoryCorrectly()
     {
@@ -44,7 +44,7 @@ public class BulkOperationTests
     }
 
     /// <summary>Action="Repay" を指定した入金完了操作で、在庫が更新されない（返却される）ことを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncRepayActionShouldNotUpdateInventory()
     {

@@ -4,7 +4,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
@@ -65,7 +64,7 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
 public class DispenseAsyncTests
 {
     /// <summary>非同期の払出操作が呼び出し元をブロックせず、完了時にイベントを発火することを検証する。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task AsyncDispenseShouldNotBlockAndFireEvent()
     {
@@ -110,7 +109,7 @@ public class DispenseAsyncTests
     }
 
     /// <summary>非同期払出中に重ねて払出を要求した場合に E_BUSY がスローされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseDuringAsyncShouldThrowBusy()
     {
@@ -144,7 +143,7 @@ public class DispenseAsyncTests
     }
 
     /// <summary>非同期払出中に在庫読取を試みた場合に E_BUSY がスローされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ReadCountsDuringAsyncShouldThrowBusy()
     {
@@ -176,7 +175,7 @@ public class DispenseAsyncTests
     }
 
     /// <summary>ClearOutput 呼び出しにより、実行中の非同期払出が適切にキャンセルされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ClearOutputShouldCancelAsyncDispense()
     {
@@ -241,7 +240,7 @@ public class DispenseAsyncTests
     }
 
     /// <summary>非同期払出時にハード故障が発生した場合、AsyncResultCodeExtended にエラー詳細がセットされることを検証します。</summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous unit test.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task AsyncDispenseFailureShouldSetAsyncResultCodeExtended()
     {

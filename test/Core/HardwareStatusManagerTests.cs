@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 

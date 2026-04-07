@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core;

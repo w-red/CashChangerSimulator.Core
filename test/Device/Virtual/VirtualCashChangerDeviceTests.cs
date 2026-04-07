@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using R3;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
@@ -28,7 +27,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
         var history = new TransactionHistory();
         statusManager = new HardwareStatusManager();
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
-        
+
         loggerFactoryMock = new Mock<ILoggerFactory>();
         loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(new Mock<ILogger>().Object);
@@ -43,6 +42,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
     }
 
     /// <summary>複数のインスタンスで同時に排他権（Claim）を取得しようとした場合に例外が発生することを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ConcurrentClaimShouldThrowException()
     {
@@ -58,10 +58,12 @@ public class VirtualCashChangerDeviceTests : IDisposable
 
         // Assert: 別タスクからの Claim は失敗するはず
         var ex = await Should.ThrowAsync<Exception>(async () => await task.WaitAsync(TimeSpan.FromMilliseconds(TestTimingConstants.DefaultTimeoutMs)));
+
         // Note: Mutex 経由で DeviceException や その内部の例外がスローされる可能性がある
     }
 
     /// <summary>排他権を解放した後に別のインスタンスが排他権を取得できることを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ClaimAfterReleaseShouldSucceed()
     {
@@ -75,10 +77,12 @@ public class VirtualCashChangerDeviceTests : IDisposable
 
         // Assert
         await device2.ClaimAsync(TestTimingConstants.ShortDelayMs);
+
         // Exception が投げられないことで成功を確認
     }
 
     /// <summary>デバイスをオープンした際、接続状態が正しく更新されることを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task OpenShouldSetConnected()
     {
@@ -88,6 +92,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
     }
 
     /// <summary>デバイスをクローズした際、切断状態および無効状態になることを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task CloseShouldSetDisconnectedAndDisabled()
     {
@@ -103,6 +108,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
     }
 
     /// <summary>排他権取得済みの状態でデバイスを有効化できることを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EnableShouldSucceedWhenClaimed()
     {
@@ -114,6 +120,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
     }
 
     /// <summary>排他権を取得していない状態でデバイスを有効化しようとした場合に例外が発生することを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EnableShouldThrowWhenNotClaimed()
     {
@@ -122,6 +129,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
     }
 
     /// <summary>デバイスが無効な状態で入金を開始しようとした場合に例外が発生することを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DepositShouldThrowWhenNotEnabled()
     {
@@ -133,6 +141,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
     }
 
     /// <summary>デバイスが無効な状態で出金を開始しようとした場合に例外が発生することを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseShouldThrowWhenNotEnabled()
     {
@@ -144,6 +153,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
     }
 
     /// <summary>在庫情報の読み取りが空でないインベントリを返すことを確認します。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ReadInventoryShouldReturnCorrectData()
     {
@@ -151,14 +161,14 @@ public class VirtualCashChangerDeviceTests : IDisposable
         await device1.OpenAsync();
         await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.EnableAsync();
-        
+
         // DepositController 経由で預け入れを行う（VirtualCashChangerDevice のメソッドを使用）
         await device1.BeginDepositAsync();
+
         // VirtualCashChangerDevice 自体には個別の金種を投入する補助メソッドはないため、
         // 実際には DepositController を直接呼ぶか、EndDepositAsync で在庫を動かすなどのシナリオ。
         // ここでは単純化のため直接在庫を操作して確認するケースなどは他にあるので、
         // インターフェースの ReadInventory を確認する。
-        
         var inventory = await device1.ReadInventoryAsync();
         inventory.ShouldNotBeNull();
     }

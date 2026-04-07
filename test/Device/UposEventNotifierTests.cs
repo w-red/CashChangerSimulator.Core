@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using Microsoft.PointOfService;
 using Moq;
@@ -136,6 +135,7 @@ public class UposEventNotifierTests
     public void QueueEventShouldIgnoreUnknownEventArgs()
     {
         notifier.QueueEvent(EventArgs.Empty);
+
         // Verify no calls to any queue methods
         mockSink.Verify(s => s.QueueDataEvent(It.IsAny<DataEventArgs>()), Times.Never);
         mockSink.Verify(s => s.QueueStatusUpdateEvent(It.IsAny<StatusUpdateEventArgs>()), Times.Never);
@@ -149,7 +149,7 @@ public class UposEventNotifierTests
         var newMock = new Mock<IUposEventSink>();
         var defaultNotifier = new UposEventNotifier();
         defaultNotifier.Initialize(newMock.Object);
-        
+
         newMock.Setup(s => s.State).Returns(ControlState.Busy);
         defaultNotifier.State.ShouldBe(ControlState.Busy);
     }

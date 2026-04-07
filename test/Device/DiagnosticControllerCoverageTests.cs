@@ -1,6 +1,5 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Device;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
 
@@ -14,7 +13,7 @@ public class DiagnosticControllerCoverageTests
     {
         var hw = new HardwareStatusManager();
         var controller = new DiagnosticController(new Inventory(), hw);
-        
+
         Should.NotThrow(() => controller.IncrementFailedDepletion());
     }
 
@@ -24,7 +23,7 @@ public class DiagnosticControllerCoverageTests
     {
         var hw = new HardwareStatusManager();
         var controller = new DiagnosticController(new Inventory(), hw);
-        
+
         var report1 = controller.GetHealthReport(DeviceHealthCheckLevel.External);
         report1.ShouldContain("Jam Status: Normal");
 
