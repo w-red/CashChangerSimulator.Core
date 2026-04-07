@@ -53,15 +53,23 @@ public static class ConfigurationLoader
         string? path = null)
     {
         var filePath = path ?? DefaultConfigPath;
-        if (!File.Exists(filePath))
-        {
-            var defaultConfig = new SimulatorConfiguration();
-            Save(defaultConfig, filePath);
-            return defaultConfig;
-        }
-
         try
         {
+            if (!File.Exists(filePath))
+            {
+                var defaultConfig = new SimulatorConfiguration();
+                try
+                {
+                    Save(defaultConfig, filePath);
+                }
+                catch
+                {
+                    // Ignore save error when just loading defaults
+                }
+
+                return defaultConfig;
+            }
+
             var tomlText = File.ReadAllText(filePath);
             var config = TomlSerializer
                 .Deserialize<SimulatorConfiguration>(
@@ -119,13 +127,13 @@ public static class ConfigurationLoader
         string? path = null)
     {
         var filePath = path ?? InventoryStatePath;
-        if (!File.Exists(filePath))
-        {
-            return new InventoryState();
-        }
-
         try
         {
+            if (!File.Exists(filePath))
+            {
+                return new InventoryState();
+            }
+
             var tomlText = File.ReadAllText(filePath);
             var state = TomlSerializer
                 .Deserialize<InventoryState>(
