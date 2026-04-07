@@ -28,9 +28,6 @@ public class DispenseController : IDisposable
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
     private CancellationTokenSource? dispenseCts;
-    private CashDispenseStatus status = CashDispenseStatus.Idle;
-    private DeviceErrorCode lastErrorCode = DeviceErrorCode.Success;
-    private int lastErrorCodeExtended;
     private bool disposed;
 
     /// <summary>
@@ -47,6 +44,10 @@ public class DispenseController : IDisposable
         this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
         this.hardwareStatusManager = hardwareStatusManager ?? new HardwareStatusManager();
         this.simulator = simulator ?? new HardwareSimulator(new ConfigurationProvider());
+
+        // Initialize properties
+        Status = CashDispenseStatus.Idle;
+        LastErrorCode = DeviceErrorCode.Success;
     }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
@@ -65,7 +66,15 @@ public class DispenseController : IDisposable
         {
             lock (stateLock)
             {
-                return status;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -77,7 +86,7 @@ public class DispenseController : IDisposable
         {
             lock (stateLock)
             {
-                return status == CashDispenseStatus.Busy;
+                return Status == CashDispenseStatus.Busy;
             }
         }
     }
@@ -89,7 +98,15 @@ public class DispenseController : IDisposable
         {
             lock (stateLock)
             {
-                return lastErrorCode;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -101,7 +118,15 @@ public class DispenseController : IDisposable
         {
             lock (stateLock)
             {
-                return lastErrorCodeExtended;
+                return field;
+            }
+        }
+
+        private set
+        {
+            lock (stateLock)
+            {
+                field = value;
             }
         }
     }
@@ -116,7 +141,7 @@ public class DispenseController : IDisposable
     {
         lock (stateLock)
         {
-            if (status == CashDispenseStatus.Busy)
+            if (Status == CashDispenseStatus.Busy)
             {
                 throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             }
@@ -136,9 +161,9 @@ public class DispenseController : IDisposable
                 throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
             }
 
-            status = CashDispenseStatus.Busy;
-            lastErrorCode = DeviceErrorCode.Success;
-            lastErrorCodeExtended = 0;
+            Status = CashDispenseStatus.Busy;
+            LastErrorCode = DeviceErrorCode.Success;
+            LastErrorCodeExtended = 0;
         }
 
         changed.OnNext(Unit.Default);
@@ -186,7 +211,7 @@ public class DispenseController : IDisposable
 
         lock (stateLock)
         {
-            if (status == CashDispenseStatus.Busy)
+            if (Status == CashDispenseStatus.Busy)
             {
                 throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             }
@@ -206,9 +231,9 @@ public class DispenseController : IDisposable
                 throw new DeviceException("Device overlapped", DeviceErrorCode.Failure);
             }
 
-            status = CashDispenseStatus.Busy;
-            lastErrorCode = DeviceErrorCode.Success;
-            lastErrorCodeExtended = 0;
+            Status = CashDispenseStatus.Busy;
+            LastErrorCode = DeviceErrorCode.Success;
+            LastErrorCodeExtended = 0;
         }
 
         changed.OnNext(Unit.Default);
@@ -251,11 +276,11 @@ public class DispenseController : IDisposable
         dispenseCts?.Cancel();
         lock (stateLock)
         {
-            if (status != CashDispenseStatus.Idle)
+            if (Status != CashDispenseStatus.Idle)
             {
-                status = CashDispenseStatus.Idle;
-                lastErrorCode = DeviceErrorCode.Cancelled;
-                lastErrorCodeExtended = 0;
+                Status = CashDispenseStatus.Idle;
+                LastErrorCode = DeviceErrorCode.Cancelled;
+                LastErrorCodeExtended = 0;
                 changed.OnNext(Unit.Default);
             }
         }
@@ -360,9 +385,9 @@ public class DispenseController : IDisposable
         {
             lock (stateLock)
             {
-                status = isError ? CashDispenseStatus.Error : CashDispenseStatus.Idle;
-                lastErrorCode = code;
-                lastErrorCodeExtended = codeEx;
+                Status = isError ? CashDispenseStatus.Error : CashDispenseStatus.Idle;
+                LastErrorCode = code;
+                LastErrorCodeExtended = codeEx;
 
                 if (isError)
                 {
