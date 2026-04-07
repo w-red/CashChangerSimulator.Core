@@ -14,9 +14,9 @@ namespace CashChangerSimulator.Tests.Device;
 /// </summary>
 public class DepositControllerDelegationTest
 {
-    /// <summary>EndDeposit(Store) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。</summary>
+    /// <summary>EndDeposit(NoChange) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。</summary>
     [Fact]
-    public void EndDepositStoreShouldDelegateToCashChangerManagerDeposit()
+    public void EndDepositNoChangeShouldDelegateToCashChangerManagerDeposit()
     {
         // Arrange
         var inventory = new Inventory();
@@ -39,7 +39,7 @@ public class DepositControllerDelegationTest
         controller.FixDeposit();
 
         // Act
-        controller.EndDeposit(DepositAction.Store);
+        controller.EndDeposit(DepositAction.NoChange);
 
         // Assert
         managerMock.Verify(

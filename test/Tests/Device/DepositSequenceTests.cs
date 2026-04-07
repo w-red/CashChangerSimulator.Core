@@ -51,8 +51,8 @@ public class DepositSequenceTests
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.Counting);
 
         // endDeposit(Change): 釣銭分を払い出す
-        // ここでは入金分1000円すべてを釣銭対象として想定（manager.Dispenseが呼ばれる）
-        controller.EndDeposit(DepositAction.Store);
+        // 1000円投入、必要金額0円の場合、全額1000円が釣銭対象となる
+        controller.EndDeposit(DepositAction.Change);
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
     }
 
@@ -69,7 +69,7 @@ public class DepositSequenceTests
 
         controller.FixDeposit();
 
-        controller.EndDeposit(DepositAction.Store);
+        controller.EndDeposit(DepositAction.NoChange);
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
         inventory.GetCount(b1000).ShouldBe(1); // 在庫に残る
     }
@@ -120,7 +120,7 @@ public class DepositSequenceTests
         controller.DepositAmount.ShouldBe(1000);
 
         controller.FixDeposit();
-        controller.EndDeposit(DepositAction.Store);
+        controller.EndDeposit(DepositAction.NoChange);
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
     }
 
@@ -137,7 +137,7 @@ public class DepositSequenceTests
         controller.BeginDeposit();
 
         var ex = Should.Throw<DeviceException>(() =>
-            controller.EndDeposit(DepositAction.Store));
+            controller.EndDeposit(DepositAction.NoChange));
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
@@ -166,7 +166,7 @@ public class DepositSequenceTests
         controller.FixDeposit();
         controller.IsDepositInProgress.ShouldBeTrue();
 
-        controller.EndDeposit(DepositAction.Store);
+        controller.EndDeposit(DepositAction.NoChange);
         controller.IsDepositInProgress.ShouldBeFalse();
     }
 
@@ -267,7 +267,7 @@ public class DepositSequenceTests
         // Total: 5070, Required: 1050 -> Change: 4020
         // Escrow-First Return: 4x1000 bills, 2x10 coins should be returned (stay out of inventory)
         // 1x1000 bill, 5x10 coins should go to inventory
-        controller.EndDeposit(DepositAction.Store);
+        controller.EndDeposit(DepositAction.Change);
 
         inventory.GetCount(b1000).ShouldBe(1);
         inventory.GetCount(c10).ShouldBe(5);

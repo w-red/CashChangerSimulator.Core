@@ -165,7 +165,7 @@ public class DepositControllerCoverageTests
         var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         
-        (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.Store)))
+        (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.NoChange)))
             .ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
@@ -188,10 +188,10 @@ public class DepositControllerCoverageTests
         controller.FixDeposit();
         
         // Start an operation that sets isBusy = true
-        var task = controller.EndDepositAsync(DepositAction.Store);
+        var task = controller.EndDepositAsync(DepositAction.NoChange);
         
         // Concurrent call should throw Busy
-        (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.Store)))
+        (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.NoChange)))
             .ErrorCode.ShouldBe(DeviceErrorCode.Busy);
         
         await task;
@@ -206,7 +206,7 @@ public class DepositControllerCoverageTests
         controller.FixDeposit();
         
         // Start an operation that sets isBusy = true
-        var task = controller.EndDepositAsync(DepositAction.Store);
+        var task = controller.EndDepositAsync(DepositAction.NoChange);
 
         // While EndDepositAsync is running, isBusy is true
         Should.Throw<DeviceException>(() => controller.BeginDeposit())
@@ -224,7 +224,7 @@ public class DepositControllerCoverageTests
         controller.BeginDeposit();
         controller.FixDeposit();
 
-        var task = controller.EndDepositAsync(DepositAction.Store);
+        var task = controller.EndDepositAsync(DepositAction.NoChange);
         
         // Wait briefly for Task.Delay(500)
         await Task.Delay(100).ConfigureAwait(false);
@@ -243,7 +243,7 @@ public class DepositControllerCoverageTests
         controller.BeginDeposit();
         controller.FixDeposit();
 
-        var task = controller.EndDepositAsync(DepositAction.Store);
+        var task = controller.EndDepositAsync(DepositAction.NoChange);
         
         // Wait briefly to ensure Task.Delay started
         await Task.Delay(50);
