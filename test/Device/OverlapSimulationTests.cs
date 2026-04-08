@@ -4,10 +4,10 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests;
+namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>重なりエラー（Overlap Error）のシミュレーションを検証するテストクラス。</summary>
-public class OverlapSimulationTest
+public class OverlapSimulationTests
 {
     /// <summary>重なり発生時に FixDeposit は成功するが、EndDeposit(NoChange) は失敗することを検証する。</summary>
     [Fact]

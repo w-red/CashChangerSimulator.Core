@@ -265,4 +265,24 @@ public class DispenseControllerTests
         controller.Status.ShouldBe(CashDispenseStatus.Idle);
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
     }
+
+    /// <summary>実際のマネージャーを介して在庫が正しく減少することを検証する（統合テスト的側面）。</summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
+    [Fact]
+    public async Task DispenseChangeAsyncShouldUpdateInventory()
+    {
+        // Arrange
+        var realInventory = Inventory.Create();
+        var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+        realInventory.SetCount(key, 10);
+        var realManager = new CashChangerManager(realInventory, new TransactionHistory(), null);
+        var integrationController = new DispenseController(realManager, hw, mockSimulator.Object);
+
+        // Act
+        await integrationController.DispenseChangeAsync(1000, false).ConfigureAwait(false);
+
+        // Assert
+        realInventory.GetCount(key).ShouldBe(9);
+        integrationController.Status.ShouldBe(CashDispenseStatus.Idle);
+    }
 }
