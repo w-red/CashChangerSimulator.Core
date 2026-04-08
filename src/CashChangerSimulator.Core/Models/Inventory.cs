@@ -14,10 +14,12 @@ namespace CashChangerSimulator.Core.Models;
 public class Inventory : IReadOnlyInventory, IDisposable
 {
     private readonly ILogger<Inventory> logger = LogProvider.CreateLogger<Inventory>();
-    private readonly Dictionary<DenominationKey, int> counts = [];
-    private readonly Dictionary<DenominationKey, int> collectionCounts = [];
-    private readonly Dictionary<DenominationKey, int> rejectCounts = [];
-    private readonly Dictionary<DenominationKey, int> escrowCounts = [];
+
+    private readonly CashCassette recyclableCassette = new();
+    private readonly CashCassette collectionCassette = new();
+    private readonly CashCassette rejectCassette = new();
+    private readonly CashCassette escrowCassette = new();
+
     private readonly CompositeDisposable disposables = [];
     private readonly Lock @lock = new();
 
@@ -44,7 +46,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         {
             lock (@lock)
             {
-                return isForcedDiscrepancy || collectionCounts.Values.Any(v => v > 0) || rejectCounts.Values.Any(v => v > 0);
+                return isForcedDiscrepancy || collectionCassette.HasDiscrepancy() || rejectCassette.HasDiscrepancy();
             }
         }
         set
@@ -57,52 +59,16 @@ public class Inventory : IReadOnlyInventory, IDisposable
     }
 
     /// <summary>通常庫（リサイクル可能）の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts
-    {
-        get
-        {
-            lock (@lock)
-            {
-                return [.. counts];
-            }
-        }
-    }
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => recyclableCassette.GetAll();
 
     /// <summary>回収庫（オーバーフロー等）の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts
-    {
-        get
-        {
-            lock (@lock)
-            {
-                return [.. collectionCounts];
-            }
-        }
-    }
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts => collectionCassette.GetAll();
 
     /// <summary>リジェクト庫（汚損等）の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts
-    {
-        get
-        {
-            lock (@lock)
-            {
-                return [.. rejectCounts];
-            }
-        }
-    }
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts => rejectCassette.GetAll();
 
     /// <summary>入金トレイ（エスクロー）の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts
-    {
-        get
-        {
-            lock (@lock)
-            {
-                return [.. escrowCounts];
-            }
-        }
-    }
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts => escrowCassette.GetAll();
 
     /// <summary>在庫管理インスタンスを生成・初期化します。</summary>
     /// <returns>初期化済みの <see cref="Inventory"/> インスタンス。</returns>
@@ -114,22 +80,14 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <summary>指定された金種の枚数を追加します。</summary>
     /// <param name="key">金種キー。</param>
     /// <param name="count">追加する枚数（負の値も可）。</param>
-    /// <remarks>
-    /// 金種キーを正規化し、指定された枚数を通常庫に加算します。
-    /// 正負両方の値を許容しますが、最終的な在庫数が負にならないよう内部で正規化されます。
-    /// </remarks>
     public virtual void Add(DenominationKey key, int count)
     {
-        UpdateBucket(counts, key, count, "Inventory.Add");
+        UpdateBucket(recyclableCassette, key, count, "Inventory.Add");
     }
 
     /// <summary>指定された金種の枚数を上書き設定します。</summary>
     /// <param name="key">金種キー。</param>
     /// <param name="count">設定する枚数。</param>
-    /// <remarks>
-    /// 既存の値を破棄し、指定された枚数で通常庫を更新します。
-    /// 不の枚数が指定された場合は 0 として扱われます。
-    /// </remarks>
     public virtual void SetCount(DenominationKey key, int count)
     {
         ArgumentNullException.ThrowIfNull(key);
@@ -140,11 +98,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
             return;
         }
 
-        lock (@lock)
-        {
-            counts[key] = count;
-        }
-
+        recyclableCassette.SetCount(key, count);
         ((Subject<DenominationKey>)Changed).OnNext(key);
     }
 
@@ -153,7 +107,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddCollection(DenominationKey key, int count)
     {
-        UpdateBucket(collectionCounts, key, count, "Inventory.AddCollection");
+        UpdateBucket(collectionCassette, key, count, "Inventory.AddCollection");
     }
 
     /// <summary>指定された金種の枚数をリジェクト庫に追加する。</summary>
@@ -161,7 +115,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddReject(DenominationKey key, int count)
     {
-        UpdateBucket(rejectCounts, key, count, "Inventory.AddReject");
+        UpdateBucket(rejectCassette, key, count, "Inventory.AddReject");
     }
 
     /// <summary>指定された金種の枚数を入金トレイ（エスクロー）に追加する。</summary>
@@ -169,18 +123,13 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddEscrow(DenominationKey key, int count)
     {
-        UpdateBucket(escrowCounts, key, count, "Inventory.AddEscrow");
+        UpdateBucket(escrowCassette, key, count, "Inventory.AddEscrow");
     }
 
     /// <summary>入金トレイ（エスクロー）をクリアします。</summary>
     public virtual void ClearEscrow()
     {
-        List<DenominationKey> keys;
-        lock (@lock)
-        {
-            keys = escrowCounts.Keys.ToList();
-            escrowCounts.Clear();
-        }
+        var keys = escrowCassette.Clear();
 
         foreach (var key in keys)
         {
@@ -196,10 +145,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     public virtual int GetCount(DenominationKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        lock (@lock)
-        {
-            return counts.GetValueOrDefault(NormalizeKey(key));
-        }
+        return recyclableCassette.GetCount(NormalizeKey(key));
     }
 
     /// <summary>全庫（還流・回収・リジェクト）の合計枚数を取得します。</summary>
@@ -209,63 +155,42 @@ public class Inventory : IReadOnlyInventory, IDisposable
     {
         ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
-        lock (@lock)
-        {
-            return counts.GetValueOrDefault(key, 0) +
-                   collectionCounts.GetValueOrDefault(key, 0) +
-                   rejectCounts.GetValueOrDefault(key, 0) +
-                   escrowCounts.GetValueOrDefault(key, 0);
-        }
+
+        return recyclableCassette.GetCount(key) +
+               collectionCassette.GetCount(key) +
+               rejectCassette.GetCount(key) +
+               escrowCassette.GetCount(key);
     }
 
     /// <summary>在庫をすべてクリアします。</summary>
     public void Clear()
     {
-        lock (@lock)
-        {
-            counts.Clear();
-            collectionCounts.Clear();
-            rejectCounts.Clear();
-            escrowCounts.Clear();
-        }
+        recyclableCassette.Clear();
+        collectionCassette.Clear();
+        rejectCassette.Clear();
+        escrowCassette.Clear();
     }
 
     /// <summary>現在の在庫の合計金額を計算します。</summary>
     /// <param name="currencyCode">フィルタリングする通貨コード（任意）。</param>
-    /// <remarks>通常庫、回収庫、リジェクト庫のすべての合計を計算します。</remarks>
     /// <returns>合計金額。</returns>
     public virtual decimal CalculateTotal(string? currencyCode = null)
     {
-        lock (@lock)
-        {
-            return new[] { counts, collectionCounts, rejectCounts, escrowCounts }
-                .SelectMany(d => d)
-                .Where(kv => currencyCode == null || kv.Key.CurrencyCode == currencyCode)
-                .Sum(kv => kv.Key.Value * kv.Value);
-        }
+        return recyclableCassette.CalculateTotal(currencyCode) +
+               collectionCassette.CalculateTotal(currencyCode) +
+               rejectCassette.CalculateTotal(currencyCode) +
+               escrowCassette.CalculateTotal(currencyCode);
     }
 
     /// <summary>現在の在庫を保存用のデータ形式に変換します。</summary>
     /// <returns>保存用ディクショナリ。</returns>
     public Dictionary<string, int> ToDictionary()
     {
-        lock (@lock)
-        {
-            var result = counts.ToDictionary(
-                kv => $"{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}",
-                kv => kv.Value);
-            foreach (var kv in collectionCounts)
-            {
-                result[$"COL:{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}"] = kv.Value;
-            }
-
-            foreach (var kv in rejectCounts)
-            {
-                result[$"REJ:{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}"] = kv.Value;
-            }
-
-            return result;
-        }
+        var result = new Dictionary<string, int>();
+        recyclableCassette.AddToDictionary(result, string.Empty);
+        collectionCassette.AddToDictionary(result, "COL");
+        rejectCassette.AddToDictionary(result, "REJ");
+        return result;
     }
 
     /// <summary>文字列キーのディクショナリから在庫を復元します。</summary>
@@ -279,23 +204,21 @@ public class Inventory : IReadOnlyInventory, IDisposable
             {
                 if (kv.Key.StartsWith("COL:", StringComparison.OrdinalIgnoreCase))
                 {
-                    var actualKey = kv.Key[4..];
-                    if (TryParseKey(actualKey, out var denKey, out var _) && denKey != null)
+                    if (TryParseKey(kv.Key[4..], out var denKey) && denKey != null)
                     {
                         AddCollection(denKey, kv.Value);
                     }
                 }
                 else if (kv.Key.StartsWith("REJ:", StringComparison.OrdinalIgnoreCase))
                 {
-                    var actualKey = kv.Key[4..];
-                    if (TryParseKey(actualKey, out var denKey, out var _) && denKey != null)
+                    if (TryParseKey(kv.Key[4..], out var denKey) && denKey != null)
                     {
                         AddReject(denKey, kv.Value);
                     }
                 }
                 else
                 {
-                    if (TryParseKey(kv.Key, out var denKey, out var _) && denKey != null)
+                    if (TryParseKey(kv.Key, out var denKey) && denKey != null)
                     {
                         SetCount(denKey, kv.Value);
                     }
@@ -336,16 +259,13 @@ public class Inventory : IReadOnlyInventory, IDisposable
         disposed = true;
     }
 
-    private static bool TryParseKey(string fullKey, out DenominationKey? key, out string? currencyCode)
+    private static bool TryParseKey(string fullKey, out DenominationKey? key)
     {
         key = null;
-        currencyCode = null;
         var parts = fullKey.Split(DenominationKey.KeySeparator);
         if (parts.Length == 2)
         {
-            currencyCode = parts[0];
-            var denomStr = parts[1];
-            if (DenominationKey.TryParse(denomStr, currencyCode, out var parsedKey) && parsedKey != null)
+            if (DenominationKey.TryParse(parts[1], parts[0], out var parsedKey) && parsedKey != null)
             {
                 key = parsedKey;
                 return true;
@@ -360,29 +280,109 @@ public class Inventory : IReadOnlyInventory, IDisposable
             ? key with { CurrencyCode = DenominationKey.DefaultCurrencyCode }
             : key;
 
-    private void UpdateBucket(Dictionary<DenominationKey, int> bucket, DenominationKey key, int count, string methodName)
+    private void UpdateBucket(CashCassette cassette, DenominationKey key, int count, string methodName)
     {
         ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
-        if (count == 0)
+
+        if (cassette.UpdateCount(key, count, logger, methodName))
         {
-            return;
+            ((Subject<DenominationKey>)Changed).OnNext(key);
+            logger.ZLogDebug($"{methodName} finished. New Total: {CalculateTotal()}");
+        }
+    }
+
+    /// <summary>論理的な金庫（カセット）を表現する内部クラスです。</summary>
+    private sealed class CashCassette
+    {
+        private readonly Dictionary<DenominationKey, int> counts = [];
+        private readonly Lock @lock = new();
+
+        public IEnumerable<KeyValuePair<DenominationKey, int>> GetAll()
+        {
+            lock (@lock)
+            {
+                return [.. counts];
+            }
         }
 
-        int next;
-        lock (@lock)
+        public int GetCount(DenominationKey key)
         {
-            var current = bucket.GetValueOrDefault(key, 0);
-            next = Math.Max(0, current + count);
-            if (current + count < 0)
+            lock (@lock)
             {
-                logger.ZLogWarning($"{methodName}: Resulting count for {key} is negative ({current + count}). Setting to 0.");
+                return counts.GetValueOrDefault(key, 0);
+            }
+        }
+
+        public void SetCount(DenominationKey key, int count)
+        {
+            lock (@lock)
+            {
+                counts[key] = count;
+            }
+        }
+
+        public bool UpdateCount(DenominationKey key, int count, ILogger logger, string methodName)
+        {
+            if (count == 0)
+            {
+                return false;
             }
 
-            bucket[key] = next;
+            lock (@lock)
+            {
+                var current = counts.GetValueOrDefault(key, 0);
+                var next = Math.Max(0, current + count);
+                if (current + count < 0)
+                {
+                    logger.ZLogWarning($"{methodName}: Resulting count for {key} is negative ({current + count}). Setting to 0.");
+                }
+
+                counts[key] = next;
+                return true;
+            }
         }
 
-        ((Subject<DenominationKey>)Changed).OnNext(key);
-        logger.ZLogDebug($"{methodName} finished. New Total: {CalculateTotal()}");
+        public List<DenominationKey> Clear()
+        {
+            List<DenominationKey> keys;
+            lock (@lock)
+            {
+                keys = [.. counts.Keys];
+                counts.Clear();
+            }
+
+            return keys;
+        }
+
+        public decimal CalculateTotal(string? currencyCode)
+        {
+            lock (@lock)
+            {
+                return counts
+                    .Where(kv => currencyCode == null || kv.Key.CurrencyCode == currencyCode)
+                    .Sum(kv => kv.Key.Value * kv.Value);
+            }
+        }
+
+        public void AddToDictionary(Dictionary<string, int> result, string prefix)
+        {
+            lock (@lock)
+            {
+                foreach (var kv in counts)
+                {
+                    var formattedPrefix = string.IsNullOrEmpty(prefix) ? string.Empty : $"{prefix}:";
+                    result[$"{formattedPrefix}{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}"] = kv.Value;
+                }
+            }
+        }
+
+        public bool HasDiscrepancy()
+        {
+            lock (@lock)
+            {
+                return counts.Values.Any(v => v > 0);
+            }
+        }
     }
 }

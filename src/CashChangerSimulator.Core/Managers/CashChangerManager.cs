@@ -66,41 +66,10 @@ public class CashChangerManager
         decimal total = 0;
         foreach (var (key, count) in counts)
         {
-            var setting = configProvider.Config.GetDenominationSetting(key);
-
-            if (!setting.IsDepositable)
+            if (ProcessDepositItem(key, count))
             {
-                logger.ZLogWarning($"Denomination {key} is not depositable. Skipping.");
-                continue;
+                total += key.Value * count;
             }
-
-            if (!setting.IsRecyclable)
-            {
-                // 非リサイクル金種は回収庫へ
-                inventory.AddCollection(key, count);
-            }
-            else
-            {
-                // オーバーフロー処理
-                var current = inventory.GetCount(key);
-                var canAccept = Math.Max(0, setting.Full - current);
-
-                if (count > canAccept)
-                {
-                    if (canAccept > 0)
-                    {
-                        inventory.Add(key, canAccept);
-                    }
-
-                    inventory.AddCollection(key, count - canAccept);
-                }
-                else
-                {
-                    inventory.Add(key, count);
-                }
-            }
-
-            total += key.Value * count;
         }
 
         var currencyCode = counts.Keys.FirstOrDefault()?.CurrencyCode ?? "---";
@@ -155,26 +124,9 @@ public class CashChangerManager
             .Where(kv => configProvider.Config.GetDenominationSetting(kv.Key).IsRecyclable)
             .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-        foreach (var kv in counts)
-        {
-            var key = kv.Key;
-            var count = kv.Value;
-            if (count > 0)
-            {
-                inventory.Add(key, -count);
-                inventory.AddCollection(key, count);
-            }
-        }
+        CollectRecyclableInventory(counts);
 
-        if (counts.Sum(kv => kv.Value) > 0)
-        {
-            logger.ZLogInformation($"PurgeCash: Moved all recyclable inventory to collection.");
-            history.Add(new TransactionEntry(
-                DateTimeOffset.Now,
-                TransactionType.Dispense, // Purge is similar to dispense from recycling
-                counts.Sum(kv => kv.Key.Value * kv.Value),
-                counts));
-        }
+        RecordPurgeHistory(counts);
     }
 
     /// <summary>在庫枚数を直接調整します（管理用）。</summary>
@@ -188,5 +140,75 @@ public class CashChangerManager
         }
 
         logger.ZLogInformation($"Adjust: Inventory adjusted manually for {counts.Count} denominations.");
+    }
+
+    private bool ProcessDepositItem(DenominationKey key, int count)
+    {
+        var setting = configProvider.Config.GetDenominationSetting(key);
+
+        if (!setting.IsDepositable)
+        {
+            logger.ZLogWarning($"Denomination {key} is not depositable. Skipping.");
+            return false;
+        }
+
+        if (!setting.IsRecyclable)
+        {
+            // 非リサイクル金種は回収庫へ
+            inventory.AddCollection(key, count);
+        }
+        else
+        {
+            HandleRecyclableDeposit(key, count, setting);
+        }
+
+        return true;
+    }
+
+    private void HandleRecyclableDeposit(DenominationKey key, int count, DenominationSettings setting)
+    {
+        // オーバーフロー処理
+        var current = inventory.GetCount(key);
+        var canAccept = Math.Max(0, setting.Full - current);
+
+        if (count > canAccept)
+        {
+            if (canAccept > 0)
+            {
+                inventory.Add(key, canAccept);
+            }
+
+            inventory.AddCollection(key, count - canAccept);
+        }
+        else
+        {
+            inventory.Add(key, count);
+        }
+    }
+
+    private void CollectRecyclableInventory(Dictionary<DenominationKey, int> counts)
+    {
+        foreach (var kv in counts)
+        {
+            if (kv.Value > 0)
+            {
+                inventory.Add(kv.Key, -kv.Value);
+                inventory.AddCollection(kv.Key, kv.Value);
+            }
+        }
+    }
+
+    private void RecordPurgeHistory(Dictionary<DenominationKey, int> counts)
+    {
+        var sum = counts.Sum(kv => kv.Value);
+        if (sum > 0)
+        {
+            logger.ZLogInformation($"PurgeCash: Moved all recyclable inventory to collection.");
+            history.Add(new TransactionEntry(
+                DateTimeOffset.Now,
+                TransactionType.Dispense, // Purge is similar to dispense from recycling
+                counts.Sum(kv => kv.Key.Value * kv.Value),
+                counts));
+        }
     }
 }
