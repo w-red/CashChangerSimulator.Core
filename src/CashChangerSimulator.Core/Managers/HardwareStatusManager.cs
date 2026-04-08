@@ -17,7 +17,7 @@ public class HardwareStatusManager : IDisposable
 
     /// <summary>Initializes a new instance of the <see cref="HardwareStatusManager"/> class.</summary>
     [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
-    private HardwareStatusManager()
+    protected HardwareStatusManager()
     {
         IsClaimedByAnother = new BindableReactiveProperty<bool>(false).AddTo(disposables);
         DeviceEnabled = new BindableReactiveProperty<bool>(false).AddTo(disposables);
