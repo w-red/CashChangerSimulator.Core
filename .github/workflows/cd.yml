@@ -37,7 +37,7 @@ jobs:
         run: dotnet build CashChangerSimulator.Core.slnx --configuration Release --no-restore --warnaserror
 
       - name: Test
-        run: dotnet test test/Tests/CashChangerSimulator.Tests.csproj --configuration Release --no-build --verbosity normal
+        run: dotnet test test/CashChangerSimulator.Tests.csproj --configuration Release --no-build --verbosity normal
 
       - name: Pack
         run: dotnet pack CashChangerSimulator.Core.slnx --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.VERSION }}
