@@ -1,7 +1,7 @@
 using CashChangerSimulator.Core.Models;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>金種キー（DenominationKey）のパース、文字列表現、プロパティを検証するテストクラス。</summary>
 public class DenominationKeyTests

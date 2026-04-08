@@ -2,7 +2,7 @@ using CashChangerSimulator.Core.Configuration;
 using R3;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Configuration;
 
 /// <summary>ConfigurationProvider の動作を検証するテスト。</summary>
 public class ConfigurationProviderTests

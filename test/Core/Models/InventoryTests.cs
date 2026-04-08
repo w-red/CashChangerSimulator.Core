@@ -1,7 +1,7 @@
 using CashChangerSimulator.Core.Models;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>在庫管理（Inventory）の加算、設定、集計、シリアライズ機能を検証するためのテストクラス。</summary>
 public class InventoryTests

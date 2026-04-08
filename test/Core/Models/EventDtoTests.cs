@@ -3,7 +3,7 @@ using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Shouldly;
 using Xunit;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>各種デバイスイベント引数（EventArgs）のプロパティアクセスとコンストラクタを検証するテストクラス。</summary>
 public class EventDtoTests

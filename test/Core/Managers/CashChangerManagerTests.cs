@@ -5,7 +5,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Managers;
 
 /// <summary>CashChangerManager のビジネスロジックを検証するテスト。</summary>
 public class CashChangerManagerTests

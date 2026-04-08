@@ -4,7 +4,7 @@ using CashChangerSimulator.Core.Services;
 using R3;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Services;
 
 /// <summary>通貨メタデータ（記号、名称、サポート金種等）の提供機能を検証するテストクラス。</summary>
 public class CurrencyMetadataProviderTests

@@ -1,7 +1,7 @@
 using CashChangerSimulator.Core.Models;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>CurrencyCashType の基本定義とパース機能を検証するためのテストクラス。</summary>
 public class CurrencyCashTypeTests

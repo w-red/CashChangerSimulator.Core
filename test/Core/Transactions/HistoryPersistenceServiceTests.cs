@@ -3,7 +3,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Transactions;
+namespace CashChangerSimulator.Tests.Core.Transactions;
 
 /// <summary>取引履歴の永続化サービスを検証するテストクラス。</summary>
 public class HistoryPersistenceServiceTests : IDisposable

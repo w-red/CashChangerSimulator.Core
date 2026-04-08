@@ -1,6 +1,6 @@
 using CashChangerSimulator.Core.Models;
 
-namespace CashChangerSimulator.Core.Tests.Models;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>金種別数量レコードを検証するテストクラス。</summary>
 public class CashDenominationCountTests

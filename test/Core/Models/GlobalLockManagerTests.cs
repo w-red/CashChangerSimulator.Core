@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 using Xunit;
 
-namespace CashChangerSimulator.Tests.Core.Managers;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>
 /// GlobalLockManager の排他制御機能を検証するテストクラス。

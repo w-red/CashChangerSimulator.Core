@@ -4,7 +4,7 @@ using CashChangerSimulator.Core.Transactions;
 using R3;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Transactions;
 
 /// <summary>TransactionHistory の動作を検証するテスト。</summary>
 public class TransactionHistoryTests

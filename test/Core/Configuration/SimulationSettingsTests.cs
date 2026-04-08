@@ -1,7 +1,7 @@
 using CashChangerSimulator.Core.Configuration;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Configuration;
 
 /// <summary>シミュレーション設定の動作を検証するテストクラス。</summary>
 public class SimulationSettingsTests

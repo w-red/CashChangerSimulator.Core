@@ -4,7 +4,7 @@ using CashChangerSimulator.Core.Services;
 using Moq;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Services;
 
 /// <summary>出金計算ロジック（最適な金種構成の算出、通貨フィルタ等）を検証するテストクラス。</summary>
 public class ChangeCalculatorTests

@@ -2,7 +2,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>在庫ステータスの優先順位と集約ロジックを検証するテストクラス。</summary>
 public class StatusHierarchyTests

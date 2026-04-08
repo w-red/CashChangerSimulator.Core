@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Shouldly;
 using Xunit;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>CashChangerSimulator.Core のカバレッジを 100% にするための網羅的テストクラス。</summary>
 public class ExhaustiveCoreTests : IDisposable

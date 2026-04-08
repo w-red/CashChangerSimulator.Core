@@ -9,7 +9,7 @@ using CashChangerSimulator.Device.Virtual;
 using Moq;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Services;
 
 /// <summary>SimulatorServices の DI 抽象レイヤーを検証するテストクラス (TDD)。</summary>
 public class SimulatorServicesTests : IDisposable

@@ -4,7 +4,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>非還流（Non-Recyclable）や入金専用（Deposit-only）の設定における動作を検証するテストクラス。</summary>
 public class DepositOnlyTests

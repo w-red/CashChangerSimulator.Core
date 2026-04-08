@@ -5,7 +5,7 @@ using Moq;
 using R3;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Services;
 
 /// <summary>MonitorsProvider の金種モニター管理およびしきい値更新機能を検証するテストクラス。</summary>
 public class MonitorsProviderTests

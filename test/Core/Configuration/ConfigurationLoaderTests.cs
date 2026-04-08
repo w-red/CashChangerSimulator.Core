@@ -3,7 +3,7 @@ using CashChangerSimulator.Core.Models;
 using Shouldly;
 using Tomlyn;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Configuration;
 
 /// <summary>ConfigurationLoader の永続化とエラーハンドリングを検証するテスト。</summary>
 public class ConfigurationLoaderTests : IDisposable

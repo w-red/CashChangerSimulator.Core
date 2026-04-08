@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using R3;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>HardwareStatusManager の各状態遷移、エラー設定、およびグローバルロック連携を検証するテストクラス。</summary>
 public class HardwareStatusManagerTests

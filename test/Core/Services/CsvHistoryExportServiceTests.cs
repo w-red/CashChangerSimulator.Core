@@ -3,7 +3,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Services;
 
 /// <summary>CsvHistoryExportService の CSV エクスポート機能を検証するテストクラス。</summary>
 public class CsvHistoryExportServiceTests

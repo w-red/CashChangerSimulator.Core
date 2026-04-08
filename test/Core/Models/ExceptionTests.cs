@@ -2,7 +2,7 @@ using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>カスタム例外クラスのコンストラクタとプロパティを検証するテストクラス。</summary>
 public class ExceptionTests

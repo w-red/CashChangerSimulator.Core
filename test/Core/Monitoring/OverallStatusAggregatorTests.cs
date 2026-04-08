@@ -3,7 +3,7 @@ using CashChangerSimulator.Core.Monitoring;
 using R3;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Core;
+namespace CashChangerSimulator.Tests.Core.Monitoring;
 
 /// <summary>OverallStatusAggregator の集約ロジックを検証するテスト。</summary>
 public class OverallStatusAggregatorTests
