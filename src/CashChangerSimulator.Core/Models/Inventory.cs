@@ -26,7 +26,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
 
     /// <inheritdoc/>
     [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
-    private Inventory()
+    protected Inventory()
     {
         var subject = new Subject<DenominationKey>();
         disposables.Add(subject);
