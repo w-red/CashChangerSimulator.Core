@@ -1,31 +1,27 @@
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Device;
+namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>DepositController の受入制御ロジックを網羅的に検証するテストクラス。</summary>
-public class DepositControllerCoverageTests
+public class DepositControllerCoverageTests : DeviceTestBase
 {
-    private static (DepositController Controller, Inventory Inventory, HardwareStatusManager Hardware) CreateController()
-    {
-        var inventory = Inventory.Create();
-        var hw = HardwareStatusManager.Create();
-        hw.SetConnected(true);
-        var config = new ConfigurationProvider();
+    private readonly DepositController controller;
 
-        var controller = new DepositController(inventory, hw, null, config);
-        return (controller, inventory, hw);
+    public DepositControllerCoverageTests()
+    {
+        // Default behavior for these tests
+        StatusManager.SetConnected(true);
+        controller = new DepositController(Inventory, StatusManager, manager: null, configProvider: ConfigurationProvider);
     }
 
     /// <summary>IsBusy プロパティが初期状態で偽であることを検証する。</summary>
     [Fact]
     public void PropertyIsBusyShouldReturnExpectedValue()
     {
-        var (controller, _, _) = CreateController();
         controller.IsBusy.ShouldBeFalse();
     }
 
@@ -33,7 +29,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void PropertyRequiredAmountCanBeSetAndRetrieved()
     {
-        var (controller, _, _) = CreateController();
         controller.RequiredAmount = 1500m;
         controller.RequiredAmount.ShouldBe(1500m);
 
@@ -46,7 +41,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void PropertyRejectAmountAndTrackRejectShouldWorkCorrectly()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
 
         controller.RejectAmount.ShouldBe(0m);
@@ -58,7 +52,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void TrackRejectShouldDoNothingWhenDepositNotInProgress()
     {
-        var (controller, _, _) = CreateController();
         controller.TrackReject(500m);
         controller.RejectAmount.ShouldBe(0m);
     }
@@ -68,7 +61,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public async Task RepayDepositShouldClearStateAndRaiseEvent()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.TrackReject(100m);
 
@@ -83,7 +75,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void DisposeWhenCalledMultipleTimesShouldNotThrow()
     {
-        var (controller, _, _) = CreateController();
         controller.Dispose();
         Should.NotThrow(() => controller.Dispose());
     }
@@ -92,7 +83,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void PauseDepositShouldHandleEdgeCases()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
 
         controller.PauseDeposit(DeviceDepositPause.Pause);
@@ -110,8 +100,7 @@ public class DepositControllerCoverageTests
     [Fact]
     public void BeginDepositWhenJammedShouldThrow()
     {
-        var (controller, _, hw) = CreateController();
-        hw.SetJammed(true);
+        StatusManager.SetJammed(true);
         Should.Throw<DeviceException>(() => controller.BeginDeposit())
             .ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
     }
@@ -120,8 +109,7 @@ public class DepositControllerCoverageTests
     [Fact]
     public void BeginDepositWhenOverlappedShouldThrow()
     {
-        var (controller, _, hw) = CreateController();
-        hw.SetOverlapped(true);
+        StatusManager.SetOverlapped(true);
         Should.Throw<DeviceException>(() => controller.BeginDeposit())
             .ErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
     }
@@ -130,7 +118,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void TrackBulkDepositWhenPausedShouldIgnore()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.PauseDeposit(DeviceDepositPause.Pause);
 
@@ -146,7 +133,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void TrackBulkDepositWhenFixedShouldThrow()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.FixDeposit();
 
@@ -162,7 +148,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public async Task EndDepositWithoutFixShouldThrow()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
 
         (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.NoChange)))
@@ -173,7 +158,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void RepayDepositSynchronousShouldWork()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         Should.NotThrow(() => controller.RepayDeposit());
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
@@ -184,7 +168,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public async Task EndDepositAsyncWhenAlreadyBusyShouldThrow()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.FixDeposit();
 
@@ -203,7 +186,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public async Task BeginDepositWhenBusyShouldThrow()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.FixDeposit();
 
@@ -222,8 +204,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public async Task EndDepositAsyncShouldCatchOverlappedException()
     {
-        var (controller, _, hw) = CreateController();
-
         controller.BeginDeposit();
         controller.FixDeposit();
 
@@ -231,7 +211,7 @@ public class DepositControllerCoverageTests
 
         // Wait briefly for Task.Delay(500)
         await Task.Delay(100).ConfigureAwait(false);
-        hw.SetOverlapped(true);
+        StatusManager.SetOverlapped(true);
 
         await task;
 
@@ -243,7 +223,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public async Task EndDepositAsyncShouldHandleCancellation()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.FixDeposit();
 
@@ -262,7 +241,6 @@ public class DepositControllerCoverageTests
     [Fact]
     public void TrackDepositWhenFixedShouldThrow()
     {
-        var (controller, _, _) = CreateController();
         controller.BeginDeposit();
         controller.FixDeposit();
 

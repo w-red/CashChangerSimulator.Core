@@ -3,20 +3,25 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Device;
+namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>ハードウェアシミュレータの動作を検証するテストクラス。</summary>
-public class HardwareSimulatorTests
+public class HardwareSimulatorTests : DeviceTestBase
 {
+    private class ConfigurationProviderScope : IDisposable
+    {
+        public ConfigurationProvider Content { get; } = new ConfigurationProvider();
+        public void Dispose() => Content.Dispose();
+    }
+
     /// <summary>シミュレータが設定された遅延時間分待機することを検証する。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task SimulateDispenseAsyncShouldDelayByConfiguredAmount()
     {
         // Arrange
-        var configProvider = new ConfigurationProvider();
-        configProvider.Config.Simulation = new SimulationSettings { DispenseDelayMs = 200 };
-        var simulator = HardwareSimulator.Create(configProvider);
+        ConfigurationProvider.Config.Simulation = new SimulationSettings { DispenseDelayMs = 200 };
+        var simulator = HardwareSimulator.Create(ConfigurationProvider);
         var sw = new Stopwatch();
 
         // Act
@@ -36,9 +41,8 @@ public class HardwareSimulatorTests
     public async Task SimulateDispenseAsyncShouldCompleteImmediatelyWhenDelayIsZero()
     {
         // Arrange
-        var configProvider = new ConfigurationProvider();
-        configProvider.Config.Simulation = new SimulationSettings { DispenseDelayMs = 0 };
-        var simulator = HardwareSimulator.Create(configProvider);
+        ConfigurationProvider.Config.Simulation = new SimulationSettings { DispenseDelayMs = 0 };
+        var simulator = HardwareSimulator.Create(ConfigurationProvider);
         var sw = new Stopwatch();
 
         // Act
@@ -66,13 +70,13 @@ public class HardwareSimulatorTests
     public void DisposeShouldHandleExternalConfig()
     {
         // Arrange
-        var configProvider = new ConfigurationProvider();
-        var simulator = HardwareSimulator.Create(configProvider);
+        using var scope = new ConfigurationProviderScope();
+        var simulator = HardwareSimulator.Create(scope.Content);
 
         // Act
         simulator.Dispose();
 
         // Assert: configProvider should NOT be disposed because it was external
-        Should.NotThrow(() => { var _ = configProvider.Config; });
+        Should.NotThrow(() => { var _ = scope.Content.Config; });
     }
 }

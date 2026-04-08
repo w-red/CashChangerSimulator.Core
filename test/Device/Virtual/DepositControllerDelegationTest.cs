@@ -4,30 +4,29 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
 using Moq;
 
-namespace CashChangerSimulator.Tests.Device;
+namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>
 /// <see cref="DepositController"/> が直接在庫を更新せず、
 /// <see cref="CashChangerManager"/> に入金履歴の記録と在庫の更新を委譲することを検証するテストクラス。
 /// </summary>
-public class DepositControllerDelegationTest
+public class DepositControllerDelegationTest : DeviceTestBase
 {
+    private readonly Mock<CashChangerManager> managerMock;
+    private readonly DepositController controller;
+
+    public DepositControllerDelegationTest()
+    {
+        managerMock = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), null);
+        controller = new DepositController(Inventory, StatusManager, managerMock.Object);
+        StatusManager.SetConnected(true);
+    }
+
     /// <summary>EndDeposit(NoChange) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。</summary>
     [Fact]
     public void EndDepositNoChangeShouldDelegateToCashChangerManagerDeposit()
     {
         // Arrange
-        var inventory = Inventory.Create();
-        var hardwareManager = HardwareStatusManager.Create();
-        hardwareManager.SetConnected(true);
-        var managerMock =
-            new Mock<CashChangerManager>(
-                inventory,
-                new TransactionHistory(),
-                null);
-
-        var controller = new DepositController(inventory, hardwareManager, managerMock.Object);
-
         controller.BeginDeposit();
 
         // Simulate adding cash

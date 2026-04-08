@@ -10,27 +10,23 @@ using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
-namespace CashChangerSimulator.Tests.Device;
+namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>DispenseController の出金制御ロジックを網羅的に検証するテストクラス。</summary>
-public class DispenseControllerTests
+public class DispenseControllerTests : DeviceTestBase
 {
-    private readonly Inventory inventory;
-    private readonly HardwareStatusManager hw;
     private readonly Mock<CashChangerManager> mockManager;
     private readonly Mock<IDeviceSimulator> mockSimulator;
     private readonly DispenseController controller;
 
     public DispenseControllerTests()
     {
-        inventory = Inventory.Create();
-        hw = HardwareStatusManager.Create();
-        mockManager = new Mock<CashChangerManager>(inventory, new TransactionHistory(), null);
+        mockManager = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), null);
         mockSimulator = new Mock<IDeviceSimulator>();
-        controller = new DispenseController(mockManager.Object, hw, mockSimulator.Object);
+        controller = new DispenseController(mockManager.Object, StatusManager, mockSimulator.Object);
 
         // Default connected state
-        hw.SetConnected(true);
+        StatusManager.SetConnected(true);
     }
 
     /// <summary>未接続状態での出金要求時に Closed エラーが発生することを検証する。</summary>
@@ -38,7 +34,7 @@ public class DispenseControllerTests
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowClosedWhenNotConnected()
     {
-        hw.SetConnected(false);
+        StatusManager.SetConnected(false);
         var ex = await Should.ThrowAsync<DeviceException>(() =>
             controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
@@ -49,7 +45,7 @@ public class DispenseControllerTests
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowFailureWhenJammed()
     {
-        hw.SetJammed(true);
+        StatusManager.SetJammed(true);
         var ex = await Should.ThrowAsync<DeviceException>(() =>
             controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Failure);
@@ -108,7 +104,7 @@ public class DispenseControllerTests
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowFailureWhenOverlapped()
     {
-        hw.SetOverlapped(true);
+        StatusManager.SetOverlapped(true);
         var ex = await Should.ThrowAsync<DeviceException>(() =>
             controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Failure);
@@ -129,8 +125,11 @@ public class DispenseControllerTests
                 {
                     await Task.Delay(5000, t).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) { wasCanceled = true;
-                    throw; }
+                catch (OperationCanceledException)
+                {
+                    wasCanceled = true;
+                    throw;
+                }
             });
 
         var task = controller.DispenseChangeAsync(100, true);
@@ -193,7 +192,7 @@ public class DispenseControllerTests
     [Fact]
     public void DisposeShouldNotThrow()
     {
-        var tempController = new DispenseController(mockManager.Object, hw, mockSimulator.Object);
+        var tempController = new DispenseController(mockManager.Object, StatusManager, mockSimulator.Object);
         tempController.Dispose();
         tempController.Dispose();
     }
@@ -272,17 +271,15 @@ public class DispenseControllerTests
     public async Task DispenseChangeAsyncShouldUpdateInventory()
     {
         // Arrange
-        var realInventory = Inventory.Create();
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        realInventory.SetCount(key, 10);
-        var realManager = new CashChangerManager(realInventory, new TransactionHistory(), null);
-        var integrationController = new DispenseController(realManager, hw, mockSimulator.Object);
+        Inventory.SetCount(key, 10);
+        var integrationController = new DispenseController(Manager, StatusManager, mockSimulator.Object);
 
         // Act
         await integrationController.DispenseChangeAsync(1000, false).ConfigureAwait(false);
 
         // Assert
-        realInventory.GetCount(key).ShouldBe(9);
+        Inventory.GetCount(key).ShouldBe(9);
         integrationController.Status.ShouldBe(CashDispenseStatus.Idle);
     }
 }
