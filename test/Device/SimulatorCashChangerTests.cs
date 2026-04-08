@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet;
 using Microsoft.PointOfService;
 using Shouldly;
@@ -7,15 +6,14 @@ namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>SimulatorCashChanger の基本機能（プロパティ、ライフサイクル、診断等）を網羅的に検証するメインテストクラス。</summary>
 [Collection("GlobalLock")]
-public class SimulatorCashChangerTests
+public class SimulatorCashChangerTests : UposTestBase
 {
+    private InternalSimulatorCashChanger changer => Changer;
+
     /// <summary>インスタンス生成直後の初期状態（Closed, Unclaimed）を検証します。</summary>
     [Fact]
     public void InitialStateShouldBeClosed()
     {
-        // Arrange
-        var changer = new InternalSimulatorCashChanger();
-
         // Assert
         changer.State.ShouldBe(ControlState.Closed);
         changer.Claimed.ShouldBeFalse();
@@ -27,10 +25,7 @@ public class SimulatorCashChangerTests
     public void LifecycleOpenClaimEnableShouldTransitionStates()
     {
         // Arrange
-        var changer = new InternalSimulatorCashChanger
-        {
-            SkipStateVerification = false // Test standard behavior
-        };
+        changer.SkipStateVerification = false;
 
         // Act & Assert: Open
         changer.Open();
@@ -61,9 +56,6 @@ public class SimulatorCashChangerTests
     [Fact]
     public void CapPropertiesShouldReflectConfig()
     {
-        // Arrange
-        var changer = new InternalSimulatorCashChanger();
-
         // Assert
         changer.CapDeposit.ShouldBeTrue();
         changer.CapDepositDataEvent.ShouldBeTrue();
@@ -85,7 +77,6 @@ public class SimulatorCashChangerTests
     public void PropertiesShouldReflectInternalState()
     {
         // Arrange
-        var changer = new InternalSimulatorCashChanger();
         changer.Open();
 
         // Assert basic info
@@ -117,15 +108,14 @@ public class SimulatorCashChangerTests
     public void DirectIOShouldDelegateToHandler()
     {
         // Arrange
-        var changer = new InternalSimulatorCashChanger();
         changer.Open();
         changer.Claim(0);
         changer.DeviceEnabled = true;
 
         // Act
-        // Command 0 is not implemented in default, should return failure or empty result
+        // Command 999 is not implemented in default, should return failure or empty result
         // But the goal is to see it doesn't throw and sets ResultCode
-        var result = changer.DirectIO(999, 0, new object());
+        changer.DirectIO(999, 0, new object());
 
         // Assert
         changer.ResultCode.ShouldBe((int)ErrorCode.Success);
@@ -136,7 +126,6 @@ public class SimulatorCashChangerTests
     public void DiagnosticsShouldDelegateToFacade()
     {
         // Arrange
-        var changer = new InternalSimulatorCashChanger();
         changer.Open();
         changer.Claim(0);
         changer.DeviceEnabled = true;
@@ -159,25 +148,12 @@ public class SimulatorCashChangerTests
     [Fact]
     public void StatusPropertiesShouldReflectState()
     {
-        var changer = new InternalSimulatorCashChanger();
-
         // When closed
         changer.DeviceStatus.ShouldBe(CashChangerStatus.OK);
         changer.FullStatus.ShouldBe(CashChangerFullStatus.OK);
 
-        // Seeding some cash for ALL common denominations so it's not Empty/NearEmpty
-        foreach (var ccy in new[] { "JPY", "USD" })
-        {
-            foreach (int val in new[] { 10000, 5000, 2000, 1000 })
-            {
-                changer.Inventory.SetCount(new DenominationKey(val, CurrencyCashType.Bill, ccy), 10);
-            }
-
-            foreach (int val in new[] { 500, 100, 50, 10, 5, 1 })
-            {
-                changer.Inventory.SetCount(new DenominationKey(val, CurrencyCashType.Coin, ccy), 10);
-            }
-        }
+        // Seeding cash
+        SeedInitialCash(10);
 
         changer.Open();
         changer.Claim(0);
@@ -192,7 +168,6 @@ public class SimulatorCashChangerTests
     [Fact]
     public void CoreOperationsShouldNotThrowWhenEnabled()
     {
-        var changer = new InternalSimulatorCashChanger();
         changer.Open();
         changer.Claim(0);
         changer.DeviceEnabled = true;
@@ -214,10 +189,7 @@ public class SimulatorCashChangerTests
     [Fact]
     public void ResultCodeShouldBeSettable()
     {
-        var changer = new InternalSimulatorCashChanger
-        {
-            ResultCode = (int)ErrorCode.Illegal
-        };
+        changer.ResultCode = (int)ErrorCode.Illegal;
         changer.ResultCode.ShouldBe((int)ErrorCode.Illegal);
 
         changer.ResultCodeExtended = 999;
@@ -228,7 +200,6 @@ public class SimulatorCashChangerTests
     [Fact]
     public void ExitsShouldReflectConfig()
     {
-        var changer = new InternalSimulatorCashChanger();
         changer.DeviceExits.ShouldBe(1);
         changer.CurrentExit = 1;
         changer.CurrentExit.ShouldBe(1);
@@ -238,10 +209,7 @@ public class SimulatorCashChangerTests
     [Fact]
     public void RealTimeDataEnabledShouldBeSettable()
     {
-        var changer = new InternalSimulatorCashChanger
-        {
-            RealTimeDataEnabled = true
-        };
+        changer.RealTimeDataEnabled = true;
         changer.RealTimeDataEnabled.ShouldBeTrue();
     }
 }

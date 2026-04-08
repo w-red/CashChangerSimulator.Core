@@ -1,44 +1,25 @@
-using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.Extensions.Logging;
-using Moq;
-using R3;
+using CashChangerSimulator.Tests;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>VirtualCashChangerDevice の機能検証テスト。</summary>
-public class VirtualCashChangerDeviceTests : IDisposable
+public class VirtualCashChangerDeviceTests : DeviceTestBase
 {
     private readonly ICashChangerDevice device1;
     private readonly ICashChangerDevice device2;
-    private readonly Mock<ILoggerFactory> loggerFactoryMock;
-    private readonly HardwareStatusManager statusManager;
 
     /// <summary>テスト用のインスタンスを初期化します。</summary>
     public VirtualCashChangerDeviceTests()
     {
-        var inventory = Inventory.Create();
-        var history = new TransactionHistory();
-        statusManager = HardwareStatusManager.Create();
-        var manager = new CashChangerManager(inventory, history, (object?)null, null);
-
-        loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(new Mock<ILogger>().Object);
-
-        var configProvider = new ConfigurationProvider();
-        var factory = new VirtualCashChangerDeviceFactory(configProvider, loggerFactoryMock.Object);
-
-        // 各テストで固有の Mutex 名を使用して競合を避ける
-        var testMutexName = $"Global\\TestMutex_{Guid.NewGuid()}";
-        device1 = factory.Create(manager, inventory, statusManager, testMutexName);
-        device2 = factory.Create(manager, inventory, statusManager, testMutexName);
+        // 各テストで共有の Mutex 名前空間を使用して競合を避ける
+        var testMutexName = GenerateUniqueMutexName();
+        device1 = CreateDevice(testMutexName);
+        device2 = CreateDevice(testMutexName);
     }
 
     /// <summary>複数のインスタンスで同時に排他権（Claim）を取得しようとした場合に例外が発生することを確認します。</summary>
@@ -57,9 +38,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
         var task = Task.Run(() => device2.ClaimAsync(TestTimingConstants.ShortDelayMs));
 
         // Assert: 別タスクからの Claim は失敗するはず
-        var ex = await Should.ThrowAsync<Exception>(async () => await task.WaitAsync(TimeSpan.FromMilliseconds(TestTimingConstants.DefaultTimeoutMs)));
-
-        // Note: Mutex 経由で DeviceException や その内部の例外がスローされる可能性がある
+        await Should.ThrowAsync<Exception>(async () => await task.WaitAsync(TimeSpan.FromMilliseconds(TestTimingConstants.DefaultTimeoutMs)));
     }
 
     /// <summary>排他権を解放した後に別のインスタンスが排他権を取得できることを確認します。</summary>
@@ -87,7 +66,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
     public async Task OpenShouldSetConnected()
     {
         await device1.OpenAsync();
-        statusManager.IsConnected.Value.ShouldBeTrue();
+        StatusManager.IsConnected.Value.ShouldBeTrue();
         device1.State.CurrentValue.ShouldBe(DeviceControlState.Idle);
     }
 
@@ -102,8 +81,8 @@ public class VirtualCashChangerDeviceTests : IDisposable
 
         await device1.CloseAsync();
 
-        statusManager.IsConnected.Value.ShouldBeFalse();
-        statusManager.DeviceEnabled.Value.ShouldBeFalse();
+        StatusManager.IsConnected.Value.ShouldBeFalse();
+        StatusManager.DeviceEnabled.Value.ShouldBeFalse();
         device1.State.CurrentValue.ShouldBe(DeviceControlState.Closed);
     }
 
@@ -115,7 +94,7 @@ public class VirtualCashChangerDeviceTests : IDisposable
         await device1.OpenAsync();
         await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.EnableAsync();
-        statusManager.DeviceEnabled.Value.ShouldBeTrue();
+        StatusManager.DeviceEnabled.Value.ShouldBeTrue();
         device1.State.CurrentValue.ShouldBe(DeviceControlState.Idle);
     }
 
@@ -157,7 +136,6 @@ public class VirtualCashChangerDeviceTests : IDisposable
     [Fact]
     public async Task ReadInventoryShouldReturnCorrectData()
     {
-        var key = new DenominationKey(1000, CurrencyCashType.Bill);
         await device1.OpenAsync();
         await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.EnableAsync();
@@ -165,21 +143,18 @@ public class VirtualCashChangerDeviceTests : IDisposable
         // DepositController 経由で預け入れを行う（VirtualCashChangerDevice のメソッドを使用）
         await device1.BeginDepositAsync();
 
-        // VirtualCashChangerDevice 自体には個別の金種を投入する補助メソッドはないため、
-        // 実際には DepositController を直接呼ぶか、EndDepositAsync で在庫を動かすなどのシナリオ。
-        // ここでは単純化のため直接在庫を操作して確認するケースなどは他にあるので、
-        // インターフェースの ReadInventory を確認する。
         var inventory = await device1.ReadInventoryAsync();
         inventory.ShouldNotBeNull();
     }
 
     /// <inheritdoc/>
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
-        device1.Dispose();
-        device2.Dispose();
-        disposables.Dispose();
+        if (disposing)
+        {
+            device1.Dispose();
+            device2.Dispose();
+        }
+        base.Dispose(disposing);
     }
-
-    private readonly CompositeDisposable disposables = [];
 }
