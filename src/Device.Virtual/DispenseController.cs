@@ -339,67 +339,86 @@ public class DispenseController : IDisposable
         }
         catch (OperationCanceledException)
         {
-            // Canceled: status back to Idle without specific error result.
-        }
-        catch (DeviceException dex)
-        {
-            isError = true;
-            code = dex.ErrorCode;
-            codeEx = dex.ErrorCodeExtended;
-            logger.ZLogError(dex, $"Dispense failed with device error: {dex.Message}");
-            throw; // 再スローして Task に反映させる
+            code = DeviceErrorCode.Cancelled;
         }
         catch (Exception ex)
         {
             isError = true;
-            code = DeviceErrorCode.Failure;
-            codeEx = 0;
-
-            // Attempt to extract error codes from external exceptions (e.g. PosControlException in tests)
-            // without adding a direct dependency on POS.NET in this virtual layer.
-            var type = ex.GetType();
-            var pCode = type.GetProperty("ErrorCode");
-            var pCodeEx = type.GetProperty("ErrorCodeExtended");
-
-            if (pCode != null)
-            {
-                var val = pCode.GetValue(ex);
-                if (val != null)
-                {
-                    code = (DeviceErrorCode)Convert.ToInt32(val, System.Globalization.CultureInfo.InvariantCulture);
-                }
-            }
-
-            if (pCodeEx != null)
-            {
-                var valEx = pCodeEx.GetValue(ex);
-                if (valEx != null)
-                {
-                    codeEx = Convert.ToInt32(valEx, System.Globalization.CultureInfo.InvariantCulture);
-                }
-            }
-
-            logger.ZLogError(ex, $"Dispense failed with unexpected error: {ex.Message}");
-            throw; // 再スローして Task に反映させる
+            HandleDispenseError(ex, out code, out codeEx);
+            throw; // Re-throw to reflect in Task
         }
         finally
         {
-            lock (stateLock)
-            {
-                Status = isError ? CashDispenseStatus.Error : CashDispenseStatus.Idle;
-                LastErrorCode = code;
-                LastErrorCodeExtended = codeEx;
+            FinalizeDispense(isError, code, codeEx);
+        }
+    }
 
-                if (isError)
+    private void HandleDispenseError(Exception ex, out DeviceErrorCode code, out int codeEx)
+    {
+        if (ex is DeviceException dex)
+        {
+            code = dex.ErrorCode;
+            codeEx = dex.ErrorCodeExtended;
+            logger.ZLogError(dex, $"Dispense failed with device error: {dex.Message}");
+            return;
+        }
+
+        code = DeviceErrorCode.Failure;
+        codeEx = 0;
+
+        // Attempt to extract error codes from external exceptions (e.g. PosControlException in tests)
+        // without adding a direct dependency on POS.NET in this virtual layer.
+        var type = ex.GetType();
+        var pCode = type.GetProperty("ErrorCode");
+        var pCodeEx = type.GetProperty("ErrorCodeExtended");
+
+        if (pCode != null)
+        {
+            var val = pCode.GetValue(ex);
+            if (val != null)
+            {
+                code = (DeviceErrorCode)Convert.ToInt32(val, System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+
+        if (pCodeEx != null)
+        {
+            var valEx = pCodeEx.GetValue(ex);
+            if (valEx != null)
+            {
+                codeEx = Convert.ToInt32(valEx, System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+
+        logger.ZLogError(ex, $"Dispense failed with unexpected error: {ex.Message}");
+    }
+
+    private void FinalizeDispense(bool isError, DeviceErrorCode code, int codeEx)
+    {
+        lock (stateLock)
+        {
+            Status = isError ? CashDispenseStatus.Error : CashDispenseStatus.Idle;
+            LastErrorCode = code;
+            LastErrorCodeExtended = codeEx;
+
+            if (isError)
+            {
+                if (!disposed)
                 {
                     ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(code, codeEx, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
                 }
-                else
+            }
+            else
+            {
+                if (!disposed && code != DeviceErrorCode.Cancelled)
                 {
                     ((Subject<DeviceOutputCompleteEventArgs>)OutputCompleteEvents).OnNext(new DeviceOutputCompleteEventArgs(0));
                 }
             }
+        }
 
+        if (!disposed)
+        {
             ((Subject<Unit>)Changed).OnNext(Unit.Default);
         }
     }

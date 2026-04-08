@@ -679,81 +679,19 @@ public class DepositController : IDisposable
         ArgumentNullException.ThrowIfNull(counts);
         lock (stateLock)
         {
-            if (DepositStatus != DeviceDepositStatus.Counting
-                || IsPaused)
+            if (!ValidateTrackingPreconditions())
             {
                 return;
-            }
-
-            if (IsFixed)
-            {
-                throw new DeviceException("Deposit is already fixed.", DeviceErrorCode.Illegal);
-            }
-
-            if (hardwareStatusManager.IsJammed.Value)
-            {
-                throw new DeviceException("Device is jammed during tracking.", DeviceErrorCode.Jammed);
-            }
-
-            if (hardwareStatusManager.IsOverlapped.Value)
-            {
-                throw new DeviceException("Device has overlapped cash. Cannot track deposit.", DeviceErrorCode.Overlapped);
             }
 
             var config = configProvider.Config;
 
             foreach (var kv in counts)
             {
-                if (kv.Value <= 0)
-                {
-                    continue;
-                }
-
-                if (!depositCounts.TryGetValue(kv.Key, out int currentDepositCount))
-                {
-                    currentDepositCount = 0;
-                }
-
-                int capacity = config.Thresholds.Full;
-                if (config.Inventory.TryGetValue(kv.Key.CurrencyCode, out var invSettings) &&
-                    invSettings.Denominations.TryGetValue(kv.Key.ToDenominationString(), out var denSettings))
-                {
-                    capacity = denSettings.Full;
-                }
-
-                int currentInventoryCount = inventory.GetCount(kv.Key);
-                int totalBeforeDeposit = currentInventoryCount + currentDepositCount;
-                int totalAfterDeposit = totalBeforeDeposit + kv.Value;
-
-                int previouslyOverflowed = Math.Max(0, totalBeforeDeposit - capacity);
-                int overflowCount = Math.Max(0, totalAfterDeposit - capacity);
-                int newlyOverflowed = overflowCount - previouslyOverflowed;
-
-                depositCounts[kv.Key] = currentDepositCount + kv.Value;
-                DepositAmount += kv.Key.Value * kv.Value;
-
-                if (newlyOverflowed > 0)
-                {
-                    OverflowAmount += kv.Key.Value * newlyOverflowed;
-                }
-
-                for (int i = 0; i < kv.Value; i++)
-                {
-                    depositedSerials.Add($"SN-{kv.Key.Value}-{Guid.NewGuid().ToString()[..8]}");
-                }
-
-                inventory.AddEscrow(kv.Key, kv.Value);
+                ProcessDenominationTracking(kv.Key, kv.Value, config);
             }
 
-            if (RealTimeDataEnabled && !disposed)
-            {
-                ((Subject<DeviceDataEventArgs>)DataEvents).OnNext(new DeviceDataEventArgs(0));
-            }
-
-            if (!disposed)
-            {
-                ((Subject<Unit>)Changed).OnNext(Unit.Default);
-            }
+            NotifyTrackingEvents();
         }
     }
 
@@ -810,6 +748,87 @@ public class DepositController : IDisposable
             internalConfigProvider?.Dispose();
 
             // Note: Injected dependencies (inventory, hardwareStatusManager) should not be disposed here.
+        }
+    }
+
+    private bool ValidateTrackingPreconditions()
+    {
+        if (DepositStatus != DeviceDepositStatus.Counting || IsPaused)
+        {
+            return false;
+        }
+
+        if (IsFixed)
+        {
+            throw new DeviceException("Deposit is already fixed.", DeviceErrorCode.Illegal);
+        }
+
+        if (hardwareStatusManager.IsJammed.Value)
+        {
+            throw new DeviceException("Device is jammed during tracking.", DeviceErrorCode.Jammed);
+        }
+
+        if (hardwareStatusManager.IsOverlapped.Value)
+        {
+            throw new DeviceException("Device has overlapped cash. Cannot track deposit.", DeviceErrorCode.Overlapped);
+        }
+
+        return true;
+    }
+
+    private void ProcessDenominationTracking(DenominationKey key, int count, CashChangerSimulator.Core.Configuration.SimulatorConfiguration config)
+    {
+        if (count <= 0)
+        {
+            return;
+        }
+
+        if (!depositCounts.TryGetValue(key, out int currentDepositCount))
+        {
+            currentDepositCount = 0;
+        }
+
+        int capacity = config.Thresholds.Full;
+        if (config.Inventory.TryGetValue(key.CurrencyCode, out var invSettings) &&
+            invSettings.Denominations.TryGetValue(key.ToDenominationString(), out var denSettings))
+        {
+            capacity = denSettings.Full;
+        }
+
+        int currentInventoryCount = inventory.GetCount(key);
+        int totalBeforeDeposit = currentInventoryCount + currentDepositCount;
+        int totalAfterDeposit = totalBeforeDeposit + count;
+
+        int previouslyOverflowed = Math.Max(0, totalBeforeDeposit - capacity);
+        int overflowCount = Math.Max(0, totalAfterDeposit - capacity);
+        int newlyOverflowed = overflowCount - previouslyOverflowed;
+
+        depositCounts[key] = currentDepositCount + count;
+        DepositAmount += key.Value * count;
+
+        if (newlyOverflowed > 0)
+        {
+            OverflowAmount += key.Value * newlyOverflowed;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            depositedSerials.Add($"SN-{key.Value}-{Guid.NewGuid().ToString()[..8]}");
+        }
+
+        inventory.AddEscrow(key, count);
+    }
+
+    private void NotifyTrackingEvents()
+    {
+        if (RealTimeDataEnabled && !disposed)
+        {
+            ((Subject<DeviceDataEventArgs>)DataEvents).OnNext(new DeviceDataEventArgs(0));
+        }
+
+        if (!disposed)
+        {
+            ((Subject<Unit>)Changed).OnNext(Unit.Default);
         }
     }
 }
