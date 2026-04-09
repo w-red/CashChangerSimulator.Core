@@ -1,0 +1,29 @@
+{
+  "stryker-config": {
+    "mutate": [
+      "DepositController.cs",
+      "DispenseController.cs"
+    ],
+    "project": "CashChangerSimulator.Device.Virtual.csproj",
+    "test-projects": [
+      "CashChangerSimulator.Tests.csproj"
+    ],
+    "test-runner": "mtp",
+    "reporters": [
+      "progress",
+      "html",
+      "json",
+      "cleartext"
+    ],
+    "concurrency": 4,
+    "coverage-analysis": "perTest",
+    "test-case-filter": "*MutationTests",
+    "ignore-methods": [
+      "*LogInformation*",
+      "*LogWarning*",
+      "*LogError*",
+      "*LogDebug*",
+      "*LogTrace*"
+    ]
+  }
+}
