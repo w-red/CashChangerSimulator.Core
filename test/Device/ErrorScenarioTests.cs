@@ -8,6 +8,7 @@ using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Shouldly;
 
@@ -55,7 +56,7 @@ public class ErrorScenarioTests
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hardware);
-        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
 
         var deps = new SimulatorDependencies(
             configProvider,
@@ -135,26 +136,29 @@ public class ErrorScenarioTests
 
     /// <summary>ジャム発生・復旧時に正しい StatusUpdateEvent が発火することを検証する。</summary>
     [Fact]
-    public void JamShouldFireStatusUpdateEvent()
+    public async Task JamShouldFireStatusUpdateEvent()
     {
         var (device, hardware) = CreateDevice();
-        int lastStatus = 0;
+        var statuses = new List<int>();
 
         device.OnEventQueued = (e) =>
         {
             if (e is StatusUpdateEventArgs se)
             {
-                lastStatus = se.Status;
+                statuses.Add(se.Status);
             }
         };
 
         // Jam ON
         hardware.SetJammed(true);
-        lastStatus.ShouldBe((int)UposCashChangerStatusUpdateCode.Jam);
+        await WaitUntil(() => statuses.Contains((int)UposCashChangerStatusUpdateCode.Jam));
+        statuses.ShouldContain((int)UposCashChangerStatusUpdateCode.Jam);
 
         // Jam OFF
+        statuses.Clear();
         hardware.SetJammed(false);
-        lastStatus.ShouldBe((int)UposCashChangerStatusUpdateCode.Ok);
+        await WaitUntil(() => statuses.Contains((int)UposCashChangerStatusUpdateCode.Ok));
+        statuses.ShouldContain((int)UposCashChangerStatusUpdateCode.Ok);
     }
 
     /// <summary>重複した pauseDeposit 呼び出しが ErrorCode.Illegal を発生させることを検証する。</summary>
@@ -266,5 +270,14 @@ public class ErrorScenarioTests
         // セパレータのみ
         Should.Throw<PosControlException>(() => device.DirectIO(DirectIOCommands.AdjustCashCountsStr, 0, ":;:"))
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
+    }
+
+    private static async Task WaitUntil(Func<bool> condition, int timeoutMs = 2000)
+    {
+        var start = DateTime.Now;
+        while (!condition() && (DateTime.Now - start).TotalMilliseconds < timeoutMs)
+        {
+            await Task.Delay(10);
+        }
     }
 }

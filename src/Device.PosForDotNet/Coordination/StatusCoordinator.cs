@@ -121,29 +121,29 @@ public class StatusCoordinator(
             }
         }));
 
-        disposables.Add(hardwareStatusManager.IsConnected.Subscribe(connected =>
+        disposables.Add(hardwareStatusManager.IsConnected.Skip(1).Subscribe(connected =>
         {
             if (disposed)
             {
                 return;
             }
-
+ 
             var code = connected ? UposCashChangerStatusUpdateCode.Inserted : UposCashChangerStatusUpdateCode.Removed;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
-
+ 
         disposables.Add(hardwareStatusManager.IsCollectionBoxRemoved.Skip(1).Subscribe(removed =>
         {
             if (disposed)
             {
                 return;
             }
-
+ 
             var code = removed ? UposCashChangerStatusUpdateCode.Removed : UposCashChangerStatusUpdateCode.Inserted;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
-
-        disposables.Add(hardwareStatusManager.IsJammed.Subscribe(jammed =>
+ 
+        disposables.Add(hardwareStatusManager.IsJammed.Skip(1).Subscribe(jammed =>
         {
             if (disposed)
             {
@@ -165,9 +165,6 @@ public class StatusCoordinator(
                     _ => CashChangerStatus.OK
                 };
                 sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
-
-                // If it was still Empty/NearEmpty, fire those too?
-                // Actually, UPOS Ok event often implies clearing of error state.
             }
         }));
 
@@ -221,13 +218,18 @@ public class StatusCoordinator(
 
         disposables.Add(dispenseController.Changed
             .Select(_ => dispenseController.IsBusy)
+            .Prepend(dispenseController.IsBusy)
             .DistinctUntilChanged()
             .Pairwise()
             .Subscribe(x =>
             {
+                if (disposed)
+                {
+                    return;
+                }
+
                 bool wasBusy = x.Previous;
                 bool isBusy = x.Current;
-
                 sink.SetAsyncProcessing(isBusy);
 
                 // Transition to Idle (isBusy: true -> false)

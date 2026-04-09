@@ -1,12 +1,15 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -32,7 +35,7 @@ public class StatusCoordinatorTest
         var manager = new CashChangerManager(inventory, history, (object?)null, null);
 
         depositController = new DepositController(inventory, hardwareStatusManager, manager);
-        dispenseController = new DispenseController(manager, hardwareStatusManager);
+        dispenseController = new DispenseController(manager, inventory, new ConfigurationProvider(), NullLoggerFactory.Instance, hardwareStatusManager, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
     }
 
     /// <summary>ジャム状態が変化した際に適切なステータス更新イベントが発生することを確認します。</summary>
@@ -57,7 +60,7 @@ public class StatusCoordinatorTest
         // Act - Reset Jam
         hardwareStatusManager.SetJammed(false);
 
-        // Assert - Ok fires at initial subscription + on reset, so at least twice
-        mockSink.Verify(s => s.FireEvent(It.Is<StatusUpdateEventArgs>(e => e.Status == (int)UposCashChangerStatusUpdateCode.Ok)), Times.AtLeast(2));
+        // Assert - Ok fires on reset
+        mockSink.Verify(s => s.FireEvent(It.Is<StatusUpdateEventArgs>(e => e.Status == (int)UposCashChangerStatusUpdateCode.Ok)), Times.Once);
     }
 }
