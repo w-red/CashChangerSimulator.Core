@@ -15,7 +15,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     {
         // Default behavior for these tests
         StatusManager.SetConnected(true);
-        controller = new DepositController(Inventory, StatusManager, manager: null, configProvider: ConfigurationProvider);
+        controller = new DepositController(Inventory, StatusManager, manager: null, configProvider: ConfigurationProvider, timeProvider: TimeProvider);
     }
 
     /// <summary>IsBusy プロパティが初期状態で偽であることを検証する。</summary>
@@ -61,6 +61,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     [Fact]
     public async Task RepayDepositShouldClearStateAndRaiseEvent()
     {
+        ConfigurationProvider.Config.Simulation.DepositDelayMs = 0;
         controller.BeginDeposit();
         controller.TrackReject(100m);
 
@@ -148,6 +149,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     [Fact]
     public async Task EndDepositWithoutFixShouldThrow()
     {
+        ConfigurationProvider.Config.Simulation.DepositDelayMs = 0;
         controller.BeginDeposit();
 
         (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.NoChange)))
@@ -158,6 +160,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     [Fact]
     public void RepayDepositSynchronousShouldWork()
     {
+        ConfigurationProvider.Config.Simulation.DepositDelayMs = 0;
         controller.BeginDeposit();
         Should.NotThrow(() => controller.RepayDeposit());
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
@@ -171,6 +174,8 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.BeginDeposit();
         controller.FixDeposit();
 
+        ConfigurationProvider.Config.Simulation.DepositDelayMs = 5000;
+        
         // Start an operation that sets isBusy = true
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
@@ -178,6 +183,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         (await Should.ThrowAsync<DeviceException>(async () => await controller.EndDepositAsync(DepositAction.NoChange)))
             .ErrorCode.ShouldBe(DeviceErrorCode.Busy);
 
+        TimeProvider.Advance(TimeSpan.FromMilliseconds(5000));
         await task;
     }
 
@@ -189,6 +195,8 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.BeginDeposit();
         controller.FixDeposit();
 
+        ConfigurationProvider.Config.Simulation.DepositDelayMs = 5000;
+        
         // Start an operation that sets isBusy = true
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
@@ -196,6 +204,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         Should.Throw<DeviceException>(() => controller.BeginDeposit())
             .ErrorCode.ShouldBe(DeviceErrorCode.Busy);
 
+        TimeProvider.Advance(TimeSpan.FromMilliseconds(5000));
         await task;
     }
 
@@ -207,12 +216,13 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.BeginDeposit();
         controller.FixDeposit();
 
+        ConfigurationProvider.Config.Simulation.DepositDelayMs = 5000;
+        
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
-        // Wait briefly for Task.Delay(500)
-        await Task.Delay(100).ConfigureAwait(false);
         StatusManager.SetOverlapped(true);
 
+        TimeProvider.Advance(TimeSpan.FromMilliseconds(5000));
         await task;
 
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
@@ -223,15 +233,14 @@ public class DepositControllerCoverageTests : DeviceTestBase
     [Fact]
     public async Task EndDepositAsyncShouldHandleCancellation()
     {
+        ConfigurationProvider.Config.Simulation.DepositDelayMs = 5000;
         controller.BeginDeposit();
         controller.FixDeposit();
 
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
-        // Wait briefly to ensure Task.Delay started
-        await Task.Delay(50);
-
         controller.Dispose(); // This cancels the internal CTS
+        TimeProvider.Advance(TimeSpan.FromMilliseconds(100)); // Ensure cancellation is processed
 
         await task;
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);

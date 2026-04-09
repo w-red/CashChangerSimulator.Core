@@ -8,6 +8,9 @@ using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Shouldly;
 
@@ -34,27 +37,32 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
 {
     public List<EventArgs> QueuedEvents { get; } = [];
 
-    public TestSimulatorCashChanger(Inventory inv, CashChangerManager manager, IDeviceSimulator? deviceSimulator = null)
-        : this(inv, manager, HardwareStatusManager.Create(), deviceSimulator)
+    public TestSimulatorCashChanger(Inventory inv, CashChangerManager manager, IDeviceSimulator? deviceSimulator = null, TimeProvider? timeProvider = null, ConfigurationProvider? config = null, ILoggerFactory? loggerFactory = null)
+        : this(inv, manager, HardwareStatusManager.Create(), deviceSimulator, timeProvider, config, loggerFactory)
     {
     }
 
-    private TestSimulatorCashChanger(Inventory inv, CashChangerManager manager, HardwareStatusManager hw, IDeviceSimulator? deviceSimulator = null)
+    private TestSimulatorCashChanger(Inventory inv, CashChangerManager manager, HardwareStatusManager hw, IDeviceSimulator? deviceSimulator = null, TimeProvider? timeProvider = null, ConfigurationProvider? config = null, ILoggerFactory? loggerFactory = null)
         : base(new SimulatorDependencies(
-            new ConfigurationProvider(),
+            config ?? new ConfigurationProvider(),
             inv,
             new TransactionHistory(),
             manager,
             new DepositController(inv, hw),
-            new DispenseController(manager, hw, deviceSimulator ?? new Mock<IDeviceSimulator>().Object),
-            new OverallStatusAggregatorProvider(MonitorsProvider.Create(inv, new ConfigurationProvider(), CurrencyMetadataProvider.Create(new ConfigurationProvider()))),
-            hw))
+            new DispenseController(manager, inv, config ?? new ConfigurationProvider(), loggerFactory ?? NullLoggerFactory.Instance, hw, deviceSimulator ?? new Mock<IDeviceSimulator>().Object, timeProvider),
+            new OverallStatusAggregatorProvider(MonitorsProvider.Create(inv, config ?? new ConfigurationProvider(), CurrencyMetadataProvider.Create(config ?? new ConfigurationProvider()))),
+            hw,
+            TimeProvider: timeProvider))
     {
     }
 
     protected override void NotifyEvent(EventArgs e)
     {
-        QueuedEvents.Add(e);
+        lock (QueuedEvents)
+        {
+            QueuedEvents.Add(e);
+        }
+
         base.NotifyEvent(e);
     }
 }
@@ -69,10 +77,11 @@ public class DispenseAsyncTests
     public async Task AsyncDispenseShouldNotBlockAndFireEvent()
     {
         // Arrange
+        var timeProvider = new FakeTimeProvider();
         var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
-        var changer = new TestSimulatorCashChanger(inventory, manager)
+        var changer = new TestSimulatorCashChanger(inventory, manager, timeProvider: timeProvider)
         {
             AsyncMode = true,
             SkipStateVerification = false
@@ -82,30 +91,33 @@ public class DispenseAsyncTests
         changer.Claim(1000);
         changer.DeviceEnabled = true;
 
+        // Mock simulator to control when it finishes
+        var dispenseTcs = new TaskCompletionSource();
+        Mock.Get(changer.DispenseController.Simulator).Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(dispenseTcs.Task);
+
         // Act
         changer.DispenseChange(100);
 
-        // Assert: Immediate return, event should not have fired yet because we haven't set the finish signal
-        changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91).ShouldBeFalse();
-
-        // Let it finish
-        manager.DispenseFinishSignal.Set();
-
-        // Wait for completion
-        int timeout = 0;
-        bool eventFired = false;
-        while (!eventFired && timeout < 50)
+        // Assert: Immediate return, event should not have fired yet because simulator is still "running"
+        lock (changer.QueuedEvents)
         {
-            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken).ConfigureAwait(false);
-            lock (changer.QueuedEvents)
-            {
-                eventFired = changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
-            }
-
-            timeout++;
+            changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91).ShouldBeFalse();
         }
 
-        eventFired.ShouldBeTrue();
+        // Let simulator finish
+        dispenseTcs.SetResult();
+        timeProvider.Advance(TimeSpan.FromMilliseconds(20));
+
+        // Let manager finish
+        manager.DispenseFinishSignal.Set();
+
+        // Wait for completion event
+        await WaitUntil(() => {
+            lock (changer.QueuedEvents)
+            {
+                return changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
+            }
+        }, timeProvider: timeProvider);
     }
 
     /// <summary>非同期払出中に重ねて払出を要求した場合に E_BUSY がスローされることを検証します。</summary>
@@ -114,10 +126,16 @@ public class DispenseAsyncTests
     public async Task DispenseDuringAsyncShouldThrowBusy()
     {
         // Arrange
+        var timeProvider = new FakeTimeProvider();
         var inventory = Inventory.Create();
-        inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
-        var manager = new MockCashChangerManager(inventory);
-        var changer = new TestSimulatorCashChanger(inventory, manager)
+        var denomination = new DenominationKey(100, CurrencyCashType.Coin);
+        inventory.SetCount(denomination, 10);
+
+        var config = new ConfigurationProvider();
+        config.Config.Inventory["JPY"].Denominations[denomination.ToDenominationString()] = new DenominationSettings { IsRecyclable = true };
+
+        var manager = new MockCashChangerManager(inventory, config);
+        var changer = new TestSimulatorCashChanger(inventory, manager, timeProvider: timeProvider, config: config)
         {
             AsyncMode = true,
             SkipStateVerification = false
@@ -127,31 +145,64 @@ public class DispenseAsyncTests
         changer.Claim(1000);
         changer.DeviceEnabled = true;
 
-        // Act: Start dispense but don't finish it
-        var dispenseTask = Task.Run(() => changer.DispenseChange(100), TestContext.Current.CancellationToken);
+        // Ensure the mock simulator stays busy until we say so
+        var dispenseTcs = new TaskCompletionSource();
+        Mock.Get(changer.DispenseController.Simulator).Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(dispenseTcs.Task);
 
-        // Wait until it enters the manager
-        manager.DispenseStartSignal.Wait(2000, TestContext.Current.CancellationToken).ShouldBeTrue("Dispense did not start in time");
+        // Act: Start dispense (should return immediately because AsyncMode = true)
+        changer.DispenseChange(100);
+
+        // Wait until it becomes busy.
+        await WaitUntil(() => changer.DispenseController.IsBusy, timeProvider: timeProvider);
 
         // Assert: While busy, another dispense should throw E_BUSY
         var ex = Should.Throw<PosControlException>(() => changer.DispenseChange(50));
-        ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Busy);
+        ex.ErrorCode.ShouldBe(ErrorCode.Busy);
 
-        // Cleanup
+        // Cleanup: Finish the first dispense
+        dispenseTcs.SetResult();
+        timeProvider.Advance(TimeSpan.FromMilliseconds(20)); // Advance to complete Task.Delay in simulator
+        
         manager.DispenseFinishSignal.Set();
-        await dispenseTask.ConfigureAwait(false);
+        await WaitUntil(() => !changer.DispenseController.IsBusy, timeProvider: timeProvider);
     }
 
+    private async Task WaitUntil(Func<bool> condition, int timeoutSeconds = 5, TimeProvider? timeProvider = null)
+    {
+        var tp = timeProvider ?? TimeProvider.System;
+        var startTimestamp = tp.GetTimestamp();
+        var timeoutTicks = TimeSpan.FromSeconds(timeoutSeconds).Ticks;
+
+        while (!condition())
+        {
+            var elapsedTicks = tp.GetTimestamp() - startTimestamp;
+            if (elapsedTicks > timeoutTicks)
+            {
+                condition().ShouldBeTrue($"Condition was not met within {timeoutSeconds}s (virtual time)");
+                return;
+            }
+
+            if (tp is FakeTimeProvider ftp)
+            {
+                ftp.Advance(TimeSpan.FromMilliseconds(5));
+            }
+
+            // [STABILITY] Use a small real delay to ensure background tasks are scheduled 
+            // on the current thread's synchronization context/scheduler.
+            await Task.Delay(1);
+        }
+    }
     /// <summary>非同期払出中に在庫読取を試みた場合に E_BUSY がスローされることを検証します。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ReadCountsDuringAsyncShouldThrowBusy()
     {
         // Arrange
+        var timeProvider = new FakeTimeProvider();
         var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
-        var changer = new TestSimulatorCashChanger(inventory, manager)
+        var changer = new TestSimulatorCashChanger(inventory, manager, timeProvider: timeProvider)
         {
             AsyncMode = true,
             SkipStateVerification = false
@@ -162,16 +213,21 @@ public class DispenseAsyncTests
         changer.DeviceEnabled = true;
 
         // Act: Start dispense but don't finish it
-        var dispenseTask = Task.Run(() => changer.DispenseChange(100), TestContext.Current.CancellationToken);
-        manager.DispenseStartSignal.Wait(2000, TestContext.Current.CancellationToken).ShouldBeTrue();
+        var dispenseTcs = new TaskCompletionSource();
+        Mock.Get(changer.DispenseController.Simulator).Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(dispenseTcs.Task);
+
+        changer.DispenseChange(100);
+        await WaitUntil(() => changer.DispenseController.IsBusy, timeProvider: timeProvider);
 
         // Assert: While busy, ReadCashCounts should throw E_BUSY
         var ex = Should.Throw<PosControlException>(() => changer.ReadCashCounts());
         ex.ErrorCode.ShouldBe((ErrorCode)DeviceErrorCode.Busy);
 
         // Cleanup
+        dispenseTcs.SetResult();
+        timeProvider.Advance(TimeSpan.FromMilliseconds(20));
         manager.DispenseFinishSignal.Set();
-        await dispenseTask.ConfigureAwait(false);
+        await WaitUntil(() => !changer.DispenseController.IsBusy, timeProvider: timeProvider);
     }
 
     /// <summary>ClearOutput 呼び出しにより、実行中の非同期払出が適切にキャンセルされることを検証します。</summary>
@@ -185,6 +241,7 @@ public class DispenseAsyncTests
         var manager = new MockCashChangerManager(inventory);
 
         // Mock simulator that we can block and that respects the token
+        var timeProvider = new FakeTimeProvider();
         var mockSimulator = new Mock<IDeviceSimulator>();
         var hardwareSimulatedSignal = new ManualResetEventSlim(false);
 
@@ -194,7 +251,7 @@ public class DispenseAsyncTests
                 hardwareSimulatedSignal.Set();
                 try
                 {
-                    await Task.Delay(10000, ct).ConfigureAwait(false); // Block until cancelled
+                    await Task.Delay(TimeSpan.FromSeconds(10), timeProvider, ct).ConfigureAwait(false); // Block until cancelled
                 }
                 catch (OperationCanceledException)
                 {
@@ -203,7 +260,7 @@ public class DispenseAsyncTests
                 }
             });
 
-        var changer = new TestSimulatorCashChanger(inventory, manager, mockSimulator.Object)
+        var changer = new TestSimulatorCashChanger(inventory, manager, mockSimulator.Object, timeProvider)
         {
             AsyncMode = true,
             SkipStateVerification = false
@@ -229,8 +286,9 @@ public class DispenseAsyncTests
         // Assert: Should be Idle again
         changer.ReadCashCounts(); // Should NO LONGER throw Busy
 
-        // Wait a bit for the async task to propagate the cancellation catch
-        await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        // Propagate virtual time to let internal tasks catch up if any
+        timeProvider.Advance(TimeSpan.FromMilliseconds(100));
+        await Task.Yield(); // Simple yield instead of real-time delay
 
         // Verify no AsyncFinished event fired
         lock (changer.QueuedEvents)
@@ -245,6 +303,7 @@ public class DispenseAsyncTests
     public async Task AsyncDispenseFailureShouldSetAsyncResultCodeExtended()
     {
         // Arrange
+        var timeProvider = new FakeTimeProvider();
         var inventory = Inventory.Create();
         inventory.SetCount(new DenominationKey(100, CurrencyCashType.Coin), 10);
         var manager = new MockCashChangerManager(inventory);
@@ -253,7 +312,7 @@ public class DispenseAsyncTests
         mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new PosControlException("Hardware simulated error", ErrorCode.Extended, (int)UposCashChangerErrorCodeExtended.Jam));
 
-        var changer = new TestSimulatorCashChanger(inventory, manager, mockSimulator.Object)
+        var changer = new TestSimulatorCashChanger(inventory, manager, mockSimulator.Object, timeProvider)
         {
             AsyncMode = true,
             SkipStateVerification = false
@@ -265,24 +324,17 @@ public class DispenseAsyncTests
 
         // Act
         changer.DispenseChange(100);
+        
         manager.DispenseFinishSignal.Set();
 
-        // Assert: Wait for completion in QueuedEvents
-        int timeout = 0;
-        bool eventFired = false;
-        while (!eventFired && timeout < 50)
-        {
-            await Task.Delay(TestTimingConstants.EventPropagationDelayMs * 2, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await WaitUntil(() => {
             lock (changer.QueuedEvents)
             {
-                eventFired = changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
+                return changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
             }
+        }, timeoutSeconds: 5, timeProvider: timeProvider);
 
-            timeout++;
-        }
-
-        eventFired.ShouldBeTrue();
-
+        // Assert
         // Check exact extended code
         changer.AsyncResultCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.Jam);
     }

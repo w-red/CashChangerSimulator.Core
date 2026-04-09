@@ -32,7 +32,8 @@ public class FacadeTests
             inventory,
             hardwareStatusManager,
             managerMock?.Object ?? new Mock<CashChangerManager>(inventory, new Mock<TransactionHistory>().Object, (object?)null, new ConfigurationProvider()).Object,
-            new ConfigurationProvider());
+            new ConfigurationProvider(),
+            (TimeProvider?)null);
         inventoryMock = new Mock<Inventory>();
         managerMock = new Mock<CashChangerManager>(
             inventory,

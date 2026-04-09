@@ -6,6 +6,8 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Shouldly;
 
@@ -67,10 +69,12 @@ public class AsyncModeReliabilityTests
         var hardwareStatus = HardwareStatusManager.Create();
 
         var hardwareSim = new Mock<IDeviceSimulator>();
+        var dispenseTcs = new TaskCompletionSource();
         hardwareSim.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
-                   .Returns(Task.CompletedTask);
+                   .Returns(dispenseTcs.Task);
 
-        var controller = new DispenseController(manager, hardwareStatus, hardwareSim.Object);
+        var timeProvider = new FakeTimeProvider();
+        var controller = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardwareStatus, hardwareSim.Object, timeProvider);
         var changer = new ReliabilityTestChanger(inventory, manager, controller, hardwareStatus)
         {
             SkipStateVerification = true
@@ -82,28 +86,21 @@ public class AsyncModeReliabilityTests
         changer.DeviceEnabled = true;
         changer.AsyncMode = true;
 
-        // Capture background exceptions properly for diagnostic output
-        Func<Task> act = async () =>
-        {
-            try
-            {
-                changer.DispenseChange(100);
-            }
-            catch (Exception ex)
-            {
-                changer.SetBackgroundException(ex);
-            }
-        };
-        await Task.Run(act, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        // Start dispense
+        changer.DispenseChange(100);
 
         // Assert: Ensure it's busy immediately
         changer.DispenseController.IsBusy.ShouldBeTrue("Dispense operation should be busy.");
 
         // Allow the dispense to complete
+        dispenseTcs.SetResult();
         manager.DispenseFinishSignal.Set();
 
-        // Wait for event capture with a generous timeout
-        bool eventFired = changer.WaitForEvent(5000);
+        // Advance virtual time to complete the background task
+        timeProvider.Advance(TimeSpan.FromMilliseconds(20));
+
+        // Wait for event capture with a short timeout as it should be immediate after Advance
+        bool eventFired = changer.WaitForEvent(1000);
 
         // Assert consistency AT EVENT RECEIPT
         eventFired.ShouldBeTrue("Completion event was not fired within 5 seconds.");

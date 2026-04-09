@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -8,7 +9,9 @@ using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Shouldly;
 
@@ -21,16 +24,19 @@ public class ExhaustiveDeviceTests : IDisposable
     private readonly CashChangerManager manager;
     private readonly HardwareStatusManager hardwareStatusManager;
     private readonly Mock<IDeviceSimulator> simulatorMock;
+    private readonly FakeTimeProvider timeProvider;
     private readonly DispenseController controller;
 
     public ExhaustiveDeviceTests()
     {
         inventory = Inventory.Create();
         var history = new TransactionHistory();
+        var configProvider = new ConfigurationProvider();
         manager = new CashChangerManager(inventory, history, (object?)null, null);
         hardwareStatusManager = HardwareStatusManager.Create();
         simulatorMock = new Mock<IDeviceSimulator>();
-        controller = new DispenseController(manager, hardwareStatusManager, simulatorMock.Object);
+        timeProvider = new FakeTimeProvider();
+        controller = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardwareStatusManager, simulatorMock.Object, timeProvider);
 
         hardwareStatusManager.SetConnected(true);
     }
@@ -54,14 +60,14 @@ public class ExhaustiveDeviceTests : IDisposable
 
         // Async mode
         await controller.DispenseChangeAsync((int)1000, true).ConfigureAwait(false);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        timeProvider.Advance(TimeSpan.FromMilliseconds(200));
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
 
         // Error: Busy
         var tcs = new TaskCompletionSource();
         simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
         var task = controller.DispenseChangeAsync((int)1000, false);
-        await Task.Delay(100, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        timeProvider.Advance(TimeSpan.FromMilliseconds(100));
         await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync((int)1000, false).ConfigureAwait(false)).ConfigureAwait(false);
         tcs.SetResult();
         controller.ClearOutput();

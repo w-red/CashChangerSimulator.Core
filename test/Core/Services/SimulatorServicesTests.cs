@@ -2,10 +2,13 @@ using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
+using Microsoft.Extensions.Logging.Abstractions;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.Virtual;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Shouldly;
 
@@ -92,7 +95,8 @@ public class SimulatorServicesTests : IDisposable
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hw);
-        var dispenseController = new DispenseController(manager, hw, new Mock<IDeviceSimulator>().Object);
+        var timeProvider = new FakeTimeProvider();
+        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object, timeProvider);
 
         var provider = new TestServiceProvider(
             configProvider,

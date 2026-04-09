@@ -66,7 +66,7 @@ public class ComplianceTests
 
     /// <summary>リアルタイム通知が無効な場合、入金確定時にのみ DataEvent が発火することを検証します。</summary>
     [Fact]
-    public void RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix()
+    public async Task RealTimeDataEnabledFalseShouldFireDataEventOnlyOnFix()
     {
         // Arrange
         var (changer, controller, _, _, _) = CreateChanger();
@@ -87,12 +87,14 @@ public class ComplianceTests
         eventCount.ShouldBe(0); // Not fired yet
 
         changer.FixDeposit();
+        await WaitUntil(() => eventCount == 1);
+
         eventCount.ShouldBe(1); // Fired on Fix (buffered data notification)
     }
 
     /// <summary>リアルタイム通知が有効な場合、投入の都度 DataEvent が発火することを検証します。</summary>
     [Fact]
-    public void RealTimeDataEnabledTrueShouldFireDataEventOnTrack()
+    public async Task RealTimeDataEnabledTrueShouldFireDataEventOnTrack()
     {
         // Arrange
         var (changer, controller, _, history, _) = CreateChanger();
@@ -110,6 +112,7 @@ public class ComplianceTests
 
         // Act
         controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"));
+        await WaitUntil(() => eventCount == 1);
 
         // Assert
         eventCount.ShouldBe(1); // Fired immediately
@@ -118,7 +121,7 @@ public class ComplianceTests
 
     /// <summary>DirectIO(SimulateRemoved) によりカセット取外しイベントが発火することを検証します。</summary>
     [Fact]
-    public void DirectIOSimulateRemovedShouldFireStatusUpdateEvent()
+    public async Task DirectIOSimulateRemovedShouldFireStatusUpdateEvent()
     {
         // Arrange
         var (changer, _, _, _, _) = CreateChanger();
@@ -135,6 +138,7 @@ public class ComplianceTests
 
         // Act
         changer.DirectIO(DirectIOCommands.SimulateRemoved, 0, string.Empty);
+        await WaitUntil(() => status == 41);
 
         // Assert
         status.ShouldBe(41); // CHAN_STATUS_REMOVED
@@ -142,7 +146,7 @@ public class ComplianceTests
 
     /// <summary>DirectIO(SimulateInserted) によりカセット装着イベントが発火することを検証します。</summary>
     [Fact]
-    public void DirectIOSimulateInsertedShouldFireStatusUpdateEvent()
+    public async Task DirectIOSimulateInsertedShouldFireStatusUpdateEvent()
     {
         // Arrange
         var (changer, _, _, _, _) = CreateChanger();
@@ -157,6 +161,7 @@ public class ComplianceTests
 
         // Act
         changer.DirectIO(DirectIOCommands.SimulateInserted, 0, string.Empty);
+        await WaitUntil(() => status == 42);
 
         // Assert
         status.ShouldBe(42); // CHAN_STATUS_INSERTED
@@ -230,5 +235,14 @@ public class ComplianceTests
 
         // Assert
         discrepancy.ShouldBeTrue();
+    }
+
+    private static async Task WaitUntil(Func<bool> condition, int timeoutMs = 2000)
+    {
+        var start = DateTime.Now;
+        while (!condition() && (DateTime.Now - start).TotalMilliseconds < timeoutMs)
+        {
+            await Task.Delay(10);
+        }
     }
 }

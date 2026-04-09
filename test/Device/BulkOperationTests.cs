@@ -1,9 +1,11 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Device.Virtual.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Shouldly;
 
@@ -22,7 +24,7 @@ public class BulkOperationTests
         var hardware = HardwareStatusManager.Create();
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         var json = @"
@@ -53,7 +55,7 @@ public class BulkOperationTests
         var hardware = HardwareStatusManager.Create();
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         var json = @"

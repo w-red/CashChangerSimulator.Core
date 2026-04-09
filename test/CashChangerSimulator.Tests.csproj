@@ -22,6 +22,7 @@
     <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
     <Exclude>[*.Tests]*,[xunit.*]*,[CashChangerSimulator.Core]MemoryPack.Formatter*,[CashChangerSimulator.Core]ZLogger.Generated*,[CashChangerSimulator.Device.Virtual]ZLogger.Generated*,[CashChangerSimulator.Device.PosForDotNet]ZLogger.Generated*</Exclude>
     <ExcludeByFile>**\*.g.cs,**\obj\**</ExcludeByFile>
+    <UseMicrosoftTestingPlatform>false</UseMicrosoftTestingPlatform>
   </PropertyGroup>
 
 
@@ -46,6 +47,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.4.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="R3" Version="1.3.0" />

@@ -65,28 +65,35 @@ public class DepositReliabilityTests
                 }
 
                 changer.DepositController.TrackDeposit(key);
-                await Task.Delay(5, ct).ConfigureAwait(false);
+                await Task.Yield();
             }
         }, ct);
 
-        // Wait slightly and FixDeposit concurrently
-        await Task.Delay(10, ct).ConfigureAwait(false);
+        // Wait slightly and FixDeposit concurrently, ensuring at least one insertion has registered
+        while (changer.DepositAmount == 0 && !ct.IsCancellationRequested && !insertionTask.IsCompleted)
+        {
+            await Task.Delay(1, ct).ConfigureAwait(false);
+        }
         changer.FixDeposit();
         cts.Cancel();
 
-        try
+        // Ensure task is finished to prevent assembly lock
+        await insertionTask;
+
+        // Assert: Wait for UPOS event delivery thread to fire DataEvent
+        var dataEvents = new List<DataEventArgs>();
+        const int timeoutMs = 2000;
+        int elapsedMs = 0;
+        while (elapsedMs < timeoutMs)
         {
-            await Task.WhenAny(insertionTask, Task.Delay(500, ct)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
+            dataEvents = changer.EventHistory.OfType<DataEventArgs>().ToList();
+            if (dataEvents.Count == 1)
+                break;
+            await Task.Delay(10).ConfigureAwait(false);
+            elapsedMs += 10;
         }
 
-        // Assert
-        var events = changer.EventHistory.ToList();
-        var dataEvents = events.OfType<DataEventArgs>().ToList();
-
-        dataEvents.Count.ShouldBe(1, $"Expected exactly 1 DataEvent on Fix, but found {dataEvents.Count}. Events: {string.Join(", ", events.Select(e => e.GetType().Name))}");
+        dataEvents.Count.ShouldBe(1, $"Expected exactly 1 DataEvent on Fix, but found {dataEvents.Count}. Events: {string.Join(", ", changer.EventHistory.Select(e => e.GetType().Name))}");
         changer.DepositAmount.ShouldBeGreaterThan(0);
 
         changer.Close();
@@ -163,7 +170,7 @@ public class DepositReliabilityTests
             while (!cts.Token.IsCancellationRequested && !ct.IsCancellationRequested)
             {
                 changer.DepositController.TrackDeposit(key);
-                await Task.Delay(1, ct).ConfigureAwait(false);
+                await Task.Yield();
             }
         }, ct);
 
@@ -186,13 +193,7 @@ public class DepositReliabilityTests
         }
 
         cts.Cancel();
-        try
-        {
-            await Task.WhenAny(task, Task.Delay(500, ct)).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-        }
+        await task; // Ensure background insertion loop has exited
 
         changer.FixDeposit();
         changer.Close();

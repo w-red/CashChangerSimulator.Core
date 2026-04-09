@@ -14,7 +14,7 @@ public class DeviceEventHistoryObserverTest
 {
     /// <summary>DataEventArgs を伴うデバイスイベントが発生した際、履歴に追加されることを検証します。</summary>
     [Fact]
-    public void HandleDeviceEventWhenDataEventArgsRecordsToHistory()
+    public async Task HandleDeviceEventWhenDataEventArgsRecordsToHistory()
     {
         // Arrange
         var history = new TransactionHistory();
@@ -28,6 +28,7 @@ public class DeviceEventHistoryObserverTest
         // Typically DataEvents are queued internally, but we can trigger the action here
         // to simulate the device firing the event.
         device.OnEventQueued?.Invoke(new DataEventArgs(0));
+        await WaitUntil(() => history.Entries.Count == 1);
 
         // Assert
         history.Entries.Count.ShouldBe(1);
@@ -39,7 +40,7 @@ public class DeviceEventHistoryObserverTest
 
     /// <summary>StatusUpdateEventArgs(Ok=0) が ErrorRecovery として履歴に記録されることを検証します。</summary>
     [Fact]
-    public void HandleDeviceEventWhenStatusOkRecordsErrorRecovery()
+    public async Task HandleDeviceEventWhenStatusOkRecordsErrorRecovery()
     {
         // Arrange
         var history = new TransactionHistory();
@@ -49,6 +50,7 @@ public class DeviceEventHistoryObserverTest
 
         // Act — StatusUpdateEventArgs(0) corresponds to UposCashChangerStatusUpdateCode.Ok
         device.OnEventQueued?.Invoke(new StatusUpdateEventArgs(0));
+        await WaitUntil(() => history.Entries.Count == 1);
 
         // Assert
         history.Entries.Count.ShouldBe(1);
@@ -57,7 +59,7 @@ public class DeviceEventHistoryObserverTest
 
     /// <summary>StatusUpdateEventArgs(Jam=31) が HardwareError として履歴に記録されることを検証します。</summary>
     [Fact]
-    public void HandleDeviceEventWhenStatusJamRecordsHardwareError()
+    public async Task HandleDeviceEventWhenStatusJamRecordsHardwareError()
     {
         // Arrange
         var history = new TransactionHistory();
@@ -67,6 +69,7 @@ public class DeviceEventHistoryObserverTest
 
         // Act — StatusUpdateEventArgs(31) corresponds to UposCashChangerStatusUpdateCode.Jam
         device.OnEventQueued?.Invoke(new StatusUpdateEventArgs(31));
+        await WaitUntil(() => history.Entries.Count == 1);
 
         // Assert
         history.Entries.Count.ShouldBe(1);
@@ -88,5 +91,14 @@ public class DeviceEventHistoryObserverTest
 
         // Assert
         history.Entries.ShouldBeEmpty();
+    }
+
+    private static async Task WaitUntil(Func<bool> condition, int timeoutMs = 2000)
+    {
+        var start = DateTime.Now;
+        while (!condition() && (DateTime.Now - start).TotalMilliseconds < timeoutMs)
+        {
+            await Task.Delay(10);
+        }
     }
 }

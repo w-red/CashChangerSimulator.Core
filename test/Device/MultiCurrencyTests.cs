@@ -7,6 +7,7 @@ using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Shouldly;
 
@@ -48,7 +49,7 @@ public class MultiCurrencyTests
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hardware);
-        var dispenseController = new DispenseController(manager, hardware, new Mock<IDeviceSimulator>().Object);
+        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
 
         var deps = new SimulatorDependencies(
             configProvider,

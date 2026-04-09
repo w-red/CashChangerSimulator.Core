@@ -1,11 +1,15 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Shouldly;
 
@@ -32,7 +36,8 @@ public class UposDispenseFacadeTest
         hardwareStatusManager.SetConnected(true);
         var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
         depositController = new DepositController(inventory, hardwareStatusManager);
-        dispenseController = new DispenseController(manager, hardwareStatusManager, null);
+        var timeProvider = new FakeTimeProvider();
+        dispenseController = new DispenseController(manager, inventory, new ConfigurationProvider(), NullLoggerFactory.Instance, hardwareStatusManager, new Mock<IDeviceSimulator>().Object, timeProvider);
         mediatorMock = new Mock<IUposMediator>();
         mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
             .Callback<IUposCommand>((cmd) => cmd.Execute());

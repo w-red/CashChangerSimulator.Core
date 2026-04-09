@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -8,6 +9,7 @@ using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CashChangerSimulator.Tests.Device;
 
@@ -24,7 +26,7 @@ public class UposCommandTests
         // DepositController needs Inventory and HardwareStatusManager
         var inventory = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        depositControllerMock = new Mock<DepositController>(inventory, hardware, null!, null!);
+        depositControllerMock = new Mock<DepositController>(inventory, hardware, null!, null!, (TimeProvider?)null);
     }
 
     /// <summary>BeginDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
@@ -174,14 +176,15 @@ public class UposCommandTests
     {
         var manager = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
         var hw = HardwareStatusManager.Create();
-        var deposit = new Mock<DepositController>(Inventory.Create(), hw, null!, null!);
+        var deposit = new Mock<DepositController>(Inventory.Create(), hw, null!, null!, (TimeProvider?)null);
         var sim = new Mock<IDeviceSimulator>();
-        var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
+        var inv = Inventory.Create();
+        var cp = new ConfigurationProvider();
+        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object, (TimeProvider?)null);
         var command = new DispenseChangeCommand(controllerMock.Object, hw, deposit.Object, 1000m, false);
 
         command.Execute();
-
-        controllerMock.Verify(c => c.DispenseChangeAsync(1000, false, null), Times.Once);
+        controllerMock.Verify(c => c.DispenseChangeAsync(1000, false), Times.Once);
     }
 
     /// <summary>DispenseCashCommand の実行がコントローラへ委譲されることを検証します。</summary>
@@ -191,9 +194,10 @@ public class UposCommandTests
         var manager = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
         var inv = Inventory.Create();
         var hw = HardwareStatusManager.Create();
-        var deposit = new Mock<DepositController>(inv, hw, null!, null!);
+        var deposit = new Mock<DepositController>(inv, hw, null!, null!, (TimeProvider?)null);
         var sim = new Mock<IDeviceSimulator>();
-        var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
+        var cp = new ConfigurationProvider();
+        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object, (TimeProvider?)null);
         var counts = new Dictionary<DenominationKey, int>();
         var command = new DispenseCashCommand(controllerMock.Object, inv, hw, deposit.Object, counts, false);
 
@@ -209,7 +213,9 @@ public class UposCommandTests
         var manager = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
         var hw = HardwareStatusManager.Create();
         var sim = new Mock<IDeviceSimulator>();
-        var controllerMock = new Mock<DispenseController>(manager.Object, hw, sim.Object);
+        var inv = Inventory.Create();
+        var cp = new ConfigurationProvider();
+        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object, (TimeProvider?)null);
         var command = new ClearOutputCommand(controllerMock.Object);
 
         command.Execute();
