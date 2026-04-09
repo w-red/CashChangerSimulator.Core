@@ -6,10 +6,7 @@ using Moq;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
-/// <summary>
-/// <see cref="DepositController"/> が直接在庫を更新せず、
-/// <see cref="CashChangerManager"/> に入金履歴の記録と在庫の更新を委譲することを検証するテストクラス。
-/// </summary>
+/// <summary>DepositController の委譲動作を検証するテストクラス。</summary>
 public class DepositControllerDelegationTest : DeviceTestBase
 {
     private readonly Mock<CashChangerManager> managerMock;

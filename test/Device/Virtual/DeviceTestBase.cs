@@ -10,9 +10,7 @@ using Moq;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
-/// <summary>
-/// 仮想デバイスコントローラーのテストセットアップを共通化するための基底クラス。
-/// </summary>
+/// <summary>仮想デバイスコントローラーのテストセットアップを共通化するための基底クラス。</summary>
 public abstract class DeviceTestBase : IDisposable
 {
     private bool _disposed;
@@ -60,14 +58,10 @@ public abstract class DeviceTestBase : IDisposable
     /// <summary>仮想デバイスファクトリー</summary>
     protected VirtualCashChangerDeviceFactory DeviceFactory { get; }
 
-    /// <summary>
-    /// 各テストで固有の Mutex 名（Global\\TestMutex_{Guid}）を生成します。
-    /// </summary>
+    /// <summary>各テストで固有の Mutex 名（Global\\TestMutex_{Guid}）を生成します。</summary>
     protected string GenerateUniqueMutexName() => $"Global\\TestMutex_{Guid.NewGuid()}";
 
-    /// <summary>
-    /// 仮想デバイスインスタンスを生成します。
-    /// </summary>
+    /// <summary>仮想デバイスインスタンスを生成します。</summary>
     protected ICashChangerDevice CreateDevice(string? mutexName = null)
     {
         return DeviceFactory.Create(Manager, Inventory, StatusManager, mutexName ?? GenerateUniqueMutexName());

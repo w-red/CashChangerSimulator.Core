@@ -6,10 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>
-/// <see cref="DeviceEventHistoryObserver"/> の動作を検証するテストクラス。
-/// デバイス層の DataEvent が TransactionHistory に委譲記述されるかをテストします。
-/// </summary>
+/// <summary>DeviceEventHistoryObserver の動作を検証するテストクラス。</summary>
 public class DeviceEventHistoryObserverTest
 {
     /// <summary>DataEventArgs を伴うデバイスイベントが発生した際、履歴に追加されることを検証します。</summary>

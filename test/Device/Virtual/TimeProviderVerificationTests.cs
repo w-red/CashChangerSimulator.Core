@@ -7,9 +7,7 @@ using Xunit;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>
-/// TimeProvider による仮想時間制御の動作と、決定論的なテスト実行を検証するテストクラス。
-/// </summary>
+/// <summary>TimeProvider による仮想時間制御の動作と、決定論的なテスト実行を検証するテストクラス。</summary>
 public class TimeProviderVerificationTests
 {
     private readonly Inventory inventory;

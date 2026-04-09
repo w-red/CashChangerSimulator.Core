@@ -2,9 +2,7 @@ using CashChangerSimulator.Device.PosForDotNet;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>
-/// POS for .NET レイヤー (UPOS アダプター) のテストセットアップを共通化するための基底クラス。
-/// </summary>
+/// <summary>POS for .NET レイヤーのテストセットアップを共通化するための基底クラス。</summary>
 public abstract class UposTestBase : IDisposable
 {
     private bool _disposed;
@@ -17,9 +15,7 @@ public abstract class UposTestBase : IDisposable
     /// <summary>テスト対象のキャッシュチェンジャーインスタンス。</summary>
     protected InternalSimulatorCashChanger Changer { get; }
 
-    /// <summary>
-    /// 全ての金種（JPY/USD）に対して一定数（デフォルト 10枚）のキャッシュを補充します。
-    /// </summary>
+    /// <summary>全ての金種（JPY/USD）に対して一定数のキャッシュを補充します。</summary>
     protected void SeedInitialCash(int count = 10)
     {
         foreach (var ccy in new[] { "JPY", "USD" })

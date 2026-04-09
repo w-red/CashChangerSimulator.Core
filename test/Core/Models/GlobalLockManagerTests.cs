@@ -6,10 +6,7 @@ using Xunit;
 
 namespace CashChangerSimulator.Tests.Core.Models;
 
-/// <summary>
-/// GlobalLockManager の排他制御機能を検証するテストクラス。
-/// Tests for verify GlobalLockManager's synchronization features.
-/// </summary>
+/// <summary>GlobalLockManager の排他制御機能を検証するテストクラス。</summary>
 public class GlobalLockManagerTests : IDisposable
 {
     private readonly string _testLockPath;
@@ -21,10 +18,7 @@ public class GlobalLockManagerTests : IDisposable
         _lockManager = new GlobalLockManager(_testLockPath, NullLogger.Instance);
     }
 
-    /// <summary>
-    /// 各テストの終了時にリソースを解放します。
-    /// Release resources after each test.
-    /// </summary>
+    /// <summary>各テストの終了時にリソースを解放します。</summary>
     public void Dispose()
     {
         _lockManager.Dispose();
@@ -34,10 +28,7 @@ public class GlobalLockManagerTests : IDisposable
         }
     }
 
-    /// <summary>
-    /// ロックの取得、保持確認、解放が正しく動作することを検証します。
-    /// Verify that lock acquisition, hold check, and release work correctly.
-    /// </summary>
+    /// <summary>ロックの取得、保持確認、解放が正しく動作することを検証します。</summary>
     [Fact]
     public void TestAcquireAndRelease()
     {
@@ -58,10 +49,7 @@ public class GlobalLockManagerTests : IDisposable
         _lockManager.IsLockHeldByAnother().ShouldBeFalse();
     }
 
-    /// <summary>
-    /// Dispose 後のロック操作がエラーを発生させないことを検証します。
-    /// Verify that locking operations after Dispose do not crash.
-    /// </summary>
+    /// <summary>Dispose 後のロック操作がエラーを発生させないことを検証します。</summary>
     [Fact]
     public void TestLockAfterDispose()
     {
@@ -85,10 +73,7 @@ public class GlobalLockManagerTests : IDisposable
         }
     }
 
-    /// <summary>
-    /// 別スレッドがロックを保持している間、他者がロックを取得できないことを検証します。
-    /// Verify that others cannot acquire the lock while another thread holds it.
-    /// </summary>
+    /// <summary>別スレッドがロックを保持している間、他者がロックを取得できないことを検証します。</summary>
     [Fact]
     public async Task TestConcurrentLocking()
     {
@@ -136,10 +121,7 @@ public class GlobalLockManagerTests : IDisposable
         otherManager.IsLockHeldByAnother().ShouldBeFalse();
     }
 
-    /// <summary>
-    /// コンストラクタに空のパスを渡した場合、デフォルトのパスが使用されることを検証します。
-    /// Verify that default path is used when an empty path is passed to the constructor.
-    /// </summary>
+    /// <summary>コンストラクタに空のパスを渡した場合、デフォルトのパスが使用されることを検証します。</summary>
     [Fact]
     public void ConstructorShouldUseDefaultPathIfNullOrEmpty()
     {
@@ -153,10 +135,7 @@ public class GlobalLockManagerTests : IDisposable
         manager.Release();
     }
 
-    /// <summary>
-    /// 二重に Dispose を呼び出しても例外が発生しないことを検証します。
-    /// Verify that calling Dispose twice does not throw exceptions.
-    /// </summary>
+    /// <summary>二重に Dispose を呼び出しても例外が発生しないことを検証します。</summary>
     [Fact]
     public void DoubleDisposeShouldBeSafe()
     {
@@ -171,10 +150,7 @@ public class GlobalLockManagerTests : IDisposable
         });
     }
 
-    /// <summary>
-    /// 外部のファイルストリームによってロックされている場合、IsLockHeldByAnother が true を返すことを検証します。
-    /// Verify that IsLockHeldByAnother returns true when the file is locked by an external stream.
-    /// </summary>
+    /// <summary>外部のファイルストリームによってロックされている場合、保持中と判定されることを検証します。</summary>
     [Fact]
     public void IsLockHeldByAnotherShouldBeTrueWhenFileLockedByExternalStream()
     {

@@ -6,11 +6,7 @@ using Moq;
 
 namespace CashChangerSimulator.Tests.Core;
 
-/// <summary>
-/// Core プロジェクトのテストセットアップ（Setup）を共通化するための基底クラス。
-/// デフォルトでは実オブジェクトを使用しますが、Create〇〇メソッドをオーバーライドすることで
-/// Moq オブジェクト等に差し替えることができます。
-/// </summary>
+/// <summary>Core プロジェクトのテストセットアップを共通化するための基底クラス。</summary>
 public abstract class CoreTestBase : IDisposable
 {
     private bool _disposed;
