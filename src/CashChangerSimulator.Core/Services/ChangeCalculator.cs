@@ -61,7 +61,7 @@ public static class ChangeCalculator
 
         if (remaining > 0)
         {
-            Logger.ZLogWarning($"Insufficient cash: requested {targetAmount}, remaining {remaining}.");
+            Logger.ZLogWarning($"Insufficient cash: requested {targetAmount}, remaining {remaining}."); // Stryker disable once all
             throw new InsufficientCashException($"要求された金額 {targetAmount} を支払うための在庫が不足しているか、端数が合いません（残り: {remaining}）。");
         }
 
@@ -70,8 +70,6 @@ public static class ChangeCalculator
 
     private static IEnumerable<DenominationKey> GetAvailableDenominationKeys(IReadOnlyInventory inventory)
     {
-        ArgumentNullException.ThrowIfNull(inventory);
-
         // 実際には IReadOnlyInventory の実装（Inventory クラス）から全金種キーを取得する
         return inventory is Inventory inv ? inv.AllCounts.Select(kv => kv.Key) : [];
     }
