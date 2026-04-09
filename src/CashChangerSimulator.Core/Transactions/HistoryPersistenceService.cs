@@ -17,9 +17,7 @@ public class HistoryPersistenceService : IDisposable
     private readonly CompositeDisposable disposables = new();
     private bool disposed;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="HistoryPersistenceService"/> class.
-    /// </summary>
+    /// <summary>取引履歴と保存パスを指定してサービスを初期化します。</summary>
     /// <param name="history">取引履歴オブジェクト。</param>
     /// <param name="filePath">保存先のファイルパス。null の場合はデフォルトパスが使用される。</param>
     public HistoryPersistenceService(TransactionHistory history, string? filePath = null)

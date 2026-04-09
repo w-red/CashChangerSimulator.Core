@@ -17,7 +17,7 @@ public sealed class GlobalLockManager : IDisposable
     private FileStream? lockStream;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="GlobalLockManager"/> class.保持されたファイルパスを使用してロックマネージャーを初期化します。</summary>
+    /// <summary>保持されたファイルパスを使用してロックマネージャーを初期化します。</summary>
     /// <param name="lockFilePath">ロックに使用するファイルパス。</param>
     /// <param name="logger">ロガー。</param>
     public GlobalLockManager(string? lockFilePath, ILogger logger)

@@ -24,10 +24,7 @@ public class CashChangerManager
     private readonly ConfigurationProvider configProvider;
     private readonly ILogger<CashChangerManager> logger = LogProvider.CreateLogger<CashChangerManager>();
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="CashChangerManager"/> class.
-    /// コンストラクタ（後方互換用）。
-    /// </summary>
+    /// <summary>在庫と取引履歴を指定してマネージャーを初期化します（後方互換用）。</summary>
     /// <param name="inventory">在庫。</param>
     /// <param name="history">取引履歴。</param>
     public CashChangerManager(Inventory inventory, TransactionHistory history)

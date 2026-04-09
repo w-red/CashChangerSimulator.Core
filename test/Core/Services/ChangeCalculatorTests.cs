@@ -139,10 +139,11 @@ public class ChangeCalculatorTests
         Should.Throw<ArgumentNullException>(() => ChangeCalculator.Calculate(null!, 100));
     }
 
-    /// <summary>
-    /// 必要ない金種（needed &lt;= 0）がディクショナリに含まれないことを検証します（Mutant 791, 796 撃破）。
-    /// また、計算が完了した後に余剰な金種の GetCount を呼び出さないことを検証します（Mutant 785, 788 撃破）。
-    /// </summary>
+    /// <summary>出金計算の効率性と結果の整合性を検証します。</summary>
+    /// <remarks>
+    /// 必要ない金種（needed &lt;= 0）がディクショナリに含まれないこと（Mutant 791, 796 撃破）、
+    /// および計算完了後に余剰な金種の GetCount を呼び出さないこと（Mutant 785, 788 撃破）を検証します。
+    /// </remarks>
     [Fact]
     public void Calculate_ShouldBeEfficientAndNotIncludeZeroCounts()
     {
