@@ -17,6 +17,7 @@ public sealed class VirtualCashChangerDeviceFactory : ICashChangerDeviceFactory
     public const string DefaultMutexName = @"Global\CashChangerSimulatorVirtualDeviceMutex";
 
     private readonly ConfigurationProvider configurationProvider;
+    private readonly TimeProvider timeProvider;
     private readonly ILoggerFactory loggerFactory;
 
     /// <summary>
@@ -24,10 +25,15 @@ public sealed class VirtualCashChangerDeviceFactory : ICashChangerDeviceFactory
     /// </summary>
     /// <param name="configurationProvider">設定プロバイダー。</param>
     /// <param name="loggerFactory">ロガーファクトリ。</param>
-    public VirtualCashChangerDeviceFactory(ConfigurationProvider configurationProvider, ILoggerFactory loggerFactory)
+    /// <param name="timeProvider">時間プロバイダー。</param>
+    public VirtualCashChangerDeviceFactory(
+        ConfigurationProvider configurationProvider,
+        ILoggerFactory loggerFactory,
+        TimeProvider? timeProvider = null)
     {
         this.configurationProvider = configurationProvider ?? throw new ArgumentNullException(nameof(configurationProvider));
         this.loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <inheritdoc/>
@@ -46,8 +52,8 @@ public sealed class VirtualCashChangerDeviceFactory : ICashChangerDeviceFactory
     /// <returns>生成された仮想デバイス。</returns>
     public ICashChangerDevice Create(CashChangerManager manager, Inventory inventory, HardwareStatusManager statusManager, string mutexName)
     {
-        var depositController = new DepositController(inventory, statusManager, manager, configurationProvider);
-        var dispenseController = new DispenseController(manager, statusManager, HardwareSimulator.Create(configurationProvider));
+        var depositController = new DepositController(inventory, statusManager, manager, configurationProvider, timeProvider);
+        var dispenseController = new DispenseController(manager, inventory, configurationProvider, loggerFactory, statusManager, HardwareSimulator.Create(configurationProvider, timeProvider), timeProvider);
         var diagnosticController = new DiagnosticController(inventory, statusManager);
 
         return new VirtualCashChangerDevice(

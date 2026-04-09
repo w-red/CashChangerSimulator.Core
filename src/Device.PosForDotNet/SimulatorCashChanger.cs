@@ -44,7 +44,8 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     private readonly UposEventNotifier eventNotifier;
     private readonly DirectIOHandler directIOHandler = new();
     private string checkHealthText = "OK";
-    private bool disposedValue;
+    protected readonly object syncRoot = new();
+    protected bool disposedValue;
 
     /// <summary><see cref="SimulatorCashChanger"/> クラスの新しいインスタンスを初期化します。</summary>
     /// <param name="deps">シミュレータの依存関係。</param>

@@ -24,4 +24,5 @@ public record SimulatorDependencies(
     IUposMediator? Mediator = null,
     IUposEventNotifier? EventNotifier = null,
     UposConfigurationManager? ConfigurationManager = null,
-    string? GlobalLockFilePath = null);
+    string? GlobalLockFilePath = null,
+    TimeProvider? TimeProvider = null);

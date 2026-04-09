@@ -1,3 +1,4 @@
+using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -33,6 +34,7 @@ public class SimulatorContext : IDisposable
     public StatusCoordinator StatusCoordinator { get; }
     public IUposEventNotifier EventNotifier { get; }
     public MonitorsProvider MonitorsProvider { get; }
+    public TimeProvider TimeProvider { get; }
 
     private SimulatorContext(SimulatorDependencies deps, ICashChangerStatusSink sink, ILogger logger)
     {
@@ -41,6 +43,7 @@ public class SimulatorContext : IDisposable
         History = deps.History ?? new TransactionHistory();
         HardwareStatusManager = deps.HardwareStatusManager ?? HardwareStatusManager.Create();
         DiagnosticController = deps.DiagnosticController ?? new DiagnosticController(Inventory, HardwareStatusManager);
+        TimeProvider = deps.TimeProvider ?? TimeProvider.System;
 
         var metadataProvider = CurrencyMetadataProvider.Create(ConfigProvider);
         MonitorsProvider = MonitorsProvider.Create(Inventory, ConfigProvider, metadataProvider);
@@ -49,8 +52,8 @@ public class SimulatorContext : IDisposable
         Aggregator = OverallStatusAggregator.Create(MonitorsProvider.Monitors);
 
         Manager = deps.Manager ?? new CashChangerManager(Inventory, History, ConfigProvider);
-        DepositController = deps.DepositController ?? new DepositController(Inventory, HardwareStatusManager, Manager, ConfigProvider);
-        DispenseController = deps.DispenseController ?? new DispenseController(Manager, HardwareStatusManager, HardwareSimulator.Create(ConfigProvider));
+        DepositController = deps.DepositController ?? new DepositController(Inventory, HardwareStatusManager, Manager, ConfigProvider, deps.TimeProvider);
+        DispenseController = deps.DispenseController ?? new DispenseController(Manager, Inventory, ConfigProvider, LogProvider.Factory, HardwareStatusManager, HardwareSimulator.Create(ConfigProvider, deps.TimeProvider), deps.TimeProvider);
 
         Mediator = deps.Mediator ?? new UposMediator();
         EventNotifier = deps.EventNotifier ?? new UposEventNotifier();

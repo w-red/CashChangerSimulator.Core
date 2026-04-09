@@ -16,6 +16,25 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Internal Simulator Cash Changer", 1, 14)]
 public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulator
 {
+    static InternalSimulatorCashChanger()
+    {
+        // [FIX] Pre-create LocalSettings directory in a static constructor to avoid race conditions
+        // during high-concurrency test initialization.
+        // [修正] 高並列なテスト初期化時の競合を避けるため、静的コンストラクタで LocalSettings ディレクトリを事前作成します。
+        var settingsDir = Path.Combine(AppContext.BaseDirectory, "LocalSettings");
+        if (!Directory.Exists(settingsDir))
+        {
+            try
+            {
+                Directory.CreateDirectory(settingsDir);
+            }
+            catch
+            {
+                // In multiple-assembly test runs, another process might have created it.
+            }
+        }
+    }
+
     // テスト用に内部コンポーネントを公開
 
     /// <inheritdoc/>
@@ -32,6 +51,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
 
     // Nullable に変更：LogProvider が null を返す可能性や、テスト環境での変動に対応
     private readonly ILogger<InternalSimulatorCashChanger>? internalLogger;
+    private bool isHandlingEvent;
 
     /// <summary>テスト用：構成を指定せずに初期化します。</summary>
     public InternalSimulatorCashChanger()
@@ -107,7 +127,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             throw new PosControlException("Simulated dispense exception", ErrorCode.Failure);
         }
 
-        await Task.Delay(10, ct).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(10), Context.TimeProvider, ct).ConfigureAwait(false);
     }
 
     /// <summary>指定された引数で新しいインスタンスを初期化します。</summary>
@@ -127,7 +147,8 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         DepositController depositController,
         DispenseController dispenseController,
         OverallStatusAggregatorProvider aggregatorProvider,
-        HardwareStatusManager hardwareStatusManager)
+        HardwareStatusManager hardwareStatusManager,
+        TimeProvider? timeProvider = null)
         : base(new SimulatorDependencies(
             configProvider,
             inventory,
@@ -137,6 +158,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             dispenseController,
             aggregatorProvider,
             hardwareStatusManager,
+            TimeProvider: timeProvider,
             GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = true;
@@ -153,7 +175,8 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         DispenseController? dispenseController = null,
         OverallStatusAggregatorProvider? aggregatorProvider = null,
         HardwareStatusManager? hardwareStatusManager = null,
-        DiagnosticController? diagnosticController = null)
+        DiagnosticController? diagnosticController = null,
+        TimeProvider? timeProvider = null)
         : base(new SimulatorDependencies(
             configProvider,
             inventory,
@@ -164,29 +187,27 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             aggregatorProvider,
             hardwareStatusManager,
             diagnosticController,
+            TimeProvider: timeProvider,
             GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = true;
         internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
-    private bool isHandlingEvent;
 
     /// <summary>イベント通知をオーバーライドし、OnEventQueued フックを実行します。</summary>
     protected override void NotifyEvent(EventArgs e)
     {
-        if (isHandlingEvent)
+        if (disposedValue || isHandlingEvent)
         {
             return;
         }
 
-        isHandlingEvent = true;
         try
         {
+            isHandlingEvent = true;
             OnEventQueued?.Invoke(e);
-
-            // POS.NET の内部キューイングを完全にバイパスするためのチェック。
-            // ヘッドレス環境での NullReferenceException を回避するために重要。
+            
             if (DisableUposEventQueuing)
             {
                 return;
