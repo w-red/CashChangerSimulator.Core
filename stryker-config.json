@@ -1,0 +1,29 @@
+{
+  "stryker-config": {
+    "project": "src/CashChangerSimulator.Core/CashChangerSimulator.Core.csproj",
+    "test-projects": [
+      "test/CashChangerSimulator.Tests.csproj"
+    ],
+    "mutate": [
+      "Services/ChangeCalculator.cs"
+    ],
+    "reporters": [
+      "progress",
+      "html"
+    ],
+    "concurrency": 4,
+    "test-runner": "mtp",
+    "coverage-analysis": "off",
+    "test-case-filter": "ChangeCalculatorTests",
+    "ignore-methods": [
+      "Console.WriteLine",
+      "Log*",
+      "ZLog*",
+      "MemoryPackSerializer.*"
+    ],
+    "ignore-mutations": [
+      "String",
+      "StringMethod"
+    ]
+  }
+}
