@@ -11,7 +11,6 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 public static class CashCountAdapter
 {
     /// <summary>CashCount を DenominationKey に変換します。</summary>
-    /// <returns></returns>
     public static DenominationKey ToDenominationKey(CashCount cc, string currencyCode, decimal factor)
     {
         var type = cc.Type == CashCountType.Bill ? CurrencyCashType.Bill : CurrencyCashType.Coin;
@@ -20,7 +19,6 @@ public static class CashCountAdapter
     }
 
     /// <summary>DenominationKey を CashCount に変換します。</summary>
-    /// <returns></returns>
     public static CashCount ToCashCount(DenominationKey key, int count, decimal factor)
     {
         var type = key.Type == CurrencyCashType.Bill ? CashCountType.Bill : CashCountType.Coin;
@@ -29,7 +27,6 @@ public static class CashCountAdapter
     }
 
     /// <summary>CashCount 配列を DenominationKey→枚数の辞書に一括変換します。</summary>
-    /// <returns></returns>
     public static Dictionary<DenominationKey, int> ToDenominationDict(
         IEnumerable<CashCount> cashCounts, string currencyCode, decimal factor)
     {
@@ -41,10 +38,7 @@ public static class CashCountAdapter
             cc => cc.Count);
     }
 
-    /// <summary>
-    /// 文字列形式の金種・枚数リスト ("denom:count,denom:count") を CashCount 配列に変換します。
-    /// </summary>
-    /// <returns></returns>
+    /// <summary>文字列形式の金種・枚数リスト ("denom:count,denom:count") を CashCount 配列に変換します。</summary>
     public static IEnumerable<CashCount> ParseCashCounts(string countsStr, string currencyCode, decimal factor, IEnumerable<DenominationKey> availableKeys)
     {
         ArgumentNullException.ThrowIfNull(currencyCode);
@@ -70,10 +64,7 @@ public static class CashCountAdapter
             .ToList();
     }
 
-    /// <summary>
-    /// CashCount 配列を文字列形式 ("denom:count,denom:count") に変換します。
-    /// </summary>
-    /// <returns></returns>
+    /// <summary>CashCount 配列を文字列形式 ("denom:count,denom:count") に変換します。</summary>
     public static string FormatCashCounts(IEnumerable<CashCount> cashCounts)
     {
         ArgumentNullException.ThrowIfNull(cashCounts);

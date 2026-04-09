@@ -5,11 +5,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
 
-/// <summary>
-/// UPOSデバイス (SimulatorCashChanger) から発火されるイベントを購読し、
-/// UIのActivity Feed等に表示するための取引履歴 (TransactionHistory) を記録するオブザーバー層。
-/// デバイス層が上位のUI履歴要件に依存しないように隔離するためのクラスです。
-/// </summary>
+/// <summary>デバイスから発火されるイベントを購読し、取引履歴を記録するオブザーバークラス。</summary>
 public class DeviceEventHistoryObserver : IDisposable
 {
     private readonly InternalSimulatorCashChanger device;
