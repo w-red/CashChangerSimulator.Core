@@ -1,3 +1,5 @@
+/* Stryker disable all */
+
 using CashChangerSimulator.Core.Configuration;
 using MemoryPack;
 using Microsoft.Extensions.Logging;

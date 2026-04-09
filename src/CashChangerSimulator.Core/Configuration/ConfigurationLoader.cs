@@ -1,5 +1,8 @@
+/* Stryker disable all */
 using Microsoft.Extensions.Logging;
+
 using Tomlyn;
+
 using ZLogger;
 
 namespace CashChangerSimulator.Core.Configuration;

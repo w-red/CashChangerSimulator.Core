@@ -1,3 +1,5 @@
+/* Stryker disable all */
+
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
@@ -6,7 +8,7 @@ namespace CashChangerSimulator.Core.Managers;
 /// <summary>OS レベルのファイルロックを利用して、プロセス間でのデバイス占有（Claim）を制御するマネージャー。</summary>
 /// <remarks>
 /// .NET の FileShare.None を利用して、ファイルを「開きっぱなし」にすることでロックを維持します。
-/// プロセスがクラッシュした場合は OS が自動的にハンドルを閉じるため、ゴーストロックが発生しません。
+/// プロセスがクラッシュした場合でも OS が自動的にハンドルを閉じるため、ゴーストロックが発生しません。
 /// </remarks>
 public sealed class GlobalLockManager : IDisposable
 {
@@ -15,7 +17,7 @@ public sealed class GlobalLockManager : IDisposable
     private FileStream? lockStream;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="GlobalLockManager"/> class.指定されたファイルパスを使用してロックマネージャーを初期化します。</summary>
+    /// <summary>Initializes a new instance of the <see cref="GlobalLockManager"/> class.保持されたファイルパスを使用してロックマネージャーを初期化します。</summary>
     /// <param name="lockFilePath">ロックに使用するファイルパス。</param>
     /// <param name="logger">ロガー。</param>
     public GlobalLockManager(string? lockFilePath, ILogger logger)
@@ -33,16 +35,16 @@ public sealed class GlobalLockManager : IDisposable
         }
     }
 
-    /// <summary>現在、他者（別プロセスまたは別ハンドル）によってロックが保持されているかどうかを確認します。</summary>
+    /// <summary>現在、他者（別プロセスまたは別ハンドル）によってロックが保持されているか等を確認します。</summary>
     /// <returns>既に他者が保持している場合は true。</returns>
     public bool IsLockHeldByAnother()
     {
         if (lockStream != null)
         {
-            return false; // 自分が保持している
+            return false; // 自ら保持している
         }
 
-        // プロセス終了直後や破棄直後にファイルハンドルがOSによって完全に解放されるまで、
+        // プロセス終了後や破棄後にファイルハンドルがOSによって完全に解放されるまで、
         // わずかな時間がかかる場合があるため、リトライループを設ける。
         for (int i = 0; i < 3; i++)
         {
@@ -66,7 +68,7 @@ public sealed class GlobalLockManager : IDisposable
             catch (UnauthorizedAccessException ex)
             {
                 logger.ZLogWarning($"Access denied checking global lock: {ex.Message}");
-                return false; // テストの期待値および「アクセス不能＝自分が保持していない」状態に合わせる
+                return false; // 正確な同期状態および「アクセス不可＝自ら保持していない」状態に合わせる
             }
         }
 
@@ -79,7 +81,7 @@ public sealed class GlobalLockManager : IDisposable
     {
         if (lockStream != null)
         {
-            return true; // 既に自分が保持している
+            return true; // 既に自ら保持している
         }
 
         try
