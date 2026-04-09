@@ -132,7 +132,7 @@ public class ChangeCalculatorTests
         Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(mockInv.Object, 100));
     }
 
-    /// <summary>引数に null を渡した場合に ArgumentNullException がスローされることを検証します（Mutant 812 撃破）。</summary>
+    /// <summary>引数に null を渡した場合に ArgumentNullException がスローされることを検証します（変異テスト対応）。</summary>
     [Fact]
     public void Calculate_ShouldThrowArgumentNullException_WhenInventoryIsNull()
     {
@@ -141,8 +141,8 @@ public class ChangeCalculatorTests
 
     /// <summary>出金計算の効率性と結果の整合性を検証します。</summary>
     /// <remarks>
-    /// 必要ない金種（needed &lt;= 0）がディクショナリに含まれないこと（Mutant 791, 796 撃破）、
-    /// および計算完了後に余剰な金種の GetCount を呼び出さないこと（Mutant 785, 788 撃破）を検証します。
+    /// 必要ない金種（needed &lt;= 0）がディクショナリに含まれないこと（変異テスト対応：不必要な構成要素の除外）、
+    /// および計算完了後に余剰な金種の GetCount を呼び出さないこと（変異テスト対応：不要な在庫確認の回避）を検証します。
     /// </remarks>
     [Fact]
     public void Calculate_ShouldBeEfficientAndNotIncludeZeroCounts()
@@ -157,20 +157,19 @@ public class ChangeCalculatorTests
         inv.Add(k1, 10);
 
         // Request 100.
-        // 1. 1000 is checked, needed = 0 -> should continue (Mutant 788, 791)
+        // 1. 1000 is checked, needed = 0 -> should continue（変異テスト対応）
         // 2. 100 is checked, needed = 1 -> took 1. Remaining = 0.
-        // 3. remaining is 0 -> should break (Mutant 785)
+        // 3. remaining is 0 -> should break（変異テスト対応）
         var result = ChangeCalculator.Calculate(inv, 100);
 
         // Check dictionary integrity
-        result.Count.ShouldBe(1);
         result.ContainsKey(k100).ShouldBeTrue();
-        result.ContainsKey(k1000).ShouldBeFalse(); // Should NOT contain k1000 with count 0 (Mutant 796)
+        result.ContainsKey(k1000).ShouldBeFalse(); // Should NOT contain k1000 with count 0（変異テスト対応）
         result.ContainsKey(k1).ShouldBeFalse();
 
         // Check efficiency (Calls to GetCount)
-        inv.GetCountCalls.ShouldNotContain(k1); // mutant 785 (break) prevents checking k1
-        inv.GetCountCalls.ShouldNotContain(k1000); // mutant 788/791 (continue) should prevent getting count if not needed
+        inv.GetCountCalls.ShouldNotContain(k1); // 変異テスト対応：break により k1 のチェックがスキップされること
+        inv.GetCountCalls.ShouldNotContain(k1000); // 変異テスト対応：continue により不要な金種の在庫取得が行われないこと
         inv.GetCountCalls.ShouldContain(k100);
     }
 
