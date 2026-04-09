@@ -41,10 +41,19 @@ public class DispenseChangeCommand : IUposCommand
     /// <summary>金額指定出金操作を実行します。</summary>
     public void Execute()
     {
-        ExecuteAsync().GetAwaiter().GetResult();
-        if (!async && controller.LastErrorCode != DeviceErrorCode.Success)
+        if (async)
         {
-            throw new DeviceException("DispenseChange failed", controller.LastErrorCode, controller.LastErrorCodeExtended);
+            // In asynchronous mode, we must return control immediately.
+            // The task will run in the background.
+            _ = ExecuteAsync();
+        }
+        else
+        {
+            ExecuteAsync().GetAwaiter().GetResult();
+            if (controller.LastErrorCode != DeviceErrorCode.Success)
+            {
+                throw new DeviceException("DispenseChange failed", controller.LastErrorCode, controller.LastErrorCodeExtended);
+            }
         }
     }
 
@@ -56,8 +65,23 @@ public class DispenseChangeCommand : IUposCommand
             mediator.IsBusy = true;
         }
 
-        var amountAsInt = (int)amount;
-        await controller.DispenseChangeAsync(amountAsInt, async).ConfigureAwait(false);
+        try
+        {
+            var amountAsInt = (int)amount;
+            await controller.DispenseChangeAsync(amountAsInt, false).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] DispenseChangeCommand.ExecuteAsync failed: {ex.Message}");
+            throw;
+        }
+        finally
+        {
+            if (async && mediator != null)
+            {
+                mediator.IsBusy = false;
+            }
+        }
     }
 
     /// <summary>コマンド実行前の状態および事前条件（ハードウェア状態）を検証します。</summary>

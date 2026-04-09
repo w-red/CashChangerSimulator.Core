@@ -49,10 +49,13 @@ public static class ChangeCalculator
             int available = inventory.GetCount(key);
             int countToTake = Math.Min(needed, available);
 
+            Console.WriteLine($"[DEBUG] ChangeCalculator: Checking {key.Value} (Needed: {needed}, Available: {available})");
+
             if (countToTake > 0)
             {
                 result[key] = countToTake;
                 remaining -= key.Value * countToTake;
+                Console.WriteLine($"[DEBUG] ChangeCalculator: Took {countToTake}. Remaining: {remaining}");
             }
         }
 
