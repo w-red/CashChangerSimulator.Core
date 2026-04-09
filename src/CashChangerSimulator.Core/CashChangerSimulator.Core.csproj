@@ -7,6 +7,12 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(MutationTesting)' == 'true'">
+        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+        <StyleCopAnalyzersEnabled>false</StyleCopAnalyzersEnabled>
+        <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    </PropertyGroup>
+
     <ItemGroup>
         <InternalsVisibleTo Include="CashChangerSimulator.Tests" />
     </ItemGroup>
@@ -26,5 +32,9 @@
         <PackageReference Include="ZLogger" Version="2.5.10" />
     </ItemGroup>
 
+
 </Project>
+
+
+
 
