@@ -9,9 +9,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>
-/// 仮想ハードウェアのシミュレーションロジックを統合し、ICashChangerDevice インターフェースを提供するクラス。
-/// </summary>
+/// <summary>仮想ハードウェアのシミュレーションロジックを統合し、ICashChangerDevice インターフェースを提供するクラス。</summary>
 public sealed class VirtualCashChangerDevice : ICashChangerDevice
 {
     private readonly DepositController depositController;
@@ -34,9 +32,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     private bool hasMutex;
     private bool disposed;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="VirtualCashChangerDevice"/> class.
-    /// </summary>
+    /// <summary>依存コンポーネントを指定してインスタンスを初期化します。</summary>
     /// <param name="depositController">入金コントローラー。</param>
     /// <param name="dispenseController">出金コントローラー。</param>
     /// <param name="diagnosticController">診断コントローラー。</param>

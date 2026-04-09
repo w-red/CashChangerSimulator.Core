@@ -1,8 +1,6 @@
 namespace CashChangerSimulator.Device.Virtual.Services;
 
-/// <summary>
-/// Defines the contract for executing automated scripts in the simulator.
-/// </summary>
+/// <summary>シミュレーターでの自動スクリプト実行のためのコントラクトを定義します。</summary>
 public interface IScriptExecutionService
 {
     /// <summary>スクリプトを非同期で実行します。</summary>

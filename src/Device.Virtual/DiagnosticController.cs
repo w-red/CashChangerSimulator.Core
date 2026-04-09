@@ -15,9 +15,7 @@ public class DiagnosticController : IDisposable
     private readonly HardwareStatusManager hardwareStatusManager;
     private bool disposed;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DiagnosticController"/> class.
-    /// </summary>
+    /// <summary>依存コンポーネントを指定してインスタンスを初期化します。</summary>
     /// <param name="inventory">現金在庫データを管理する <see cref="Inventory"/> モデル。</param>
     /// <param name="hardwareStatusManager">デバイスの接続やジャム状態を管理する <see cref="HardwareStatusManager"/>。</param>
     public DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)

@@ -32,9 +32,7 @@ public class DepositController : IDisposable
     private CancellationTokenSource? depositCts;
     private bool disposed;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DepositController"/> class.
-    /// </summary>
+    /// <summary>依存コンポーネントを指定してインスタンスを初期化します。</summary>
     /// <param name="inventory">現金在庫。</param>
     /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
     /// <param name="manager">釣銭機マネージャー。</param>

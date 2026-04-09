@@ -28,9 +28,7 @@ public class DispenseController : IDisposable
     private CancellationTokenSource? dispenseCts;
     private bool disposed;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DispenseController"/> class.
-    /// </summary>
+    /// <summary>依存コンポーネントを指定してインスタンスを初期化します。</summary>
     /// <param name="manager">マネージャー。</param>
     /// <param name="inventory">在庫。</param>
     /// <param name="configProvider">設定プロバイダー。</param>
@@ -102,9 +100,7 @@ public class DispenseController : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>
-    /// 指定された金額を払い出します。
-    /// </summary>
+    /// <summary>指定された金額を払い出します。</summary>
     /// <param name="amount">払い出す金額。</param>
     /// <param name="isRepay">返却処理かどうか。</param>
     /// <returns>タスク。</returns>
@@ -127,9 +123,7 @@ public class DispenseController : IDisposable
         await DispenseCashAsync(counts, isRepay).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// 指定された金種と枚数を払い出します。
-    /// </summary>
+    /// <summary>指定された金種と枚数を払い出します。</summary>
     /// <param name="dispenseCounts">払い出す金種と枚数の辞書。</param>
     /// <param name="isRepay">返却処理かどうか。</param>
     /// <returns>タスク。</returns>
@@ -221,9 +215,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>
-    /// 出力を中止します。
-    /// </summary>
+    /// <summary>出力を中止します。</summary>
     public virtual void ClearOutput()
     {
         dispenseCts?.Cancel();
@@ -254,9 +246,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>
-    /// 管理リソースを解放します。
-    /// </summary>
+    /// <summary>管理リソースを解放します。</summary>
     /// <param name="disposing">破棄中かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
@@ -278,9 +268,7 @@ public class DispenseController : IDisposable
         }
     }
 
-    /// <summary>
-    /// 例外を UPOS エラーコードへマッピングします。
-    /// </summary>
+    /// <summary>例外をエラーコードへマッピングします。</summary>
     private static void HandleDispenseError(Exception ex, out DeviceErrorCode code, out int codeEx)
     {
         code = DeviceErrorCode.Failure;

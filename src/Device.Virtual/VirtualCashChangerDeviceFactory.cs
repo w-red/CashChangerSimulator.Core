@@ -6,23 +6,17 @@ using Microsoft.Extensions.Logging;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>
-/// 仮想釣銭機デバイスを生成するためのファクトリクラス。
-/// </summary>
+/// <summary>仮想釣銭機デバイスを生成するためのファクトリクラス。</summary>
 public sealed class VirtualCashChangerDeviceFactory : ICashChangerDeviceFactory
 {
-    /// <summary>
-    /// デフォルトの共有ミューテックス名。
-    /// </summary>
+    /// <summary>デフォルトの共有ミューテックス名。</summary>
     public const string DefaultMutexName = @"Global\CashChangerSimulatorVirtualDeviceMutex";
 
     private readonly ConfigurationProvider configurationProvider;
     private readonly TimeProvider timeProvider;
     private readonly ILoggerFactory loggerFactory;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="VirtualCashChangerDeviceFactory"/> class.
-    /// </summary>
+    /// <summary>依存コンポーネントを指定してインスタンスを初期化します。</summary>
     /// <param name="configurationProvider">設定プロバイダー。</param>
     /// <param name="loggerFactory">ロガーファクトリ。</param>
     /// <param name="timeProvider">時間プロバイダー。</param>
@@ -42,9 +36,7 @@ public sealed class VirtualCashChangerDeviceFactory : ICashChangerDeviceFactory
         return Create(manager, inventory, statusManager, DefaultMutexName);
     }
 
-    /// <summary>
-    /// 指定された Mutex 名を使用して仮想デバイスを生成します。
-    /// </summary>
+    /// <summary>指定された Mutex 名を使用して仮想デバイスを生成します。</summary>
     /// <param name="manager">マネージャー。</param>
     /// <param name="inventory">在庫。</param>
     /// <param name="statusManager">ステータスマネージャー。</param>

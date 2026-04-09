@@ -108,9 +108,7 @@ public class ScriptExecutionService(
         }
     }
 
-    /// <summary>
-    /// 内部でコマンドリストを実行します。
-    /// </summary>
+    /// <summary>内部でコマンドリストを実行します。</summary>
     /// <param name="commands">コマンドリスト。</param>
     /// <param name="context">実行コンテキスト。</param>
     /// <param name="onProgress">プログレス通知。</param>
