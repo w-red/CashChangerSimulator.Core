@@ -1,8 +1,6 @@
 namespace CashChangerSimulator.Core.Opos;
 
-/// <summary>
-/// SimulatorCashChanger で使用されるベンダー固有コマンド（DirectIO）の定数定義。
-/// </summary>
+/// <summary>SimulatorCashChanger で使用されるベンダー固有コマンド（DirectIO）の定数定義。</summary>
 public static class DirectIOCommands
 {
     /// <summary>重複投入（Overlap）エラー状態を設定または解除します。 data: 1 (Error), 0 (Reset).</summary>
