@@ -22,7 +22,11 @@ public class DispenseCommandHandler(DispenseController dispenseController) : ISc
         ArgumentNullException.ThrowIfNull(logger);
 
         var dispenseValue = ScriptExecutionService.ResolveValue(cmd.Value, context);
-        logger.ZLogDebug($"Dispense: {dispenseValue}");
+        if (logger != null)
+        {
+            logger.ZLogDebug($"Dispense: {dispenseValue}");
+        }
+
         await dispenseController.DispenseChangeAsync(dispenseValue, false).ConfigureAwait(false);
     }
 }

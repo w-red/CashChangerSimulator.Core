@@ -22,7 +22,8 @@ public class DepositController : IDisposable
     private readonly ConfigurationProvider configProvider;
     private readonly ConfigurationProvider? internalConfigProvider;
     private readonly CashChangerManager? manager;
-    private readonly ILogger<DepositController> logger = LogProvider.CreateLogger<DepositController>();
+    private readonly TimeProvider timeProvider;
+    private readonly ILogger<DepositController>? logger = LogProvider.CreateLogger<DepositController>();
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
     private readonly Dictionary<DenominationKey, int> depositCounts = [];
@@ -38,11 +39,13 @@ public class DepositController : IDisposable
     /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
     /// <param name="manager">釣銭機マネージャー。</param>
     /// <param name="configProvider">設定プロバイダー。</param>
+    /// <param name="timeProvider">時間プロバイダー。</param>
     public DepositController(
         Inventory inventory,
         HardwareStatusManager? hardwareStatusManager = null,
         CashChangerManager? manager = null,
-        ConfigurationProvider? configProvider = null)
+        ConfigurationProvider? configProvider = null,
+        TimeProvider? timeProvider = null)
     {
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         this.hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
@@ -58,6 +61,7 @@ public class DepositController : IDisposable
         }
 
         this.manager = manager;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
 
         var changedSubject = new Subject<Unit>();
         disposables.Add(changedSubject);
@@ -340,7 +344,10 @@ public class DepositController : IDisposable
     {
         lock (stateLock)
         {
-            logger.ZLogInformation($"BeginDeposit called. Current Status: {DepositStatus}");
+            if (logger != null)
+            {
+                logger.ZLogInformation($"BeginDeposit called. Current Status: {DepositStatus}");
+            }
 
             if (IsBusy)
             {
@@ -427,8 +434,7 @@ public class DepositController : IDisposable
             }
         }
 
-        await Task.Yield();
-
+        // Task.Yield() removed for determinism.
         if (depositCts != null)
         {
             await depositCts.CancelAsync().ConfigureAwait(false);
@@ -440,13 +446,17 @@ public class DepositController : IDisposable
 
         try
         {
-            await Task.Delay(500, token).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(configProvider.Config.Simulation.DepositDelayMs), timeProvider, token).ConfigureAwait(false);
 
             lock (stateLock)
             {
                 if (action == DepositAction.Repay)
                 {
-                    logger.ZLogInformation($"Deposit Repay: Returning cash from escrow.");
+                    if (logger != null)
+                    {
+                        logger.ZLogInformation($"Deposit Repay: Returning cash from escrow.");
+                    }
+
                     inventory.ClearEscrow();
                 }
                 else if (action == DepositAction.Change)
@@ -510,7 +520,11 @@ public class DepositController : IDisposable
                 else
                 {
                     // NoChange (or None)
-                    logger.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
+                    if (logger != null)
+                    {
+                        logger.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
+                    }
+
                     var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
                     inventory.ClearEscrow();
 
@@ -557,7 +571,13 @@ public class DepositController : IDisposable
         }
         catch (DeviceException dex)
         {
-            logger.ZLogError(dex, $"EndDeposit failed with device error.");
+            /* Stryker disable all */
+            if (logger != null)
+            {
+                logger.ZLogError(dex, $"EndDeposit failed with device error.");
+            }
+
+            /* Stryker restore all */
             lock (stateLock)
             {
                 LastErrorCode = dex.ErrorCode;
@@ -570,7 +590,13 @@ public class DepositController : IDisposable
         }
         catch (Exception ex)
         {
-            logger.ZLogError(ex, $"EndDeposit failed with unexpected error.");
+            /* Stryker disable all */
+            if (logger != null)
+            {
+                logger.ZLogError(ex, $"EndDeposit failed with unexpected error.");
+            }
+
+            /* Stryker restore all */
             lock (stateLock)
             {
                 LastErrorCode = DeviceErrorCode.Failure;
@@ -746,8 +772,6 @@ public class DepositController : IDisposable
             depositCts?.Dispose();
             disposables.Dispose();
             internalConfigProvider?.Dispose();
-
-            // Note: Injected dependencies (inventory, hardwareStatusManager) should not be disposed here.
         }
     }
 
@@ -778,45 +802,41 @@ public class DepositController : IDisposable
 
     private void ProcessDenominationTracking(DenominationKey key, int count, CashChangerSimulator.Core.Configuration.SimulatorConfiguration config)
     {
-        if (count <= 0)
+        lock (stateLock)
         {
-            return;
+            // [UPOS] Simulate identification/validation
+            DepositStatus = DeviceDepositStatus.Validation;
+
+            // [CAPACITY] Check for overflow
+            var denomConfig = config.GetDenominationSetting(key);
+            var maxCount = denomConfig.Full;
+
+            var currentInStorage = inventory.GetCount(key);
+            var available = Math.Max(0, maxCount - currentInStorage);
+            var overflow = Math.Max(0, count - available);
+
+            // [LIFECYCLE] Record progress
+            if (depositCounts.TryGetValue(key, out var current))
+            {
+                depositCounts[key] = current + count;
+            }
+            else
+            {
+                depositCounts[key] = count;
+            }
+
+            inventory.AddEscrow(key, count);
+            DepositAmount += key.Value * count;
+            OverflowAmount += key.Value * overflow;
+
+            for (var i = 0; i < count; i++)
+            {
+                depositedSerials.Add($"SN-{key.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}-{Guid.NewGuid().ToString()[..8]}");
+            }
+
+            // [LIFECYCLE] Finished identification
+            DepositStatus = DeviceDepositStatus.Counting;
         }
-
-        if (!depositCounts.TryGetValue(key, out int currentDepositCount))
-        {
-            currentDepositCount = 0;
-        }
-
-        int capacity = config.Thresholds.Full;
-        if (config.Inventory.TryGetValue(key.CurrencyCode, out var invSettings) &&
-            invSettings.Denominations.TryGetValue(key.ToDenominationString(), out var denSettings))
-        {
-            capacity = denSettings.Full;
-        }
-
-        int currentInventoryCount = inventory.GetCount(key);
-        int totalBeforeDeposit = currentInventoryCount + currentDepositCount;
-        int totalAfterDeposit = totalBeforeDeposit + count;
-
-        int previouslyOverflowed = Math.Max(0, totalBeforeDeposit - capacity);
-        int overflowCount = Math.Max(0, totalAfterDeposit - capacity);
-        int newlyOverflowed = overflowCount - previouslyOverflowed;
-
-        depositCounts[key] = currentDepositCount + count;
-        DepositAmount += key.Value * count;
-
-        if (newlyOverflowed > 0)
-        {
-            OverflowAmount += key.Value * newlyOverflowed;
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            depositedSerials.Add($"SN-{key.Value}-{Guid.NewGuid().ToString()[..8]}");
-        }
-
-        inventory.AddEscrow(key, count);
     }
 
     private void NotifyTrackingEvents()

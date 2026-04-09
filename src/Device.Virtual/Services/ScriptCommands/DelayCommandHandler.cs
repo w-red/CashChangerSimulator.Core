@@ -4,7 +4,7 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>delay コマンド: 指定ミリ秒待機します。</summary>
-public class DelayCommandHandler : IScriptCommandHandler
+public class DelayCommandHandler(TimeProvider timeProvider) : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
     public string OpName => "DELAY";
@@ -22,7 +22,11 @@ public class DelayCommandHandler : IScriptCommandHandler
         ArgumentNullException.ThrowIfNull(logger);
 
         var ms = ScriptExecutionService.ResolveValue(cmd.Value, context);
-        logger.ZLogDebug($"Delaying for {ms}ms");
-        await Task.Delay(ms).ConfigureAwait(false);
+        if (logger != null)
+        {
+            logger.ZLogDebug($"Delaying for {ms}ms");
+        }
+
+        await Task.Delay(TimeSpan.FromMilliseconds(ms), timeProvider).ConfigureAwait(false);
     }
 }

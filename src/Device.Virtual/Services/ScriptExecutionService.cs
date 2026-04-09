@@ -4,6 +4,7 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services;
@@ -13,12 +14,13 @@ public class ScriptExecutionService(
     DepositController depositController,
     DispenseController dispenseController,
     Inventory inventory,
-    HardwareStatusManager hardwareStatusManager) : IScriptExecutionService
+    HardwareStatusManager hardwareStatusManager,
+    TimeProvider? timeProvider = null) : IScriptExecutionService
 {
     private static readonly JsonSerializerOptions JsonOptions =
         new() { PropertyNameCaseInsensitive = true };
 
-    private readonly ILogger<ScriptExecutionService> logger =
+    private readonly ILogger<ScriptExecutionService>? logger =
         LogProvider.CreateLogger<ScriptExecutionService>();
 
     private readonly Dictionary<string, IScriptCommandHandler> handlers =
@@ -26,7 +28,8 @@ public class ScriptExecutionService(
             depositController,
             dispenseController,
             inventory,
-            hardwareStatusManager);
+            hardwareStatusManager,
+            timeProvider ?? TimeProvider.System);
 
     /// <summary>変数参照を解決して整数値を返します。</summary>
     /// <param name="value">値オブジェクト。</param>
@@ -83,16 +86,26 @@ public class ScriptExecutionService(
         var commands = JsonSerializer.Deserialize<List<ScriptCommand>>(json, JsonOptions);
         if (commands == null)
         {
-            logger.ZLogError($"Failed to deserialize script JSON.");
+            if (logger != null)
+            {
+                logger.ZLogError($"Failed to deserialize script JSON.");
+            }
+
             return;
         }
 
-        logger.ZLogInformation($"Starting script execution. Commands count: {commands.Count}");
+        if (logger != null)
+        {
+            logger.ZLogInformation($"Starting script execution. Commands count: {commands.Count}");
+        }
 
         var context = new ScriptExecutionContext();
         await ExecuteCommandsInternalAsync(commands, context, onProgress).ConfigureAwait(false);
 
-        logger.ZLogInformation($"Finished script execution.");
+        if (logger != null)
+        {
+            logger.ZLogInformation($"Finished script execution.");
+        }
     }
 
     /// <summary>
@@ -120,7 +133,8 @@ public class ScriptExecutionService(
         DepositController depositController,
         DispenseController dispenseController,
         Inventory inventory,
-        HardwareStatusManager hardwareStatusManager)
+        HardwareStatusManager hardwareStatusManager,
+        TimeProvider timeProvider)
     {
         var handlers = new IScriptCommandHandler[]
         {
@@ -129,11 +143,11 @@ public class ScriptExecutionService(
             new InjectErrorCommandHandler(hardwareStatusManager),
             new AssertCommandHandler(inventory),
             new BeginDepositCommandHandler(depositController),
-            new TrackDepositCommandHandler(depositController),
+            new TrackDepositCommandHandler(depositController, timeProvider),
             new FixDepositCommandHandler(depositController),
             new EndDepositCommandHandler(depositController),
             new DispenseCommandHandler(dispenseController),
-            new DelayCommandHandler(),
+            new DelayCommandHandler(timeProvider),
         };
         return handlers.ToDictionary(h => h.OpName, h => h);
     }
@@ -151,7 +165,11 @@ public class ScriptExecutionService(
         ArgumentNullException.ThrowIfNull(cmd);
         ArgumentNullException.ThrowIfNull(context);
 
-        logger.ZLogDebug($"Executing command: {cmd.Op}");
+        if (logger != null)
+        {
+            logger.ZLogDebug($"Executing command: {cmd.Op}");
+        }
+
         onProgress?.Invoke(cmd.Op);
 
         var opName = cmd.Op.ToUpperInvariant().Replace("-", string.Empty, StringComparison.Ordinal);
@@ -160,20 +178,29 @@ public class ScriptExecutionService(
         if (opName == "REPEAT" && cmd.Commands != null)
         {
             var iterations = cmd.Count != null ? ResolveValue(cmd.Count, context) : 0;
-            logger.ZLogInformation($"Starting repeat loop: {iterations} times.");
+            if (logger != null)
+            {
+                logger.ZLogInformation($"Starting repeat loop: {iterations} times.");
+            }
+
             for (int i = 0; i < iterations; i++)
             {
                 await ExecuteCommandsInternalAsync(cmd.Commands, context, onProgress).ConfigureAwait(false);
             }
 
-            logger.ZLogInformation($"Finished repeat loop.");
+            if (logger != null)
+            {
+                logger.ZLogInformation($"Finished repeat loop.");
+            }
+
             return;
         }
 
         // identifiers などの正規化は ToUpperInvariant が推奨される (CA1308)
         if (handlers.TryGetValue(opName, out var handler))
         {
-            await handler.ExecuteAsync(cmd, context, logger, onProgress).ConfigureAwait(false);
+            // Use explicit cast and NullLogger to avoid CS0019
+            await handler.ExecuteAsync(cmd, context, (ILogger?)logger ?? NullLogger.Instance, onProgress).ConfigureAwait(false);
         }
     }
 }

@@ -24,7 +24,10 @@ public class SetCommandHandler : IScriptCommandHandler
         if (!string.IsNullOrEmpty(cmd.Variable))
         {
             context.Variables[cmd.Variable] = cmd.Value;
-            logger.ZLogInformation($"Set variable: {cmd.Variable} = {cmd.Value}");
+            if (logger != null)
+            {
+                logger.ZLogInformation($"Set variable: {cmd.Variable} = {cmd.Value}");
+            }
         }
 
         return Task.CompletedTask;

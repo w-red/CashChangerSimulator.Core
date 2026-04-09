@@ -30,7 +30,11 @@ public class EndDepositCommandHandler(DepositController depositController) : ISc
             "STORE" => DepositAction.NoChange,
             _ => DepositAction.NoChange
         };
-        logger.ZLogDebug($"EndDeposit Action: {action}");
+        if (logger != null)
+        {
+            logger.ZLogDebug($"EndDeposit Action: {action}");
+        }
+
         await depositController.EndDepositAsync(action).ConfigureAwait(false);
     }
 }

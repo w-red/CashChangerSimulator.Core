@@ -10,19 +10,21 @@ public class HardwareSimulator : IDeviceSimulator
 {
     [SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Field is managed via CompositeDisposable in constructors.")]
     private readonly ConfigurationProvider? configProvider;
+    private readonly TimeProvider timeProvider;
     private readonly CompositeDisposable disposables = [];
 
     /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.デフォルト設定でシミュレーターを初期化する。</summary>
     private HardwareSimulator()
-        : this(null)
+        : this(null, null)
     {
     }
 
     /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.設定プロバイダーを指定してシミュレーターを初期化する。</summary>
     /// <param name="configProvider">設定プロバイダー。</param>
+    /// <param name="timeProvider">時間プロバイダー。</param>
     [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
     [SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Field is disposed via disposables collection.")]
-    private HardwareSimulator(ConfigurationProvider? configProvider)
+    private HardwareSimulator(ConfigurationProvider? configProvider, TimeProvider? timeProvider = null)
     {
         if (configProvider == null)
         {
@@ -34,21 +36,25 @@ public class HardwareSimulator : IDeviceSimulator
         {
             this.configProvider = configProvider;
         }
+
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>デフォルト設定でシミュレーターを生成・初期化します。</summary>
+    /// <param name="timeProvider">時間プロバイダー。</param>
     /// <returns>初期化済みの <see cref="HardwareSimulator"/> インスタンス。</returns>
-    public static HardwareSimulator Create()
+    public static HardwareSimulator Create(TimeProvider? timeProvider = null)
     {
-        return new HardwareSimulator(null);
+        return new HardwareSimulator(null, timeProvider);
     }
 
     /// <summary>設定プロバイダーを指定してシミュレーターを生成・初期化します。</summary>
     /// <param name="configProvider">設定プロバイダー。</param>
+    /// <param name="timeProvider">時間プロバイダー。</param>
     /// <returns>初期化済みの <see cref="HardwareSimulator"/> インスタンス。</returns>
-    public static HardwareSimulator Create(ConfigurationProvider? configProvider)
+    public static HardwareSimulator Create(ConfigurationProvider? configProvider, TimeProvider? timeProvider = null)
     {
-        return new HardwareSimulator(configProvider);
+        return new HardwareSimulator(configProvider, timeProvider);
     }
 
     /// <inheritdoc/>
@@ -57,7 +63,7 @@ public class HardwareSimulator : IDeviceSimulator
         var delay = configProvider?.Config?.Simulation?.DispenseDelayMs ?? 500;
         if (delay > 0)
         {
-            await Task.Delay(delay, ct).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(delay), timeProvider, ct).ConfigureAwait(false);
         }
     }
 

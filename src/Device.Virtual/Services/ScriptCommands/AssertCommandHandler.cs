@@ -24,7 +24,11 @@ public class AssertCommandHandler(Inventory inventory) : IScriptCommandHandler
 
         var target = cmd.Target?.ToUpperInvariant();
         var expected = ScriptExecutionService.ResolveValue(cmd.Value, context);
-        logger.ZLogInformation($"Asserting {target} == {expected}");
+        if (logger != null)
+        {
+            logger.ZLogInformation($"Asserting {target} == {expected}");
+        }
+
         if (target == "INVENTORY")
         {
             var denomValue = ScriptExecutionService.ResolveValue(cmd.Denom ?? 0, context);

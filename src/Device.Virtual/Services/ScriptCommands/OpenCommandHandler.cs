@@ -22,7 +22,11 @@ public class OpenCommandHandler(HardwareStatusManager hardwareStatusManager) : I
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(logger);
 
-        logger.ZLogInformation($"Opening device via script.");
+        if (logger != null)
+        {
+            logger.ZLogInformation($"Opening device via script.");
+        }
+
         hardwareStatusManager.SetConnected(true);
         return Task.CompletedTask;
     }

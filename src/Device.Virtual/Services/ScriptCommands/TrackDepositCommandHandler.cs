@@ -5,7 +5,7 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>trackdeposit コマンド: 金種を投入シミュレーションします。</summary>
-public class TrackDepositCommandHandler(DepositController depositController) : IScriptCommandHandler
+public class TrackDepositCommandHandler(DepositController depositController, TimeProvider timeProvider) : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
     public string OpName => "TRACKDEPOSIT";
@@ -27,8 +27,12 @@ public class TrackDepositCommandHandler(DepositController depositController) : I
         var value = ScriptExecutionService.ResolveValue(cmd.Value, context);
         var count = cmd.Count != null ? ScriptExecutionService.ResolveValue(cmd.Count, context) : 1;
         var key = new DenominationKey(value, type, cmd.Currency ?? "JPY");
-        logger.ZLogDebug($"TrackDeposit: {key} (Count: {count})");
+        if (logger != null)
+        {
+            logger.ZLogDebug($"TrackDeposit: {key} (Count: {count})");
+        }
+
         depositController.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });
-        await Task.Delay(250).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(250), timeProvider).ConfigureAwait(false);
     }
 }
