@@ -3,9 +3,7 @@ namespace CashChangerSimulator.Core.Configuration;
 /// <summary>シミュレーション動作の設定を保持するクラス。</summary>
 public class SimulationSettings
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SimulationSettings"/> class.
-    /// </summary>
+    /// <summary>シミュレーション設定の新しいインスタンスを初期化します。</summary>
     public SimulationSettings()
     {
     }

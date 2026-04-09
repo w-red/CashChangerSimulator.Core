@@ -1,23 +1,20 @@
 namespace CashChangerSimulator.Core.Models;
 
-/// <summary>
-/// Status codes for the device status update events.
-/// (Common UPOS status codes or internal mapping).
-/// </summary>
+/// <summary>デバイスの状態更新イベントのステータスコード。</summary>
 public enum DeviceStatus
 {
-    /// <summary>None or unknown.</summary>
+    /// <summary>なし、または不明。</summary>
     None = 0,
 
-    /// <summary>Power is on.</summary>
+    /// <summary>電源 ON。</summary>
     PowerOn = 2001,
 
-    /// <summary>Power is off or disconnected.</summary>
+    /// <summary>電源 OFF または切断。</summary>
     PowerOff = 2002,
 
-    /// <summary>Status is normal.</summary>
+    /// <summary>正常状態。</summary>
     JournalOk = 12,
 
-    /// <summary>Status is jammed or error.</summary>
+    /// <summary>ジャム、またはエラー状態。</summary>
     JournalEmpty = 11,
 }
