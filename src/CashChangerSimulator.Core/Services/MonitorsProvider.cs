@@ -19,7 +19,6 @@ public class MonitorsProvider : IDisposable
     /// <param name="inventory">在庫マネージャー。</param>
     /// <param name="configProvider">設定プロバイダー。</param>
     /// <param name="metadataProvider">通貨メタデータプロバイダー。</param>
-    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
     private MonitorsProvider(Inventory inventory, ConfigurationProvider configProvider, ICurrencyMetadataProvider metadataProvider)
     {
         ArgumentNullException.ThrowIfNull(inventory);

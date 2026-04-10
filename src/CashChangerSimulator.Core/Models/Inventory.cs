@@ -1,4 +1,3 @@
-/* Stryker disable all */
 using System.Diagnostics.CodeAnalysis;
 
 using Microsoft.Extensions.Logging;
@@ -30,7 +29,6 @@ public class Inventory : IReadOnlyInventory, IDisposable
     private bool isForcedDiscrepancy;
 
     /// <inheritdoc/>
-    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
     protected Inventory()
     {
         var subject = new Subject<DenominationKey>();

@@ -7,7 +7,6 @@ namespace CashChangerSimulator.Core.Monitoring;
 public class CashStatusMonitor : IDisposable
 {
     private readonly IReadOnlyInventory inventory;
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Managed by CompositeDisposable.")]
     private readonly ReactiveProperty<CashStatus> status = new(CashStatus.Unknown);
     private readonly CompositeDisposable disposables = [];
     private bool disposed;

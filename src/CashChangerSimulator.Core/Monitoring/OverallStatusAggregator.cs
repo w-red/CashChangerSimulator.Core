@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using R3;
 
 namespace CashChangerSimulator.Core.Monitoring;
@@ -10,7 +9,6 @@ public class OverallStatusAggregator : IDisposable
     private IEnumerable<CashStatusMonitor> monitors;
     private bool disposed;
 
-    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
     private OverallStatusAggregator(IEnumerable<CashStatusMonitor> monitors)
     {
         this.monitors = monitors;

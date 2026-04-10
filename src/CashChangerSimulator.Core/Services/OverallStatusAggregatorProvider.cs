@@ -11,7 +11,6 @@ public class OverallStatusAggregatorProvider : IDisposable
 
     /// <summary>Initializes a new instance of the <see cref="OverallStatusAggregatorProvider"/> class.全体的なステータス集計インスタンスを提供するプロバイダー。</summary>
     /// <param name="monitorsProvider">ステータスモニタープロバイダー。</param>
-    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
     public OverallStatusAggregatorProvider(MonitorsProvider monitorsProvider)
     {
         ArgumentNullException.ThrowIfNull(monitorsProvider);

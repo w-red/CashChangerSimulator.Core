@@ -73,7 +73,6 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
 
     /// <summary>Initializes a new instance of the <see cref="CurrencyMetadataProvider"/> class.設定プロバイダーを指定してメタデータプロバイダーを初期化する。</summary>
     /// <param name="configProvider">設定プロバイダー。</param>
-    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
     private CurrencyMetadataProvider(ConfigurationProvider configProvider)
     {
         ArgumentNullException.ThrowIfNull(configProvider);
