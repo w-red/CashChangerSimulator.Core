@@ -21,7 +21,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public DispenseControllerMutationTests()
     {
         _simulatorMock = new Mock<IDeviceSimulator>();
-        StatusManager.IsConnected.Value = true;
+        StatusManager.Input.IsConnected.Value = true;
         _controller = new DispenseController(
             Manager,
             Inventory,
@@ -111,7 +111,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var counts = new Dictionary<DenominationKey, int>();
-        StatusManager.IsConnected.Value = false;
+        StatusManager.Input.IsConnected.Value = false;
         
         // Act & Assert
         var ex = await Should.ThrowAsync<DeviceException>(async () => 
@@ -125,7 +125,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var counts = new Dictionary<DenominationKey, int>();
-        StatusManager.IsJammed.Value = true;
+        StatusManager.Input.IsJammed.Value = true;
         
         // Act & Assert
         var ex = await Should.ThrowAsync<DeviceException>(async () => 

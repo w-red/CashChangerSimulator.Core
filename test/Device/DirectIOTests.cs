@@ -30,11 +30,11 @@ public class DirectIOTests
 
         var hardwareStatusManager = simulator.HardwareStatus;
 
-        hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue("DirectIO 10 with data=1 should set Overlap to true.");
+        hardwareStatusManager.IsOverlapped.CurrentValue.ShouldBeTrue("DirectIO 10 with data=1 should set Overlap to true.");
 
         // Force Overlap OFF
         simulator.DirectIO(10, 0, null!);
-        hardwareStatusManager.IsOverlapped.Value.ShouldBeFalse("DirectIO 10 with data=0 should set Overlap to false.");
+        hardwareStatusManager.IsOverlapped.CurrentValue.ShouldBeFalse("DirectIO 10 with data=0 should set Overlap to false.");
     }
 
     /// <summary>DirectIO(11) によりジャム状態の切り替えが正しく行われることを検証します。</summary>
@@ -47,11 +47,11 @@ public class DirectIOTests
 
         // Force Jam ON
         simulator.DirectIO(11, 1, null!);
-        hardwareStatusManager.IsJammed.Value.ShouldBeTrue("DirectIO 11 with data=1 should set Jam to true.");
+        hardwareStatusManager.IsJammed.CurrentValue.ShouldBeTrue("DirectIO 11 with data=1 should set Jam to true.");
 
         // Force Jam OFF
         simulator.DirectIO(11, 0, null!);
-        hardwareStatusManager.IsJammed.Value.ShouldBeFalse("DirectIO 11 with data=0 should set Jam to false.");
+        hardwareStatusManager.IsJammed.CurrentValue.ShouldBeFalse("DirectIO 11 with data=0 should set Jam to false.");
     }
 
     /// <summary>DirectIO(100) によりバージョン情報が正しく返却されることを検証します。</summary>

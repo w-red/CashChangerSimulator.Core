@@ -29,7 +29,7 @@ public class DeviceLifecycleStateTest
     {
         state = state.Open(context);
         state.ShouldBeOfType<OpenedState>();
-        hardwareStatusManager.IsConnected.Value.ShouldBeTrue();
+        hardwareStatusManager.IsConnected.CurrentValue.ShouldBeTrue();
     }
 
     /// <summary>Closed 状態で Close を呼ぶと例外がスローされることを確認します。</summary>
@@ -62,7 +62,7 @@ public class DeviceLifecycleStateTest
         state = state.Open(context);
         state = state.Close(context);
         state.ShouldBeOfType<ClosedState>();
-        hardwareStatusManager.IsConnected.Value.ShouldBeFalse();
+        hardwareStatusManager.IsConnected.CurrentValue.ShouldBeFalse();
     }
 
     /// <summary>Claimed 状態で Release を呼ぶと Opened 状態に戻ることを確認します。</summary>

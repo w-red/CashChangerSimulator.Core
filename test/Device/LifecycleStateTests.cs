@@ -26,7 +26,7 @@ public class LifecycleStateTests
 
         // Open
         state.Open(context).ShouldBeOfType<OpenedState>();
-        context.HardwareStatusManager.IsConnected.Value.ShouldBeTrue();
+        context.HardwareStatusManager.IsConnected.CurrentValue.ShouldBeTrue();
 
         // Already closed or invalid operations
         Should.Throw<PosControlException>(() => state.Close(context)).ErrorCode.ShouldBe(ErrorCode.Closed);
@@ -47,9 +47,9 @@ public class LifecycleStateTests
         state.Claim(context, 0).ShouldBeOfType<ClaimedState>();
 
         // Close
-        context.HardwareStatusManager.SetConnected(true);
+        context.HardwareStatusManager.Input.IsConnected.Value = true;
         state.Close(context).ShouldBeOfType<ClosedState>();
-        context.HardwareStatusManager.IsConnected.Value.ShouldBeFalse();
+        context.HardwareStatusManager.IsConnected.CurrentValue.ShouldBeFalse();
 
         // Release (ignored)
         state.Release(context).ShouldBe(state);
@@ -71,10 +71,10 @@ public class LifecycleStateTests
         deviceEnabled.ShouldBeFalse();
 
         // Close (auto-release)
-        context.HardwareStatusManager.SetConnected(true);
+        context.HardwareStatusManager.Input.IsConnected.Value = true;
         deviceEnabled = true;
         state.Close(context).ShouldBeOfType<ClosedState>();
         deviceEnabled.ShouldBeFalse();
-        context.HardwareStatusManager.IsConnected.Value.ShouldBeFalse();
+        context.HardwareStatusManager.IsConnected.CurrentValue.ShouldBeFalse();
     }
 }

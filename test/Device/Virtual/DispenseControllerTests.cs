@@ -27,7 +27,7 @@ public class DispenseControllerTests : DeviceTestBase
         controller = new DispenseController(mockManager.Object, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object, TimeProvider);
 
         // Default connected state
-        StatusManager.SetConnected(true);
+        StatusManager.Input.IsConnected.Value = true;
     }
 
     /// <summary>未接続状態での出金要求時に Closed エラーが発生することを検証する。</summary>
@@ -35,7 +35,7 @@ public class DispenseControllerTests : DeviceTestBase
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowClosedWhenNotConnected()
     {
-        StatusManager.SetConnected(false);
+        StatusManager.Input.IsConnected.Value = false;
         var ex = await Should.ThrowAsync<DeviceException>(() =>
             controller.DispenseChangeAsync(100, false)).ConfigureAwait(false);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
@@ -47,7 +47,7 @@ public class DispenseControllerTests : DeviceTestBase
     public async Task DispenseChangeAsyncShouldThrowFailureWhenJammed()
     {
         var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(100, CurrencyCashType.Coin), 1 } };
-        StatusManager.SetJammed(true);
+        StatusManager.Input.IsJammed.Value = true;
         var ex = await Should.ThrowAsync<DeviceException>(() =>
             controller.DispenseCashAsync(counts, false)).ConfigureAwait(false);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Jammed);

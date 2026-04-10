@@ -38,7 +38,7 @@ public class ExhaustiveDeviceTests : IDisposable
         timeProvider = new FakeTimeProvider();
         controller = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardwareStatusManager, simulatorMock.Object, timeProvider);
 
-        hardwareStatusManager.SetConnected(true);
+        hardwareStatusManager.Input.IsConnected.Value = true;
     }
 
     public void Dispose()
@@ -73,9 +73,9 @@ public class ExhaustiveDeviceTests : IDisposable
         controller.ClearOutput();
 
         // Error: Disconnected
-        hardwareStatusManager.SetConnected(false);
+        hardwareStatusManager.Input.IsConnected.Value = false;
         await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync((int)1000, false).ConfigureAwait(false)).ConfigureAwait(false);
-        hardwareStatusManager.SetConnected(true);
+        hardwareStatusManager.Input.IsConnected.Value = true;
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class ExhaustiveDeviceTests : IDisposable
         device.Claim(1000);
         device.DeviceEnabled = true;
 
-        device.HardwareStatus.SetConnected(true);
+        device.HardwareStatus.Input.IsConnected.Value = true;
         device.CurrencyCode = "JPY";
 
         // Deposits
@@ -154,23 +154,23 @@ public class ExhaustiveDeviceTests : IDisposable
         // Enable
         var enableHandler = new EnableCommandHandler(hardwareStatusManager);
         await enableHandler.ExecuteAsync(new ScriptCommand { Op = "enable", Value = "true" }, context, logger, null).ConfigureAwait(false);
-        hardwareStatusManager.IsConnected.Value.ShouldBeTrue();
+        hardwareStatusManager.IsConnected.CurrentValue.ShouldBeTrue();
 
         // InjectError
         var injectHandler = new InjectErrorCommandHandler(hardwareStatusManager);
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "overlap" }, context, logger, null).ConfigureAwait(false);
-        hardwareStatusManager.IsOverlapped.Value.ShouldBeTrue();
+        hardwareStatusManager.IsOverlapped.CurrentValue.ShouldBeTrue();
 
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "device", ErrorCode = 1, ErrorCodeExtended = 2 }, context, logger, null).ConfigureAwait(false);
 
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "reset" }, context, logger, null).ConfigureAwait(false);
-        hardwareStatusManager.IsOverlapped.Value.ShouldBeFalse();
+        hardwareStatusManager.IsOverlapped.CurrentValue.ShouldBeFalse();
 
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "jam", Location = "Entrance" }, context, logger, null).ConfigureAwait(false);
-        hardwareStatusManager.IsJammed.Value.ShouldBeTrue();
+        hardwareStatusManager.IsJammed.CurrentValue.ShouldBeTrue();
 
         await injectHandler.ExecuteAsync(new ScriptCommand { Op = "inject-error", Error = "unknown" }, context, logger, null).ConfigureAwait(false);
-        hardwareStatusManager.IsJammed.Value.ShouldBeFalse();
+        hardwareStatusManager.IsJammed.CurrentValue.ShouldBeFalse();
 
         // Open (already connected in constructor, but call again)
         var openHandler = new OpenCommandHandler(hardwareStatusManager);

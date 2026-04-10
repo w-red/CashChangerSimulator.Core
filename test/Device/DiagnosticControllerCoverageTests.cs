@@ -27,7 +27,7 @@ public class DiagnosticControllerCoverageTests
         var report1 = controller.GetHealthReport(DeviceHealthCheckLevel.External);
         report1.ShouldContain("Jam Status: Normal");
 
-        hw.SetJammed(true);
+        hw.Input.IsJammed.Value = true;
         var report2 = controller.GetHealthReport(DeviceHealthCheckLevel.Interactive);
         report2.ShouldContain("Interactive check initiated");
     }

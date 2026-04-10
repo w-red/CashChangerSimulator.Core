@@ -155,7 +155,7 @@ public class StatusUpdateEventTests
     {
         var (_, _, hw, events) = CreateTestCashChanger();
 
-        hw.SetJammed(true);
+        hw.Input.IsJammed.Value = true;
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Jam));
 
         // UPOS standard: CHAN_STATUS_JAM = 31
@@ -168,11 +168,11 @@ public class StatusUpdateEventTests
     {
         var (_, _, hw, events) = CreateTestCashChanger();
 
-        hw.SetJammed(true);
+        hw.Input.IsJammed.Value = true;
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Jam));
         events.Clear();
 
-        hw.SetJammed(false);
+        hw.Input.IsJammed.Value = false;
         
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Ok));
 
@@ -189,7 +189,7 @@ public class StatusUpdateEventTests
         var (_, _, hw, events) = CreateTestCashChanger();
 
         // Simulate collection box removal
-        hw.SetCollectionBoxRemoved(true);
+        hw.Input.IsCollectionBoxRemoved.Value = true;
         
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Removed));
 
@@ -202,11 +202,11 @@ public class StatusUpdateEventTests
     {
         var (_, _, hw, events) = CreateTestCashChanger();
 
-        hw.SetCollectionBoxRemoved(true);
+        hw.Input.IsCollectionBoxRemoved.Value = true;
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Removed));
         events.Clear();
 
-        hw.SetCollectionBoxRemoved(false);
+        hw.Input.IsCollectionBoxRemoved.Value = false;
         
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Inserted));
 

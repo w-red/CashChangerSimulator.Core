@@ -66,7 +66,7 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     public async Task OpenShouldSetConnected()
     {
         await device1.OpenAsync();
-        StatusManager.IsConnected.Value.ShouldBeTrue();
+        StatusManager.IsConnected.CurrentValue.ShouldBeTrue();
         device1.State.CurrentValue.ShouldBe(DeviceControlState.Idle);
     }
 
@@ -81,8 +81,8 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
 
         await device1.CloseAsync();
 
-        StatusManager.IsConnected.Value.ShouldBeFalse();
-        StatusManager.DeviceEnabled.Value.ShouldBeFalse();
+        StatusManager.IsConnected.CurrentValue.ShouldBeFalse();
+        StatusManager.DeviceEnabled.CurrentValue.ShouldBeFalse();
         device1.State.CurrentValue.ShouldBe(DeviceControlState.Closed);
     }
 
@@ -94,7 +94,7 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
         await device1.OpenAsync();
         await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.EnableAsync();
-        StatusManager.DeviceEnabled.Value.ShouldBeTrue();
+        StatusManager.DeviceEnabled.CurrentValue.ShouldBeTrue();
         device1.State.CurrentValue.ShouldBe(DeviceControlState.Idle);
     }
 

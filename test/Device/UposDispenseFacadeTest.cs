@@ -33,7 +33,7 @@ public class UposDispenseFacadeTest
         inventory.SetCount(new DenominationKey(500m, CurrencyCashType.Coin, "JPY"), 20);
 
         hardwareStatusManager = HardwareStatusManager.Create();
-        hardwareStatusManager.SetConnected(true);
+        hardwareStatusManager.Input.IsConnected.Value = true;
         var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
         depositController = new DepositController(inventory, hardwareStatusManager);
         var timeProvider = new FakeTimeProvider();
@@ -76,7 +76,7 @@ public class UposDispenseFacadeTest
     [Fact]
     public void DispenseByAmountWhenJammedShouldThrow()
     {
-        hardwareStatusManager.SetJammed(true);
+        hardwareStatusManager.Input.IsJammed.Value = true;
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>

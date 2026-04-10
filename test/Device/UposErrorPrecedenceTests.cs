@@ -33,7 +33,7 @@ public class UposErrorPrecedenceTests
     public void VerifyStateShouldPrioritizeClosedWhenMultipleErrorsExist()
     {
         // 状態: Closed, ClaimedByAnother: true, NotClaimed, Disabled
-        so.HardwareStatus.SetConnected(false); // Closed
+        so.HardwareStatus.Input.IsConnected.Value = false; // Closed
 
         // 他のインスタンスで占有をシミュレート
         using var competitor = new InternalSimulatorCashChanger(new SimulatorDependencies(GlobalLockFilePath: lockPath));
@@ -68,7 +68,19 @@ public class UposErrorPrecedenceTests
     {
         // 状態: Open, ClaimedByAnother: false, NotClaimed by self, Disabled
         so.Open();
-        so.HardwareStatus.SetClaimedByAnother(false);
+        so.HardwareStatus.Input.IsClaimedByAnother.Value = false;
+
+        var ex = Should.Throw<PosControlException>(() => mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
+        ex.ErrorCode.ShouldBe(ErrorCode.NotClaimed);
+    }
+
+    [Fact]
+    public void VerifyStateShouldPrioritizeNotClaimedWhenOpenAndNotOccupiedButNotClaimedBySelf_ConnectedValue()
+    {
+        // 状態: Open, ClaimedByAnother: false, NotClaimed by self, Disabled
+        so.Open();
+        so.HardwareStatus.Input.IsConnected.Value = true;
+        so.HardwareStatus.Input.IsClaimedByAnother.Value = false;
 
         var ex = Should.Throw<PosControlException>(() => mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true));
         ex.ErrorCode.ShouldBe(ErrorCode.NotClaimed);
@@ -92,7 +104,7 @@ public class UposErrorPrecedenceTests
         // DeviceEnabled プロパティへのセット時も優先順位が適用されることを確認
 
         // 1. Closed 優先
-        so.HardwareStatus.SetConnected(false);
+        so.HardwareStatus.Input.IsConnected.Value = false;
         Should.Throw<PosControlException>(() => so.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.Closed);
 
@@ -110,7 +122,7 @@ public class UposErrorPrecedenceTests
                 .ErrorCode.ShouldBe(ErrorCode.Claimed);
         }
 
-        so.HardwareStatus.SetClaimedByAnother(false);
+        so.HardwareStatus.Input.IsClaimedByAnother.Value = false;
 
         // OSがファイルハンドルを閉じるのを待つためのわずかなウェイト
         await Task.Delay(100, TestContext.Current.CancellationToken).ConfigureAwait(false);

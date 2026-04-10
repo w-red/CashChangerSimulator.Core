@@ -21,7 +21,7 @@ public class ComplianceTests
     {
         var inventory = Inventory.Create();
         var hardwareStatusManager = HardwareStatusManager.Create();
-        hardwareStatusManager.SetConnected(true);
+        hardwareStatusManager.Input.IsConnected.Value = true;
         var history = new CashChangerSimulator.Core.Transactions.TransactionHistory();
         var controller = new DepositController(inventory, hardwareStatusManager);
         var deps = new SimulatorDependencies(

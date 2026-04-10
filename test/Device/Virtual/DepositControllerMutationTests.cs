@@ -18,7 +18,7 @@ public class DepositControllerMutationTests : DeviceTestBase
 
     public DepositControllerMutationTests()
     {
-        StatusManager.IsConnected.Value = true;
+        StatusManager.Input.IsConnected.Value = true;
         
         // 物理的な待機をなくし、かつ TimeProvider によりタイムアウトを即時にするため 0 に設定
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 0;
@@ -274,7 +274,7 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         _controller.BeginDeposit();
-        StatusManager.IsJammed.Value = true;
+        StatusManager.Input.IsJammed.Value = true;
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
 
         // Act & Assert
@@ -286,7 +286,7 @@ public class DepositControllerMutationTests : DeviceTestBase
     public void BeginDeposit_WhenOverlapped_ThrowsDeviceException()
     {
         // Arrange
-        StatusManager.IsOverlapped.Value = true;
+        StatusManager.Input.IsOverlapped.Value = true;
 
         // Act & Assert
         Should.Throw<DeviceException>(() => _controller.BeginDeposit())

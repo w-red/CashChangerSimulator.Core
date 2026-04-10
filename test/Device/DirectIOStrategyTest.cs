@@ -34,7 +34,7 @@ public class DirectIOStrategyTest
 
         // Assert
         result.Data.ShouldBe(1);
-        device.HardwareStatus.IsOverlapped.Value.ShouldBeTrue();
+        device.HardwareStatus.IsOverlapped.CurrentValue.ShouldBeTrue();
     }
 
     /// <summary>SetJamStrategy が箇所指定付きでジャム状態を正しく更新することを検証する。</summary>
@@ -49,8 +49,8 @@ public class DirectIOStrategyTest
 
         // Assert
         result.Data.ShouldBe(1);
-        device.HardwareStatus.IsJammed.Value.ShouldBeTrue();
-        device.HardwareStatus.JamLocation.Value.ShouldBe(JamLocation.BillCassette1);
+        device.HardwareStatus.IsJammed.CurrentValue.ShouldBeTrue();
+        device.HardwareStatus.CurrentJamLocation.CurrentValue.ShouldBe(JamLocation.BillCassette1);
     }
 
     /// <summary>GetJamLocation コマンドが現在のジャム箇所を文字列で返却することを検証する。</summary>
@@ -58,7 +58,8 @@ public class DirectIOStrategyTest
     public void GetJamLocationShouldReturnCurrentLocation()
     {
         // Arrange
-        device.HardwareStatus.SetJammed(true, JamLocation.Inlet);
+        device.HardwareStatus.Input.IsJammed.Value = true;
+        device.HardwareStatus.Input.CurrentJamLocation.Value = JamLocation.Inlet;
 
         // Act
         var result = device.DirectIO(DirectIOCommands.GetJamLocation, 0, string.Empty);
@@ -75,13 +76,11 @@ public class DirectIOStrategyTest
         // SetOverlap
         var resultOverlap = device.DirectIO(DirectIOCommands.SetOverlap, 1, "test");
         resultOverlap.Data.ShouldBe(1);
-        device.HardwareStatus.IsOverlapped.Value.ShouldBeTrue();
-
-        // SetJam
+        device.HardwareStatus.IsOverlapped.CurrentValue.ShouldBeTrue("DirectIO 10 with data=1 should set Overlap to true.");
         var resultJam = device.DirectIO(DirectIOCommands.SetJam, 1, "Transport");
         resultJam.Data.ShouldBe(1);
-        device.HardwareStatus.IsJammed.Value.ShouldBeTrue();
-        device.HardwareStatus.JamLocation.Value.ShouldBe(JamLocation.Transport);
+        device.HardwareStatus.IsJammed.CurrentValue.ShouldBeTrue();
+        device.HardwareStatus.CurrentJamLocation.CurrentValue.ShouldBe(JamLocation.Transport);
 
         // GetVersion
         var resultVersion = device.DirectIO(DirectIOCommands.GetVersion, 0, string.Empty);

@@ -14,7 +14,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     public DepositControllerCoverageTests()
     {
         // Default behavior for these tests
-        StatusManager.SetConnected(true);
+        StatusManager.Input.IsConnected.Value = true;
         controller = new DepositController(Inventory, StatusManager, manager: null, configProvider: ConfigurationProvider, timeProvider: TimeProvider);
     }
 
@@ -101,7 +101,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     [Fact]
     public void BeginDepositWhenJammedShouldThrow()
     {
-        StatusManager.SetJammed(true);
+        StatusManager.Input.IsJammed.Value = true;
         Should.Throw<DeviceException>(() => controller.BeginDeposit())
             .ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
     }
@@ -110,7 +110,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     [Fact]
     public void BeginDepositWhenOverlappedShouldThrow()
     {
-        StatusManager.SetOverlapped(true);
+        StatusManager.Input.IsOverlapped.Value = true;
         Should.Throw<DeviceException>(() => controller.BeginDeposit())
             .ErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
     }
@@ -220,7 +220,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
-        StatusManager.SetOverlapped(true);
+        StatusManager.Input.IsOverlapped.Value = true;
 
         TimeProvider.Advance(TimeSpan.FromMilliseconds(5000));
         await task;

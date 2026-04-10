@@ -14,7 +14,7 @@ public class OverlapSimulationTests : DeviceTestBase
     public OverlapSimulationTests()
     {
         controller = new DepositController(Inventory, StatusManager);
-        StatusManager.SetConnected(true);
+        StatusManager.Input.IsConnected.Value = true;
     }
 
     /// <summary>重なり発生時に FixDeposit は成功するが、EndDeposit(NoChange) は失敗することを検証する。</summary>
@@ -29,7 +29,7 @@ public class OverlapSimulationTests : DeviceTestBase
         controller.TrackBulkDeposit(counts);
 
         // Manually set overlap (previously done via random error simulation)
-        StatusManager.SetOverlapped(true);
+        StatusManager.Input.IsOverlapped.Value = true;
 
         // Act & Assert
         // Fix should succeed to allow Repay flow
@@ -41,7 +41,7 @@ public class OverlapSimulationTests : DeviceTestBase
 
         // EndDeposit(Repay) should succeed, but does not auto-clear hardware overlap
         controller.EndDeposit(DepositAction.Repay);
-        StatusManager.IsOverlapped.Value.ShouldBeTrue();
+        StatusManager.IsOverlapped.CurrentValue.ShouldBeTrue();
     }
 
     /// <summary>重なり発生中に入金を開始しようとすると例外が発生することを検証する。</summary>
@@ -49,7 +49,7 @@ public class OverlapSimulationTests : DeviceTestBase
     public void BeginDepositShouldThrowWhenOverlapped()
     {
         // Arrange
-        StatusManager.SetOverlapped(true);
+        StatusManager.Input.IsOverlapped.Value = true;
 
         // Act & Assert
         Should.Throw<DeviceException>(() => controller.BeginDeposit());

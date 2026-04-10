@@ -30,7 +30,7 @@ public class CommandTests
         var counts = new List<CashCount> { new(CashCountType.Bill, 1000, 10) };
         var cmd = new AdjustCashCountsCommand(inventory, counts, "JPY", 1, hardware);
 
-        hardware.SetJammed(true);
+        hardware.Input.IsJammed.Value = true;
         var ex = Should.Throw<PosControlException>(() => cmd.Execute());
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
@@ -45,7 +45,7 @@ public class CommandTests
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
         var cmd = new DispenseCashCommand(null!, inventory, hardware, deposit, counts, false);
 
-        hardware.SetJammed(true);
+        hardware.Input.IsJammed.Value = true;
         var ex = Should.Throw<PosControlException>(() => cmd.Verify(mediator.Object));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }

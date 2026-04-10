@@ -52,13 +52,13 @@ public class StatusCoordinatorTest
         coordinator.Start();
 
         // Act
-        hardwareStatusManager.SetJammed(true);
+        hardwareStatusManager.Input.IsJammed.Value = true;
 
         // Assert
         mockSink.Verify(s => s.FireEvent(It.Is<StatusUpdateEventArgs>(e => e.Status == (int)UposCashChangerStatusUpdateCode.Jam)), Times.Once);
 
         // Act - Reset Jam
-        hardwareStatusManager.SetJammed(false);
+        hardwareStatusManager.Input.IsJammed.Value = false;
 
         // Assert - Ok fires on reset
         mockSink.Verify(s => s.FireEvent(It.Is<StatusUpdateEventArgs>(e => e.Status == (int)UposCashChangerStatusUpdateCode.Ok)), Times.Once);

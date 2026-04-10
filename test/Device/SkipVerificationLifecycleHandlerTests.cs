@@ -29,11 +29,11 @@ public class SkipVerificationLifecycleHandlerTests
     public void StateShouldReflectHardwareAndMediator()
     {
         // Closed
-        hardware.SetConnected(false);
+        hardware.Input.IsConnected.Value = false;
         handler.State.ShouldBe(ControlState.Closed);
 
         // Busy
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.IsBusy).Returns(true);
         handler.State.ShouldBe(ControlState.Busy);
 
@@ -48,7 +48,7 @@ public class SkipVerificationLifecycleHandlerTests
     {
         // Open
         handler.Open(() => { });
-        hardware.IsConnected.Value.ShouldBeTrue();
+        hardware.IsConnected.CurrentValue.ShouldBeTrue();
         history.Entries.ShouldContain(e => e.Type == TransactionType.Open);
 
         // Claim
@@ -61,7 +61,7 @@ public class SkipVerificationLifecycleHandlerTests
 
         // Close
         handler.Close(() => { });
-        hardware.IsConnected.Value.ShouldBeFalse();
+        hardware.IsConnected.CurrentValue.ShouldBeFalse();
         history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
         history.Entries.ShouldContain(e => e.Type == TransactionType.Close);
     }
@@ -70,7 +70,7 @@ public class SkipVerificationLifecycleHandlerTests
     [Fact]
     public void ClaimAndReleaseShouldThrowWhenClosed()
     {
-        hardware.SetConnected(false);
+        hardware.Input.IsConnected.Value = false;
 
         Should.Throw<PosControlException>(() => handler.Claim(0, _ => { }))
             .ErrorCode.ShouldBe(ErrorCode.Closed);
@@ -83,7 +83,7 @@ public class SkipVerificationLifecycleHandlerTests
     [Fact]
     public void ReleaseShouldWorkWhenOpen()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         handler.Release(() => { });
 
         mediator.VerifySet(m => m.Claimed = false);

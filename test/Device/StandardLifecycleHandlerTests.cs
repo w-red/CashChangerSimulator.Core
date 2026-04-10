@@ -25,16 +25,16 @@ public class StandardLifecycleHandlerTests
         handler = new StandardLifecycleHandler(hardware, mediator.Object, history, NullLogger.Instance);
     }
 
-    /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を正しく反映することを検証します。</summary>
+    /// <summary>ハンドラの状態がハードウェア接続およびメディエータのビジー状態を反映することを検証します。</summary>
     [Fact]
     public void StateShouldReflectHardwareAndMediator()
     {
         // Closed
-        hardware.SetConnected(false);
+        hardware.Input.IsConnected.Value = false;
         handler.State.ShouldBe(ControlState.Closed);
 
         // Idle
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.IsBusy).Returns(false);
         handler.State.ShouldBe(ControlState.Idle);
 
@@ -47,7 +47,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void DeviceEnabledSetterShouldThrowWhenClosed()
     {
-        hardware.SetConnected(false);
+        hardware.Input.IsConnected.Value = false;
         Should.Throw<PosControlException>(() => handler.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
@@ -56,7 +56,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void DeviceEnabledSetterShouldThrowWhenNotClaimed()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.Claimed).Returns(false);
         Should.Throw<PosControlException>(() => handler.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.NotClaimed);
@@ -66,8 +66,8 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void DeviceEnabledSetterShouldThrowWhenClaimedByAnother()
     {
-        hardware.SetConnected(true);
-        hardware.SetClaimedByAnother(true);
+        hardware.Input.IsConnected.Value = true;
+        hardware.Input.IsClaimedByAnother.Value = true;
         Should.Throw<PosControlException>(() => handler.DeviceEnabled = true)
             .ErrorCode.ShouldBe(ErrorCode.Claimed);
     }
@@ -76,7 +76,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void DeviceEnabledSetterShouldWorkWhenClaimed()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.Claimed).Returns(true);
         mediator.SetupProperty(m => m.DeviceEnabled);
 
@@ -88,7 +88,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void OpenShouldHandleAlreadyOpen()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         var baseCalled = false;
         handler.Open(() => baseCalled = true);
 
@@ -100,10 +100,10 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void OpenShouldHandleBaseException()
     {
-        hardware.SetConnected(false);
+        hardware.Input.IsConnected.Value = false;
         handler.Open(() => throw new Exception("Test"));
 
-        hardware.IsConnected.Value.ShouldBeTrue();
+        hardware.IsConnected.CurrentValue.ShouldBeTrue();
         history.Entries.ShouldContain(e => e.Type == TransactionType.Open);
     }
 
@@ -111,7 +111,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void CloseShouldHandleAlreadyClosed()
     {
-        hardware.SetConnected(false);
+        hardware.Input.IsConnected.Value = false;
         var baseCalled = false;
         handler.Close(() => baseCalled = true);
 
@@ -123,12 +123,12 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void CloseShouldHandleBaseExceptionAndImplicitRelease()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.Claimed).Returns(true);
 
         handler.Close(() => throw new Exception("Test"));
 
-        hardware.IsConnected.Value.ShouldBeFalse();
+        hardware.IsConnected.CurrentValue.ShouldBeFalse();
         history.Entries.ShouldContain(e => e.Type == TransactionType.Release);
         history.Entries.ShouldContain(e => e.Type == TransactionType.Close);
     }
@@ -137,7 +137,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void ClaimShouldThrowWhenClosed()
     {
-        hardware.SetConnected(false);
+        hardware.Input.IsConnected.Value = false;
         Should.Throw<PosControlException>(() => handler.Claim(0, _ => { }))
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
@@ -146,7 +146,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void ClaimShouldHandleAlreadyClaimed()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.Claimed).Returns(true);
 
         var baseCalled = false;
@@ -159,7 +159,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void ClaimShouldHandleBaseException()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.Claimed).Returns(false);
 
         handler.Claim(0, _ => throw new Exception("Test"));
@@ -172,7 +172,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void ReleaseShouldThrowWhenClosed()
     {
-        hardware.SetConnected(false);
+        hardware.Input.IsConnected.Value = false;
         Should.Throw<PosControlException>(() => handler.Release(() => { }))
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
@@ -181,7 +181,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void ReleaseShouldHandleNotClaimed()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.Claimed).Returns(false);
 
         var baseCalled = false;
@@ -194,7 +194,7 @@ public class StandardLifecycleHandlerTests
     [Fact]
     public void ReleaseShouldHandleBaseException()
     {
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         mediator.Setup(m => m.Claimed).Returns(true);
 
         handler.Release(() => throw new Exception("Test"));

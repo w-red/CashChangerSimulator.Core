@@ -127,7 +127,7 @@ public class ErrorScenarioTests
     public void DispenseDuringJamShouldThrowFailure()
     {
         var (device, hardware) = CreateDevice();
-        hardware.SetJammed(true);
+        hardware.Input.IsJammed.Value = true;
 
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(1000));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
@@ -150,13 +150,13 @@ public class ErrorScenarioTests
         };
 
         // Jam ON
-        hardware.SetJammed(true);
+        hardware.Input.IsJammed.Value = true;
         await WaitUntil(() => statuses.Contains((int)UposCashChangerStatusUpdateCode.Jam));
         statuses.ShouldContain((int)UposCashChangerStatusUpdateCode.Jam);
 
         // Jam OFF
         statuses.Clear();
-        hardware.SetJammed(false);
+        hardware.Input.IsJammed.Value = false;
         await WaitUntil(() => statuses.Contains((int)UposCashChangerStatusUpdateCode.Ok));
         statuses.ShouldContain((int)UposCashChangerStatusUpdateCode.Ok);
     }

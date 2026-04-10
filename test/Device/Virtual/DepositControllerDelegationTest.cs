@@ -16,7 +16,7 @@ public class DepositControllerDelegationTest : DeviceTestBase
     {
         managerMock = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), null);
         controller = new DepositController(Inventory, StatusManager, managerMock.Object);
-        StatusManager.SetConnected(true);
+        StatusManager.Input.IsConnected.Value = true;
     }
 
     /// <summary>EndDeposit(NoChange) を呼び出した際、CashChangerManager の Deposit メソッドへ正しく委譲されることを検証します。</summary>

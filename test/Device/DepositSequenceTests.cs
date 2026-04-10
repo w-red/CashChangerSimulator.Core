@@ -11,15 +11,15 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>入金シーケンスの各状態遷移（UPOS準拠）を検証するテストクラス。</summary>
 public class DepositSequenceTests
 {
-    private static (DepositController Controller, Inventory Inventory) CreateController()
+    private static (DepositController Controller, Inventory Inventory, HardwareStatusManager Hardware) CreateController()
     {
         var inventory = Inventory.Create();
         var history = new TransactionHistory();
         _ = new CashChangerManager(inventory, history, (object?)null, null);
         var hw = HardwareStatusManager.Create();
-        hw.SetConnected(true);
+        hw.Input.IsConnected.Value = true;
         var controller = new DepositController(inventory, hw);
-        return (controller, inventory);
+        return (controller, inventory, hw);
     }
 
     // =====================================================
@@ -30,7 +30,7 @@ public class DepositSequenceTests
     [Fact]
     public void FullDepositSequenceWithChange()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         // beginDeposit: 入金受付開始
@@ -57,7 +57,7 @@ public class DepositSequenceTests
     [Fact]
     public void FullDepositSequenceWithNoChange()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, inventory, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
@@ -75,7 +75,7 @@ public class DepositSequenceTests
     [Fact]
     public void FullDepositSequenceWithRepay()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, inventory, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
@@ -95,7 +95,7 @@ public class DepositSequenceTests
     [Fact]
     public void PauseAndRestartDuringDeposit()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
@@ -129,7 +129,7 @@ public class DepositSequenceTests
     [Fact]
     public void EndDepositWithoutFixDepositThrowsIllegal()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
 
         controller.BeginDeposit();
 
@@ -142,7 +142,7 @@ public class DepositSequenceTests
     [Fact]
     public void FixDepositWithoutBeginDepositThrowsIllegal()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
 
         var ex = Should.Throw<DeviceException>(() =>
             controller.FixDeposit());
@@ -153,7 +153,7 @@ public class DepositSequenceTests
     [Fact]
     public void DepositInProgressGuardTest()
     {
-        var (controller, _) = CreateController();
+        var (controller, _, _) = CreateController();
 
         controller.IsDepositInProgress.ShouldBeFalse();
 
@@ -178,7 +178,7 @@ public class DepositSequenceTests
         // Arrange
         var inventory = Inventory.Create();
         var hw = HardwareStatusManager.Create();
-        hw.SetConnected(true);
+        hw.Input.IsConnected.Value = true;
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         var config = new SimulatorConfiguration();
@@ -207,12 +207,10 @@ public class DepositSequenceTests
     public void TrackDepositShouldThrow_WhenDeviceIsJammed()
     {
         // Arrange
-        var (controller, _) = CreateController();
-        var hwField = typeof(DepositController).GetField("hardwareStatusManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-        var hw = (HardwareStatusManager)hwField.GetValue(controller)!;
+        var (controller, _, hw) = CreateController();
 
         controller.BeginDeposit();
-        hw.SetJammed(true);
+        hw.Input.IsJammed.Value = true;
 
         // Act & Assert
         var ex = Should.Throw<DeviceException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill)));
@@ -223,7 +221,7 @@ public class DepositSequenceTests
     [Fact]
     public void TrackDepositShouldUpdateInventoryEscrow()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, inventory, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();
@@ -238,7 +236,7 @@ public class DepositSequenceTests
     [Fact]
     public void EndDepositChangeShouldDispenseFromEscrowFirst()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, inventory, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         var c10 = new DenominationKey(10, CurrencyCashType.Coin);
 
@@ -274,7 +272,7 @@ public class DepositSequenceTests
     [Fact]
     public void EndDepositRepayShouldClearInventoryEscrow()
     {
-        var (controller, inventory) = CreateController();
+        var (controller, inventory, _) = CreateController();
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
         controller.BeginDeposit();

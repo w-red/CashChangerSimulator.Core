@@ -37,7 +37,7 @@ public class BulkOperationTests
         ]";
 
         // Act
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         await service.ExecuteScriptAsync(json).ConfigureAwait(false);
 
         // Assert
@@ -45,7 +45,7 @@ public class BulkOperationTests
         inv.GetCount(key1000).ShouldBe(3); // 5 deposited - 2 dispensed
     }
 
-    /// <summary>Action="Repay" を指定した入金完了操作で、在庫が更新されない（返却される）ことを検証します。</summary>
+    /// <summary>Action=""Repay"" を指定した入金完了操作で、在庫が更新されない（返却される）ことを検証します。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncRepayActionShouldNotUpdateInventory()
@@ -67,7 +67,7 @@ public class BulkOperationTests
         ]";
 
         // Act
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         await service.ExecuteScriptAsync(json).ConfigureAwait(false);
 
         // Assert

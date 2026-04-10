@@ -22,7 +22,7 @@ public class AdvancedScriptingTests
         // Arrange
         var inv = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
@@ -63,7 +63,7 @@ public class AdvancedScriptingTests
         // Arrange
         var inv = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
@@ -99,7 +99,7 @@ public class AdvancedScriptingTests
         // Arrange
         var inv = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
@@ -115,7 +115,7 @@ public class AdvancedScriptingTests
         // Act & Assert
         // BeginDeposit はハードウェアエラー状態（Jammed）なので DeviceException を投げるべき
         await Should.ThrowAsync<CashChangerSimulator.Core.Exceptions.DeviceException>(async () => await service.ExecuteScriptAsync(json).ConfigureAwait(false)).ConfigureAwait(false);
-        hardware.IsJammed.Value.ShouldBeTrue();
+        hardware.IsJammed.CurrentValue.ShouldBeTrue();
     }
 
     /// <summary>スクリプト内の Assert 操作により、現在のインベントリ状態が正しく検証されることを確認します。</summary>
@@ -126,7 +126,7 @@ public class AdvancedScriptingTests
         // Arrange
         var inv = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
@@ -159,7 +159,7 @@ public class AdvancedScriptingTests
         // Arrange
         var inv = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
@@ -175,8 +175,8 @@ public class AdvancedScriptingTests
         await service.ExecuteScriptAsync(json).ConfigureAwait(false);
 
         // Assert
-        hardware.IsJammed.Value.ShouldBeTrue();
-        hardware.JamLocation.Value.ShouldBe(JamLocation.Inlet);
+        hardware.IsJammed.CurrentValue.ShouldBeTrue();
+        hardware.CurrentJamLocation.CurrentValue.ShouldBe(JamLocation.Inlet);
     }
 
     /// <summary>汎用デバイスエラーの注入がハードウェア状態およびエラーコードに正しく反映されることを検証します。</summary>
@@ -187,7 +187,7 @@ public class AdvancedScriptingTests
         // Arrange
         var inv = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
         var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
@@ -203,8 +203,8 @@ public class AdvancedScriptingTests
         await service.ExecuteScriptAsync(json).ConfigureAwait(false);
 
         // Assert
-        hardware.IsDeviceError.Value.ShouldBeTrue();
-        hardware.CurrentErrorCode.Value.ShouldBe(111);
-        hardware.CurrentErrorCodeExtended.Value.ShouldBe(222);
+        hardware.IsDeviceError.CurrentValue.ShouldBeTrue();
+        hardware.CurrentErrorCode.CurrentValue.ShouldBe(111);
+        hardware.CurrentErrorCodeExtended.CurrentValue.ShouldBe(222);
     }
 }
