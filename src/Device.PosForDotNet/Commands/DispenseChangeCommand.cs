@@ -92,7 +92,7 @@ public class DispenseChangeCommand : IUposCommand
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: true, mustNotBeBusy: true);
 
         // Pre-condition checks previously in Facade
-        if (hardwareStatusManager.IsJammed.Value)
+        if (hardwareStatusManager.IsJammed.CurrentValue)
         {
             throw new PosControlException(
                 "Device is jammed. Cannot dispense.",

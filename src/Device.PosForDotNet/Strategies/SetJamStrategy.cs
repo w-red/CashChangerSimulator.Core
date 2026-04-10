@@ -24,7 +24,8 @@ public class SetJamStrategy : IDirectIOCommand
             }
         }
 
-        device.HardwareStatusManager.SetJammed(jam, location);
+        device.HardwareStatusManager.Input.IsJammed.Value = jam;
+        device.HardwareStatusManager.Input.CurrentJamLocation.Value = location;
         return new DirectIOData(data, obj);
     }
 }

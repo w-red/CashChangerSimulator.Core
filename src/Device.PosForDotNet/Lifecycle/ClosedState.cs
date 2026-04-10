@@ -9,7 +9,7 @@ public class ClosedState : IDeviceState
     /// <inheritdoc/>
     public IDeviceState Open(DeviceLifecycleContext context)
     {
-        context.HardwareStatusManager.SetConnected(true);
+        context.HardwareStatusManager.Input.IsConnected.Value = true;
         context.Logger.ZLogInformation($"OPOS Open called via simulator.");
         return new OpenedState();
     }

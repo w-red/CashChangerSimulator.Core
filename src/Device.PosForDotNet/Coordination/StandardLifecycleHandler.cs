@@ -19,16 +19,16 @@ public class StandardLifecycleHandler(
     {
         get
         {
-            if (hardware.IsDisposed || !hardware.IsConnected.Value)
+            if (hardware.IsDisposed || !hardware.IsConnected.CurrentValue)
             {
                 return ControlState.Closed;
             }
-
+ 
             if (mediator.IsBusy)
             {
                 return ControlState.Busy;
             }
-
+ 
             return ControlState.Idle;
         }
     }
@@ -54,7 +54,7 @@ public class StandardLifecycleHandler(
                 // [FIX] Always refresh the global lock status before checking ClaimedByAnother for precedence.
                 // [修正] 優先順位の検証前に、グローバルロックの状態を常に最新化します。
                 hardware.RefreshClaimedStatus();
-                mediator.ClaimedByAnother = hardware.IsClaimedByAnother.Value;
+                mediator.ClaimedByAnother = hardware.IsClaimedByAnother.CurrentValue;
 
                 if (mediator.ClaimedByAnother)
                 {
@@ -121,7 +121,7 @@ public class StandardLifecycleHandler(
             }
         }
 
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
         mediator.SetSuccess();
     }
@@ -183,9 +183,13 @@ public class StandardLifecycleHandler(
             history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
         }
 
-        hardware.SetConnected(false);
-        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
-        mediator.SetSuccess();
+        if (hardware is { IsDisposed: false, Input: not null })
+        {
+            hardware.Input.IsConnected.Value = false;
+        }
+
+        history?.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
+        mediator?.SetSuccess();
     }
 
     /// <inheritdoc/>

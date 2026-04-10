@@ -202,7 +202,7 @@ public class UposMediator : IUposMediator
         hardwareStatusManager?.RefreshClaimedStatus();
         if (hardwareStatusManager != null && sink != null)
         {
-            sink.ClaimedByAnother = hardwareStatusManager.IsClaimedByAnother.Value;
+            sink.ClaimedByAnother = hardwareStatusManager.IsClaimedByAnother.CurrentValue;
         }
 
         if (mustBeClaimed && sink != null && sink.ClaimedByAnother)

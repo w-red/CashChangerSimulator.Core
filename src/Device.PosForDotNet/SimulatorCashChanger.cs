@@ -270,12 +270,12 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     bool ICashChangerStatusSink.ClaimedByAnother
     {
-        get => ctx.HardwareStatusManager.IsClaimedByAnother.Value; set { /* No-op */ }
+        get => ctx.HardwareStatusManager.IsClaimedByAnother.CurrentValue; set { /* No-op */ }
     }
 
     bool IUposEventSink.ClaimedByAnother
     {
-        get => ctx.HardwareStatusManager.IsClaimedByAnother.Value; set { /* No-op */ }
+        get => ctx.HardwareStatusManager.IsClaimedByAnother.CurrentValue; set { /* No-op */ }
     }
 
     bool ICashChangerStatusSink.DeviceEnabled { get => ctx.Mediator.DeviceEnabled; set => ctx.Mediator.DeviceEnabled = value; }
@@ -584,11 +584,11 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         ((IUposEventSink)this).QueueEvent(e);
 
         // Re-emit as abstracted events
-        if (e is Microsoft.PointOfService.DataEventArgs de)
+        if (e is DataEventArgs de)
         {
             dataEvents.OnNext(new CoreDeviceEventTypes.DeviceDataEventArgs(de.Status));
         }
-        else if (e is Microsoft.PointOfService.DeviceErrorEventArgs ee)
+        else if (e is DeviceErrorEventArgs ee)
         {
             errorEvents.OnNext(new CoreDeviceEventTypes.DeviceErrorEventArgs(
                 (DeviceErrorCode)ee.ErrorCode,
@@ -596,15 +596,15 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
                 (DeviceErrorLocus)ee.ErrorLocus,
                 (DeviceErrorResponse)ee.ErrorResponse));
         }
-        else if (e is Microsoft.PointOfService.StatusUpdateEventArgs se)
+        else if (e is StatusUpdateEventArgs se)
         {
             statusUpdateEvents.OnNext(new CoreDeviceEventTypes.DeviceStatusUpdateEventArgs(se.Status));
         }
-        else if (e is Microsoft.PointOfService.DirectIOEventArgs die)
+        else if (e is DirectIOEventArgs die)
         {
             directIOEvents.OnNext(new CoreDeviceEventTypes.DeviceDirectIOEventArgs(die.EventNumber, die.Data, die.Object));
         }
-        else if (e is Microsoft.PointOfService.OutputCompleteEventArgs oce)
+        else if (e is OutputCompleteEventArgs oce)
         {
             outputCompleteEvents.OnNext(new CoreDeviceEventTypes.DeviceOutputCompleteEventArgs(oce.OutputId));
         }

@@ -21,7 +21,7 @@ public class AdjustCashCountsCommand(
     /// <inheritdoc/>
     public Task ExecuteAsync()
     {
-        if (hardwareStatusManager.IsJammed.Value)
+        if (hardwareStatusManager.IsJammed.CurrentValue)
         {
             throw new PosControlException(
                 "Device is jammed. Cannot adjust cash counts.",

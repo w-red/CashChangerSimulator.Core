@@ -18,7 +18,7 @@ public class ClaimedState : IDeviceState
     {
         // Auto-release before closing
         context.SetDeviceEnabled(false);
-        context.HardwareStatusManager.SetConnected(false);
+        context.HardwareStatusManager.Input.IsConnected.Value = false;
         context.Logger.ZLogInformation($"OPOS Close called via simulator (auto-released).");
         return new ClosedState();
     }

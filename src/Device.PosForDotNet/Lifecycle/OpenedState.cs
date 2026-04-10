@@ -17,7 +17,7 @@ public class OpenedState : IDeviceState
     public IDeviceState Close(DeviceLifecycleContext context)
     {
         context.SetDeviceEnabled(false);
-        context.HardwareStatusManager.SetConnected(false);
+        context.HardwareStatusManager.Input.IsConnected.Value = false;
         context.Logger.ZLogInformation($"OPOS Close called via simulator.");
         return new ClosedState();
     }

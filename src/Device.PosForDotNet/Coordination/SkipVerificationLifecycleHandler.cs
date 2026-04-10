@@ -11,7 +11,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, TransactionHistory history, ILogger logger) : IUposLifecycleHandler
 {
     /// <inheritdoc/>
-    public ControlState State => !hardware.IsConnected.Value ? ControlState.Closed : mediator.IsBusy ? ControlState.Busy : ControlState.Idle;
+    public ControlState State => !hardware.IsConnected.CurrentValue ? ControlState.Closed : mediator.IsBusy ? ControlState.Busy : ControlState.Idle;
 
     /// <inheritdoc/>
     public bool Claimed => mediator.Claimed;
@@ -36,7 +36,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
         ArgumentNullException.ThrowIfNull(baseOpen);
 
         // Skip baseOpen()
-        hardware.SetConnected(true);
+        hardware.Input.IsConnected.Value = true;
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Open, 0, new Dictionary<DenominationKey, int>()));
         logger.ZLogInformation($"Device opened (Verification Skipped).");
         mediator.SetSuccess();
@@ -51,10 +51,14 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
             history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
         }
 
-        hardware.SetConnected(false);
-        history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
-        logger.ZLogInformation($"Device closed (Verification Skipped).");
-        mediator.SetSuccess();
+        if (hardware is { IsDisposed: false, Input: not null })
+        {
+            hardware.Input.IsConnected.Value = false;
+        }
+
+        history?.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Close, 0, new Dictionary<DenominationKey, int>()));
+        logger?.ZLogInformation($"Device closed (Verification Skipped).");
+        mediator?.SetSuccess();
     }
 
     /// <inheritdoc/>
@@ -68,6 +72,7 @@ public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IU
         }
 
         mediator.Claimed = true;
+        mediator.ClaimedByAnother = hardware.IsClaimedByAnother.CurrentValue;
         history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Claim, 0, new Dictionary<DenominationKey, int>()));
         logger.ZLogInformation($"Device claimed (Verification Skipped).");
         mediator.SetSuccess();

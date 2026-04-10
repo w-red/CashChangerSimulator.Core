@@ -59,7 +59,7 @@ public static class UposCurrencyHelper
 
     /// <summary>CashDenominationCount を POS for .NET の CashCount に変換します。</summary>
     /// <returns></returns>
-    public static Microsoft.PointOfService.CashCount ToCashCount(CashDenominationCount c, IEnumerable<DenominationKey> availableKeys)
+    public static CashCount ToCashCount(CashDenominationCount c, IEnumerable<DenominationKey> availableKeys)
     {
         ArgumentNullException.ThrowIfNull(c);
         ArgumentNullException.ThrowIfNull(availableKeys);
@@ -68,6 +68,6 @@ public static class UposCurrencyHelper
         var key = availableKeys.FirstOrDefault(k => k.Value == c.Denomination);
         var type = key?.Type == CurrencyCashType.Bill ? Microsoft.PointOfService.CashCountType.Bill : Microsoft.PointOfService.CashCountType.Coin;
 
-        return new Microsoft.PointOfService.CashCount(type, (int)c.Denomination, c.Count);
+        return new CashCount(type, (int)c.Denomination, c.Count);
     }
 }
