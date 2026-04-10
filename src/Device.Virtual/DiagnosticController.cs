@@ -46,8 +46,8 @@ public class DiagnosticController : IDisposable
                 sb.AppendLine("Status: OK");
                 break;
             case DeviceHealthCheckLevel.External:
-                sb.AppendFormat(CultureInfo.InvariantCulture, "Hardware: {0}{1}", hardwareStatusManager.IsConnected.Value ? "Connected" : "Disconnected", Environment.NewLine);
-                sb.AppendFormat(CultureInfo.InvariantCulture, "Jam Status: {0}{1}", hardwareStatusManager.IsJammed.Value ? "Jammed" : "Normal", Environment.NewLine);
+                sb.AppendFormat(CultureInfo.InvariantCulture, "Hardware: {0}{1}", hardwareStatusManager.IsConnected.CurrentValue ? "Connected" : "Disconnected", Environment.NewLine);
+                sb.AppendFormat(CultureInfo.InvariantCulture, "Jam Status: {0}{1}", hardwareStatusManager.IsJammed.CurrentValue ? "Jammed" : "Normal", Environment.NewLine);
                 break;
             case DeviceHealthCheckLevel.Interactive:
                 sb.AppendLine("Interactive check initiated. Please verify LED patterns.");

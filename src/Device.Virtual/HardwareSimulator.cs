@@ -8,7 +8,6 @@ namespace CashChangerSimulator.Device.Virtual;
 /// <summary>釣銭機ハードウェアの動作をシミュレートするクラス。</summary>
 public class HardwareSimulator : IDeviceSimulator
 {
-    [SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Field is managed via CompositeDisposable in constructors.")]
     private readonly ConfigurationProvider? configProvider;
     private readonly TimeProvider timeProvider;
     private readonly CompositeDisposable disposables = [];
@@ -22,8 +21,6 @@ public class HardwareSimulator : IDeviceSimulator
     /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.設定プロバイダーを指定してシミュレーターを初期化する。</summary>
     /// <param name="configProvider">設定プロバイダー。</param>
     /// <param name="timeProvider">時間プロバイダー。</param>
-    [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "AddTo(disposables) ensures proper disposal.")]
-    [SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Field is disposed via disposables collection.")]
     private HardwareSimulator(ConfigurationProvider? configProvider, TimeProvider? timeProvider = null)
     {
         if (configProvider == null)

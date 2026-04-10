@@ -21,7 +21,7 @@ public class EnableCommandHandler(HardwareStatusManager hardwareStatusManager) :
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(logger);
 
-        hardwareStatusManager.SetConnected(true); // Open status
+        hardwareStatusManager.Input.DeviceEnabled.Value = true;
         return Task.CompletedTask;
     }
 }

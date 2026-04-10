@@ -5,7 +5,7 @@
       "test/CashChangerSimulator.Tests.csproj"
     ],
     "mutate": [
-      "Services/ChangeCalculator.cs"
+      "Models/*.cs"
     ],
     "reporters": [
       "progress",
@@ -14,7 +14,7 @@
     "concurrency": 4,
     "test-runner": "mtp",
     "coverage-analysis": "off",
-    "test-case-filter": "ChangeCalculatorTests",
+    "test-case-filter": "InventoryTests|DenominationKeyTests",
     "ignore-methods": [
       "Console.WriteLine",
       "Log*",

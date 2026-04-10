@@ -1,6 +1,8 @@
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
+using R3;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
@@ -39,23 +41,31 @@ public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManag
                     Enum.TryParse(cmd.Location, true, out location);
                 }
 
-                hardwareStatusManager.SetJammed(true, location);
+                if (!hardwareStatusManager.IsConnected.CurrentValue)
+                {
+                    throw new DeviceException("Device is not connected.", DeviceErrorCode.Failure);
+                }
+
+                hardwareStatusManager.Input.IsJammed.Value = true;
+                hardwareStatusManager.Input.CurrentJamLocation.Value = location;
                 break;
             case "OVERLAP":
-                hardwareStatusManager.SetOverlapped(true);
+                hardwareStatusManager.Input.IsOverlapped.Value = true;
                 break;
             case "DEVICE":
                 var code = cmd.ErrorCode != null ? ScriptExecutionService.ResolveValue(cmd.ErrorCode, context) : 0;
                 var extended = cmd.ErrorCodeExtended != null ? ScriptExecutionService.ResolveValue(cmd.ErrorCodeExtended, context) : 0;
-                hardwareStatusManager.SetDeviceError(code, extended);
+                hardwareStatusManager.Input.CurrentErrorCode.Value = code;
+                hardwareStatusManager.Input.CurrentErrorCodeExtended.Value = extended;
+                hardwareStatusManager.Input.IsDeviceError.Value = true;
                 break;
             case "NONE":
             case "RESET":
-                hardwareStatusManager.ResetError();
+                hardwareStatusManager.Input.ResetTrigger.OnNext(Unit.Default);
                 break;
             default:
-                hardwareStatusManager.SetJammed(false);
-                hardwareStatusManager.SetOverlapped(false);
+                hardwareStatusManager.Input.IsJammed.Value = false;
+                hardwareStatusManager.Input.IsOverlapped.Value = false;
                 break;
         }
 

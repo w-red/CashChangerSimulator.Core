@@ -108,7 +108,7 @@ public class DispenseController : IDisposable
     {
         lock (stateLock)
         {
-            if (!hardwareStatusManager.IsConnected.Value)
+            if (!hardwareStatusManager.IsConnected.CurrentValue)
             {
                 throw new DeviceException("Device is not connected.", DeviceErrorCode.Closed);
             }
@@ -138,12 +138,12 @@ public class DispenseController : IDisposable
                 throw new DeviceException("Already processing another dispense.", DeviceErrorCode.Busy);
             }
 
-            if (!hardwareStatusManager.IsConnected.Value)
+            if (!hardwareStatusManager.IsConnected.CurrentValue)
             {
                 throw new DeviceException("Device is not connected.", DeviceErrorCode.Closed);
             }
 
-            if (hardwareStatusManager.IsJammed.Value)
+            if (hardwareStatusManager.IsJammed.CurrentValue)
             {
                 throw new DeviceException("Hardware is jammed.", DeviceErrorCode.Jammed);
             }

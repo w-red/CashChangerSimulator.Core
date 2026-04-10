@@ -18,7 +18,6 @@ public class DepositController : IDisposable
 {
     private readonly Inventory inventory;
     private readonly HardwareStatusManager hardwareStatusManager;
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2213:DisposableFieldsShouldBeDisposed", Justification = "Shared or conditionally owned via internalConfigProvider.")]
     private readonly ConfigurationProvider configProvider;
     private readonly ConfigurationProvider? internalConfigProvider;
     private readonly CashChangerManager? manager;
@@ -352,12 +351,12 @@ public class DepositController : IDisposable
                 throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             }
 
-            if (hardwareStatusManager.IsJammed.Value)
+            if (hardwareStatusManager.IsJammed.CurrentValue)
             {
                 throw new DeviceException("Device is jammed. Cannot begin deposit.", DeviceErrorCode.Jammed);
             }
 
-            if (hardwareStatusManager.IsOverlapped.Value)
+            if (hardwareStatusManager.IsOverlapped.CurrentValue)
             {
                 throw new DeviceException("Device has overlapped cash. Cannot begin deposit.", DeviceErrorCode.Overlapped);
             }
@@ -542,7 +541,7 @@ public class DepositController : IDisposable
                     }
                 }
 
-                if (action != DepositAction.Repay && hardwareStatusManager.IsOverlapped.Value)
+                if (action != DepositAction.Repay && hardwareStatusManager.IsOverlapped.CurrentValue)
                 {
                     throw new DeviceException("Device Error (Overlap). Cannot complete deposit.", DeviceErrorCode.Overlapped);
                 }
@@ -785,12 +784,12 @@ public class DepositController : IDisposable
             throw new DeviceException("Deposit is already fixed.", DeviceErrorCode.Illegal);
         }
 
-        if (hardwareStatusManager.IsJammed.Value)
+        if (hardwareStatusManager.IsJammed.CurrentValue)
         {
             throw new DeviceException("Device is jammed during tracking.", DeviceErrorCode.Jammed);
         }
 
-        if (hardwareStatusManager.IsOverlapped.Value)
+        if (hardwareStatusManager.IsOverlapped.CurrentValue)
         {
             throw new DeviceException("Device has overlapped cash. Cannot track deposit.", DeviceErrorCode.Overlapped);
         }
@@ -798,7 +797,7 @@ public class DepositController : IDisposable
         return true;
     }
 
-    private void ProcessDenominationTracking(DenominationKey key, int count, CashChangerSimulator.Core.Configuration.SimulatorConfiguration config)
+    private void ProcessDenominationTracking(DenominationKey key, int count, SimulatorConfiguration config)
     {
         lock (stateLock)
         {

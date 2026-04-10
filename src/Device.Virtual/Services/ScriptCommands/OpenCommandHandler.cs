@@ -27,7 +27,7 @@ public class OpenCommandHandler(HardwareStatusManager hardwareStatusManager) : I
             logger.ZLogInformation($"Opening device via script.");
         }
 
-        hardwareStatusManager.SetConnected(true);
+        hardwareStatusManager.Input.IsConnected.Value = true;
         return Task.CompletedTask;
     }
 }

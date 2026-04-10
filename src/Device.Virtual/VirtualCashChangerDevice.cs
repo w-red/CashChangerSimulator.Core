@@ -115,7 +115,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     {
         lock (stateLock)
         {
-            hardwareStatus.SetConnected(true);
+            hardwareStatus.Input.IsConnected.Value = true;
             if (logger != null)
             {
                 logger.ZLogInformation($"VirtualCashChangerDevice Opened.");
@@ -130,8 +130,8 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     {
         lock (stateLock)
         {
-            hardwareStatus.SetConnected(false);
-            hardwareStatus.DeviceEnabled.Value = false;
+            hardwareStatus.Input.IsConnected.Value = false;
+            hardwareStatus.Input.DeviceEnabled.Value = false;
         }
 
         if (hasMutex)
@@ -151,7 +151,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public Task ClaimAsync(int timeout)
     {
-        if (!hardwareStatus.IsConnected.Value)
+        if (!hardwareStatus.IsConnected.CurrentValue)
         {
             throw new DeviceException("Device not opened.", DeviceErrorCode.Closed);
         }
@@ -197,7 +197,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             throw new DeviceException("Device not claimed.", DeviceErrorCode.Illegal);
         }
 
-        hardwareStatus.SetDeviceEnabled(true);
+        hardwareStatus.Input.DeviceEnabled.Value = true;
         if (logger != null)
         {
             logger.ZLogInformation($"VirtualCashChangerDevice Enabled.");
@@ -210,7 +210,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public Task DisableAsync()
     {
-        hardwareStatus.SetDeviceEnabled(false);
+        hardwareStatus.Input.DeviceEnabled.Value = false;
         if (logger != null)
         {
             logger.ZLogInformation($"VirtualCashChangerDevice Disabled.");
@@ -360,7 +360,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
 
     private void EnsureEnabled()
     {
-        if (!hardwareStatus.IsConnected.Value)
+        if (!hardwareStatus.IsConnected.CurrentValue)
         {
             throw new DeviceException("Device not opened.", DeviceErrorCode.Closed);
         }
@@ -370,7 +370,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             throw new DeviceException("Device not claimed.", DeviceErrorCode.Illegal);
         }
 
-        if (!hardwareStatus.DeviceEnabled.Value)
+        if (!hardwareStatus.DeviceEnabled.CurrentValue)
         {
             throw new DeviceException("Device not enabled.", DeviceErrorCode.Disabled);
         }
@@ -383,7 +383,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             bool busy = depositController.IsBusy || dispenseController.IsBusy;
             isBusy.Value = busy;
 
-            if (!hardwareStatus.IsConnected.Value)
+            if (!hardwareStatus.IsConnected.CurrentValue)
             {
                 state.Value = DeviceControlState.Closed;
             }
