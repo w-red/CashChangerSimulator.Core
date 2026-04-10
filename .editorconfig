@@ -24,8 +24,11 @@ dotnet_diagnostic.SA1629.severity = none
 dotnet_diagnostic.SA1633.severity = none # File header not required
 dotnet_diagnostic.SA1642.severity = none
 dotnet_diagnostic.SA1649.severity = none # File name match type name (sometimes we have multiple)
-
 dotnet_diagnostic.CA1031.severity = none
+
+# CA2213: Disposable fields should be disposed
+dotnet_diagnostic.CA2213.severity = none # Need not at R3
+dotnet_diagnostic.CA2000.severity = none # Need not at R3
 
 # Enforce some good ones
 dotnet_diagnostic.SA1000.severity = error
