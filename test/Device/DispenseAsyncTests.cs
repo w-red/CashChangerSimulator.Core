@@ -67,7 +67,7 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
     }
 }
 
-/// <summary>非同期モードでの出金操作（DispenseChange, DispenseCash）の挙動を検証するテストクラス。</summary>
+/// <summary>非同期モードでの出金操作(DispenseChange, DispenseCash)の挙動を検証するテストクラス。</summary>
 [Collection("GlobalLock")]
 public class DispenseAsyncTests
 {

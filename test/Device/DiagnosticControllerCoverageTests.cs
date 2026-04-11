@@ -7,7 +7,7 @@ namespace CashChangerSimulator.Tests.Device;
 
 public class DiagnosticControllerCoverageTests
 {
-    /// <summary>不感帯（デプリション）失敗のカウントが正しくインクリメントされることを検証する。</summary>
+    /// <summary>不感帯(デプリション)失敗のカウントが正しくインクリメントされることを検証する。</summary>
     [Fact]
     public void IncrementFailedDepletionShouldIncreaseValue()
     {

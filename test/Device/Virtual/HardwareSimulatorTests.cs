@@ -29,7 +29,7 @@ public class HardwareSimulatorTests : DeviceTestBase
         await simulator.SimulateDispenseAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
         sw.Stop();
 
-        // Assert: 少なくとも設定値（200ms）に近い時間経過していること
+        // Assert: 少なくとも設定値(200ms)に近い時間経過していること
         // 余裕を見て150ms以上としているのは、環境によるタイマーのブレを考慮
         sw.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(150);
         sw.ElapsedMilliseconds.ShouldBeLessThan(1000); // 異常に長くないこと

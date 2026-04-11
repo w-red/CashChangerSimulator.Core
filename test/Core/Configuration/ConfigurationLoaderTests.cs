@@ -159,7 +159,7 @@ public class ConfigurationLoaderTests : IDisposable
         state.Counts.ShouldBeEmpty();
     }
 
-    /// <summary>ファイルアクセス拒否（UnauthorizedAccessException）発生時にデフォルト値が返されることを検証する。</summary>
+    /// <summary>ファイルアクセス拒否(UnauthorizedAccessException)発生時にデフォルト値が返されることを検証する。</summary>
     [Fact]
     public void LoadConfigShouldReturnDefaultsWhenAccessDenied()
     {

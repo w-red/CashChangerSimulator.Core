@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>在庫の調整機能（AdjustCashCounts）を検証するテストクラス。</summary>
+/// <summary>在庫の調整機能(AdjustCashCounts)を検証するテストクラス。</summary>
 public class AdjustCashCountsTests : UposTestBase
 {
     public AdjustCashCountsTests()

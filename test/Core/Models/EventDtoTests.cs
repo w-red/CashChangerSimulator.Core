@@ -5,7 +5,7 @@ using Xunit;
 
 namespace CashChangerSimulator.Tests.Core.Models;
 
-/// <summary>各種デバイスイベント引数（EventArgs）のプロパティアクセスとコンストラクタを検証するテストクラス。</summary>
+/// <summary>各種デバイスイベント引数(EventArgs)のプロパティアクセスとコンストラクタを検証するテストクラス。</summary>
 public class EventDtoTests
 {
     /// <summary>DeviceDirectIOEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>

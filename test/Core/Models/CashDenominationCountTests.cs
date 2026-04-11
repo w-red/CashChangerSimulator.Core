@@ -17,7 +17,7 @@ public class CashDenominationCountTests
         Assert.Equal(5, target.Count);
     }
 
-    /// <summary>レコードとしての値比較（等価性）が正しく動作することを検証します。</summary>
+    /// <summary>レコードとしての値比較(等価性)が正しく動作することを検証します。</summary>
     [Fact]
     public void EqualityWorks()
     {

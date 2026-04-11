@@ -81,7 +81,7 @@ public class CashChangerManagerTests : CoreTestBase
         History.Entries[0].Counts[c100].ShouldBe(2);
     }
 
-    /// <summary>多通貨（USD）での入金と履歴記録を検証する。</summary>
+    /// <summary>多通貨(USD)での入金と履歴記録を検証する。</summary>
     [Fact]
     public void DepositWithOtherCurrencyShouldStoreCorrectCurrencyCode()
     {
@@ -138,7 +138,7 @@ public class CashChangerManagerTests : CoreTestBase
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
 
-        // 2000円札（非リサイクル）と1000円札（リサイクル）を在庫に入れる
+        // 2000円札(非リサイクル)と1000円札(リサイクル)を在庫に入れる
         Inventory.SetCount(b2000, 10);
         Inventory.SetCount(b1000, 10);
 
@@ -174,7 +174,7 @@ public class CashChangerManagerTests : CoreTestBase
         Inventory.CollectionCounts.ShouldContain(kv => kv.Key == b1000 && kv.Value == 10);
     }
 
-    /// <summary>入金付加（IsDepositable=false）な金種がスキップされることを検証する。</summary>
+    /// <summary>入金付加(IsDepositable=false)な金種がスキップされることを検証する。</summary>
     [Fact]
     public void DepositShouldSkipWhenNotDepositable()
     {

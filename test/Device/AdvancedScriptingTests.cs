@@ -11,10 +11,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>高度なスクリプト機能（ループ、変数）のテストクラス。</summary>
+/// <summary>高度なスクリプト機能(ループ、変数)のテストクラス。</summary>
 public class AdvancedScriptingTests
 {
-    /// <summary>スクリプト内の Repeat（ループ）操作が期待通りに複数回実行されることを検証します。</summary>
+    /// <summary>スクリプト内の Repeat(ループ)操作が期待通りに複数回実行されることを検証します。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncRepeatShouldExecuteMultipleTimes()
@@ -113,7 +113,7 @@ public class AdvancedScriptingTests
         ]";
 
         // Act & Assert
-        // BeginDeposit はハードウェアエラー状態（Jammed）なので DeviceException を投げるべき
+        // BeginDeposit はハードウェアエラー状態(Jammed)なので DeviceException を投げるべき
         await Should.ThrowAsync<CashChangerSimulator.Core.Exceptions.DeviceException>(async () => await service.ExecuteScriptAsync(json).ConfigureAwait(false)).ConfigureAwait(false);
         hardware.IsJammed.CurrentValue.ShouldBeTrue();
     }
@@ -151,7 +151,7 @@ public class AdvancedScriptingTests
         inv.GetCount(key500).ShouldBe(2);
     }
 
-    /// <summary>特定の箇所（Inletなど）へのジャム注入がハードウェア状態に正しく反映されることを検証します。</summary>
+    /// <summary>特定の箇所(Inletなど)へのジャム注入がハードウェア状態に正しく反映されることを検証します。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncInjectErrorJamLocationShouldUpdateHardware()

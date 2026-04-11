@@ -27,7 +27,7 @@ public class CustomLogger<T> : ILogger<T>
     }
 }
 
-/// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル（Open/Claim/Release/Close）を検証するテストクラス。</summary>
+/// <summary>InternalSimulatorCashChanger の UPOS ライフサイクル(Open/Claim/Release/Close)を検証するテストクラス。</summary>
 [Collection("GlobalLock")]
 public class UposLifecycleTests
 {
@@ -90,7 +90,7 @@ public class UposLifecycleTests
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>デバイスがオープンされる前に占有（Claim）を試みると例外がスローされることを検証する。</summary>
+    /// <summary>デバイスがオープンされる前に占有(Claim)を試みると例外がスローされることを検証する。</summary>
     [Fact]
     public void ClaimBeforeOpenShouldSucceedInWaitState()
     {
@@ -108,7 +108,7 @@ public class UposLifecycleTests
         cc.Claim(1000);
     }
 
-    /// <summary>健康状態確認（CheckHealth）が常に OK を返すことを検証する。</summary>
+    /// <summary>健康状態確認(CheckHealth)が常に OK を返すことを検証する。</summary>
     [Fact]
     public void CheckHealthShouldReturnOk()
     {
@@ -116,7 +116,7 @@ public class UposLifecycleTests
         cc.CheckHealth((HealthCheckLevel)DeviceHealthCheckLevel.Internal).ShouldContain("OK");
     }
 
-    /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する（NRE回避の確認）。</summary>
+    /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する(NRE回避の確認)。</summary>
     [Fact]
     public void SkipStateVerificationShouldBypassFramework()
     {

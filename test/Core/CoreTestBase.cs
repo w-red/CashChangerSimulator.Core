@@ -19,7 +19,7 @@ public abstract class CoreTestBase : IDisposable
         Manager = CreateManager(Inventory, History, ConfigurationProvider);
     }
 
-    /// <summary>インベントリインスタンス（実クラスまたはMockオブジェクト）</summary>
+    /// <summary>インベントリインスタンス(実クラスまたはMockオブジェクト)</summary>
     protected Inventory Inventory { get; }
 
     /// <summary>トランザクション履歴</summary>

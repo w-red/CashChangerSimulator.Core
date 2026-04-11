@@ -93,7 +93,7 @@ public class OverallStatusAggregatorTests
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Empty);
     }
 
-    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する（カバレッジ用）。</summary>
+    /// <summary>Dispose 呼び出しによりリソースが解放されることを検証する(カバレッジ用)。</summary>
     [Fact]
     public void DisposeShouldWork()
     {

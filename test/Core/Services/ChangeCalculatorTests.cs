@@ -6,11 +6,11 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core.Services;
 
-/// <summary>出金計算ロジック（最適な金種構成の算出、通貨フィルタ等）を検証するテストクラス。</summary>
+/// <summary>出金計算ロジック(最適な金種構成の算出、通貨フィルタ等)を検証するテストクラス。</summary>
 public class ChangeCalculatorTests
 {
 
-    /// <summary>カスタムフィルタ（例：紙幣のみ）が指定された際に、条件に合う金種のみで計算されることを検証します。</summary>
+    /// <summary>カスタムフィルタ(例：紙幣のみ)が指定された際に、条件に合う金種のみで計算されることを検証します。</summary>
     [Fact]
     public void CalculateWithCustomFilterShouldWork()
     {
@@ -32,7 +32,7 @@ public class ChangeCalculatorTests
         Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(inv, 1500));
     }
 
-    /// <summary>混合した金種在庫から、最適な（枚数が最小になる）組み合わせが算出されることを検証します。</summary>
+    /// <summary>混合した金種在庫から、最適な(枚数が最小になる)組み合わせが算出されることを検証します。</summary>
     [Fact]
     public void CalculateOptimalCombinationShouldWork()
     {
@@ -100,7 +100,7 @@ public class ChangeCalculatorTests
         result.ContainsKey(keyUsd).ShouldBeFalse();
     }
 
-    /// <summary>額面が同じ場合でも金種種別（Type）による優先順位が守られることを検証します。</summary>
+    /// <summary>額面が同じ場合でも金種種別(Type)による優先順位が守られることを検証します。</summary>
     [Fact]
     public void ShouldRespectTypePriorityForSameValue()
     {
@@ -132,7 +132,7 @@ public class ChangeCalculatorTests
         Should.Throw<InsufficientCashException>(() => ChangeCalculator.Calculate(mockInv.Object, 100));
     }
 
-    /// <summary>引数に null を渡した場合に ArgumentNullException がスローされることを検証します（変異テスト対応）。</summary>
+    /// <summary>引数に null を渡した場合に ArgumentNullException がスローされることを検証します(変異テスト対応)。</summary>
     [Fact]
     public void Calculate_ShouldThrowArgumentNullException_WhenInventoryIsNull()
     {
@@ -141,8 +141,8 @@ public class ChangeCalculatorTests
 
     /// <summary>出金計算の効率性と結果の整合性を検証します。</summary>
     /// <remarks>
-    /// 必要ない金種（needed &lt;= 0）がディクショナリに含まれないこと（変異テスト対応：不必要な構成要素の除外）、
-    /// および計算完了後に余剰な金種の GetCount を呼び出さないこと（変異テスト対応：不要な在庫確認の回避）を検証します。
+    /// 必要ない金種(needed &lt;= 0)がディクショナリに含まれないこと(変異テスト対応：不必要な構成要素の除外)、
+    /// および計算完了後に余剰な金種の GetCount を呼び出さないこと(変異テスト対応：不要な在庫確認の回避)を検証します。
     /// </remarks>
     [Fact]
     public void Calculate_ShouldBeEfficientAndNotIncludeZeroCounts()
@@ -157,14 +157,14 @@ public class ChangeCalculatorTests
         inv.Add(k1, 10);
 
         // Request 100.
-        // 1. 1000 is checked, needed = 0 -> should continue（変異テスト対応）
+        // 1. 1000 is checked, needed = 0 -> should continue(変異テスト対応)
         // 2. 100 is checked, needed = 1 -> took 1. Remaining = 0.
-        // 3. remaining is 0 -> should break（変異テスト対応）
+        // 3. remaining is 0 -> should break(変異テスト対応)
         var result = ChangeCalculator.Calculate(inv, 100);
 
         // Check dictionary integrity
         result.ContainsKey(k100).ShouldBeTrue();
-        result.ContainsKey(k1000).ShouldBeFalse(); // Should NOT contain k1000 with count 0（変異テスト対応）
+        result.ContainsKey(k1000).ShouldBeFalse(); // Should NOT contain k1000 with count 0(変異テスト対応)
         result.ContainsKey(k1).ShouldBeFalse();
 
         // Check efficiency (Calls to GetCount)

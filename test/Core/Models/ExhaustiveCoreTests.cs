@@ -25,7 +25,7 @@ public class ExhaustiveCoreTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>LogProvider の各設定パス（コンソール、ファイル、ログレベル）を網羅的に検証します。</summary>
+    /// <summary>LogProvider の各設定パス(コンソール、ファイル、ログレベル)を網羅的に検証します。</summary>
     [Fact]
     public void LogProviderShouldCoverageAllPaths()
     {

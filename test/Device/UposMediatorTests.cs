@@ -7,7 +7,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UPOS メディエータの状態検証（VerifyState）、コマンド実行、非同期結果処理をテストするクラス。</summary>
+/// <summary>UPOS メディエータの状態検証(VerifyState)、コマンド実行、非同期結果処理をテストするクラス。</summary>
 public class UposMediatorTests
 {
     private readonly InternalSimulatorCashChanger so;
@@ -29,7 +29,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>占有（Claim）されていない状態で状態検証を行うと例外が発生することを検証します。</summary>
+    /// <summary>占有(Claim)されていない状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldThrowNotClaimedWhenNotClaimed()
     {
@@ -38,7 +38,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.NotClaimed);
     }
 
-    /// <summary>無効（Disabled）状態で状態検証を行うと例外が発生することを検証します。</summary>
+    /// <summary>無効(Disabled)状態で状態検証を行うと例外が発生することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldThrowDisabledWhenNotEnabled()
     {
@@ -61,7 +61,7 @@ public class UposMediatorTests
             .ErrorCode.ShouldBe(ErrorCode.Busy);
     }
 
-    /// <summary>全ての条件（Open, Claimed, Enabled, NotBusy）を満たす場合に状態検証が成功することを検証します。</summary>
+    /// <summary>全ての条件(Open, Claimed, Enabled, NotBusy)を満たす場合に状態検証が成功することを検証します。</summary>
     [Fact]
     public void VerifyStateShouldNotThrowWhenAllConditionsMet()
     {

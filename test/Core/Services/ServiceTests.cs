@@ -10,7 +10,7 @@ namespace CashChangerSimulator.Tests.Core.Services;
 /// <summary>MonitorsProvider の金種モニター管理およびしきい値更新機能を検証するテストクラス。</summary>
 public class MonitorsProviderTests
 {
-    /// <summary>設定（Configuration）の変更が、各モニターのしきい値へ正しく反映されることを検証します。</summary>
+    /// <summary>設定(Configuration)の変更が、各モニターのしきい値へ正しく反映されることを検証します。</summary>
     [Fact]
     public void UpdateThresholdsFromConfigShouldUpdateCorrectly()
     {
@@ -31,7 +31,7 @@ public class MonitorsProviderTests
         monitor.NearEmptyThreshold.ShouldBe(99);
     }
 
-    /// <summary>非還流金種（IsRecyclable=false）の設定時、モニターの監視が無効化（しきい値-1）されることを検証します。</summary>
+    /// <summary>非還流金種(IsRecyclable=false)の設定時、モニターの監視が無効化(しきい値-1)されることを検証します。</summary>
     [Fact]
     public void RefreshMonitorsShouldHandleNonRecyclable()
     {
@@ -68,7 +68,7 @@ public class MonitorsProviderTests
         monitor.NearEmptyThreshold.ShouldBe(123);
     }
 
-    /// <summary>TriggerChanged 呼び出しにより、変更通知（Changed）が発火されることを検証します。</summary>
+    /// <summary>TriggerChanged 呼び出しにより、変更通知(Changed)が発火されることを検証します。</summary>
     [Fact]
     public void TriggerChangedShouldNotifyObservers()
     {

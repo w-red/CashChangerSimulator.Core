@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>入金シーケンスの各状態遷移（UPOS準拠）を検証するテストクラス。</summary>
+/// <summary>入金シーケンスの各状態遷移(UPOS準拠)を検証するテストクラス。</summary>
 public class DepositSequenceTests
 {
     private static (DepositController Controller, Inventory Inventory, HardwareStatusManager Hardware) CreateController()
@@ -88,7 +88,7 @@ public class DepositSequenceTests
         controller.EndDeposit(DepositAction.Repay);
 
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
-        inventory.GetCount(b1000).ShouldBe(0); // 在庫から消える（返却）
+        inventory.GetCount(b1000).ShouldBe(0); // 在庫から消える(返却)
     }
 
     /// <summary>入金中の中断(Pause)と再開(Restart)を含むシーケンスを検証する。</summary>
@@ -122,7 +122,7 @@ public class DepositSequenceTests
     }
 
     // =====================================================
-    // 異常シーケンス（E_ILLEGAL ガード）
+    // 異常シーケンス(E_ILLEGAL ガード)
     // =====================================================
 
     /// <summary>fixDepositを呼ばずにendDepositを実行した際にErrorCode.Illegalがスローされることを検証する。</summary>
@@ -232,7 +232,7 @@ public class DepositSequenceTests
         inventory.GetCount(b1000).ShouldBe(0); // Not in main inventory yet
     }
 
-    /// <summary>釣銭返却アクション（EndDeposit Change）時にエスクロー内の特定金種が優先的に扱われることを検証します。</summary>
+    /// <summary>釣銭返却アクション(EndDeposit Change)時にエスクロー内の特定金種が優先的に扱われることを検証します。</summary>
     [Fact]
     public void EndDepositChangeShouldDispenseFromEscrowFirst()
     {
@@ -268,7 +268,7 @@ public class DepositSequenceTests
         inventory.EscrowCounts.ShouldBeEmpty();
     }
 
-    /// <summary>入金キャンセル（Repay）時にエスクロー在庫がクリアされることを検証します。</summary>
+    /// <summary>入金キャンセル(Repay)時にエスクロー在庫がクリアされることを検証します。</summary>
     [Fact]
     public void EndDepositRepayShouldClearInventoryEscrow()
     {

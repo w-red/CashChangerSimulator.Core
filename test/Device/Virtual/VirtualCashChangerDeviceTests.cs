@@ -22,7 +22,7 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
         device2 = CreateDevice(testMutexName);
     }
 
-    /// <summary>複数のインスタンスで同時に排他権（Claim）を取得しようとした場合に例外が発生することを確認します。</summary>
+    /// <summary>複数のインスタンスで同時に排他権(Claim)を取得しようとした場合に例外が発生することを確認します。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ConcurrentClaimShouldThrowException()
@@ -140,7 +140,7 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
         await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
         await device1.EnableAsync();
 
-        // DepositController 経由で預け入れを行う（VirtualCashChangerDevice のメソッドを使用）
+        // DepositController 経由で預け入れを行う(VirtualCashChangerDevice のメソッドを使用)
         await device1.BeginDepositAsync();
 
         var inventory = await device1.ReadInventoryAsync();

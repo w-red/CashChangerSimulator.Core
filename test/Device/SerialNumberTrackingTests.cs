@@ -7,7 +7,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>入金確定（FixDeposit）時の記番号（シリアルナンバー）追跡機能を検証するテストクラス。</summary>
+/// <summary>入金確定(FixDeposit)時の記番号(シリアルナンバー)追跡機能を検証するテストクラス。</summary>
 public class SerialNumberTrackingTests
 {
     private static (InternalSimulatorCashChanger changer, DepositController controller) CreateChanger()

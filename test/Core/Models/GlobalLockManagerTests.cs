@@ -41,7 +41,7 @@ public class GlobalLockManagerTests : IDisposable
         // 3. 自分で保持している場合、IsLockHeldByAnother は false (他者ではない)
         _lockManager.IsLockHeldByAnother().ShouldBeFalse();
 
-        // 4. 再帰的な呼び出し（既に保持している場合は true）
+        // 4. 再帰的な呼び出し(既に保持している場合は true)
         _lockManager.TryAcquire().ShouldBeTrue();
 
         // 5. 解放
@@ -214,7 +214,7 @@ public class GlobalLockManagerTests : IDisposable
             var result = manager.IsLockHeldByAnother();
             
             // Assert
-            // 実装上、UnauthorizedAccessException は不保持（false）として扱う
+            // 実装上、UnauthorizedAccessException は不保持(false)として扱う
             result.ShouldBeFalse();
         }
         finally

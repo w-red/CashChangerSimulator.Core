@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>DirectIO コマンド（オーバーラップ、ジャム注入、バージョン取得など）の個別動作を検証するテストクラス。</summary>
+/// <summary>DirectIO コマンド(オーバーラップ、ジャム注入、バージョン取得など)の個別動作を検証するテストクラス。</summary>
 public class DirectIOTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()

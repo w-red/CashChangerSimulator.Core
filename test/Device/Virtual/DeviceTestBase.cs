@@ -58,7 +58,7 @@ public abstract class DeviceTestBase : IDisposable
     /// <summary>仮想デバイスファクトリー</summary>
     protected VirtualCashChangerDeviceFactory DeviceFactory { get; }
 
-    /// <summary>各テストで固有の Mutex 名（Global\\TestMutex_{Guid}）を生成します。</summary>
+    /// <summary>各テストで固有の Mutex 名(Global\\TestMutex_{Guid})を生成します。</summary>
     protected string GenerateUniqueMutexName() => $"Global\\TestMutex_{Guid.NewGuid()}";
 
     /// <summary>仮想デバイスインスタンスを生成します。</summary>
@@ -88,7 +88,7 @@ public abstract class DeviceTestBase : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>指定された条件が満たされるまで待機します（FakeTimeProvider 対応）。</summary>
+    /// <summary>指定された条件が満たされるまで待機します(FakeTimeProvider 対応)。</summary>
     protected async Task WaitUntil(Func<bool> condition, int timeoutSeconds = 5)
     {
         var startTimestamp = TimeProvider.GetTimestamp();

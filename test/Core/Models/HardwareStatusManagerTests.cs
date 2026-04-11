@@ -28,7 +28,7 @@ public class HardwareStatusManagerTests
         manager.State.CurrentJamLocation.CurrentValue.ShouldBe(JamLocation.None); // パイプラインにより連動
     }
 
-    /// <summary>重なり（Overlap）状態を設定・取得できることを検証する。</summary>
+    /// <summary>重なり(Overlap)状態を設定・取得できることを検証する。</summary>
     [Fact]
     public void SetOverlappedShouldUpdateState()
     {
@@ -168,7 +168,7 @@ public class HardwareStatusManagerTests
         callCount.ShouldBeGreaterThanOrEqualTo(2);
     }
 
-    /// <summary>破棄（Dispose）後の状態設定で例外が発生することを検証する（R3 の標準挙動）。</summary>
+    /// <summary>破棄(Dispose)後の状態設定で例外が発生することを検証する(R3 の標準挙動)。</summary>
     [Fact]
     public void AfterDisposeOperationsShouldThrow()
     {

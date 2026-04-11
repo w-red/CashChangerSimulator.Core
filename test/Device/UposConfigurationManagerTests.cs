@@ -41,7 +41,7 @@ public class UposConfigurationManagerTests
         manager.CurrencyCode.ShouldBe("USD");
     }
 
-    /// <summary>設定変更時に内部状態（在庫等）が正しくリセットされることを検証します。</summary>
+    /// <summary>設定変更時に内部状態(在庫等)が正しくリセットされることを検証します。</summary>
     [Fact]
     public void ResetStateWhenConfigurationChanges()
     {
@@ -77,7 +77,7 @@ public class UposConfigurationManagerTests
         manager.CurrencyCode.ShouldBe("EUR");
     }
 
-    /// <summary>破棄（Dispose）後に設定変更を受け取っても副作用が発生しないことを検証します。</summary>
+    /// <summary>破棄(Dispose)後に設定変更を受け取っても副作用が発生しないことを検証します。</summary>
     [Fact]
     public void DisposeShouldUnsubscribe()
     {

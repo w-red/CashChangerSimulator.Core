@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>カバレッジ向上のため、通常ルート以外のメソッド（DispenseCash, Dispose 複数回実行等）を検証するテストクラス。</summary>
+/// <summary>カバレッジ向上のため、通常ルート以外のメソッド(DispenseCash, Dispose 複数回実行等)を検証するテストクラス。</summary>
 public class SimulatorCashChangerCoverageTests
 {
     /// <summary>DispenseCash(CashCount[]) オーバーロードが正常に動作することを検証します。</summary>

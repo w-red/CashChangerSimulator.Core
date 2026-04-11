@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
-/// <summary>重なりエラー（Overlap Error）のシミュレーションを検証するテストクラス。</summary>
+/// <summary>重なりエラー(Overlap Error)のシミュレーションを検証するテストクラス。</summary>
 public class OverlapSimulationTests : DeviceTestBase
 {
     private readonly DepositController controller;

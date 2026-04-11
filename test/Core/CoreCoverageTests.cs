@@ -57,7 +57,7 @@ public class CoreCoverageTests
         result.ShouldBe(mockService.Object);
     }
 
-    /// <summary>TransactionHistory の破棄（Dispose）がエラーなく実行できることを検証します。</summary>
+    /// <summary>TransactionHistory の破棄(Dispose)がエラーなく実行できることを検証します。</summary>
     [Fact]
     public void TransactionHistoryDisposeShouldWork()
     {
@@ -85,7 +85,7 @@ public class CoreCoverageTests
         symbol.ShouldNotBeNull();
     }
 
-    /// <summary>CurrencyMetadataProvider が JPY 以外の通貨（USD等）に対して正しい金種名称を生成することを検証します。</summary>
+    /// <summary>CurrencyMetadataProvider が JPY 以外の通貨(USD等)に対して正しい金種名称を生成することを検証します。</summary>
     [Fact]
     public void CurrencyMetadataProviderGetDenominationNameNonJpyShouldWork()
     {
@@ -122,7 +122,7 @@ public class CoreCoverageTests
         provider.Aggregator.ShouldNotBeNull();
     }
 
-    /// <summary>CurrencyMetadataProvider が JPY 以外の通貨（USD等）に対して、銀貨（Coin）と紙幣（Bill）の名称を正しく使い分けることを検証します。</summary>
+    /// <summary>CurrencyMetadataProvider が JPY 以外の通貨(USD等)に対して、銀貨(Coin)と紙幣(Bill)の名称を正しく使い分けることを検証します。</summary>
     [Fact]
     public void CurrencyMetadataProviderGetDenominationNameBillCoinMappingShouldWork()
     {
@@ -241,7 +241,7 @@ public class CoreCoverageTests
         result.ShouldBeNull();
     }
 
-    /// <summary>OverallStatusAggregator が空状態（Empty）やニアエンプティ（NearEmpty）を正しく判定できるか検証します。</summary>
+    /// <summary>OverallStatusAggregator が空状態(Empty)やニアエンプティ(NearEmpty)を正しく判定できるか検証します。</summary>
     [Fact]
     public void OverallStatusAggregatorEmptyAndLowStatusShouldWork()
     {
@@ -276,13 +276,13 @@ public class CoreCoverageTests
         var tempFile = Path.Combine(Path.GetTempPath(), $"history_unauth_{Guid.NewGuid()}.bin");
         File.WriteAllBytes(tempFile, [1, 2, 3]);
 
-        // ディレクトリをファイル名として指定することで（あるいはReadOnlyでも）例外を誘発
+        // ディレクトリをファイル名として指定することで(あるいはReadOnlyでも)例外を誘発
         // ここでは、読み取り不可能な場所をシミュレート
         using var service = new HistoryPersistenceService(new TransactionHistory(), tempFile);
 
         try
         {
-            // Windowsでファイル属性を ReadOnly に設定して擬似的に例外を狙う（一部環境では UnauthorizedAccessException になる）
+            // Windowsでファイル属性を ReadOnly に設定して擬似的に例外を狙う(一部環境では UnauthorizedAccessException になる)
             // または、読み取りをブロックする形で IO 例外を狙う
             using var fs = new FileStream(tempFile, FileMode.Open, FileAccess.Write, FileShare.None);
             

@@ -246,7 +246,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
     }
 
-    /// <summary>既に確定（Fixed）した状態で入金を追跡しようとし、警告が想定通りに処理されることを検証する。</summary>
+    /// <summary>既に確定(Fixed)した状態で入金を追跡しようとし、警告が想定通りに処理されることを検証する。</summary>
     [Fact]
     public void TrackDepositWhenFixedShouldThrow()
     {

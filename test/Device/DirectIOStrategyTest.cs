@@ -6,14 +6,14 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>DirectIO コマンドの各戦略（Strategy）を検証するテストクラス。</summary>
+/// <summary>DirectIO コマンドの各戦略(Strategy)を検証するテストクラス。</summary>
 public class DirectIOStrategyTest
 {
     private readonly InternalSimulatorCashChanger device;
 
     public DirectIOStrategyTest()
     {
-        // InternalSimulatorCashChanger を初期化（SkipStateVerification = true にして OPOS API の制約を回避）
+        // InternalSimulatorCashChanger を初期化(SkipStateVerification = true にして OPOS API の制約を回避)
         device = new InternalSimulatorCashChanger
         {
             SkipStateVerification = true

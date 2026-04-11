@@ -11,7 +11,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>一括操作（スクリプト実行）による在庫更新や払い戻しを検証するテストクラス。</summary>
+/// <summary>一括操作(スクリプト実行)による在庫更新や払い戻しを検証するテストクラス。</summary>
 public class BulkOperationTests
 {
     /// <summary>複雑な入出金スクリプトを実行し、最終的なインベントリが正しく更新されることを検証します。</summary>
@@ -45,7 +45,7 @@ public class BulkOperationTests
         inv.GetCount(key1000).ShouldBe(3); // 5 deposited - 2 dispensed
     }
 
-    /// <summary>Action=""Repay"" を指定した入金完了操作で、在庫が更新されない（返却される）ことを検証します。</summary>
+    /// <summary>Action=""Repay"" を指定した入金完了操作で、在庫が更新されない(返却される)ことを検証します。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteScriptAsyncRepayActionShouldNotUpdateInventory()

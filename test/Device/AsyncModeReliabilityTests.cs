@@ -15,7 +15,7 @@ namespace CashChangerSimulator.Tests.Device;
 
 /// <summary>非同期モードにおけるデバイス動作の信頼性と状態の整合性を検証するテストクラス。</summary>
 /// <remarks>
-/// 非同期払い出し操作において、完了イベントが通知された瞬間の内部状態（Status, ResultCode）が
+/// 非同期払い出し操作において、完了イベントが通知された瞬間の内部状態(Status, ResultCode)が
 /// 規約通りであることをタイムクリティカルな条件下で検証します。
 /// </remarks>
 public class AsyncModeReliabilityTests

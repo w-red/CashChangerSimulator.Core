@@ -15,7 +15,7 @@ public abstract class UposTestBase : IDisposable
     /// <summary>テスト対象のキャッシュチェンジャーインスタンス。</summary>
     protected InternalSimulatorCashChanger Changer { get; }
 
-    /// <summary>全ての金種（JPY/USD）に対して一定数のキャッシュを補充します。</summary>
+    /// <summary>全ての金種(JPY/USD)に対して一定数のキャッシュを補充します。</summary>
     protected void SeedInitialCash(int count = 10)
     {
         foreach (var ccy in new[] { "JPY", "USD" })

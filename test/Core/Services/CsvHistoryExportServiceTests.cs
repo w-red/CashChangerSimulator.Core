@@ -15,7 +15,7 @@ public class CsvHistoryExportServiceTests
         service = new CsvHistoryExportService();
     }
 
-    /// <summary>取引履歴リストが正しい CSV 文字列（ヘッダーとデータ行）に変換されることを検証します。</summary>
+    /// <summary>取引履歴リストが正しい CSV 文字列(ヘッダーとデータ行)に変換されることを検証します。</summary>
     [Fact]
     public void ExportShouldReturnCorrectCsvString()
     {

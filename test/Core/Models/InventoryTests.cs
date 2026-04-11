@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core.Models;
 
-/// <summary>在庫管理（Inventory）の加算、設定、集計、シリアライズ機能を検証するためのテストクラス。</summary>
+/// <summary>在庫管理(Inventory)の加算、設定、集計、シリアライズ機能を検証するためのテストクラス。</summary>
 public class InventoryTests : CoreTestBase
 {
     /// <summary>指定された金種の数量を増加させることができることを検証する。</summary>
@@ -192,7 +192,7 @@ public class InventoryTests : CoreTestBase
         Inventory.CalculateTotal().ShouldBe(0);
     }
 
-    /// <summary>不一致状態（Discrepancy）の設定と取得が正しく行われることを検証する。</summary>
+    /// <summary>不一致状態(Discrepancy)の設定と取得が正しく行われることを検証する。</summary>
     [Fact]
     public void SetDiscrepancyShouldWork()
     {
@@ -201,7 +201,7 @@ public class InventoryTests : CoreTestBase
         Inventory.HasDiscrepancy.ShouldBeTrue();
     }
 
-    /// <summary>エスクロー（投入中）の数量を増加させることができることを検証する。</summary>
+    /// <summary>エスクロー(投入中)の数量を増加させることができることを検証する。</summary>
     [Fact]
     public void AddEscrowShouldIncreaseEscrowCount()
     {
@@ -252,7 +252,7 @@ public class InventoryTests : CoreTestBase
         Inventory.AllCounts.First().Key.CurrencyCode.ShouldBe(DenominationKey.DefaultCurrencyCode);
     }
 
-    /// <summary>不一致状態（HasDiscrepancy）を外部から直接変更できることを検証する。</summary>
+    /// <summary>不一致状態(HasDiscrepancy)を外部から直接変更できることを検証する。</summary>
     [Fact]
     public void HasDiscrepancySetterShouldWork()
     {

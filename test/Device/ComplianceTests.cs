@@ -49,7 +49,7 @@ public class ComplianceTests
         return (changer, controller, inventory, history, observer);
     }
 
-    /// <summary>ReadCashCounts が在庫の不整合（Discrepancy）を正しく報告することを検証します。</summary>
+    /// <summary>ReadCashCounts が在庫の不整合(Discrepancy)を正しく報告することを検証します。</summary>
     [Fact]
     public void ReadCashCountsShouldReportDiscrepancy()
     {

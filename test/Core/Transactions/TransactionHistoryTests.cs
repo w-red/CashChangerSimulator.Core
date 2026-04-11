@@ -47,7 +47,7 @@ public class TransactionHistoryTests
 
         history.Entries.Count.ShouldBe(1000);
         history.Entries[0].Amount.ShouldBe(1099); // 最新
-        history.Entries[999].Amount.ShouldBe(100); // 100番目が最後（100-1099の1000件）
+        history.Entries[999].Amount.ShouldBe(100); // 100番目が最後(100-1099の1000件)
     }
 
     /// <summary>HistoryState DTO との相互変換が正しく行われることを検証する。</summary>

@@ -29,7 +29,7 @@ public class HistoryPersistenceTests
         history.Entries[2].Amount.ShouldBe(200);
     }
 
-    /// <summary>外部状態（HistoryState）からの復元時にも最大履歴件数が維持されることを検証します。</summary>
+    /// <summary>外部状態(HistoryState)からの復元時にも最大履歴件数が維持されることを検証します。</summary>
     [Fact]
     public void FromStateShouldRespectMaxEntriesFromConfig()
     {

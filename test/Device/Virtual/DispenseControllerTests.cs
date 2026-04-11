@@ -41,7 +41,7 @@ public class DispenseControllerTests : DeviceTestBase
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
 
-    /// <summary>ハード故障（ジャム）発生中の出金要求時に Failure エラーが発生することを検証する。</summary>
+    /// <summary>ハード故障(ジャム)発生中の出金要求時に Failure エラーが発生することを検証する。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowFailureWhenJammed()
@@ -251,7 +251,7 @@ public class DispenseControllerTests : DeviceTestBase
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
     }
 
-    /// <summary>実際のマネージャーを介して在庫が正しく減少することを検証する（統合テスト的側面）。</summary>
+    /// <summary>実際のマネージャーを介して在庫が正しく減少することを検証する(統合テスト的側面)。</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldUpdateInventory()

@@ -14,7 +14,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>各種エラーシナリオ（ビジー、不正なパラメータ/シーケンス、在庫不足、ジャム）の検証テスト。</summary>
+/// <summary>各種エラーシナリオ(ビジー、不正なパラメータ/シーケンス、在庫不足、ジャム)の検証テスト。</summary>
 [Collection("GlobalLock")]
 public class ErrorScenarioTests
 {
@@ -110,7 +110,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>在庫不足時（OverDispense）の例外処理を検証します。</summary>
+    /// <summary>在庫不足時(OverDispense)の例外処理を検証します。</summary>
     [Fact]
     public void DispenseWithShortageShouldThrowOverdispense()
     {
@@ -213,7 +213,7 @@ public class ErrorScenarioTests
         ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense); // ECHAN_OVERDISPENSE
     }
 
-    /// <summary>在庫の合計金額は足りているが、金種の組み合わせで端数が支払えない（Impossible Change）場合にエラーになることを検証する。</summary>
+    /// <summary>在庫の合計金額は足りているが、金種の組み合わせで端数が支払えない(Impossible Change)場合にエラーになることを検証する。</summary>
     [Fact]
     public void DispenseChangeWithImpossibleCombinationShouldThrowOverdispense()
     {
@@ -222,7 +222,7 @@ public class ErrorScenarioTests
         // 1000円札 1枚のみの設定
         device.AdjustCashCounts([new CashCount(CashCountType.Bill, 1000, 1)]);
 
-        // 500円を要求（在庫金額はあるが、組み合わせがない）
+        // 500円を要求(在庫金額はあるが、組み合わせがない)
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(500));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
         ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
@@ -234,7 +234,7 @@ public class ErrorScenarioTests
     {
         var (device, _) = CreateDevice();
 
-        // USD設定下かつ標準でない金種（3ドルなど）
+        // USD設定下かつ標準でない金種(3ドルなど)
         device.CurrencyCode = "USD";
         var counts = new[] { new CashCount(CashCountType.Bill, 3, 1) };
 
@@ -242,7 +242,7 @@ public class ErrorScenarioTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>DirectIO (ADJUST_CASH_COUNTS_STR) に不正な引数（nullや非文字列）を渡した際、ErrorCode.Illegal が発生することを検証する。</summary>
+    /// <summary>DirectIO (ADJUST_CASH_COUNTS_STR) に不正な引数(nullや非文字列)を渡した際、ErrorCode.Illegal が発生することを検証する。</summary>
     [Fact]
     public void DirectIOAdjustWithInvalidArgumentsShouldThrowIllegal()
     {

@@ -77,7 +77,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         await _controller.DispenseCashAsync(counts, false);
 
         // Assert
-        // OperationCanceledException の場合、isError=false となりステータスは Idle に戻る（コードは Cancelled）
+        // OperationCanceledException の場合、isError=false となりステータスは Idle に戻る(コードは Cancelled)
         _controller.Status.ShouldBe(CashDispenseStatus.Idle);
         _controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
     }

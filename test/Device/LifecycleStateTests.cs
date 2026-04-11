@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>デバイスのライフサイクル状態（Closed, Opened, Claimed）の遷移ロジックを個別検証するテストクラス。</summary>
+/// <summary>デバイスのライフサイクル状態(Closed, Opened, Claimed)の遷移ロジックを個別検証するテストクラス。</summary>
 public class LifecycleStateTests
 {
     private readonly DeviceLifecycleContext context;
@@ -34,7 +34,7 @@ public class LifecycleStateTests
         Should.Throw<PosControlException>(() => state.Release(context)).ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 
-    /// <summary>OpenedState からの各操作による状態遷移（Claim, Close等）を検証します。</summary>
+    /// <summary>OpenedState からの各操作による状態遷移(Claim, Close等)を検証します。</summary>
     [Fact]
     public void OpenedStateTransitions()
     {
@@ -55,7 +55,7 @@ public class LifecycleStateTests
         state.Release(context).ShouldBe(state);
     }
 
-    /// <summary>ClaimedState からの解放（Release）および自動解放を伴う Close 操作を検証します。</summary>
+    /// <summary>ClaimedState からの解放(Release)および自動解放を伴う Close 操作を検証します。</summary>
     [Fact]
     public void ClaimedStateTransitions()
     {

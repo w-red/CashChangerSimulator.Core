@@ -11,7 +11,7 @@ using Moq;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>各機能ファサード（DepositFacade, InventoryFacade等）がメディエータを介してコマンドを正しく発行することを検証するテストクラス。</summary>
+/// <summary>各機能ファサード(DepositFacade, InventoryFacade等)がメディエータを介してコマンドを正しく発行することを検証するテストクラス。</summary>
 public class FacadeTests
 {
     private readonly Mock<IUposMediator> mediatorMock;

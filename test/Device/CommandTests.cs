@@ -9,7 +9,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>各コマンド（AdjustCashCounts, DispenseCash 等）の実行前検証と例外処理をテストするクラス。</summary>
+/// <summary>各コマンド(AdjustCashCounts, DispenseCash 等)の実行前検証と例外処理をテストするクラス。</summary>
 public class CommandTests
 {
     private readonly Inventory inventory;

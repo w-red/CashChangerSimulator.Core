@@ -4,13 +4,13 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>SimulatorCashChanger の基本機能（プロパティ、ライフサイクル、診断等）を網羅的に検証するメインテストクラス。</summary>
+/// <summary>SimulatorCashChanger の基本機能(プロパティ、ライフサイクル、診断等)を網羅的に検証するメインテストクラス。</summary>
 [Collection("GlobalLock")]
 public class SimulatorCashChangerTests : UposTestBase
 {
     private InternalSimulatorCashChanger changer => Changer;
 
-    /// <summary>インスタンス生成直後の初期状態（Closed, Unclaimed）を検証します。</summary>
+    /// <summary>インスタンス生成直後の初期状態(Closed, Unclaimed)を検証します。</summary>
     [Fact]
     public void InitialStateShouldBeClosed()
     {
@@ -20,7 +20,7 @@ public class SimulatorCashChangerTests : UposTestBase
         changer.DeviceEnabled.ShouldBeFalse();
     }
 
-    /// <summary>標準的なライフサイクル（Open -> Claim -> Enable -> Release -> Close）の遷移を検証します。</summary>
+    /// <summary>標準的なライフサイクル(Open -> Claim -> Enable -> Release -> Close)の遷移を検証します。</summary>
     [Fact]
     public void LifecycleOpenClaimEnableShouldTransitionStates()
     {
@@ -164,7 +164,7 @@ public class SimulatorCashChangerTests : UposTestBase
         changer.FullStatus.ShouldBe(CashChangerFullStatus.OK);
     }
 
-    /// <summary>利用可能状態での基本操作（回収、出力クリア、入金セッション）で例外が発生しないことを検証します。</summary>
+    /// <summary>利用可能状態での基本操作(回収、出力クリア、入金セッション)で例外が発生しないことを検証します。</summary>
     [Fact]
     public void CoreOperationsShouldNotThrowWhenEnabled()
     {
@@ -196,7 +196,7 @@ public class SimulatorCashChangerTests : UposTestBase
         changer.ResultCodeExtended.ShouldBe(999);
     }
 
-    /// <summary>回収口（Exit）に関連するプロパティの動作を検証します。</summary>
+    /// <summary>回収口(Exit)に関連するプロパティの動作を検証します。</summary>
     [Fact]
     public void ExitsShouldReflectConfig()
     {

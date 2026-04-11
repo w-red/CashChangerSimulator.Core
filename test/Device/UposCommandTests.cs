@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UPOS コマンドクラス群（BeginDeposit, DispenseCash 等）の実行および検証ロジックをテストするクラス。</summary>
+/// <summary>UPOS コマンドクラス群(BeginDeposit, DispenseCash 等)の実行および検証ロジックをテストするクラス。</summary>
 public class UposCommandTests
 {
     private readonly Mock<IUposMediator> mediatorMock;

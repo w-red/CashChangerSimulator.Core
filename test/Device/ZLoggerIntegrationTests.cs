@@ -66,7 +66,7 @@ public class ZLoggerIntegrationTests : IDisposable
         logContent.ShouldContain("Caught async error");
         logContent.ShouldContain(exceptionMessage);
 
-        // スタックトレース（メソッド名など）が含まれているか
+        // スタックトレース(メソッド名など)が含まれているか
         logContent.ShouldContain("ThrowNestedException");
         logContent.ShouldContain("ZLoggerIntegrationTests.cs");
 

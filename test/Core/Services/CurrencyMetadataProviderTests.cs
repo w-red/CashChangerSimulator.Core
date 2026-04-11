@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core.Services;
 
-/// <summary>通貨メタデータ（記号、名称、サポート金種等）の提供機能を検証するテストクラス。</summary>
+/// <summary>通貨メタデータ(記号、名称、サポート金種等)の提供機能を検証するテストクラス。</summary>
 public class CurrencyMetadataProviderTests
 {
     private readonly ConfigurationProvider configProvider;
@@ -18,7 +18,7 @@ public class CurrencyMetadataProviderTests
         provider = CurrencyMetadataProvider.Create(configProvider);
     }
 
-    /// <summary>コンストラクタ実行時にデフォルトの通貨（JPY）で初期化されることを検証します。</summary>
+    /// <summary>コンストラクタ実行時にデフォルトの通貨(JPY)で初期化されることを検証します。</summary>
     [Fact]
     public void ConstructorShouldInitializeWithDefaultJpy()
     {
@@ -26,7 +26,7 @@ public class CurrencyMetadataProviderTests
         provider.Symbol.ShouldBe("¥");
     }
 
-    /// <summary>未知の通貨コードが設定された際、適切にデフォルト（JPY）へフォールバックされることを検証します。</summary>
+    /// <summary>未知の通貨コードが設定された際、適切にデフォルト(JPY)へフォールバックされることを検証します。</summary>
     [Fact]
     public void RefreshShouldHandleUnknownCurrency()
     {
@@ -38,7 +38,7 @@ public class CurrencyMetadataProviderTests
         provider.SupportedDenominations.Count.ShouldBe(10); // JPY count
     }
 
-    /// <summary>通貨記号が文化圏（Culture）や設定に応じて正しく取得されることを検証します。</summary>
+    /// <summary>通貨記号が文化圏(Culture)や設定に応じて正しく取得されることを検証します。</summary>
     [Fact]
     public void SymbolShouldHandlePrefixAndSuffix()
     {
@@ -96,7 +96,7 @@ public class CurrencyMetadataProviderTests
         provider.GetDenominationName(unknown, "en-US").ShouldBe("100 (Bill)");
     }
 
-    /// <summary>設定変更時に通知イベント（Changed）が正しく発火されることを検証します。</summary>
+    /// <summary>設定変更時に通知イベント(Changed)が正しく発火されることを検証します。</summary>
     [Fact]
     public void ChangedShouldNotifyOnUpdate()
     {
@@ -109,7 +109,7 @@ public class CurrencyMetadataProviderTests
         called.ShouldBeTrue();
     }
 
-    /// <summary>日本円（JPY）において、設定ファイルの DisplayNameJP が優先的に使用されることを検証します。</summary>
+    /// <summary>日本円(JPY)において、設定ファイルの DisplayNameJP が優先的に使用されることを検証します。</summary>
     [Fact]
     public void GetDenominationNameShouldRespectDisplayNameJpForJpy()
     {
@@ -149,7 +149,7 @@ public class CurrencyMetadataProviderTests
         provider.SymbolSuffix.CurrentValue.ShouldBe("円");
     }
 
-    /// <summary>GetDenominationName の未カバーの条件分岐（非日本語環境での DisplayName 等）を検証します。</summary>
+    /// <summary>GetDenominationName の未カバーの条件分岐(非日本語環境での DisplayName 等)を検証します。</summary>
     [Fact]
     public void GetDenominationNameExtraPaths()
     {

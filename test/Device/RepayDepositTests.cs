@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>入金キャンセル（Repay）操作時に在庫が更新されず、セッションが正しく終了することを検証するテストクラス。</summary>
+/// <summary>入金キャンセル(Repay)操作時に在庫が更新されず、セッションが正しく終了することを検証するテストクラス。</summary>
 public class RepayDepositTests
 {
     private static InternalSimulatorCashChanger CreateSimulator()

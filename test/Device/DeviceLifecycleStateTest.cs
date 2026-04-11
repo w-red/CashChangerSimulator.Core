@@ -7,7 +7,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>DeviceLifecycleManager（State パターン）の遷移を検証するテストクラス。</summary>
+/// <summary>DeviceLifecycleManager(State パターン)の遷移を検証するテストクラス。</summary>
 public class DeviceLifecycleStateTest
 {
     private readonly HardwareStatusManager hardwareStatusManager = HardwareStatusManager.Create();

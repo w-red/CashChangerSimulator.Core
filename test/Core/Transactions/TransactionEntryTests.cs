@@ -4,7 +4,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core.Transactions;
 
-/// <summary>取引エントリ（TransactionEntry）の不変性と 'with' 式によるプロパティ変更を検証するテストクラス。</summary>
+/// <summary>取引エントリ(TransactionEntry)の不変性と 'with' 式によるプロパティ変更を検証するテストクラス。</summary>
 public class TransactionEntryTests
 {
     /// <summary>'with' 式を使用して init セッター経由でプロパティが正しく変更されることを検証する。</summary>

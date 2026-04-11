@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UPOS イベント通知（DataEvent, StatusUpdateEvent）のキューイング処理を検証するテストクラス。</summary>
+/// <summary>UPOS イベント通知(DataEvent, StatusUpdateEvent)のキューイング処理を検証するテストクラス。</summary>
 public class UposEventNotifierTests
 {
     private readonly Mock<IUposEventSink> mockSink;

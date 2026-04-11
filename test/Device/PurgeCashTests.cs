@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>PurgeCash（回収）操作により在庫が回収庫へ移動し、不整合（Discrepancy）が発生することを検証するテストクラス。</summary>
+/// <summary>PurgeCash(回収)操作により在庫が回収庫へ移動し、不整合(Discrepancy)が発生することを検証するテストクラス。</summary>
 public class PurgeCashTests : UposTestBase
 {
     public PurgeCashTests()

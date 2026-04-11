@@ -9,7 +9,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UPOS 規約に関連する複雑な操作（不整合フラグ管理、金種文字列解釈等）を検証するテストクラス。</summary>
+/// <summary>UPOS 規約に関連する複雑な操作(不整合フラグ管理、金種文字列解釈等)を検証するテストクラス。</summary>
 [Collection("GlobalLock")]
 public class UposComplianceTests
 {

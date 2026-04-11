@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Parsers;
 
-/// <summary>金種カウント文字列（UPOS標準形式）のパースロジックを検証するテストクラス。</summary>
+/// <summary>金種カウント文字列(UPOS標準形式)のパースロジックを検証するテストクラス。</summary>
 public class CashCountParserTests
 {
     private readonly List<DenominationKey> jpyKeys =
@@ -27,7 +27,7 @@ public class CashCountParserTests
         new DenominationKey(0.1m, CurrencyCashType.Coin, "USD")
     ];
 
-    /// <summary>セミコロン区切り形式（硬貨;紙幣）が JPY 環境で正しくパースされることを検証します。</summary>
+    /// <summary>セミコロン区切り形式(硬貨;紙幣)が JPY 環境で正しくパースされることを検証します。</summary>
     [Fact]
     public void ParseParsesSemicolonFormatCorrectlyJpy()
     {
@@ -45,7 +45,7 @@ public class CashCountParserTests
         result.ShouldContain(c => c.Type == CashCountType.Bill && c.NominalValue == 10000 && c.Count == 2);
     }
 
-    /// <summary>USD 環境でセミコロン区切り形式（硬貨;紙幣）が正しくパースされ、同額の硬貨と紙幣が区別されることを検証します。</summary>
+    /// <summary>USD 環境でセミコロン区切り形式(硬貨;紙幣)が正しくパースされ、同額の硬貨と紙幣が区別されることを検証します。</summary>
     [Fact]
     public void ParseParsesSemicolonFormatCorrectlyUsdAmbiguityResolved()
     {
@@ -80,7 +80,7 @@ public class CashCountParserTests
         result[0].Count.ShouldBe(50);
     }
 
-    /// <summary>セミコロンのない曖昧な形式（同額の硬貨と紙幣が存在する場合）で例外が発生することを検証します。</summary>
+    /// <summary>セミコロンのない曖昧な形式(同額の硬貨と紙幣が存在する場合)で例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnAmbiguousImplicitFormatWithoutSemicolon()
     {
@@ -91,7 +91,7 @@ public class CashCountParserTests
         exception.Message.ShouldContain("Ambiguous denomination value '1'");
     }
 
-    /// <summary>セクション数が不正（3つ以上）な場合に例外が発生することを検証します。</summary>
+    /// <summary>セクション数が不正(3つ以上)な場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnInvalidSectionCount()
     {
@@ -113,7 +113,7 @@ public class CashCountParserTests
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("ABC:10", jpyKeys, 1));
     }
 
-    /// <summary>枚数値が不正（数値以外、または負数）な場合に例外が発生することを検証します。</summary>
+    /// <summary>枚数値が不正(数値以外、または負数)な場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnInvalidCountValue()
     {
@@ -128,7 +128,7 @@ public class CashCountParserTests
         Should.Throw<ArgumentException>(() => CashCountParser.Parse("123:10", jpyKeys, 1));
     }
 
-    /// <summary>金種が正しいセクション（硬貨/紙幣）に配置されていない場合に例外が発生することを検証します。</summary>
+    /// <summary>金種が正しいセクション(硬貨/紙幣)に配置されていない場合に例外が発生することを検証します。</summary>
     [Fact]
     public void ParseThrowsOnDenominationInWrongSection()
     {
