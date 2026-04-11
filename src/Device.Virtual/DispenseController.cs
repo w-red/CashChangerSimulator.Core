@@ -13,7 +13,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>出金（払出）シーケンスを管理するコントローラー（仮想デバイス実装）。</summary>
+/// <summary>出金(払出)シーケンスを管理するコントローラー(仮想デバイス実装)。</summary>
 public class DispenseController : IDisposable
 {
     private readonly CashChangerManager manager;
@@ -90,7 +90,7 @@ public class DispenseController : IDisposable
     /// <summary>処理中かどうかを取得します。</summary>
     public bool IsBusy => Status == CashDispenseStatus.Busy;
 
-    /// <summary>シミュレーターを取得します（テスト用）。</summary>
+    /// <summary>シミュレーターを取得します(テスト用)。</summary>
     public IDeviceSimulator Simulator => simulator;
 
     /// <inheritdoc/>

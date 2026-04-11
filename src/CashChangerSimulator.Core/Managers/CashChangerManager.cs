@@ -13,8 +13,8 @@ namespace CashChangerSimulator.Core.Managers;
 
 /// <summary>入金・出金・在庫・履歴を統括するマネージャークラス。</summary>
 /// <remarks>
-/// 在庫データ（Inventory）と履歴（TransactionHistory）を操作し、
-/// 設定に基づいた入金の振り分けや、アルゴリズムによる出金の内訳計算（ChangeCalculator）を統合します。
+/// 在庫データ(Inventory)と履歴(TransactionHistory)を操作し、
+/// 設定に基づいた入金の振り分けや、アルゴリズムによる出金の内訳計算(ChangeCalculator)を統合します。
 /// シミュレータのドメインロジックの中核を担います。
 /// </remarks>
 public class CashChangerManager
@@ -24,7 +24,7 @@ public class CashChangerManager
     private readonly ConfigurationProvider configProvider;
     private readonly ILogger<CashChangerManager> logger = LogProvider.CreateLogger<CashChangerManager>();
 
-    /// <summary>在庫と取引履歴を指定してマネージャーを初期化します（後方互換用）。</summary>
+    /// <summary>在庫と取引履歴を指定してマネージャーを初期化します(後方互換用)。</summary>
     /// <param name="inventory">在庫。</param>
     /// <param name="history">取引履歴。</param>
     public CashChangerManager(Inventory inventory, TransactionHistory history)
@@ -32,7 +32,7 @@ public class CashChangerManager
     {
     }
 
-    /// <summary>Initializes a new instance of the <see cref="CashChangerManager"/> class.（後方互換: calculator 引数は無視されます）.</summary>
+    /// <summary>Initializes a new instance of the <see cref="CashChangerManager"/> class.(後方互換: calculator 引数は無視されます).</summary>
     /// <param name="inventory">在庫。</param>
     /// <param name="history">取引履歴。</param>
     /// <param name="calculator">使用されません (互換性維持のみ)。</param>
@@ -59,7 +59,7 @@ public class CashChangerManager
     }
 
     /// <summary>入金を処理します。</summary>
-    /// <remarks>金種の設定（リサイクル可否、満杯しきい値）に基づき、通常庫または回収庫に振り分けます。</remarks>
+    /// <remarks>金種の設定(リサイクル可否、満杯しきい値)に基づき、通常庫または回収庫に振り分けます。</remarks>
     /// <param name="counts">投入された金種ごとの枚数内訳。</param>
     public virtual void Deposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
@@ -130,7 +130,7 @@ public class CashChangerManager
         RecordPurgeHistory(counts);
     }
 
-    /// <summary>在庫枚数を直接調整します（管理用）。</summary>
+    /// <summary>在庫枚数を直接調整します(管理用)。</summary>
     /// <param name="counts">調整する金種と枚数のディクショナリ。</param>
     public virtual void Adjust(IReadOnlyDictionary<DenominationKey, int> counts)
     {

@@ -19,7 +19,7 @@ public class UposMediator : IUposMediator
     private StatusCoordinator? coordinator;
     private HardwareStatusManager? hardwareStatusManager;
 
-    /// <summary>Initializes a new instance of the <see cref="UposMediator"/> class.依存関係を指定せずに初期化します（後で Initialize を呼ぶ必要があります）。</summary>
+    /// <summary>Initializes a new instance of the <see cref="UposMediator"/> class.依存関係を指定せずに初期化します(後で Initialize を呼ぶ必要があります)。</summary>
     public UposMediator()
     {
     }
@@ -173,8 +173,8 @@ public class UposMediator : IUposMediator
 
     /// <summary>検証規則に基づき、現在の状態をチェックします。</summary>
     /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。</remarks>
-    /// <param name="mustBeClaimed">排他占有（Claim）が必要かどうか。</param>
-    /// <param name="mustBeEnabled">デバイス有効化（Enabled）が必要かどうか。</param>
+    /// <param name="mustBeClaimed">排他占有(Claim)が必要かどうか。</param>
+    /// <param name="mustBeEnabled">デバイス有効化(Enabled)が必要かどうか。</param>
     /// <param name="mustNotBeBusy">ビジー状態であってはならないかどうか。</param>
     public void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false)
     {
@@ -270,7 +270,7 @@ public class UposMediator : IUposMediator
     /// <inheritdoc/>
     public virtual void HandleFailure(DeviceErrorCode code, int codeEx = 0)
     {
-        // [FIX] Extended Code が未指定（0）の場合、DeviceErrorCode に応じたデフォルト値をセットする。
+        // [FIX] Extended Code が未指定(0)の場合、DeviceErrorCode に応じたデフォルト値をセットする。
         if (codeEx == 0)
         {
             codeEx = code switch

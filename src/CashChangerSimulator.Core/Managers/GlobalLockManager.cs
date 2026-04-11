@@ -5,7 +5,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Core.Managers;
 
-/// <summary>OS レベルのファイルロックを利用して、プロセス間でのデバイス占有（Claim）を制御するマネージャー。</summary>
+/// <summary>OS レベルのファイルロックを利用して、プロセス間でのデバイス占有(Claim)を制御するマネージャー。</summary>
 /// <remarks>
 /// .NET の FileShare.None を利用して、ファイルを「開きっぱなし」にすることでロックを維持します。
 /// プロセスがクラッシュした場合でも OS が自動的にハンドルを閉じるため、ゴーストロックが発生しません。
@@ -35,7 +35,7 @@ public sealed class GlobalLockManager : IDisposable
         }
     }
 
-    /// <summary>現在、他者（別プロセスまたは別ハンドル）によってロックが保持されているか等を確認します。</summary>
+    /// <summary>現在、他者(別プロセスまたは別ハンドル)によってロックが保持されているか等を確認します。</summary>
     /// <returns>既に他者が保持している場合は true。</returns>
     public bool IsLockHeldByAnother()
     {

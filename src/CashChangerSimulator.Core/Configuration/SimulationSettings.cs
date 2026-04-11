@@ -8,10 +8,10 @@ public class SimulationSettings
     {
     }
 
-    /// <summary>払い出し操作にかかる遅延時間（ミリ秒）。</summary>
+    /// <summary>払い出し操作にかかる遅延時間(ミリ秒)。</summary>
     public int DispenseDelayMs { get => field; set => field = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "DispenseDelayMs cannot be negative."); } = 500;
 
-    /// <summary>入金確定操作にかかる遅延時間（ミリ秒）。</summary>
+    /// <summary>入金確定操作にかかる遅延時間(ミリ秒)。</summary>
     public int DepositDelayMs { get => field; set => field = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "DepositDelayMs cannot be negative."); } = 500;
 
     /// <summary>起動時にデバイスを自動オープン (Hot Start) するかどうか。</summary>

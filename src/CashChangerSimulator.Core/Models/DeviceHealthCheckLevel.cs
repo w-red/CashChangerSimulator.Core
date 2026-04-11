@@ -9,7 +9,7 @@ public enum DeviceHealthCheckLevel
     /// <summary>内部診断。</summary>
     Internal = 1,
 
-    /// <summary>外部診断（ハードウェア連携含む）。</summary>
+    /// <summary>外部診断(ハードウェア連携含む)。</summary>
     External = 2,
 
     /// <summary>対話型診断。</summary>

@@ -11,7 +11,7 @@ public interface ICashChangerStatusSink
     /// <summary>非同期処理中かどうかを設定します。</summary>
     void SetAsyncProcessing(bool isBusy);
 
-    /// <summary>デバイスの状態（POS for .NET 標準）。</summary>
+    /// <summary>デバイスの状態(POS for .NET 標準)。</summary>
     ControlState State { get; }
 
     /// <summary>デバイスが占有されているかどうかを取得または設定します。</summary>

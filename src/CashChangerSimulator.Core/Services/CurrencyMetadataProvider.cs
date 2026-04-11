@@ -114,19 +114,19 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
     /// <inheritdoc/>
     public Observable<Unit> Changed { get; }
 
-    /// <summary>通貨コード（例: "JPY"）。</summary>
+    /// <summary>通貨コード(例: "JPY")。</summary>
     public string CurrencyCode => ((BindableReactiveProperty<string>)CurrencyCodeProperty).Value;
 
-    /// <summary>通貨記号（プレフィックス優先）。</summary>
+    /// <summary>通貨記号(プレフィックス優先)。</summary>
     public string Symbol => !string.IsNullOrEmpty(((BindableReactiveProperty<string>)SymbolPrefixProperty).Value) ? ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value : ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value;
 
-    /// <summary>通貨記号のプレフィックス（例: "¥", "$"）。通常、金額の前に表示されます。</summary>
+    /// <summary>通貨記号のプレフィックス(例: "¥", "$")。通常、金額の前に表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolPrefix { get; }
 
-    /// <summary>通貨記号のサフィックス（例: "円"）。通常、金額の後ろに表示されます。</summary>
+    /// <summary>通貨記号のサフィックス(例: "円")。通常、金額の後ろに表示されます。</summary>
     public ReadOnlyReactiveProperty<string> SymbolSuffix { get; }
 
-    /// <summary>この通貨でサポートされている全金種のリスト（額面の降順）。</summary>
+    /// <summary>この通貨でサポートされている全金種のリスト(額面の降順)。</summary>
     public IReadOnlyList<DenominationKey> SupportedDenominations { get; private set; } = [];
 
     /// <summary>Internal access to reactive properties via cast.</summary>

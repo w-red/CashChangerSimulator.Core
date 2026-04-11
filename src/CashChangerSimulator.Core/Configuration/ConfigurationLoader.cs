@@ -31,7 +31,7 @@ public static class ConfigurationLoader
         PropertyNamingPolicy = null,
     };
 
-    /// <summary>取引履歴の保存先ファイルパス（バイナリ形式）。</summary>
+    /// <summary>取引履歴の保存先ファイルパス(バイナリ形式)。</summary>
     private static readonly string HistoryStatePath =
         Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,
@@ -49,7 +49,7 @@ public static class ConfigurationLoader
     public static string DefaultHistoryStateFilePath =>
         HistoryStatePath;
 
-    /// <summary>設定ファイルを読み込む（存在しない場合はデフォルトを作成して返す）。</summary>
+    /// <summary>設定ファイルを読み込む(存在しない場合はデフォルトを作成して返す)。</summary>
     /// <param name="path">読み込み元のファイルパス。</param>
     /// <returns>読み込まれた設定。</returns>
     public static SimulatorConfiguration Load(

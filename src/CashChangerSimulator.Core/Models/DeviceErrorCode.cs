@@ -45,7 +45,7 @@ public enum DeviceErrorCode
     /// <summary>拡張エラーが発生。 (OPOS_E_EXTENDED).</summary>
     Extended = 114,
 
-    /// <summary>在庫不足（シミュレータ固有）。</summary>
+    /// <summary>在庫不足(シミュレータ固有)。</summary>
     NoInventory = 118,
 
     /// <summary>未実装の機能。</summary>
@@ -60,6 +60,6 @@ public enum DeviceErrorCode
     /// <summary>処理が重複している。</summary>
     Overlapped = 301,
 
-    /// <summary>処理がキャンセル（クリア）された。</summary>
+    /// <summary>処理がキャンセル(クリア)された。</summary>
     Cancelled = 115,
 }

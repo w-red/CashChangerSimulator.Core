@@ -5,7 +5,7 @@ using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>デバイスの診断機能（ヘルスチェック、統計情報）を管理するコントローラー（仮想デバイス実装）。</summary>
+/// <summary>デバイスの診断機能(ヘルスチェック、統計情報)を管理するコントローラー(仮想デバイス実装)。</summary>
 /// <remarks>
 /// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして診断機能を提供します。
 /// </remarks>

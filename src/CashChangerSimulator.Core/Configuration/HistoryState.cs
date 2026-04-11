@@ -3,7 +3,7 @@ using MemoryPack;
 
 namespace CashChangerSimulator.Core.Configuration;
 
-/// <summary>取引履歴の状態を保持するクラス（永続化用）。</summary>
+/// <summary>取引履歴の状態を保持するクラス(永続化用)。</summary>
 [MemoryPackable]
 public partial class HistoryState
 {

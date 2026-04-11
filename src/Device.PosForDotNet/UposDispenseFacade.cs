@@ -10,8 +10,8 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 
 /// <summary>UPOS の出金操作を統合的に処理する Facade。</summary>
 /// <remarks>
-/// 金額指定の払い出し（DispenseChange）および金種指定の払い出し（DispenseCash）のリクエストを受け、
-/// 適切なバリデーション（在庫確認、状態チェック）を行った後にコマンドを実行します。
+/// 金額指定の払い出し(DispenseChange)および金種指定の払い出し(DispenseCash)のリクエストを受け、
+/// 適切なバリデーション(在庫確認、状態チェック)を行った後にコマンドを実行します。
 /// </remarks>
 public class UposDispenseFacade
 {

@@ -5,11 +5,11 @@ namespace CashChangerSimulator.Device.PosForDotNet.Services;
 
 /// <summary>イベント通知の送り先となる SO 本体が実装するインターフェース。</summary>
 /// <remarks>
-/// Microsoft POS for .NET (OPOS) の基本クラス（CashChangerBasic等）が持つイベント通知メソッドへの橋渡しを行います。
+/// Microsoft POS for .NET (OPOS) の基本クラス(CashChangerBasic等)が持つイベント通知メソッドへの橋渡しを行います。
 /// </remarks>
 public interface IUposEventSink
 {
-    /// <summary>デバイスの状態（POS for .NET 標準）。</summary>
+    /// <summary>デバイスの状態(POS for .NET 標準)。</summary>
     ControlState State { get; }
 
     /// <summary>デバイスが占有されているかどうかを取得または設定します。</summary>

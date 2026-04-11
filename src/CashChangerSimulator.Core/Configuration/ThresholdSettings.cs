@@ -3,12 +3,12 @@ namespace CashChangerSimulator.Core.Configuration;
 /// <summary>ステータス判定用のしきい値を管理する設定クラス。</summary>
 public class ThresholdSettings
 {
-    /// <summary>ニアエンプティと判定する枚数（この枚数以下の場合）。</summary>
+    /// <summary>ニアエンプティと判定する枚数(この枚数以下の場合)。</summary>
     public int NearEmpty { get; set; } = 5;
 
-    /// <summary>ニアフルと判定する枚数（この枚数以上の場合）。</summary>
+    /// <summary>ニアフルと判定する枚数(この枚数以上の場合)。</summary>
     public int NearFull { get; set; } = 90;
 
-    /// <summary>フルと判定する枚数（この枚数以上の場合）。</summary>
+    /// <summary>フルと判定する枚数(この枚数以上の場合)。</summary>
     public int Full { get; set; } = 100;
 }

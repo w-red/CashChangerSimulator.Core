@@ -9,7 +9,7 @@ public class ScriptCommand
     /// <summary>通貨コードを取得または設定します。</summary>
     public string? Currency { get; set; }
 
-    /// <summary>値（数値または変数参照）を取得または設定します。</summary>
+    /// <summary>値(数値または変数参照)を取得または設定します。</summary>
     public object Value { get; set; } = 0;
 
     /// <summary>枚数または回数を取得または設定します。</summary>

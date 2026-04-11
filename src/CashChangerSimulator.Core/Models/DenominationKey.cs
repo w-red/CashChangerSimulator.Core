@@ -3,11 +3,11 @@ using MemoryPack;
 namespace CashChangerSimulator.Core.Models;
 
 /// <summary>金種を一意に識別するための複合キー。</summary>
-/// <param name="Value">金種の額面（例: 1000, 500, 0.25）。</param>
-/// <param name="Type">金種の種別（紙幣または硬貨）。</param>
-/// <param name="CurrencyCode">通貨コード（例: "JPY"）。</param>
+/// <param name="Value">金種の額面(例: 1000, 500, 0.25)。</param>
+/// <param name="Type">金種の種別(紙幣または硬貨)。</param>
+/// <param name="CurrencyCode">通貨コード(例: "JPY")。</param>
 /// <remarks>
-/// 通貨コード（JPY等）、額面（1000等）、および硬貨/紙幣の種別を組み合わせたイミュータブルなキー。
+/// 通貨コード(JPY等)、額面(1000等)、および硬貨/紙幣の種別を組み合わせたイミュータブルなキー。
 /// 在庫管理や金額計算の最小単位として、ディクショナリのキー等に使用されます。
 /// </remarks>
 [MemoryPackable]
@@ -54,7 +54,7 @@ public partial record DenominationKey(
     public override int GetHashCode()
     {
         // decimal.GetHashCode() は 1000m と 1000.00m で異なる値を返す可能性があるため、
-        // 文字列変換（G29形式など）や正規化を使用してハッシュ値を安定させる必要があります。
+        // 文字列変換(G29形式など)や正規化を使用してハッシュ値を安定させる必要があります。
         // ここでは最も安全な ToString("G29") によるハッシュ値生成を行います。
         return HashCode.Combine(
             Value.ToString("G29", System.Globalization.CultureInfo.InvariantCulture),
@@ -62,7 +62,7 @@ public partial record DenominationKey(
             CurrencyCode);
     }
 
-    /// <summary>設定ファイル等で使用する文字列形式を取得します（例: "B1000", "C500", "C0.25"）。</summary>
+    /// <summary>設定ファイル等で使用する文字列形式を取得します(例: "B1000", "C500", "C0.25")。</summary>
     /// <returns>文字列形式の金種。</returns>
     public string ToDenominationString() => $"{PrefixChar}{Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
@@ -77,7 +77,7 @@ public partial record DenominationKey(
 
     /// <summary>通貨コードと文字列形式から金種キーを解析します。</summary>
     /// <param name="s">解析対象の文字列。</param>
-    /// <param name="currencyCode">通貨コード（s に通貨コードが含まれない場合のデフォルトとして使用）。</param>
+    /// <param name="currencyCode">通貨コード(s に通貨コードが含まれない場合のデフォルトとして使用)。</param>
     /// <param name="result">解析結果の金種キー。</param>
     /// <returns>成功した場合は true、それ以外は false。</returns>
     public static bool TryParse(string s, string currencyCode, out DenominationKey? result)
@@ -90,7 +90,7 @@ public partial record DenominationKey(
             return false;
         }
 
-        // セパレータ（:）が含まれる場合は、通貨コードと金種文字列に分離する
+        // セパレータ(:)が含まれる場合は、通貨コードと金種文字列に分離する
         var parts = s.Split(KeySeparator, 2);
         string targetDenomination;
         string targetCurrency;

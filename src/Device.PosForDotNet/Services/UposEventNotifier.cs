@@ -7,7 +7,7 @@ public class UposEventNotifier : IUposEventNotifier
 {
     private IUposEventSink? sink;
 
-    /// <summary>Initializes a new instance of the <see cref="UposEventNotifier"/> class.イベント通知先を指定せずに初期化します（後で Initialize を呼ぶ必要があります）。</summary>
+    /// <summary>Initializes a new instance of the <see cref="UposEventNotifier"/> class.イベント通知先を指定せずに初期化します(後で Initialize を呼ぶ必要があります)。</summary>
     public UposEventNotifier()
     {
     }

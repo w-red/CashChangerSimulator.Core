@@ -3,7 +3,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Strategies;
 
-/// <summary>重複投入（Overlap）エラー状態を設定または解除する戦略。</summary>
+/// <summary>重複投入(Overlap)エラー状態を設定または解除する戦略。</summary>
 public class SetOverlapStrategy : IDirectIOCommand
 {
     /// <inheritdoc/>

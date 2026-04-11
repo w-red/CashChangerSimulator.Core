@@ -3,7 +3,7 @@ using R3;
 
 namespace CashChangerSimulator.Core.Managers;
 
-/// <summary>ハードウェアの状態（ジャム、接続、エラー等）を操作するためのインターフェース。</summary>
+/// <summary>ハードウェアの状態(ジャム、接続、エラー等)を操作するためのインターフェース。</summary>
 public interface IHardwareStatusInput
 {
     /// <summary>占有状態を操作するためのプロパティ。</summary>

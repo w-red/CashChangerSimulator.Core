@@ -9,7 +9,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 /// <param name="diagnosticController">診断ロジックを制御する <see cref="DiagnosticController"/>。</param>
 /// <param name="mediator">コマンド実行を仲介する <see cref="IUposMediator"/>。</param>
 /// <remarks>
-/// デバイスのヘルスチェック（<see cref="CheckHealth"/>）、統計情報の取得・更新・リセット（<see cref="RetrieveStatistics"/>等）など、
+/// デバイスのヘルスチェック(<see cref="CheckHealth"/>)、統計情報の取得・更新・リセット(<see cref="RetrieveStatistics"/>等)など、
 /// デバイスのメンテナンスと診断に関連する操作を集約します。
 /// </remarks>
 public class DiagnosticsFacade(DiagnosticController diagnosticController, IUposMediator mediator)

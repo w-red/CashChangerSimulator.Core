@@ -127,8 +127,8 @@ public class OverallStatusAggregator : IDisposable
 
     private static CashStatus AggregateFull(IEnumerable<CashStatusMonitor> monitors)
     {
-        // ニアフル・満杯についても、リサイクル可能（払出に関わる）な金種のみを対象とする
-        // ※回収庫の満杯監視が必要な場合は別途ロジックが必要だが、現状の要求は在庫（リサイクル）に関するもの
+        // ニアフル・満杯についても、リサイクル可能(払出に関わる)な金種のみを対象とする
+        // ※回収庫の満杯監視が必要な場合は別途ロジックが必要だが、現状の要求は在庫(リサイクル)に関するもの
         var recyclableStatuses = monitors.Where(m => m.IsRecyclable).Select(m => m.Status.CurrentValue).ToList();
 
         if (recyclableStatuses.Count == 0)

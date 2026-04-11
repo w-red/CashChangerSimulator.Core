@@ -4,7 +4,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
-/// <summary>enddeposit コマンド: 入金を終了します（仮想デバイス）。</summary>
+/// <summary>enddeposit コマンド: 入金を終了します(仮想デバイス)。</summary>
 public class EndDepositCommandHandler(DepositController depositController) : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>

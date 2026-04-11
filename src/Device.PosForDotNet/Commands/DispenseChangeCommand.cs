@@ -84,7 +84,7 @@ public class DispenseChangeCommand : IUposCommand
         }
     }
 
-    /// <summary>コマンド実行前の状態および事前条件（ハードウェア状態）を検証します。</summary>
+    /// <summary>コマンド実行前の状態および事前条件(ハードウェア状態)を検証します。</summary>
     /// <param name="mediator">検証に使用するメディエーター。</param>
     public void Verify(IUposMediator mediator)
     {

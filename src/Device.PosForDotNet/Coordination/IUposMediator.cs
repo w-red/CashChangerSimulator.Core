@@ -32,19 +32,19 @@ public interface IUposMediator
     /// <remarks>Open, Claim, Enable, Busy 等の状態を確認し、不適切な場合は例外をスローします。</remarks>
     void VerifyState(bool mustBeClaimed = true, bool mustBeEnabled = false, bool mustNotBeBusy = false);
 
-    /// <summary>デバイスが有効（Enable）かどうかを取得または設定します。</summary>
+    /// <summary>デバイスが有効(Enable)かどうかを取得または設定します。</summary>
     bool DeviceEnabled { get; set; }
 
     /// <summary>データイベントを通知するかどうかを取得または設定します。</summary>
     bool DataEventEnabled { get; set; }
 
-    /// <summary>デバイスが占有（Claim）されているかどうかを取得または設定します。</summary>
+    /// <summary>デバイスが占有(Claim)されているかどうかを取得または設定します。</summary>
     bool Claimed { get; set; }
 
     /// <summary>他者によってデバイスが占有されているかどうかを取得または設定します。</summary>
     bool ClaimedByAnother { get; set; }
 
-    /// <summary>状態検証（VerifyState）をスキップするかどうかを取得または設定します。</summary>
+    /// <summary>状態検証(VerifyState)をスキップするかどうかを取得または設定します。</summary>
     bool SkipStateVerification { get; set; }
 
     /// <summary>非同期処理中かどうかを取得または設定します。</summary>

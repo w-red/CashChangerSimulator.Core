@@ -37,7 +37,7 @@ public interface ICashChangerDevice : IDisposable
     Task CloseAsync();
 
     /// <summary>デバイスの排他権を非同期で取得します。</summary>
-    /// <param name="timeout">タイムアウト（ミリ秒）。</param>
+    /// <param name="timeout">タイムアウト(ミリ秒)。</param>
     /// <returns>完了を示すタスク。</returns>
     Task ClaimAsync(int timeout);
 
@@ -53,7 +53,7 @@ public interface ICashChangerDevice : IDisposable
     /// <returns>完了を示すタスク。</returns>
     Task DisableAsync();
 
-    /// <summary>預入（Deposit）処理を開始します。</summary>
+    /// <summary>預入(Deposit)処理を開始します。</summary>
     /// <returns>完了を示すタスク。</returns>
     Task BeginDepositAsync();
 
@@ -70,7 +70,7 @@ public interface ICashChangerDevice : IDisposable
     /// <returns>完了を示すタスク。</returns>
     Task RepayDepositAsync();
 
-    /// <summary>預入処理を終了（収納または返却）します。</summary>
+    /// <summary>預入処理を終了(収納または返却)します。</summary>
     /// <param name="action">終了アクション。</param>
     /// <returns>完了を示すタスク。</returns>
     Task EndDepositAsync(DepositAction action);
@@ -94,11 +94,11 @@ public interface ICashChangerDevice : IDisposable
     /// <returns>完了を示すタスク。</returns>
     Task AdjustInventoryAsync(IEnumerable<CashDenominationCount> counts);
 
-    /// <summary>現金を回収庫へ移動（パージ）します。</summary>
+    /// <summary>現金を回収庫へ移動(パージ)します。</summary>
     /// <returns>完了を示すタスク。</returns>
     Task PurgeCashAsync();
 
-    /// <summary>デバイスの健康診断（自己診断）を実行します。</summary>
+    /// <summary>デバイスの健康診断(自己診断)を実行します。</summary>
     /// <param name="level">診断レベル。</param>
     /// <returns>診断結果メッセージ。</returns>
     Task<string> CheckHealthAsync(DeviceHealthCheckLevel level);

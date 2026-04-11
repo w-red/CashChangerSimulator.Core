@@ -318,7 +318,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             return;
         }
 
-        // 1. 各コントローラーの破棄（内部でのキャンセルを誘発）
+        // 1. 各コントローラーの破棄(内部でのキャンセルを誘発)
         depositController.Dispose();
         dispenseController.Dispose();
         diagnosticController.Dispose();
@@ -394,7 +394,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             else if (depositController.LastErrorCode != DeviceErrorCode.Success
                      || dispenseController.LastErrorCode != DeviceErrorCode.Success)
             {
-                // エラー状態の判定（リカバリ待ち等の詳細ロジックは必要に応じて拡張）
+                // エラー状態の判定(リカバリ待ち等の詳細ロジックは必要に応じて拡張)
                 state.Value = DeviceControlState.Error;
             }
             else

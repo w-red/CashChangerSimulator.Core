@@ -2,7 +2,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Testing;
 
 /// <summary>SimulatorCashChanger のテスト用拡張を提供します。</summary>
 /// <remarks>
-/// テストプロジェクトにおいてデバイスの内部状態（イベント発火や非同期フラグ）への直感的なアクセスを実現します。
+/// テストプロジェクトにおいてデバイスの内部状態(イベント発火や非同期フラグ)への直感的なアクセスを実現します。
 /// ※C# 14 Extension Types の仕様策定状況に合わせ、現在は静的拡張メソッドとして実装されています。
 /// </remarks>
 public static class SimulatorTestingExtensions
@@ -26,7 +26,7 @@ public static class SimulatorTestingExtensions
             => sim.FireEventInternal(e);
 
         /// <summary>非同期処理の実行状態を強制的に設定します。</summary>
-        /// <remarks>デバイスが通信中や動作中（ビジー状態）である場合の排他制御ロジックをテストするために使用します。</remarks>
+        /// <remarks>デバイスが通信中や動作中(ビジー状態)である場合の排他制御ロジックをテストするために使用します。</remarks>
         public void SetAsyncProcessing(bool isBusy)
             => sim.SetAsyncProcessingInternal(isBusy);
     }

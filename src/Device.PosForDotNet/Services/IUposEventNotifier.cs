@@ -10,7 +10,7 @@ public interface IUposEventNotifier : ICashChangerStatusSink
     /// <summary>イベント通知先を指定して初期化します。</summary>
     void Initialize(IUposEventSink sink);
 
-    /// <summary>イベントを通知キューに追加（または即時送信）します。</summary>
+    /// <summary>イベントを通知キューに追加(または即時送信)します。</summary>
     /// <param name="e">イベント引数。</param>
     void NotifyEvent(EventArgs e);
 
@@ -22,6 +22,6 @@ public interface IUposEventNotifier : ICashChangerStatusSink
     /// <param name="e">イベント引数。</param>
     void QueueEvent(EventArgs e);
 
-    /// <summary>pOS.NET の内部イベントキューイングを無効化するかどうかを取得します（テスト用）。</summary>
+    /// <summary>pOS.NET の内部イベントキューイングを無効化するかどうかを取得します(テスト用)。</summary>
     bool DisableUposEventQueuing { get; }
 }

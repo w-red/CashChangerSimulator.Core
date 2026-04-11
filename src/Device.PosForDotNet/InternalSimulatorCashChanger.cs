@@ -12,7 +12,7 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet;
 
 /// <summary>シミュレータ内部およびテストでのみ使用される機能を備えた <see cref="SimulatorCashChanger"/> の拡張クラス。</summary>
-/// <remarks>本番用（サービスオブジェクト）のロジックと、シミュレータの利便性・テスト用フックを分離するために使用します。</remarks>
+/// <remarks>本番用(サービスオブジェクト)のロジックと、シミュレータの利便性・テスト用フックを分離するために使用します。</remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Internal Simulator Cash Changer", 1, 14)]
 public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulator
 {
@@ -73,7 +73,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     /// <summary>テスト用：出金時に例外をシミュレートするかどうかを取得または設定します。</summary>
     public bool SimulateDispenseException { get; set; }
 
-    /// <summary>テスト用：POS.NET のイベントキューイングを無効にするかどうか（NRE回避用）を取得または設定します。</summary>
+    /// <summary>テスト用：POS.NET のイベントキューイングを無効にするかどうか(NRE回避用)を取得または設定します。</summary>
     public bool DisableUposEventQueuing { get; set; }
 
     /// <summary>テスト用：OPOS コールの履歴を取得します。</summary>
@@ -119,7 +119,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task SimulateDispenseAsync(CancellationToken ct = default)
     {
-        // ViewModels から呼び出された際の履歴を記録（テスト検証用）
+        // ViewModels から呼び出された際の履歴を記録(テスト検証用)
         OposHistory.Add("DispenseCash (Triggered)");
 
         if (SimulateDispenseException)
@@ -138,7 +138,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
-    /// <summary>テスト用：個別の依存関係を指定して初期化します（8個の引数版）。</summary>
+    /// <summary>テスト用：個別の依存関係を指定して初期化します(8個の引数版)。</summary>
     public InternalSimulatorCashChanger(
         ConfigurationProvider configProvider,
         Inventory inventory,
@@ -165,7 +165,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
-    /// <summary>テスト用：最小限の依存関係で初期化します（named parameters対応）。</summary>
+    /// <summary>テスト用：最小限の依存関係で初期化します(named parameters対応)。</summary>
     public InternalSimulatorCashChanger(
         ConfigurationProvider? configProvider = null,
         Inventory? inventory = null,

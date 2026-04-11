@@ -2,8 +2,8 @@ namespace CashChangerSimulator.Core.Configuration;
 
 /// <summary>金種ごとの詳細設定を保持するデータモデル。</summary>
 /// <remarks>
-/// 表示名、初期枚数、各種センサー（NearEmpty/Full）のしきい値、
-/// および釣銭（リサイクル）として使用可能かどうかのフラグを保持します。
+/// 表示名、初期枚数、各種センサー(NearEmpty/Full)のしきい値、
+/// および釣銭(リサイクル)として使用可能かどうかのフラグを保持します。
 /// </remarks>
 public class DenominationSettings
 {
@@ -25,7 +25,7 @@ public class DenominationSettings
     /// <summary>フル判定値。</summary>
     public int Full { get; set; } = 100;
 
-    /// <summary>この金種を釣銭（リサイクル）として使用するかどうか。</summary>
+    /// <summary>この金種を釣銭(リサイクル)として使用するかどうか。</summary>
     /// <remarks>false: 出金時の計算対象から除外されます。</remarks>
     public bool IsRecyclable { get; set; } = true;
 

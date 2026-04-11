@@ -11,7 +11,7 @@ public interface IDirectIOCommand
     /// <summary>コマンドを実行します。</summary>
     /// <param name="data">コマンドデータ。</param>
     /// <param name="obj">コマンドオブジェクト。</param>
-    /// <param name="device">実行対象のデバイス（必要に応じて状態変更に使用）。</param>
+    /// <param name="device">実行対象のデバイス(必要に応じて状態変更に使用)。</param>
     /// <returns>実行結果データ。</returns>
     DirectIOData Execute(int data, object obj, SimulatorCashChanger device);
 }

@@ -10,7 +10,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>入金シーケンスのライフサイクルを管理するコントローラー（仮想デバイス実装）。</summary>
+/// <summary>入金シーケンスのライフサイクルを管理するコントローラー(仮想デバイス実装)。</summary>
 /// <remarks>
 /// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして入金プロセスをシミュレートします。
 /// </remarks>
@@ -84,7 +84,7 @@ public class DepositController : IDisposable
     /// <summary>エラーイベントの通知ストリーム。</summary>
     public virtual Observable<DeviceErrorEventArgs> ErrorEvents { get; }
 
-    /// <summary>リアルタイムデータの通知。上位層（アダプター等）が利用します。</summary>
+    /// <summary>リアルタイムデータの通知。上位層(アダプター等)が利用します。</summary>
     public bool RealTimeDataEnabled { get; set; }
 
     /// <summary>投入された合計金額を取得します。</summary>
@@ -107,7 +107,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>オーバーフロー（満杯等により収納不可）した金額を取得します。</summary>
+    /// <summary>オーバーフロー(満杯等により収納不可)した金額を取得します。</summary>
     public virtual decimal OverflowAmount
     {
         get
@@ -127,7 +127,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>リジェクト（偽札、汚れ等により返却）された金額を取得します。</summary>
+    /// <summary>リジェクト(偽札、汚れ等により返却)された金額を取得します。</summary>
     public virtual decimal RejectAmount
     {
         get
@@ -214,7 +214,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>入金が確定（Fixed）されたかどうかを取得します。</summary>
+    /// <summary>入金が確定(Fixed)されたかどうかを取得します。</summary>
     public virtual bool IsFixed
     {
         get
@@ -336,7 +336,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>預入（Deposit）処理を開始します。</summary>
+    /// <summary>預入(Deposit)処理を開始します。</summary>
     public virtual void BeginDeposit()
     {
         lock (stateLock)
@@ -402,7 +402,7 @@ public class DepositController : IDisposable
     }
 
     /// <summary>入金処理を非同期で終了します。</summary>
-    /// <param name="action">終了時のアクション（収納または返却）。</param>
+    /// <param name="action">終了時のアクション(収納または返却)。</param>
     /// <returns>完了を示すタスク。</returns>
     public virtual async Task EndDepositAsync(DepositAction action)
     {
@@ -617,8 +617,8 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>入金を終了します（同期ラッパー）。</summary>
-    /// <param name="action">終了時のアクション（収納または返却）。</param>
+    /// <summary>入金を終了します(同期ラッパー)。</summary>
+    /// <param name="action">終了時のアクション(収納または返却)。</param>
     public virtual void EndDeposit(DepositAction action)
     {
         EndDepositAsync(action).GetAwaiter().GetResult();
@@ -647,7 +647,7 @@ public class DepositController : IDisposable
             .ConfigureAwait(false);
     }
 
-    /// <summary>投入された現金を返却し、入金セッションを終了します（同期ラッパー）。</summary>
+    /// <summary>投入された現金を返却し、入金セッションを終了します(同期ラッパー)。</summary>
     public virtual void RepayDeposit()
     {
         RepayDepositAsync().GetAwaiter().GetResult();
@@ -718,7 +718,7 @@ public class DepositController : IDisposable
         }
     }
 
-    /// <summary>指定された金額に近い金種をリジェクト庫（返却用）に投入します。</summary>
+    /// <summary>指定された金額に近い金種をリジェクト庫(返却用)に投入します。</summary>
     /// <param name="amount">リジェクトする合計金額。</param>
     public void TrackReject(decimal amount)
     {

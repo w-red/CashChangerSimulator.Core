@@ -3,7 +3,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Lifecycle;
 
-/// <summary>デバイスが未接続（Closed）の状態を表します。</summary>
+/// <summary>デバイスが未接続(Closed)の状態を表します。</summary>
 public class ClosedState : IDeviceState
 {
     /// <inheritdoc/>

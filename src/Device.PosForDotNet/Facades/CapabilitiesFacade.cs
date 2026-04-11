@@ -2,10 +2,10 @@ using CashChangerSimulator.Core.Configuration;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 
-/// <summary>デバイスの能力（CapXXX プロパティ）を公開する <see cref="CapabilitiesFacade"/>。</summary>
+/// <summary>デバイスの能力(CapXXX プロパティ)を公開する <see cref="CapabilitiesFacade"/>。</summary>
 /// <param name="config">シミュレーターの設定情報である <see cref="SimulatorConfiguration"/>。</param>
 /// <remarks>
-/// UPOS 仕様に基づき、デバイスがサポートする機能（出金、入金、各ステータスの報告可否など）を読み取り専用で提供します。
+/// UPOS 仕様に基づき、デバイスがサポートする機能(出金、入金、各ステータスの報告可否など)を読み取り専用で提供します。
 /// </remarks>
 public class CapabilitiesFacade(SimulatorConfiguration config)
 {

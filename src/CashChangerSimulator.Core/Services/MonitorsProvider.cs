@@ -35,7 +35,7 @@ public class MonitorsProvider : IDisposable
 
         RefreshMonitors();
 
-        // 構成変更時またはメタデータ変更時（通貨変更時など）にモニターリストも更新する
+        // 構成変更時またはメタデータ変更時(通貨変更時など)にモニターリストも更新する
         configProvider.Reloaded.Subscribe(_ => RefreshMonitors()).AddTo(disposables);
         metadataProvider.Changed.Subscribe(_ => RefreshMonitors()).AddTo(disposables);
     }
@@ -97,7 +97,7 @@ public class MonitorsProvider : IDisposable
         ((Subject<Unit>)Changed).OnNext(Unit.Default);
     }
 
-    /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する（ホットリロード用）。</summary>
+    /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する(ホットリロード用)。</summary>
     /// <param name="config">更新に使用する設定オブジェクト。</param>
     public void UpdateThresholdsFromConfig(SimulatorConfiguration config)
     {

@@ -5,7 +5,7 @@ using R3;
 
 namespace CashChangerSimulator.Core.Managers;
 
-/// <summary>釣銭機のハードウェア的な障害状態（ジャムなど）を管理するクラス。</summary>
+/// <summary>釣銭機のハードウェア的な障害状態(ジャムなど)を管理するクラス。</summary>
 public class HardwareStatusManager : IHardwareStatus, IDisposable
 {
     private readonly CompositeDisposable disposables = [];
@@ -80,7 +80,7 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
             IsJammed.Select(j => new DeviceStatusUpdateEventArgs((int)(j ? DeviceStatus.JournalEmpty : DeviceStatus.JournalOk))));
 
         // 5. 合成ステータスの構築
-        // エラーがない（Jammed, Overlapped, DeviceError, BoxRemoved がすべて false）場合に true
+        // エラーがない(Jammed, Overlapped, DeviceError, BoxRemoved がすべて false)場合に true
         IsNormal = Observable.CombineLatest(
             IsJammed,
             IsOverlapped,

@@ -9,7 +9,7 @@ namespace CashChangerSimulator.Core.Models;
 
 /// <summary>金種ごとの在庫枚数を管理する実体クラス。</summary>
 /// <remarks>
-/// 通常庫（リサイクル用）、回収庫（オーバーフロー用）、およびリジェクト庫（汚損・不明用）の
+/// 通常庫(リサイクル用)、回収庫(オーバーフロー用)、およびリジェクト庫(汚損・不明用)の
 /// 3つの論理的なバケットで現金の枚数を管理します。
 /// 在庫の変化は <see cref="Changed"/> ストリームを通じてリアクティブに通知されます。
 /// </remarks>
@@ -59,16 +59,16 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>通常庫（リサイクル可能）の全枚数。</summary>
+    /// <summary>通常庫(リサイクル可能)の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => recyclableCassette.GetAll();
 
-    /// <summary>回収庫（オーバーフロー等）の全枚数。</summary>
+    /// <summary>回収庫(オーバーフロー等)の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts => collectionCassette.GetAll();
 
-    /// <summary>リジェクト庫（汚損等）の全枚数。</summary>
+    /// <summary>リジェクト庫(汚損等)の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts => rejectCassette.GetAll();
 
-    /// <summary>入金トレイ（エスクロー）の全枚数。</summary>
+    /// <summary>入金トレイ(エスクロー)の全枚数。</summary>
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts => escrowCassette.GetAll();
 
     /// <summary>在庫管理インスタンスを生成・初期化します。</summary>
@@ -80,7 +80,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
 
     /// <summary>指定された金種の枚数を追加します。</summary>
     /// <param name="key">金種キー。</param>
-    /// <param name="count">追加する枚数（負の値も可）。</param>
+    /// <param name="count">追加する枚数(負の値も可)。</param>
     public virtual void Add(DenominationKey key, int count)
     {
         UpdateBucket(recyclableCassette, key, count, "Inventory.Add");
@@ -119,7 +119,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         UpdateBucket(rejectCassette, key, count, "Inventory.AddReject");
     }
 
-    /// <summary>指定された金種の枚数を入金トレイ（エスクロー）に追加する。</summary>
+    /// <summary>指定された金種の枚数を入金トレイ(エスクロー)に追加する。</summary>
     /// <param name="key">金種キー。</param>
     /// <param name="count">追加する枚数。</param>
     public virtual void AddEscrow(DenominationKey key, int count)
@@ -127,7 +127,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         UpdateBucket(escrowCassette, key, count, "Inventory.AddEscrow");
     }
 
-    /// <summary>入金トレイ（エスクロー）をクリアします。</summary>
+    /// <summary>入金トレイ(エスクロー)をクリアします。</summary>
     public virtual void ClearEscrow()
     {
         var keys = escrowCassette.Clear();
@@ -149,7 +149,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         return recyclableCassette.GetCount(NormalizeKey(key));
     }
 
-    /// <summary>全庫（還流・回収・リジェクト）の合計枚数を取得します。</summary>
+    /// <summary>全庫(還流・回収・リジェクト)の合計枚数を取得します。</summary>
     /// <param name="key">金種キー。</param>
     /// <returns>合計枚数。</returns>
     public virtual int GetTotalCount(DenominationKey key)
@@ -173,7 +173,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     }
 
     /// <summary>現在の在庫の合計金額を計算します。</summary>
-    /// <param name="currencyCode">フィルタリングする通貨コード（任意）。</param>
+    /// <param name="currencyCode">フィルタリングする通貨コード(任意)。</param>
     /// <returns>合計金額。</returns>
     public virtual decimal CalculateTotal(string? currencyCode = null)
     {
@@ -293,7 +293,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         }
     }
 
-    /// <summary>論理的な金庫（カセット）を表現する内部クラスです。</summary>
+    /// <summary>論理的な金庫(カセット)を表現する内部クラスです。</summary>
     private sealed class CashCassette
     {
         private readonly Dictionary<DenominationKey, int> counts = [];

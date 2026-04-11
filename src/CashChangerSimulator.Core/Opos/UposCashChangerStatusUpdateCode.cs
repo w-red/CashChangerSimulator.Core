@@ -24,7 +24,7 @@ public enum UposCashChangerStatusUpdateCode
     /// <summary>金種が満杯の状態が解消された。</summary>
     FullOk = 23,
 
-    /// <summary>メカトラ（詰まり）が発生した。</summary>
+    /// <summary>メカトラ(詰まり)が発生した。</summary>
     Jam = 31,
 
     /// <summary>デバイスが取り外された。</summary>

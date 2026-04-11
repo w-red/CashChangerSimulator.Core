@@ -6,12 +6,12 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 
-/// <summary>現金在庫の照会、調整（全回収）等の操作を統合的に処理する <see cref="InventoryFacade"/>。</summary>
+/// <summary>現金在庫の照会、調整(全回収)等の操作を統合的に処理する <see cref="InventoryFacade"/>。</summary>
 /// <param name="inventory">在庫データを管理する <see cref="Inventory"/>。</param>
 /// <param name="manager">デバイス全体の操作を管理する <see cref="CashChangerManager"/>。</param>
 /// <param name="mediator">コマンド実行を仲介する <see cref="IUposMediator"/>。</param>
 /// <remarks>
-/// 各金種ごとの枚数取得、合計金額の計算、および在庫調整（全回収など）を行う機能を集約します。
+/// 各金種ごとの枚数取得、合計金額の計算、および在庫調整(全回収など)を行う機能を集約します。
 /// </remarks>
 public class InventoryFacade(Inventory inventory, CashChangerManager manager, IUposMediator mediator)
 {

@@ -2,7 +2,7 @@ using Microsoft.PointOfService;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>UPOS ライフサイクル（Open, Close, Claim, Release）と基本状態の管理を担当するインターフェース。</summary>
+/// <summary>UPOS ライフサイクル(Open, Close, Claim, Release)と基本状態の管理を担当するインターフェース。</summary>
 public interface IUposLifecycleHandler
 {
     /// <inheritdoc/>

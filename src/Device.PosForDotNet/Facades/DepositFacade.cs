@@ -9,7 +9,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 /// <summary>UPOS の入金操作を統合的に処理する <see cref="DepositFacade"/>。</summary>
 /// <param name="depositController">入金処理を制御する <see cref="DepositController"/>。</param>
 /// <param name="mediator">コマンド実行を仲介する <see cref="IUposMediator"/>。</param>
-/// <param name="diagnosticController">診断情報（統計など）を管理するコントローラー。</param>
+/// <param name="diagnosticController">診断情報(統計など)を管理するコントローラー。</param>
 /// <remarks>
 /// 入金処理のすべての操作、および <see cref="SimulatorCashChanger"/> から呼び出されるコマンドの実行を集約します。
 /// </remarks>
@@ -54,7 +54,7 @@ public class DepositFacade(
     }
 
     /// <summary>入金処理を終了します。</summary>
-    /// <param name="action">入金終了後のアクション（確定、返却、変更なし）。</param>
+    /// <param name="action">入金終了後のアクション(確定、返却、変更なし)。</param>
     public void EndDeposit(CashDepositAction action)
     {
         mediator.Execute(new EndDepositCommand(depositController, action));
@@ -85,7 +85,7 @@ public class DepositFacade(
         mediator.Execute(new RepayDepositCommand(depositController));
     }
 
-    /// <summary>現在投入されている現金の合計金額をUPOS形式（整数）で取得します。</summary>
+    /// <summary>現在投入されている現金の合計金額をUPOS形式(整数)で取得します。</summary>
     /// <param name="factor">金額の係数。</param>
     /// <returns>UPOS 形式の合計金額。</returns>
     public int GetUposDepositAmount(decimal factor)
@@ -96,7 +96,7 @@ public class DepositFacade(
     /// <summary>指定された通貨の入金情報を UPOS 形式で取得します。</summary>
     /// <param name="currencyCode">通貨コード。</param>
     /// <param name="factor">金額の係数。</param>
-    /// <returns>UPOS 形式の入金情報（枚数）。</returns>
+    /// <returns>UPOS 形式の入金情報(枚数)。</returns>
     public CashCount[] GetUposDepositCounts(string currencyCode, decimal factor)
     {
         return [.. DepositCounts

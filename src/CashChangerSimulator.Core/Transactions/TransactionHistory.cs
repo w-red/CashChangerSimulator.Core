@@ -24,7 +24,7 @@ public class TransactionHistory : IDisposable
     {
     }
 
-    /// <summary>全ての取引履歴（読み取り専用）。</summary>
+    /// <summary>全ての取引履歴(読み取り専用)。</summary>
     public virtual IReadOnlyList<TransactionEntry> Entries => entries;
 
     /// <summary>取引が新しく追加されたときに通知されるストリーム。</summary>

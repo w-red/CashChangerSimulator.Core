@@ -58,7 +58,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         eventNotifier = (UposEventNotifier)ctx.EventNotifier;
         ctx.StatusCoordinator.Start();
 
-        // ライフサイクルハンドラーを初期化（null参照防止）
+        // ライフサイクルハンドラーを初期化(null参照防止)
         ctx.LifecycleManager.UpdateHandler(ctx.Mediator.SkipStateVerification);
 
         var configProvider = deps.ConfigProvider ?? new ConfigurationProvider();
@@ -237,7 +237,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <inheritdoc/>
     public bool IsDepositInProgress => DepositController.IsDepositInProgress;
 
-    /// <summary>状態検証（Open, Claim 等のシーケンスチェック）をスキップするかどうかを取得または設定します。</summary>
+    /// <summary>状態検証(Open, Claim 等のシーケンスチェック)をスキップするかどうかを取得または設定します。</summary>
     /// <remarks>シミュレータとしての利便性を優先する場合に true に設定します。</remarks>
     public bool SkipStateVerification
     {

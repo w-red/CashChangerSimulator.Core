@@ -4,8 +4,8 @@ namespace CashChangerSimulator.Core.Configuration;
 
 /// <summary>アプリケーション全体で共有される設定を提供するプロバイダー。</summary>
 /// <remarks>
-/// 設定ファイル（config.toml）から読み込まれた `SimulatorConfiguration` を保持し、提供します。
-/// 実行時の設定再読み込み（ホットリロード等）を管理し、変更通知を `Reloaded` ストリームで行います。
+/// 設定ファイル(config.toml)から読み込まれた `SimulatorConfiguration` を保持し、提供します。
+/// 実行時の設定再読み込み(ホットリロード等)を管理し、変更通知を `Reloaded` ストリームで行います。
 /// </remarks>
 public class ConfigurationProvider : IDisposable
 {
@@ -49,7 +49,7 @@ public class ConfigurationProvider : IDisposable
         }
     }
 
-    /// <summary>設定インスタンスを直接更新します（主にテスト用）。</summary>
+    /// <summary>設定インスタンスを直接更新します(主にテスト用)。</summary>
     /// <param name="config">新しい設定インスタンス。</param>
     public void Update(SimulatorConfiguration config)
     {

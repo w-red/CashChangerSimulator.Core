@@ -9,7 +9,7 @@ public enum DeviceDispenseStatus
     /// <summary>正常終了。</summary>
     OK = 1,
 
-    /// <summary>在庫なし（空）。</summary>
+    /// <summary>在庫なし(空)。</summary>
     Empty = 2,
 
     /// <summary>在庫僅少。</summary>
