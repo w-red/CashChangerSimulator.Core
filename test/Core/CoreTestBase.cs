@@ -31,7 +31,7 @@ public abstract class CoreTestBase : IDisposable
     /// <summary>設定プロバイダー</summary>
     protected ConfigurationProvider ConfigurationProvider { get; }
 
-    /// <summary>Inventory を生成します。Moq に差し替える場合はオーバーライドします。</summary>
+    /// <summary>Inventory を生成します。オーバーライドして Moq や Logger を注入できます。</summary>
     protected virtual Inventory CreateInventory()
     {
         return CashChangerSimulator.Core.Models.Inventory.Create();
