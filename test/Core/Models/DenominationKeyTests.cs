@@ -55,4 +55,72 @@ public class DenominationKeyTests
     {
         new DenominationKey(10.5m, CurrencyCashType.Coin).ToDenominationString().ShouldBe("C10.5");
     }
+
+    /// <summary>等価性比較が正しく動作することを検証します。</summary>
+    [Fact]
+    public void EqualsShouldWorkCorrectly()
+    {
+        var key1 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+        var key2 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+        var key3 = new DenominationKey(2000, CurrencyCashType.Bill, "JPY");
+        var key4 = new DenominationKey(1000, CurrencyCashType.Coin, "JPY");
+        var key5 = new DenominationKey(1000, CurrencyCashType.Bill, "USD");
+
+        // 基本的な比較
+        key1.Equals(key2).ShouldBeTrue();
+        (key1 == key2).ShouldBeTrue();
+        
+        // 各プロパティの不一致
+        key1.Equals(key3).ShouldBeFalse();
+        key1.Equals(key4).ShouldBeFalse();
+        key1.Equals(key5).ShouldBeFalse();
+        
+        // null との比較
+        key1.Equals(null).ShouldBeFalse();
+        
+        // 異なる型との比較
+#pragma warning disable CS1803
+        key1.Equals("not a key").ShouldBeFalse();
+#pragma warning restore CS1803
+
+        // 同一参照
+#pragma warning disable PS0019 // Use ReferenceEquals for identity comparison
+        key1.Equals(key1).ShouldBeTrue();
+#pragma warning restore PS0019
+    }
+
+    /// <summary>ハッシュ値が一貫していることを検証します。</summary>
+    [Fact]
+    public void GetHashCodeShouldBeConsistent()
+    {
+        var key1 = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+        var key2 = new DenominationKey(1000.00m, CurrencyCashType.Bill, "JPY");
+        var key3 = new DenominationKey(2000, CurrencyCashType.Bill, "JPY");
+
+        // 同値ならハッシュ値も同じ
+        key1.GetHashCode().ShouldBe(key2.GetHashCode());
+        
+        // 異なればハッシュ値も（高確率で）異なる
+        key1.GetHashCode().ShouldNotBe(key3.GetHashCode());
+
+        // 文字列変換(G29)によって精度が異なっても同じハッシュ値になることを確認
+        var key4 = new DenominationKey(100.1m, CurrencyCashType.Coin, "JPY");
+        var key5 = new DenominationKey(100.100m, CurrencyCashType.Coin, "JPY");
+        key4.GetHashCode().ShouldBe(key5.GetHashCode());
+    }
+
+    /// <summary>TryParse において、通貨コードに null を指定した場合に ArgumentNullException がスローされることを検証します。</summary>
+    [Fact]
+    public void TryParseShouldHandleNullCurrencyCode()
+    {
+        Should.Throw<ArgumentNullException>(() => DenominationKey.TryParse("B1000", null!, out _));
+    }
+
+    /// <summary>プレフィックスのみ（額面なし）の文字列がパースできないことを検証します。</summary>
+    [Fact]
+    public void TryParseShouldHandleSingleCharDenomination()
+    {
+        DenominationKey.TryParse("B", out _).ShouldBeFalse();
+        DenominationKey.TryParse("C", out _).ShouldBeFalse();
+    }
 }
