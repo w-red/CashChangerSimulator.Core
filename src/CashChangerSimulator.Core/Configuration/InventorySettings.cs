@@ -4,6 +4,5 @@ namespace CashChangerSimulator.Core.Configuration;
 public class InventorySettings
 {
     /// <summary>金種識別子(B=紙幣, C=硬貨 + 額面)と個別設定のマップ。</summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Needed for TOML deserialization")]
-    public Dictionary<string, DenominationSettings> Denominations { get; set; } = [];
+    public Dictionary<string, DenominationSettings> Denominations { get; init; } = [];
 }
