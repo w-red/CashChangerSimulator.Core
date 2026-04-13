@@ -15,7 +15,7 @@ namespace CashChangerSimulator.Core.Models;
 /// </remarks>
 public class Inventory : IReadOnlyInventory, IDisposable
 {
-    private readonly ILogger<Inventory> logger = LogProvider.CreateLogger<Inventory>();
+    private readonly ILogger<Inventory> logger;
 
     private readonly CashCassette recyclableCassette = new();
     private readonly CashCassette collectionCassette = new();
@@ -30,7 +30,15 @@ public class Inventory : IReadOnlyInventory, IDisposable
 
     /// <inheritdoc/>
     protected Inventory()
+        : this(null)
     {
+    }
+
+    /// <summary>指定されたロガーを使用して新しいインスタンスを生成します。</summary>
+    /// <param name="logger">使用するロガー(null の場合はデフォルトを使用)。</param>
+    protected Inventory(ILogger<Inventory>? logger)
+    {
+        this.logger = logger ?? LogProvider.CreateLogger<Inventory>();
         var subject = new Subject<DenominationKey>();
         disposables.Add(subject);
         Changed = subject;
@@ -72,10 +80,11 @@ public class Inventory : IReadOnlyInventory, IDisposable
     public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts => escrowCassette.GetAll();
 
     /// <summary>在庫管理インスタンスを生成・初期化します。</summary>
+    /// <param name="logger">使用するロガー(null の場合はデフォルトを使用)。</param>
     /// <returns>初期化済みの <see cref="Inventory"/> インスタンス。</returns>
-    public static Inventory Create()
+    public static Inventory Create(ILogger<Inventory>? logger = null)
     {
-        return new Inventory();
+        return new Inventory(logger);
     }
 
     /// <summary>指定された金種の枚数を追加します。</summary>
@@ -83,6 +92,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数(負の値も可)。</param>
     public virtual void Add(DenominationKey key, int count)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         UpdateBucket(recyclableCassette, key, count, "Inventory.Add");
     }
 
@@ -91,6 +101,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">設定する枚数。</param>
     public virtual void SetCount(DenominationKey key, int count)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
         if (count < 0)
@@ -108,6 +119,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddCollection(DenominationKey key, int count)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         UpdateBucket(collectionCassette, key, count, "Inventory.AddCollection");
     }
 
@@ -116,6 +128,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddReject(DenominationKey key, int count)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         UpdateBucket(rejectCassette, key, count, "Inventory.AddReject");
     }
 
@@ -124,12 +137,14 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddEscrow(DenominationKey key, int count)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         UpdateBucket(escrowCassette, key, count, "Inventory.AddEscrow");
     }
 
     /// <summary>入金トレイ(エスクロー)をクリアします。</summary>
     public virtual void ClearEscrow()
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         var keys = escrowCassette.Clear();
 
         foreach (var key in keys)
@@ -166,6 +181,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <summary>在庫をすべてクリアします。</summary>
     public void Clear()
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         recyclableCassette.Clear();
         collectionCassette.Clear();
         rejectCassette.Clear();
@@ -177,6 +193,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <returns>合計金額。</returns>
     public virtual decimal CalculateTotal(string? currencyCode = null)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         return recyclableCassette.CalculateTotal(currencyCode) +
                collectionCassette.CalculateTotal(currencyCode) +
                rejectCassette.CalculateTotal(currencyCode) +
@@ -187,6 +204,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <returns>保存用ディクショナリ。</returns>
     public Dictionary<string, int> ToDictionary()
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         var result = new Dictionary<string, int>();
         recyclableCassette.AddToDictionary(result, string.Empty);
         collectionCassette.AddToDictionary(result, "COL");
@@ -198,6 +216,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="data">復元元データ。</param>
     public void LoadFromDictionary(IReadOnlyDictionary<string, int> data)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(data);
         foreach (var kv in data)
         {
@@ -205,23 +224,23 @@ public class Inventory : IReadOnlyInventory, IDisposable
             {
                 if (kv.Key.StartsWith("COL:", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (TryParseKey(kv.Key[4..], out var denKey) && denKey != null)
+                    if (TryParseKey(kv.Key[4..], out var denKey))
                     {
-                        AddCollection(denKey, kv.Value);
+                        AddCollection(denKey!, kv.Value);
                     }
                 }
                 else if (kv.Key.StartsWith("REJ:", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (TryParseKey(kv.Key[4..], out var denKey) && denKey != null)
+                    if (TryParseKey(kv.Key[4..], out var denKey))
                     {
-                        AddReject(denKey, kv.Value);
+                        AddReject(denKey!, kv.Value);
                     }
                 }
                 else
                 {
-                    if (TryParseKey(kv.Key, out var denKey) && denKey != null)
+                    if (TryParseKey(kv.Key, out var denKey))
                     {
-                        SetCount(denKey, kv.Value);
+                        SetCount(denKey!, kv.Value);
                     }
                 }
             }
@@ -266,7 +285,12 @@ public class Inventory : IReadOnlyInventory, IDisposable
         var parts = fullKey.Split(DenominationKey.KeySeparator);
         if (parts.Length == 2)
         {
-            if (DenominationKey.TryParse(parts[1], parts[0], out var parsedKey) && parsedKey != null)
+            if (string.IsNullOrEmpty(parts[0]))
+            {
+                return false;
+            }
+
+            if (DenominationKey.TryParse(parts[1], parts[0], out var parsedKey))
             {
                 key = parsedKey;
                 return true;
@@ -289,7 +313,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
         if (cassette.UpdateCount(key, count, logger, methodName))
         {
             ((Subject<DenominationKey>)Changed).OnNext(key);
-            logger.ZLogDebug($"{methodName} finished. New Total: {CalculateTotal()}");
+            logger.ZLogDebug($"{methodName} finished for {key}: {count}");
         }
     }
 

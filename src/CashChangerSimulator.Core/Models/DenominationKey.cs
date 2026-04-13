@@ -97,6 +97,11 @@ public partial record DenominationKey(
 
         if (parts.Length == 2)
         {
+            if (string.IsNullOrEmpty(parts[0]))
+            {
+                return false;
+            }
+
             targetCurrency = parts[0];
             targetDenomination = parts[1];
         }
