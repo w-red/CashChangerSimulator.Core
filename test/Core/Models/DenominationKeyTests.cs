@@ -11,6 +11,9 @@ public class DenominationKeyTests
     [InlineData("B1000", 1000, CurrencyCashType.Bill, "JPY")]
     [InlineData("C500", 500, CurrencyCashType.Coin, "JPY")]
     [InlineData("b2000", 2000, CurrencyCashType.Bill, "JPY")]
+    [InlineData("JPY:B1000", 1000, CurrencyCashType.Bill, "JPY")]
+    [InlineData("USD:C0.25", 0.25, CurrencyCashType.Coin, "USD")]
+    [InlineData("c1", 1, CurrencyCashType.Coin, "JPY")]
     public void TryParseValidStringShouldSucceed(string input, decimal expectedValue, CurrencyCashType expectedType, string expectedCurrency)
     {
         DenominationKey.TryParse(input, out var result).ShouldBeTrue();
@@ -24,8 +27,13 @@ public class DenominationKeyTests
     [Theory]
     [InlineData("")]
     [InlineData("B")]
+    [InlineData("C")]
     [InlineData("X100")]
     [InlineData("BABC")]
+    [InlineData(":B1000")] // 通貨コード空
+    [InlineData("JPY:")] // 金種文字列空
+    [InlineData("JPY:B")] // 金種文字列短すぎ
+    [InlineData("JPY: B1000")] // 接頭辞の前にスペース
     [InlineData(null)]
     public void TryParseInvalidStringShouldFail(string? input)
     {
@@ -76,7 +84,7 @@ public class DenominationKeyTests
         key1.Equals(key5).ShouldBeFalse();
         
         // null との比較
-        key1.Equals(null).ShouldBeFalse();
+        key1.Equals(null!).ShouldBeFalse();
         
         // 異なる型との比較
 #pragma warning disable CS1803
@@ -111,16 +119,17 @@ public class DenominationKeyTests
 
     /// <summary>TryParse において、通貨コードに null を指定した場合に ArgumentNullException がスローされることを検証します。</summary>
     [Fact]
-    public void TryParseShouldHandleNullCurrencyCode()
+    public void TryParse_ShouldThrowArgumentNullException_WhenCurrencyCodeIsNull()
     {
         Should.Throw<ArgumentNullException>(() => DenominationKey.TryParse("B1000", null!, out _));
     }
 
-    /// <summary>プレフィックスのみ（額面なし）の文字列がパースできないことを検証します。</summary>
+    /// <summary>セパレータが複数含まれる場合、最初のセパレータで分割されることを検証します。</summary>
     [Fact]
-    public void TryParseShouldHandleSingleCharDenomination()
+    public void TryParse_ShouldHandleMultipleSeparators()
     {
-        DenominationKey.TryParse("B", out _).ShouldBeFalse();
-        DenominationKey.TryParse("C", out _).ShouldBeFalse();
+        // "USD:JPY:B1000" -> targetCurrency="USD", targetDenomination="JPY:B1000"
+        // targetDenomination[0] is 'J', which is Undefined. Output should be false.
+        DenominationKey.TryParse("USD:JPY:B1000", out _).ShouldBeFalse();
     }
 }

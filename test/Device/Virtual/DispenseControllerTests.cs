@@ -31,7 +31,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>未接続状態での出金要求時に Closed エラーが発生することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowClosedWhenNotConnected()
     {
@@ -42,7 +41,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>ハード故障(ジャム)発生中の出金要求時に Failure エラーが発生することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowFailureWhenJammed()
     {
@@ -54,7 +52,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>在庫不足時の出金要求時に OverDispense エラーが報告されることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldHandleInsufficientCash()
     {
@@ -63,7 +60,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>有効な金種指定での出金が正常に完了することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseCashAsyncShouldSucceedWithValidCounts()
     {
@@ -76,7 +72,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>出金処理中に重ねて出金要求を行うと Busy エラーが発生することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldThrowBusyWhenAlreadyProcessing()
     {
@@ -97,7 +92,6 @@ public class DispenseControllerTests : DeviceTestBase
 
 
     /// <summary>ClearOutput により実行中の出金処理がキャンセルされることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ClearOutputShouldCancelActiveDispense()
     {
@@ -130,7 +124,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>予期しない例外発生時に Failure エラーとして適切に処理されることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteDispenseShouldHandleUnexpectedException()
     {
@@ -145,7 +138,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>エラー状態から ClearOutput により正常状態に復帰できることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ClearOutputShouldResetStatus()
     {
@@ -161,7 +153,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>PosControlException 発生時にエラー詳細が正しく反映されることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteDispenseShouldHandlePosControlException()
     {
@@ -186,7 +177,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>非同期モードでの例外発生が正しくハンドリングされることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldHandleBackgroundException()
     {
@@ -199,7 +189,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>金種指定出金においても非同期モードの例外がハンドリングされることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseCashAsyncShouldHandleBackgroundException()
     {
@@ -212,7 +201,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>ExecuteDispense 内で DeviceException がキャッチされることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteDispenseShouldCatchDeviceException()
     {
@@ -228,7 +216,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>シミュレーター実行中のキャンセルが正しく処理されることを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ExecuteDispenseShouldHandleCancellation()
     {
@@ -252,7 +239,6 @@ public class DispenseControllerTests : DeviceTestBase
     }
 
     /// <summary>実際のマネージャーを介して在庫が正しく減少することを検証する(統合テスト的側面)。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseChangeAsyncShouldUpdateInventory()
     {

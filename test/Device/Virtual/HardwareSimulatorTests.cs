@@ -15,7 +15,6 @@ public class HardwareSimulatorTests : DeviceTestBase
     }
 
     /// <summary>シミュレータが設定された遅延時間分待機することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task SimulateDispenseAsyncShouldDelayByConfiguredAmount()
     {
@@ -36,7 +35,6 @@ public class HardwareSimulatorTests : DeviceTestBase
     }
 
     /// <summary>遅延時間が0の場合、即座に完了することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task SimulateDispenseAsyncShouldCompleteImmediatelyWhenDelayIsZero()
     {

@@ -9,7 +9,6 @@ namespace CashChangerSimulator.Tests.Core.Services;
 /// <summary>出金計算ロジック(最適な金種構成の算出、通貨フィルタ等)を検証するテストクラス。</summary>
 public class ChangeCalculatorTests
 {
-
     /// <summary>カスタムフィルタ(例：紙幣のみ)が指定された際に、条件に合う金種のみで計算されることを検証します。</summary>
     [Fact]
     public void CalculateWithCustomFilterShouldWork()
@@ -105,13 +104,14 @@ public class ChangeCalculatorTests
     public void ShouldRespectTypePriorityForSameValue()
     {
         var inv = Inventory.Create();
+
         // Create bill and coin with same value 1000
         var kBill = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         var kCoin = new DenominationKey(1000, CurrencyCashType.Coin, "JPY");
         inv.Add(kBill, 1);
         inv.Add(kCoin, 1);
 
-        // Calculate 1000. 
+        // Calculate 1000.
         // ThenByDescending(k => k.Type) should pick Bill (higher enum value) before Coin.
         var result = ChangeCalculator.Calculate(inv, 1000);
 

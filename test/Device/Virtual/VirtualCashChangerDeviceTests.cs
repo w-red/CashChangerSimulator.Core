@@ -23,7 +23,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>複数のインスタンスで同時に排他権(Claim)を取得しようとした場合に例外が発生することを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ConcurrentClaimShouldThrowException()
     {
@@ -42,7 +41,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>排他権を解放した後に別のインスタンスが排他権を取得できることを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ClaimAfterReleaseShouldSucceed()
     {
@@ -61,7 +59,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>デバイスをオープンした際、接続状態が正しく更新されることを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task OpenShouldSetConnected()
     {
@@ -71,7 +68,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>デバイスをクローズした際、切断状態および無効状態になることを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task CloseShouldSetDisconnectedAndDisabled()
     {
@@ -87,7 +83,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>排他権取得済みの状態でデバイスを有効化できることを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EnableShouldSucceedWhenClaimed()
     {
@@ -99,7 +94,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>排他権を取得していない状態でデバイスを有効化しようとした場合に例外が発生することを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EnableShouldThrowWhenNotClaimed()
     {
@@ -108,7 +102,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>デバイスが無効な状態で入金を開始しようとした場合に例外が発生することを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DepositShouldThrowWhenNotEnabled()
     {
@@ -120,7 +113,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>デバイスが無効な状態で出金を開始しようとした場合に例外が発生することを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task DispenseShouldThrowWhenNotEnabled()
     {
@@ -132,7 +124,6 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     }
 
     /// <summary>在庫情報の読み取りが空でないインベントリを返すことを確認します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task ReadInventoryShouldReturnCorrectData()
     {

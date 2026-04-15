@@ -57,7 +57,6 @@ public class DepositControllerCoverageTests : DeviceTestBase
     }
 
     /// <summary>RepayDepositAsync が状態をクリアし終了イベントを発火することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task RepayDepositShouldClearStateAndRaiseEvent()
     {
@@ -145,7 +144,6 @@ public class DepositControllerCoverageTests : DeviceTestBase
     }
 
     /// <summary>確定前に EndDeposit を呼び出そうとすると例外が発生することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EndDepositWithoutFixShouldThrow()
     {
@@ -167,7 +165,6 @@ public class DepositControllerCoverageTests : DeviceTestBase
     }
 
     /// <summary>入金中に EndDepositAsync を呼び出すと Busy エラーが発生することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EndDepositAsyncWhenAlreadyBusyShouldThrow()
     {
@@ -188,7 +185,6 @@ public class DepositControllerCoverageTests : DeviceTestBase
     }
 
     /// <summary>入金中に BeginDeposit を呼び出すと Busy エラーが発生することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task BeginDepositWhenBusyShouldThrow()
     {
@@ -209,7 +205,6 @@ public class DepositControllerCoverageTests : DeviceTestBase
     }
 
     /// <summary>EndDepositAsync 実行中に Overlapped が検出されて例外が発生することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EndDepositAsyncShouldCatchOverlappedException()
     {
@@ -229,7 +224,6 @@ public class DepositControllerCoverageTests : DeviceTestBase
     }
 
     /// <summary>EndDepositAsync 実行中にキャンセルが発生することを検証する。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task EndDepositAsyncShouldHandleCancellation()
     {

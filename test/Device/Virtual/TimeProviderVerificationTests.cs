@@ -1,28 +1,31 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using Xunit;
 
-namespace CashChangerSimulator.Device.Virtual;
+namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>TimeProvider による仮想時間制御の動作と、決定論的なテスト実行を検証するテストクラス。</summary>
 public class TimeProviderVerificationTests
 {
-    private readonly Inventory inventory;
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly FakeTimeProvider timeProvider;
+    private readonly Inventory _inventory;
+    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly FakeTimeProvider _timeProvider;
 
+    /// <summary>テストの初期設定を行います。</summary>
     public TimeProviderVerificationTests()
     {
-        inventory = Inventory.Create();
-        hardwareStatusManager = HardwareStatusManager.Create();
-        timeProvider = new FakeTimeProvider();
+        _inventory = Inventory.Create();
+        _hardwareStatusManager = HardwareStatusManager.Create();
+        _timeProvider = new FakeTimeProvider();
     }
 
+    /// <summary>FakeTimeProvider を用いて EndDepositAsync が仮想時間経過後に完了することを検証します。</summary>
     [Fact]
-    public async Task EndDepositAsync_WithFakeTimeProvider_ShouldCompleteInstantly()
+    public async Task EndDepositAsyncWithFakeTimeProviderShouldCompleteInstantly()
     {
         // Arrange
         var config = new ConfigurationProvider();
@@ -31,9 +34,9 @@ public class TimeProviderVerificationTests
         delayMs.ShouldBeGreaterThan(0);
 
         var controller = new DepositController(
-            inventory,
-            hardwareStatusManager,
-            timeProvider: timeProvider);
+            _inventory,
+            _hardwareStatusManager,
+            timeProvider: _timeProvider);
 
         controller.BeginDeposit();
         // 直接 DenominationKey を生成
@@ -47,7 +50,7 @@ public class TimeProviderVerificationTests
         task.IsCompleted.ShouldBeFalse();
 
         // 仮想時間を進める
-        timeProvider.Advance(TimeSpan.FromMilliseconds(delayMs));
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(delayMs));
 
         // Assert
         await task; // ここで即座に完了するはず
@@ -55,15 +58,16 @@ public class TimeProviderVerificationTests
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
     }
 
+    /// <summary>FakeTimeProvider を用いて HardwareSimulator が仮想時間経過後に完了することを検証します。</summary>
     [Fact]
-    public async Task HardwareSimulator_WithFakeTimeProvider_ShouldCompleteInstantly()
+    public async Task HardwareSimulatorWithFakeTimeProviderShouldCompleteInstantly()
     {
         // Arrange
         var config = new ConfigurationProvider();
         var delayMs = config.Config.Simulation.DispenseDelayMs;
         delayMs.ShouldBeGreaterThan(0);
 
-        var simulator = HardwareSimulator.Create(config, timeProvider);
+        var simulator = HardwareSimulator.Create(config, _timeProvider);
 
         // Act
         var task = simulator.SimulateDispenseAsync();
@@ -72,7 +76,7 @@ public class TimeProviderVerificationTests
         task.IsCompleted.ShouldBeFalse();
 
         // 仮想時間を進める
-        timeProvider.Advance(TimeSpan.FromMilliseconds(delayMs));
+        _timeProvider.Advance(TimeSpan.FromMilliseconds(delayMs));
 
         // Assert
         await task;
