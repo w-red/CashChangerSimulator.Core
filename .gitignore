@@ -487,6 +487,10 @@ LocalSettings/
 AGENTS.md
 .agent/
 
+# Stryker temporary analysis results
+analysis_results*.md
+**/stryker_help.txt
+
 # Temporary files and screenshots
 tmp/
 Vault/
