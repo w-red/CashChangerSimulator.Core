@@ -1,0 +1,12 @@
+{
+  "stryker-config": {
+    "mutate": [
+      "**/DiagnosticController.cs"
+    ],
+    "project": "CashChangerSimulator.Device.Virtual.csproj",
+    "test-runner": "mtp",
+    "coverage-analysis": "off",
+    "additional-timeout": 180000,
+    "concurrency": 1
+  }
+}
