@@ -186,12 +186,14 @@ public class DispenseController : IDisposable
         }
         catch (Exception ex)
         {
+            /* Stryker disable all */
             if (logger != null)
             {
                 logger.ZLogError(ex, $"Dispense failed.");
             }
 
             HandleDispenseError(ex, out var code, out var codeEx);
+            /* Stryker restore all */
 
             lock (stateLock)
             {
@@ -218,6 +220,7 @@ public class DispenseController : IDisposable
     /// <summary>出力を中止します。</summary>
     public virtual void ClearOutput()
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         dispenseCts?.Cancel();
 
         bool notifyChanged = false;

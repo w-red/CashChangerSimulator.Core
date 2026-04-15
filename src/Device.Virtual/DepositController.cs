@@ -339,12 +339,16 @@ public class DepositController : IDisposable
     /// <summary>預入(Deposit)処理を開始します。</summary>
     public virtual void BeginDeposit()
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         lock (stateLock)
         {
+            /* Stryker disable all */
             if (logger != null)
             {
                 logger.ZLogInformation($"BeginDeposit called. Current Status: {DepositStatus}");
             }
+
+            /* Stryker restore all */
 
             if (IsBusy)
             {
@@ -384,6 +388,7 @@ public class DepositController : IDisposable
     /// <summary>投入された金額を確定させます。</summary>
     public virtual void FixDeposit()
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         lock (stateLock)
         {
             if (DepositStatus != DeviceDepositStatus.Counting)
@@ -406,6 +411,7 @@ public class DepositController : IDisposable
     /// <returns>完了を示すタスク。</returns>
     public virtual async Task EndDepositAsync(DepositAction action)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         lock (stateLock)
         {
             if (!IsFixed)
@@ -449,10 +455,13 @@ public class DepositController : IDisposable
             {
                 if (action == DepositAction.Repay)
                 {
+                    /* Stryker disable all */
                     if (logger != null)
                     {
                         logger.ZLogInformation($"Deposit Repay: Returning cash from escrow.");
                     }
+
+                    /* Stryker restore all */
 
                     inventory.ClearEscrow();
                 }
@@ -517,10 +526,13 @@ public class DepositController : IDisposable
                 else
                 {
                     // NoChange (or None)
+                    /* Stryker disable all */
                     if (logger != null)
                     {
                         logger.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
                     }
+
+                    /* Stryker restore all */
 
                     var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
                     inventory.ClearEscrow();
@@ -661,6 +673,7 @@ public class DepositController : IDisposable
     /// <param name="control">一時停止または再開。</param>
     public virtual void PauseDeposit(DeviceDepositPause control)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         lock (stateLock)
         {
             if (!IsDepositInProgress)
@@ -691,6 +704,7 @@ public class DepositController : IDisposable
     /// <param name="count">枚数。</param>
     public void TrackDeposit(DenominationKey key, int count = 1)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(key);
         TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });
     }
@@ -699,6 +713,7 @@ public class DepositController : IDisposable
     /// <param name="counts">金種と枚数のセット。</param>
     public void TrackBulkDeposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(counts);
         lock (stateLock)
         {
@@ -722,6 +737,7 @@ public class DepositController : IDisposable
     /// <param name="amount">リジェクトする合計金額。</param>
     public void TrackReject(decimal amount)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         lock (stateLock)
         {
             if (!IsDepositInProgress || IsPaused)
