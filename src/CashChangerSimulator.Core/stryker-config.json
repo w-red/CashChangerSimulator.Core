@@ -4,10 +4,9 @@
       "name": "CashChangerSimulator.Core"
     },
     "mutate": [
-      "Models/Inventory.cs",
-      "Models/DenominationKey.cs"
+      "Services/CurrencyMetadataProvider.cs"
     ],
-    "test-case-filter": "FullyQualifiedName~InventoryTests|FullyQualifiedName~DenominationKeyTests",
+    "test-case-filter": "FullyQualifiedName~CurrencyMetadataProviderTests",
     "reporters": [
       "progress",
       "html"
