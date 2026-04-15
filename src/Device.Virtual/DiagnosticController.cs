@@ -35,6 +35,7 @@ public class DiagnosticController : IDisposable
     /// <returns>ヘルスチェック報告書の文字列。</returns>
     public virtual string GetHealthReport(DeviceHealthCheckLevel level)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         var sb = new StringBuilder();
         sb.AppendFormat(CultureInfo.InvariantCulture, "--- {0} Health Check Report ---{1}", level, Environment.NewLine);
 
@@ -60,18 +61,20 @@ public class DiagnosticController : IDisposable
     /// <summary>統計情報を取得します。</summary>
     /// <param name="statistics">取得する統計情報の名前。</param>
     /// <returns>統計情報の XML 表現。</returns>
-    public virtual string RetrieveStatistics(string[] statistics)
+    public virtual string RetrieveStatistics(IEnumerable<string> statistics)
     {
-        ArgumentNullException.ThrowIfNull(statistics);
+        ObjectDisposedException.ThrowIf(disposed, this);
+        ArgumentNullException.ThrowIfNull(statistics, nameof(statistics));
 
+        var filter = statistics.ToHashSet();
         var sb = new StringBuilder();
         sb.AppendLine("<CommonStatistics>");
-        if (statistics.Contains("*") || statistics.Contains("SuccessfulDepletionCount"))
+        if (filter.Contains("*") || filter.Contains("SuccessfulDepletionCount"))
         {
             sb.AppendFormat(CultureInfo.InvariantCulture, "  <SuccessfulDepletionCount>{0}</SuccessfulDepletionCount>{1}", SuccessfulDepletionCount, Environment.NewLine);
         }
 
-        if (statistics.Contains("*") || statistics.Contains("FailedDepletionCount"))
+        if (filter.Contains("*") || filter.Contains("FailedDepletionCount"))
         {
             sb.AppendFormat(CultureInfo.InvariantCulture, "  <FailedDepletionCount>{0}</FailedDepletionCount>{1}", FailedDepletionCount, Environment.NewLine);
         }
@@ -90,6 +93,8 @@ public class DiagnosticController : IDisposable
     public void Dispose()
     {
         Dispose(true);
+
+        // Stryker disable once all : No finalizer defined in this class hierarchy.
         GC.SuppressFinalize(this);
     }
 
@@ -102,8 +107,21 @@ public class DiagnosticController : IDisposable
             return;
         }
 
+        if (disposing)
+        {
+            OnDisposing(disposing);
+        }
+
         // 外部から注入された inventory や hardwareStatusManager は、
         // このクラスの Dispose で破棄すべきではありません。
         disposed = true;
+    }
+
+    /// <summary>
+    /// インスタンスが実際に破棄される際に呼び出されるフックメソッドです。
+    /// </summary>
+    /// <param name="disposing">マネージリソースを破棄中の場合は true。</param>
+    protected virtual void OnDisposing(bool disposing)
+    {
     }
 }
