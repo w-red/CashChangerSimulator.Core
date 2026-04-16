@@ -12,35 +12,49 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー(仮想デバイス実装)。</summary>
-/// <param name="inventory">在庫管理モデル。</param>
-/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-/// <param name="manager">釣銭機マネージャー。</param>
-/// <param name="configProvider">設定プロバイダー。</param>
-/// <param name="timeProvider">時間プロバイダー。</param>
-public class DepositController(
-    Inventory inventory,
-    HardwareStatusManager? hardwareStatusManager = null,
-    CashChangerManager? manager = null,
-    ConfigurationProvider? configProvider = null,
-    TimeProvider? timeProvider = null) : IDisposable
+public class DepositController : IDisposable
 {
-    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
-    private readonly ConfigurationProvider configProvider = configProvider ?? new ConfigurationProvider();
-    private readonly bool isConfigInternal = configProvider == null;
-    private readonly CashChangerManager? manager = manager;
-    private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
+    private readonly Inventory inventory;
+    private readonly HardwareStatusManager hardwareStatusManager;
+    private readonly ConfigurationProvider configProvider;
+    private readonly bool isConfigInternal;
+    private readonly CashChangerManager? manager;
+    private readonly TimeProvider timeProvider;
     private readonly ILogger<DepositController>? logger = LogProvider.CreateLogger<DepositController>();
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
-    private readonly Dictionary<DenominationKey, int> depositCounts = [];
-    private readonly List<string> depositedSerials = [];
-    private readonly List<string> lastDepositedSerials = [];
+    private readonly DepositState state = new();
+    private readonly DepositCalculator calculator;
+    private readonly DepositTracker tracker;
     private readonly Subject<Unit> changedSubject = new();
     private readonly Subject<DeviceDataEventArgs> dataEventsSubject = new();
     private readonly Subject<DeviceErrorEventArgs> errorEventsSubject = new();
     private CancellationTokenSource? depositCts;
     private bool disposed;
+
+    /// <summary>DepositController クラスの新しいインスタンスを初期化します。</summary>
+    /// <param name="inventory">在庫管理モデル。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+    /// <param name="manager">釣銭機マネージャー。</param>
+    /// <param name="configProvider">設定プロバイダー。</param>
+    /// <param name="timeProvider">時間プロバイダー。</param>
+    public DepositController(
+        Inventory inventory,
+        HardwareStatusManager? hardwareStatusManager = null,
+        CashChangerManager? manager = null,
+        ConfigurationProvider? configProvider = null,
+        TimeProvider? timeProvider = null)
+    {
+        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+        this.hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
+        this.configProvider = configProvider ?? new ConfigurationProvider();
+        this.isConfigInternal = configProvider == null;
+        this.manager = manager;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
+
+        calculator = new DepositCalculator(logger, this.inventory, this.manager);
+        tracker = new DepositTracker(this.inventory, this.configProvider);
+    }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public virtual Observable<Unit> Changed => changedSubject;
@@ -61,7 +75,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.DepositAmount;
             }
         }
 
@@ -69,7 +83,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.DepositAmount = value;
             }
         }
     }
@@ -81,7 +95,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.OverflowAmount;
             }
         }
 
@@ -89,7 +103,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.OverflowAmount = value;
             }
         }
     }
@@ -101,7 +115,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.RejectAmount;
             }
         }
 
@@ -109,7 +123,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.RejectAmount = value;
             }
         }
     }
@@ -121,7 +135,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return new Dictionary<DenominationKey, int>(depositCounts);
+                return new Dictionary<DenominationKey, int>(state.Counts);
             }
         }
     }
@@ -133,7 +147,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.Status;
             }
         }
 
@@ -141,7 +155,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.Status = value;
             }
         }
     }
@@ -153,7 +167,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return DepositStatus is
+                return state.Status is
                     DeviceDepositStatus.Start or
                     DeviceDepositStatus.Counting or
                     DeviceDepositStatus.Validation;
@@ -168,7 +182,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.IsPaused;
             }
         }
 
@@ -176,7 +190,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.IsPaused = value;
             }
         }
     }
@@ -188,7 +202,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.IsFixed;
             }
         }
 
@@ -196,7 +210,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.IsFixed = value;
             }
         }
     }
@@ -208,7 +222,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.IsBusy;
             }
         }
 
@@ -216,7 +230,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.IsBusy = value;
             }
         }
     }
@@ -228,7 +242,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.LastErrorCode;
             }
         }
 
@@ -236,7 +250,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.LastErrorCode = value;
             }
         }
     }
@@ -248,7 +262,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.LastErrorCodeExtended;
             }
         }
 
@@ -256,7 +270,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                field = value;
+                state.LastErrorCodeExtended = value;
             }
         }
     }
@@ -268,7 +282,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return [.. lastDepositedSerials];
+                return [.. state.LastDepositedSerials];
             }
         }
     }
@@ -280,20 +294,19 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                return field;
+                return state.RequiredAmount;
             }
         }
-
         set
         {
             lock (stateLock)
             {
-                if (field == value)
+                if (state.RequiredAmount == value)
                 {
                     return;
                 }
 
-                field = value;
+                state.RequiredAmount = value;
 
                 if (!disposed)
                 {
@@ -310,11 +323,11 @@ public class DepositController(
         lock (stateLock)
         {
             /* Stryker disable all */
-            logger?.ZLogInformation($"BeginDeposit called. Current Status: {DepositStatus}");
+            logger?.ZLogInformation($"BeginDeposit called. Current Status: {state.Status}");
 
             /* Stryker restore all */
 
-            if (IsBusy)
+            if (state.IsBusy)
             {
                 throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             }
@@ -329,18 +342,8 @@ public class DepositController(
                 throw new DeviceException("Device has overlapped cash. Cannot begin deposit.", DeviceErrorCode.Overlapped);
             }
 
-            DepositAmount = 0m;
-            OverflowAmount = 0m;
-            RejectAmount = 0m;
-            depositCounts.Clear();
-            depositedSerials.Clear();
-            DepositStatus = DeviceDepositStatus.Start;
-            IsPaused = false;
-            IsFixed = false;
-            LastErrorCode = DeviceErrorCode.Success;
-            LastErrorCodeExtended = 0;
-
-            DepositStatus = DeviceDepositStatus.Counting;
+            state.Reset();
+            state.Status = DeviceDepositStatus.Counting;
             inventory.ClearEscrow();
             if (!disposed)
             {
@@ -355,14 +358,14 @@ public class DepositController(
         ObjectDisposedException.ThrowIf(disposed, this);
         lock (stateLock)
         {
-            if (DepositStatus != DeviceDepositStatus.Counting)
+            if (state.Status != DeviceDepositStatus.Counting)
             {
                 throw new DeviceException("Counting is not in progress.", DeviceErrorCode.Illegal);
             }
 
-            IsFixed = true;
-            lastDepositedSerials.Clear();
-            lastDepositedSerials.AddRange(depositedSerials);
+            state.IsFixed = true;
+            state.LastDepositedSerials.Clear();
+            state.LastDepositedSerials.AddRange(state.DepositedSerials);
 
             // Stryker disable once Logical : Thread-safety guard
             if (!disposed)
@@ -380,19 +383,19 @@ public class DepositController(
         ObjectDisposedException.ThrowIf(disposed, this);
         lock (stateLock)
         {
-            if (!IsFixed)
+            if (!state.IsFixed)
             {
                 throw new DeviceException("Invalid call sequence: FixDeposit must be called before EndDeposit.", DeviceErrorCode.Illegal);
             }
 
-            if (IsBusy)
+            if (state.IsBusy)
             {
                 throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
             }
 
-            IsBusy = true;
-            LastErrorCode = DeviceErrorCode.Success;
-            LastErrorCodeExtended = 0;
+            state.IsBusy = true;
+            state.LastErrorCode = DeviceErrorCode.Success;
+            state.LastErrorCodeExtended = 0;
         }
 
         lock (stateLock)
@@ -426,109 +429,15 @@ public class DepositController(
             {
                 if (action == DepositAction.Repay)
                 {
-                    /* Stryker disable all */
-                    logger?.ZLogInformation($"Deposit Repay: Returning cash from escrow.");
-
-                    /* Stryker restore all */
-
-                    inventory.ClearEscrow();
+                    calculator.ProcessRepay();
                 }
                 else if (action == DepositAction.Change)
                 {
-                    decimal changeAmount = Math.Max(0, DepositAmount - RequiredAmount);
-                    var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
-
-                    /* Stryker disable all : Trace logging is non-functional */
-                    logger?.ZLogTrace($"EndDepositAsync: {DepositAmount} - {RequiredAmount} = {changeAmount}");
-
-                    /* Stryker restore all */
-
-                    // Stryker disable once Equality : Behaviorally equivalent to >= 0 here as 0 hits else branch which also clears escrow
-                    if (changeAmount > 0)
-                    {
-                        var availableInEscrow = inventory.EscrowCounts.OrderByDescending(kv => kv.Key.Value).ToList();
-                        decimal remainingChange = changeAmount;
-                        foreach (var (key, countInEscrow) in availableInEscrow)
-                        {
-                            // Stryker disable once Equality : Boundary calculation
-                            if (remainingChange <= 0)
-                            {
-                                break;
-                            }
-
-                            int useCount = (int)Math.Min(countInEscrow, Math.Floor(remainingChange / key.Value));
-
-                            // Stryker disable once Equality : Boundary calculation
-                            if (useCount > 0)
-                            {
-                                storeCounts[key] -= useCount;
-                                remainingChange -= key.Value * useCount;
-                            }
-                        }
-
-                        inventory.ClearEscrow();
-                        foreach (var kv in storeCounts)
-                        {
-                            // Stryker disable once Equality, Boolean : Defensive bounds check
-                            if (kv.Value > 0)
-                            {
-                                inventory.AddEscrow(kv.Key, kv.Value);
-                            }
-                        }
-
-                        // Stryker disable once Equality : Boundary calculation
-                        if (remainingChange > 0 && manager != null)
-                        {
-                            manager.Dispense(remainingChange);
-                        }
-                    }
-                    else
-                    {
-                        inventory.ClearEscrow();
-                    }
-
-                    if (manager != null)
-                    {
-                        manager.Deposit(new Dictionary<DenominationKey, int>(storeCounts));
-                    }
-                    else
-                    {
-                        foreach (var kv in storeCounts)
-                        {
-                            // Stryker disable once Equality : Boundary calculation
-                            if (kv.Value > 0)
-                            {
-                                inventory.Add(kv.Key, kv.Value);
-                            }
-                        }
-                    }
+                    calculator.ProcessChange(state.DepositAmount, state.RequiredAmount, state.Counts);
                 }
                 else
                 {
-                    // NoChange (or None)
-                    /* Stryker disable all */
-                    logger?.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
-
-                    /* Stryker restore all */
-
-                    var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
-                    inventory.ClearEscrow();
-
-                    if (manager != null)
-                    {
-                        manager.Deposit(new Dictionary<DenominationKey, int>(storeCounts));
-                    }
-                    else
-                    {
-                        foreach (var kv in storeCounts)
-                        {
-                            // Stryker disable once Equality : Boundary calculation
-                            if (kv.Value > 0)
-                            {
-                                inventory.Add(kv.Key, kv.Value);
-                            }
-                        }
-                    }
+                    calculator.ProcessNoChange(state.Counts);
                 }
 
                 if (action != DepositAction.Repay && hardwareStatusManager.IsOverlapped.CurrentValue)
@@ -537,14 +446,14 @@ public class DepositController(
                     throw new DeviceException("Device Error (Overlap). Cannot complete deposit.", DeviceErrorCode.Overlapped);
                 }
 
-                DepositStatus = DeviceDepositStatus.End;
-                IsPaused = false;
-                IsFixed = false;
+                state.Status = DeviceDepositStatus.End;
+                state.IsPaused = false;
+                state.IsFixed = false;
 
                 if (action == DepositAction.Repay)
                 {
-                    DepositAmount = 0m;
-                    depositCounts.Clear();
+                    state.DepositAmount = 0m;
+                    state.Counts.Clear();
                 }
 
                 inventory.ClearEscrow();
@@ -554,7 +463,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                LastErrorCode = DeviceErrorCode.Cancelled;
+                state.LastErrorCode = DeviceErrorCode.Cancelled;
             }
         }
         catch (DeviceException dex)
@@ -565,13 +474,13 @@ public class DepositController(
             /* Stryker restore all */
             lock (stateLock)
             {
-                LastErrorCode = dex.ErrorCode;
-                LastErrorCodeExtended = dex.ErrorCodeExtended;
+                state.LastErrorCode = dex.ErrorCode;
+                state.LastErrorCodeExtended = dex.ErrorCodeExtended;
 
                 // Stryker disable once all : Thread-safety check
                 if (!disposed)
                 {
-                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(LastErrorCode, LastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(state.LastErrorCode, state.LastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
                 }
             }
         }
@@ -583,13 +492,13 @@ public class DepositController(
             /* Stryker restore all */
             lock (stateLock)
             {
-                LastErrorCode = DeviceErrorCode.Failure;
-                LastErrorCodeExtended = 0;
+                state.LastErrorCode = DeviceErrorCode.Failure;
+                state.LastErrorCodeExtended = 0;
 
                 // Stryker disable once all : Thread-safety check
                 if (!disposed)
                 {
-                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(LastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(state.LastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
                 }
             }
         }
@@ -597,7 +506,7 @@ public class DepositController(
         {
             lock (stateLock)
             {
-                IsBusy = false;
+                state.IsBusy = false;
 
                 // Stryker disable once Logical : Thread-safety check
                 if (!disposed)
@@ -642,9 +551,9 @@ public class DepositController(
     public virtual void RepayDeposit()
     {
         RepayDepositAsync().GetAwaiter().GetResult();
-        if (LastErrorCode != DeviceErrorCode.Success)
+        if (state.LastErrorCode != DeviceErrorCode.Success)
         {
-            throw new DeviceException("RepayDeposit failed.", LastErrorCode, LastErrorCodeExtended);
+            throw new DeviceException("RepayDeposit failed.", state.LastErrorCode, state.LastErrorCodeExtended);
         }
     }
 
@@ -661,12 +570,12 @@ public class DepositController(
             }
 
             bool requestedPause = control == DeviceDepositPause.Pause;
-            if (IsPaused == requestedPause)
+            if (state.IsPaused == requestedPause)
             {
                 throw new DeviceException($"Device is already {(requestedPause ? "paused" : "running")}.", DeviceErrorCode.Illegal);
             }
 
-            IsPaused = requestedPause;
+            state.IsPaused = requestedPause;
         }
 
         lock (stateLock)
@@ -702,11 +611,9 @@ public class DepositController(
                 return;
             }
 
-            var config = configProvider.Config;
-
             foreach (var kv in counts)
             {
-                ProcessDenominationTracking(kv.Key, kv.Value, config);
+                tracker.ProcessDenominationTracking(kv.Key, kv.Value, state);
             }
 
             NotifyTrackingEvents();
@@ -720,12 +627,12 @@ public class DepositController(
         ObjectDisposedException.ThrowIf(disposed, this);
         lock (stateLock)
         {
-            if (!IsDepositInProgress || IsPaused)
+            if (!IsDepositInProgress || state.IsPaused)
             {
                 return;
             }
 
-            RejectAmount += amount;
+            state.RejectAmount += amount;
             if (RealTimeDataEnabled && !disposed)
             {
                 ((Subject<DeviceDataEventArgs>)DataEvents).OnNext(new DeviceDataEventArgs(0));
@@ -781,12 +688,12 @@ public class DepositController(
 
     private bool ValidateTrackingPreconditions()
     {
-        if (DepositStatus != DeviceDepositStatus.Counting || IsPaused)
+        if (state.Status != DeviceDepositStatus.Counting || state.IsPaused)
         {
             return false;
         }
 
-        if (IsFixed)
+        if (state.IsFixed)
         {
             throw new DeviceException("Deposit is already fixed.", DeviceErrorCode.Illegal);
         }
@@ -802,45 +709,6 @@ public class DepositController(
         }
 
         return true;
-    }
-
-    private void ProcessDenominationTracking(DenominationKey key, int count, SimulatorConfiguration config)
-    {
-        lock (stateLock)
-        {
-            // [UPOS] Simulate identification/validation
-            DepositStatus = DeviceDepositStatus.Validation;
-
-            // [CAPACITY] Check for overflow
-            var denomConfig = config.GetDenominationSetting(key);
-            var maxCount = denomConfig.Full;
-
-            var currentInStorage = inventory.GetCount(key);
-            var available = Math.Max(0, maxCount - currentInStorage);
-            var overflow = Math.Max(0, count - available);
-
-            // [LIFECYCLE] Record progress
-            if (depositCounts.TryGetValue(key, out var current))
-            {
-                depositCounts[key] = current + count;
-            }
-            else
-            {
-                depositCounts[key] = count;
-            }
-
-            inventory.AddEscrow(key, count);
-            DepositAmount += key.Value * count;
-            OverflowAmount += key.Value * overflow;
-
-            for (var i = 0; i < count; i++)
-            {
-                depositedSerials.Add($"SN-{key.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}-{Guid.NewGuid().ToString()[..8]}");
-            }
-
-            // [LIFECYCLE] Finished identification
-            DepositStatus = DeviceDepositStatus.Counting;
-        }
     }
 
     private void NotifyTrackingEvents()
