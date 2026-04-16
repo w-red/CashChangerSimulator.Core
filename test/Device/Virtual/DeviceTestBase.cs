@@ -1,8 +1,8 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
@@ -101,7 +101,7 @@ public abstract class DeviceTestBase : IDisposable
             {
                 // Last check before failing
                 if (condition()) return;
-                
+
                 throw new Xunit.Sdk.XunitException($"Condition was not met within {timeoutSeconds}s (virtual time)");
             }
 

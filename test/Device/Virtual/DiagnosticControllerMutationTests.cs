@@ -1,10 +1,8 @@
-using System.Reflection;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
-using Xunit;
+using System.Reflection;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
@@ -50,7 +48,7 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     {
         // Act
         var report = _controller.GetHealthReport(level);
- 
+
         // Assert
         report.ShouldContain($"--- {expectedTitle} Health Check Report ---");
         foreach (var keyword in expectedKeywords)
@@ -59,7 +57,7 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
         }
     }
 
-    /// <summary>ハードウェアの状態が変化した際に、レポートに適切なキーワードが含まれることを検証します（400, 404, 405 撃破）。</summary>
+    /// <summary>ハードウェアの状態が変化した際に、レポートに適切なキーワードが含まれることを検証します。</summary>
     [Theory]
     [InlineData(false, false, "Disconnected")]
     [InlineData(true, true, "Jammed")]
@@ -78,7 +76,7 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
         report.ShouldNotContain("---  Health Check Report ---"); // タイトルが空でないことの確認
     }
 
-    /// <summary>統計情報の取得において、ワイルドカードと個別指定の論理条件 (||) を網羅します（Logical mutation 撃破）。</summary>
+    /// <summary>統計情報の取得において、ワイルドカードと個別指定の論理条件 (||) を網羅します（Logical mutation 対応）。</summary>
     [Theory]
     [InlineData(new[] { "*" }, true, true)]
     [InlineData(new[] { "SuccessfulDepletionCount" }, true, false)]
@@ -98,7 +96,7 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
         // Assert
         var normalizedStats = stats.Replace("\r\n", "\n");
         normalizedStats.ShouldStartWith("<CommonStatistics>\n");
-        
+
         if (expectSuccess) normalizedStats.ShouldContain("<SuccessfulDepletionCount>1</SuccessfulDepletionCount>");
         if (expectFailed) normalizedStats.ShouldContain("<FailedDepletionCount>1</FailedDepletionCount>");
         normalizedStats.ShouldEndWith("</CommonStatistics>\n");
@@ -109,7 +107,7 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
         }
     }
 
-    /// <summary>RetrieveStatistics に null を渡した場合に例外が発生することを検証します（411 撃破）。</summary>
+    /// <summary>RetrieveStatistics に null を渡した場合に例外が発生することを検証します。</summary>
     [Fact]
     public void RetrieveStatisticsWhenArgumentIsNullThrowsArgumentNullException()
     {
@@ -147,24 +145,24 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
             Should.Throw<ObjectDisposedException>(() => _controller.RetrieveStatistics(new[] { "*" }));
     }
 
-    /// <summary>Dispose の内部挙動と副作用を厳密に検証します（L105 撃破等）。</summary>
+    /// <summary>Dispose の内部挙動と副作用を厳密に検証します。</summary>
     [Fact]
     public void DisposeStrictVerification()
     {
         // Arrange
         var testable = new TestableDiagnosticController(Inventory, StatusManager);
- 
+
         // Act
         testable.Dispose();
- 
+
         // Assert
         testable.OnDisposingCalled.ShouldBeTrue("OnDisposing must be called");
         testable.OnDisposingCallCount.ShouldBe(1, "OnDisposing should be called exactly once despite redundant Dispose calls");
- 
+
         // ObjectDisposedException の ObjectName 検証
         var ex = Should.Throw<ObjectDisposedException>(() => testable.GetHealthReport(DeviceHealthCheckLevel.Internal));
         ex.ObjectName.ShouldContain(nameof(DiagnosticController));
- 
+
         // 冪等性の検証 (2回呼んでも内部処理が走らないことを確認)
         testable.Dispose();
         testable.OnDisposingCallCount.ShouldBe(1, "OnDisposing should NOT be called again if already disposed");
