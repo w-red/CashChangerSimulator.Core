@@ -94,8 +94,7 @@ public class SimulatorServicesTests : IDisposable
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hw);
-        var timeProvider = new FakeTimeProvider();
-        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object, timeProvider);
+        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object);
 
         var provider = new TestServiceProvider(
             configProvider,

@@ -48,7 +48,7 @@ public class StatusUpdateEventTests
         var monitorsProvider = MonitorsProvider.Create(inv, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inv, hw);
-        var dispenseController = new DispenseController(manager, inv, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object, null);
+        var dispenseController = new DispenseController(manager, inv, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object);
 
         var deps = new SimulatorDependencies(
             configProvider,

@@ -74,7 +74,7 @@ public class AsyncModeReliabilityTests
                    .Returns(dispenseTcs.Task);
 
         var timeProvider = new FakeTimeProvider();
-        var controller = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardwareStatus, hardwareSim.Object, timeProvider);
+        var controller = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardwareStatus, hardwareSim.Object);
         var changer = new ReliabilityTestChanger(inventory, manager, controller, hardwareStatus)
         {
             SkipStateVerification = true

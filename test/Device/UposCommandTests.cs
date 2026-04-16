@@ -180,7 +180,7 @@ public class UposCommandTests
         var sim = new Mock<IDeviceSimulator>();
         var inv = Inventory.Create();
         var cp = new ConfigurationProvider();
-        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object, null);
+        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object);
         var command = new DispenseChangeCommand(controllerMock.Object, hw, deposit.Object, 1000m, false);
 
         command.Execute();
@@ -197,7 +197,7 @@ public class UposCommandTests
         var deposit = new Mock<DepositController>(inv, hw, null!, null!, null);
         var sim = new Mock<IDeviceSimulator>();
         var cp = new ConfigurationProvider();
-        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object, null);
+        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object);
         var counts = new Dictionary<DenominationKey, int>();
         var command = new DispenseCashCommand(controllerMock.Object, inv, hw, deposit.Object, counts, false);
 
@@ -215,7 +215,7 @@ public class UposCommandTests
         var sim = new Mock<IDeviceSimulator>();
         var inv = Inventory.Create();
         var cp = new ConfigurationProvider();
-        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object, null);
+        var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object);
         var command = new ClearOutputCommand(controllerMock.Object);
 
         command.Execute();

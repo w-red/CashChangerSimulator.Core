@@ -56,7 +56,7 @@ public class ErrorScenarioTests
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hardware);
-        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
+        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object);
 
         var deps = new SimulatorDependencies(
             configProvider,

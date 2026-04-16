@@ -24,7 +24,7 @@ public class BulkOperationTests
         var hardware = HardwareStatusManager.Create();
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         var json = @"
@@ -55,7 +55,7 @@ public class BulkOperationTests
         var hardware = HardwareStatusManager.Create();
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         var json = @"

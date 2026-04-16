@@ -49,7 +49,7 @@ public class TestSimulatorCashChanger : InternalSimulatorCashChanger
             new TransactionHistory(),
             manager,
             new DepositController(inv, hw),
-            new DispenseController(manager, inv, config ?? new ConfigurationProvider(), loggerFactory ?? NullLoggerFactory.Instance, hw, deviceSimulator ?? new Mock<IDeviceSimulator>().Object, timeProvider),
+            new DispenseController(manager, inv, config ?? new ConfigurationProvider(), loggerFactory ?? NullLoggerFactory.Instance, hw, deviceSimulator ?? new Mock<IDeviceSimulator>().Object),
             new OverallStatusAggregatorProvider(MonitorsProvider.Create(inv, config ?? new ConfigurationProvider(), CurrencyMetadataProvider.Create(config ?? new ConfigurationProvider()))),
             hw,
             TimeProvider: timeProvider))

@@ -35,7 +35,7 @@ public class StatusCoordinatorTest
         var manager = new CashChangerManager(inventory, history, null, null);
 
         depositController = new DepositController(inventory, hardwareStatusManager, manager);
-        dispenseController = new DispenseController(manager, inventory, new ConfigurationProvider(), NullLoggerFactory.Instance, hardwareStatusManager, new Mock<IDeviceSimulator>().Object, null);
+        dispenseController = new DispenseController(manager, inventory, new ConfigurationProvider(), NullLoggerFactory.Instance, hardwareStatusManager, new Mock<IDeviceSimulator>().Object);
     }
 
     /// <summary>ジャム状態が変化した際に適切なステータス更新イベントが発生することを確認します。</summary>

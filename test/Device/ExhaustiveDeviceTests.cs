@@ -36,7 +36,7 @@ public class ExhaustiveDeviceTests : IDisposable
         hardwareStatusManager = HardwareStatusManager.Create();
         simulatorMock = new Mock<IDeviceSimulator>();
         timeProvider = new FakeTimeProvider();
-        controller = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardwareStatusManager, simulatorMock.Object, timeProvider);
+        controller = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardwareStatusManager, simulatorMock.Object);
 
         hardwareStatusManager.Input.IsConnected.Value = true;
     }

@@ -36,8 +36,7 @@ public class UposDispenseFacadeTest
         hardwareStatusManager.Input.IsConnected.Value = true;
         var manager = new CashChangerManager(inventory, new TransactionHistory(), null);
         depositController = new DepositController(inventory, hardwareStatusManager);
-        var timeProvider = new FakeTimeProvider();
-        dispenseController = new DispenseController(manager, inventory, new ConfigurationProvider(), NullLoggerFactory.Instance, hardwareStatusManager, new Mock<IDeviceSimulator>().Object, timeProvider);
+        dispenseController = new DispenseController(manager, inventory, new ConfigurationProvider(), NullLoggerFactory.Instance, hardwareStatusManager, new Mock<IDeviceSimulator>().Object);
         mediatorMock = new Mock<IUposMediator>();
         mediatorMock.Setup(m => m.Execute(It.IsAny<IUposCommand>()))
             .Callback<IUposCommand>((cmd) => cmd.Execute());
