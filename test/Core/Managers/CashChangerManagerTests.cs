@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core.Exceptions;
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Shouldly;
@@ -115,7 +114,7 @@ public class CashChangerManagerTests : CoreTestBase
     {
         // Arrange
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
-        
+
         // 2000円札を非リサイクルとして明示的に設定
         ConfigurationProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
 
@@ -180,13 +179,13 @@ public class CashChangerManagerTests : CoreTestBase
     {
         // Arrange
         var b10000 = new DenominationKey(10000, CurrencyCashType.Bill);
-        
+
         // 10000円札を入金不可に設定
         ConfigurationProvider.Config.Inventory["JPY"].Denominations["B10000"].IsDepositable = false;
-        
+
         // Act
         Manager.Deposit(new Dictionary<DenominationKey, int> { { b10000, 1 } });
-        
+
         // Assert
         Inventory.GetCount(b10000).ShouldBe(0);
         Inventory.CollectionCounts.ShouldBeEmpty();
@@ -199,10 +198,10 @@ public class CashChangerManagerTests : CoreTestBase
         // Arrange
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.SetCount(b1000, 50);
-        
+
         // Act
         Manager.PurgeCash();
-        
+
         // Assert
         Inventory.GetCount(b1000).ShouldBe(0);
         Inventory.CollectionCounts.First(kv => kv.Key == b1000).Value.ShouldBe(50);
@@ -216,10 +215,10 @@ public class CashChangerManagerTests : CoreTestBase
     {
         // Arrange
         var b1000 = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         // Act
         Manager.Adjust(new Dictionary<DenominationKey, int> { { b1000, 123 } });
-        
+
         // Assert
         Inventory.GetCount(b1000).ShouldBe(123);
     }

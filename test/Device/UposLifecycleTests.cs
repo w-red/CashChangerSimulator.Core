@@ -7,8 +7,8 @@ using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging;
-using Microsoft.PointOfService;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
@@ -42,12 +42,12 @@ public class UposLifecycleTests
         var inv = Inventory.Create();
         var hw = HardwareStatusManager.Create();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history, (object?)null, null);
+        var manager = new CashChangerManager(inv, history, null, null);
         var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
         var monitorsProvider = MonitorsProvider.Create(inv, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inv, hw);
-        var dispenseController = new DispenseController(manager, inv, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inv, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object, null);
 
         var deps = new SimulatorDependencies(configProvider, inv, history, manager, depositController, dispenseController, aggregatorProvider, hw);
 

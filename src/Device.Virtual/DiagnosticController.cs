@@ -1,7 +1,7 @@
-using System.Globalization;
-using System.Text;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using System.Globalization;
+using System.Text;
 
 namespace CashChangerSimulator.Device.Virtual;
 

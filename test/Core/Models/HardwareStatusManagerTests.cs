@@ -16,10 +16,10 @@ public class HardwareStatusManagerTests
     public void SetJammedShouldUpdateState()
     {
         manager.State.IsJammed.CurrentValue.ShouldBeFalse();
-        
+
         manager.Input.IsJammed.Value = true;
         manager.Input.CurrentJamLocation.Value = JamLocation.BillCassette1;
-        
+
         manager.State.IsJammed.CurrentValue.ShouldBeTrue();
         manager.State.CurrentJamLocation.CurrentValue.ShouldBe(JamLocation.BillCassette1);
 
@@ -86,11 +86,11 @@ public class HardwareStatusManagerTests
     public void SetDeviceErrorShouldSetCodeAndStatus()
     {
         manager.State.IsDeviceError.CurrentValue.ShouldBeFalse();
-        
+
         manager.Input.CurrentErrorCode.Value = 111;
         manager.Input.CurrentErrorCodeExtended.Value = 222;
         manager.Input.IsDeviceError.Value = true;
-        
+
         manager.State.IsDeviceError.CurrentValue.ShouldBeTrue();
         manager.State.CurrentErrorCode.CurrentValue.ShouldBe(111);
         manager.State.CurrentErrorCodeExtended.CurrentValue.ShouldBe(222);
@@ -178,7 +178,7 @@ public class HardwareStatusManagerTests
         // R3 の ReactiveProperty は Dispose 後に Value 操作すると ObjectDisposedException を投げる
         Should.Throw<ObjectDisposedException>(() => manager.Input.IsConnected.Value = true);
         Should.Throw<ObjectDisposedException>(() => manager.Input.IsJammed.Value = true);
-        
+
         // Double dispose
         manager.Dispose();
     }

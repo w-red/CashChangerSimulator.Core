@@ -207,7 +207,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         {
             isHandlingEvent = true;
             OnEventQueued?.Invoke(e);
-            
+
             if (DisableUposEventQueuing)
             {
                 return;

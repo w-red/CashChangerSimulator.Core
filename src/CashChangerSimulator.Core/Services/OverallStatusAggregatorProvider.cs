@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Monitoring;
 using R3;
 

@@ -7,8 +7,8 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.PointOfService;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
@@ -36,7 +36,7 @@ public class StatusUpdateEventTests
         var inv = Inventory.Create();
         var hw = HardwareStatusManager.Create();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history, (object?)null, null);
+        var manager = new CashChangerManager(inv, history, null, null);
         var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
 
         // Initialize all denominations to 50 to ensure they are NOT Empty/NearEmpty initially
@@ -48,7 +48,7 @@ public class StatusUpdateEventTests
         var monitorsProvider = MonitorsProvider.Create(inv, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inv, hw);
-        var dispenseController = new DispenseController(manager, inv, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inv, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object, null);
 
         var deps = new SimulatorDependencies(
             configProvider,
@@ -173,7 +173,7 @@ public class StatusUpdateEventTests
         events.Clear();
 
         hw.Input.IsJammed.Value = false;
-        
+
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Ok));
 
         // UPOS standard: CHAN_STATUS_OK = 0
@@ -190,7 +190,7 @@ public class StatusUpdateEventTests
 
         // Simulate collection box removal
         hw.Input.IsCollectionBoxRemoved.Value = true;
-        
+
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Removed));
 
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Removed);
@@ -207,7 +207,7 @@ public class StatusUpdateEventTests
         events.Clear();
 
         hw.Input.IsCollectionBoxRemoved.Value = false;
-        
+
         await WaitUntil(() => events.Contains((int)UposCashChangerStatusUpdateCode.Inserted));
 
         events.ShouldContain((int)UposCashChangerStatusUpdateCode.Inserted);

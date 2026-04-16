@@ -1,10 +1,10 @@
-using System.Text.Json;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Text.Json;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services;

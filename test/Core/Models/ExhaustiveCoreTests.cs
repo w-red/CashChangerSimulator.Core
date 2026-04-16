@@ -5,7 +5,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Core.Models;
 
@@ -159,7 +158,7 @@ public class ExhaustiveCoreTests : IDisposable
 
         // 2. Recursive acquire (Already held by self)
         manager1.TryAcquire().ShouldBeTrue();
-        manager1.TryAcquire().ShouldBeTrue(); 
+        manager1.TryAcquire().ShouldBeTrue();
         manager1.IsLockHeldByAnother().ShouldBeFalse();
 
         // 3. Contention from another manager

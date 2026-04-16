@@ -1,8 +1,6 @@
-using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Managers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Core.Models;
 
@@ -80,7 +78,7 @@ public class GlobalLockManagerTests : IDisposable
         // Arrange
         var lockAcquired = new TaskCompletionSource<bool>();
         var lockReleased = new TaskCompletionSource<bool>();
-        
+
         using var otherManager = new GlobalLockManager(_testLockPath, NullLogger.Instance);
 
         // スレッド1でロックを取得
@@ -108,7 +106,7 @@ public class GlobalLockManagerTests : IDisposable
 
         var result2 = await t2;
         result2.ShouldBeFalse();
-        
+
         // 他者が保持していることを確認
         otherManager.IsLockHeldByAnother().ShouldBeTrue();
 
@@ -127,7 +125,7 @@ public class GlobalLockManagerTests : IDisposable
     {
         // Act
         using var manager = new GlobalLockManager("", NullLogger.Instance);
-        
+
         // Assert
         // プロパティへの直接アクセスはできないが、動作が正常であることを確認
         manager.IsLockHeldByAnother().ShouldBeFalse();
@@ -141,7 +139,7 @@ public class GlobalLockManagerTests : IDisposable
     {
         // Arrange
         var manager = new GlobalLockManager(Path.Combine(Path.GetTempPath(), $"double_dispose_{Guid.NewGuid()}.lock"), NullLogger.Instance);
-        
+
         // Act & Assert
         Should.NotThrow(() =>
         {
@@ -160,9 +158,9 @@ public class GlobalLockManagerTests : IDisposable
         {
             // 1. 他のストリームで排他ロック
             using var fs = File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            
+
             using var manager = new GlobalLockManager(path, NullLogger.Instance);
-            
+
             // Act & Assert
             // 2. _fileStream が null かつ外部が保持しているので、true になるはず
             manager.IsLockHeldByAnother().ShouldBeTrue();
@@ -181,14 +179,14 @@ public class GlobalLockManagerTests : IDisposable
         // ディレクトリパスをファイルパスとして渡すと、FileStream コンストラクタで UnauthorizedAccessException が発生する
         var tempDir = Path.Combine(Path.GetTempPath(), $"dir_lock_{Guid.NewGuid()}");
         Directory.CreateDirectory(tempDir);
-        
+
         try
         {
             using var manager = new GlobalLockManager(tempDir, NullLogger.Instance);
-            
+
             // Act
             var result = manager.TryAcquire();
-            
+
             // Assert
             result.ShouldBeFalse();
         }
@@ -205,14 +203,14 @@ public class GlobalLockManagerTests : IDisposable
         // Arrange
         var tempDir = Path.Combine(Path.GetTempPath(), $"dir_check_{Guid.NewGuid()}");
         Directory.CreateDirectory(tempDir);
-        
+
         try
         {
             using var manager = new GlobalLockManager(tempDir, NullLogger.Instance);
-            
+
             // Act
             var result = manager.IsLockHeldByAnother();
-            
+
             // Assert
             // 実装上、UnauthorizedAccessException は不保持(false)として扱う
             result.ShouldBeFalse();
@@ -230,12 +228,12 @@ public class GlobalLockManagerTests : IDisposable
         // Arrange
         var tempRoot = Path.Combine(Path.GetTempPath(), $"root_{Guid.NewGuid()}");
         var lockFile = Path.Combine(tempRoot, "subdir", "test.lock");
-        
+
         try
         {
             // Act
             using var manager = new GlobalLockManager(lockFile, NullLogger.Instance);
-            
+
             // Assert
             Directory.Exists(Path.GetDirectoryName(lockFile)).ShouldBeTrue();
         }

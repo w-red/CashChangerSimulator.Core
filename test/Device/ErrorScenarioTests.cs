@@ -7,8 +7,8 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.PointOfService;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
@@ -50,13 +50,13 @@ public class ErrorScenarioTests
         }
 
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, (object?)null, null);
+        var manager = new CashChangerManager(inventory, history, null, null);
         var hardware = HardwareStatusManager.Create();
         var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(inventory, hardware);
-        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
 
         var deps = new SimulatorDependencies(
             configProvider,

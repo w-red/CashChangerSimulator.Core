@@ -31,14 +31,14 @@ public class FacadeTests
         depositControllerMock = new Mock<DepositController>(
             inventory,
             hardwareStatusManager,
-            managerMock?.Object ?? new Mock<CashChangerManager>(inventory, new Mock<TransactionHistory>().Object, (object?)null, new ConfigurationProvider()).Object,
+            managerMock?.Object ?? new Mock<CashChangerManager>(inventory, new Mock<TransactionHistory>().Object, null, new ConfigurationProvider()).Object,
             new ConfigurationProvider(),
-            (TimeProvider?)null);
+            null);
         inventoryMock = new Mock<Inventory>();
         managerMock = new Mock<CashChangerManager>(
             inventory,
             new Mock<TransactionHistory>().Object,
-            (object?)null,
+            null,
             new ConfigurationProvider());
         diagnosticControllerMock = new Mock<DiagnosticController>(inventory, hardwareStatusManager);
     }

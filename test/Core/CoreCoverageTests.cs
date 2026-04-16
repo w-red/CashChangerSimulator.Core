@@ -5,9 +5,7 @@ using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using Moq;
-using R3;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Core;
 
@@ -285,10 +283,10 @@ public class CoreCoverageTests
             // Windowsでファイル属性を ReadOnly に設定して擬似的に例外を狙う(一部環境では UnauthorizedAccessException になる)
             // または、読み取りをブロックする形で IO 例外を狙う
             using var fs = new FileStream(tempFile, FileMode.Open, FileAccess.Write, FileShare.None);
-            
+
             // Act
             var state = service.Load();
-            
+
             // Assert
             state.Entries.ShouldBeEmpty();
         }

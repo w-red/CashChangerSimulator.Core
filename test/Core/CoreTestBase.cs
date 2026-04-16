@@ -2,7 +2,6 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
-using Moq;
 
 namespace CashChangerSimulator.Tests.Core;
 
@@ -51,8 +50,8 @@ public abstract class CoreTestBase : IDisposable
 
     /// <summary>CashChangerManager を生成します。Moq に差し替える場合はオーバーライドします。</summary>
     protected virtual CashChangerManager CreateManager(
-        Inventory inventory, 
-        TransactionHistory history, 
+        Inventory inventory,
+        TransactionHistory history,
         ConfigurationProvider configProvider)
     {
         return new CashChangerManager(inventory, history, configProvider);

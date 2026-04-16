@@ -77,15 +77,15 @@ public class DenominationKeyTests
         // 基本的な比較
         key1.Equals(key2).ShouldBeTrue();
         (key1 == key2).ShouldBeTrue();
-        
+
         // 各プロパティの不一致
         key1.Equals(key3).ShouldBeFalse();
         key1.Equals(key4).ShouldBeFalse();
         key1.Equals(key5).ShouldBeFalse();
-        
+
         // null との比較
         key1.Equals(null!).ShouldBeFalse();
-        
+
         // 異なる型との比較
 #pragma warning disable CS1803
         key1.Equals("not a key").ShouldBeFalse();
@@ -107,7 +107,7 @@ public class DenominationKeyTests
 
         // 同値ならハッシュ値も同じ
         key1.GetHashCode().ShouldBe(key2.GetHashCode());
-        
+
         // 異なればハッシュ値も（高確率で）異なる
         key1.GetHashCode().ShouldNotBe(key3.GetHashCode());
 

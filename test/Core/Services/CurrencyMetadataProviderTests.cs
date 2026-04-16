@@ -32,7 +32,7 @@ public class CurrencyMetadataProviderTests
     public void GuardsShouldThrowExceptions()
     {
         Should.Throw<ArgumentNullException>(() => CurrencyMetadataProvider.Create(null!));
-        
+
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Should.Throw<ArgumentNullException>(() => provider.GetDenominationName(null!));
         Should.Throw<ArgumentNullException>(() => provider.GetDenominationName(key, null!));
@@ -186,14 +186,14 @@ public class CurrencyMetadataProviderTests
     {
         configProvider.Config.System.CurrencyCode = "JPY";
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        
+
         // デフォルト設定("千円札")があるとフォールバックロジックを通らないため、明示的にクリアする
         var setting = configProvider.Config.Inventory["JPY"].Denominations["B1000"];
         setting.DisplayNameJP = string.Empty;
         setting.DisplayName = string.Empty;
-        
+
         configProvider.Update(configProvider.Config);
-        
+
         provider.GetDenominationName(key, culture).ShouldBe(expectedName);
     }
 
@@ -206,7 +206,7 @@ public class CurrencyMetadataProviderTests
         // USD は Prefix="$", Suffix="" なので、Suffixに無理やり値を入れた状態をシミュレート。
         configProvider.Config.System.CurrencyCode = "USD";
         configProvider.Update(configProvider.Config);
-        
+
         // 通常は $ のみのはずだが、コード上の三項演算子変異を殺す。
         provider.Symbol.ShouldBe("$");
     }
@@ -276,9 +276,9 @@ public class CurrencyMetadataProviderTests
     {
         var fireCount = 0;
         using var sub = provider.Changed.Subscribe(_ => fireCount++);
-        
+
         fireCount.ShouldBe(0); // 購読直後は0
-        
+
         configProvider.Config.System.CurrencyCode = "USD";
         configProvider.Update(configProvider.Config);
         fireCount.ShouldBe(1);

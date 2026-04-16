@@ -15,7 +15,7 @@ public class DepositSequenceTests
     {
         var inventory = Inventory.Create();
         var history = new TransactionHistory();
-        _ = new CashChangerManager(inventory, history, (object?)null, null);
+        _ = new CashChangerManager(inventory, history, null, null);
         var hw = HardwareStatusManager.Create();
         hw.Input.IsConnected.Value = true;
         var controller = new DepositController(inventory, hw);

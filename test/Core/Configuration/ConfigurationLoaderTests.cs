@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using Shouldly;
-using Tomlyn;
 
 namespace CashChangerSimulator.Tests.Core.Configuration;
 
@@ -35,7 +34,7 @@ public class ConfigurationLoaderTests : IDisposable
         {
             File.Delete(testInventoryPath);
         }
-        
+
         var defaultInv = ConfigurationLoader.DefaultInventoryStateFilePath;
         if (File.Exists(defaultInv))
         {
@@ -183,9 +182,9 @@ public class ConfigurationLoaderTests : IDisposable
     {
         // [System] だけがあり、他がない状態
         File.WriteAllText(testConfigPath, "[System]\nCurrencyCode = \"USD\"");
-        
+
         var config = ConfigurationLoader.Load(testConfigPath);
-        
+
         config.ShouldNotBeNull();
         config.System.CurrencyCode.ShouldBe("USD");
         config.Logging.ShouldNotBeNull();
@@ -199,9 +198,9 @@ public class ConfigurationLoaderTests : IDisposable
     {
         var config = new SimulatorConfiguration();
         var key = new DenominationKey(123m, CurrencyCashType.Bill, "ABC");
-        
+
         var setting = config.GetDenominationSetting(key);
-        
+
         setting.ShouldNotBeNull();
         setting.NearEmpty.ShouldBe(config.Thresholds.NearEmpty);
         setting.IsRecyclable.ShouldBeTrue(); // Default
@@ -213,9 +212,9 @@ public class ConfigurationLoaderTests : IDisposable
     {
         var config = new SimulatorConfiguration();
         config.System.CurrencyCode = "EUR";
-        
+
         ConfigurationLoader.Save(config, testConfigPath);
-        
+
         File.Exists(testConfigPath).ShouldBeTrue();
         var content = File.ReadAllText(testConfigPath);
         content.ShouldContain("CurrencyCode = \"EUR\"");
@@ -227,10 +226,10 @@ public class ConfigurationLoaderTests : IDisposable
     {
         var state = new InventoryState();
         state.Counts["JPY:B1000"] = 55;
-        
+
         ConfigurationLoader.SaveInventoryState(state, testConfigPath);
         var loaded = ConfigurationLoader.LoadInventoryState(testConfigPath);
-        
+
         loaded.Counts["JPY:B1000"].ShouldBe(55);
     }
 

@@ -127,22 +127,22 @@ public class StatusCoordinator(
             {
                 return;
             }
- 
+
             var code = connected ? UposCashChangerStatusUpdateCode.Inserted : UposCashChangerStatusUpdateCode.Removed;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
- 
+
         disposables.Add(hardwareStatusManager.IsCollectionBoxRemoved.Skip(1).Subscribe(removed =>
         {
             if (disposed)
             {
                 return;
             }
- 
+
             var code = removed ? UposCashChangerStatusUpdateCode.Removed : UposCashChangerStatusUpdateCode.Inserted;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
- 
+
         disposables.Add(hardwareStatusManager.IsJammed.Skip(1).Subscribe(jammed =>
         {
             if (disposed)

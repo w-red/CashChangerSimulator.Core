@@ -1,6 +1,6 @@
+using CashChangerSimulator.Core.Transactions;
 using System.Globalization;
 using System.Text;
-using CashChangerSimulator.Core.Transactions;
 
 namespace CashChangerSimulator.Core.Services;
 

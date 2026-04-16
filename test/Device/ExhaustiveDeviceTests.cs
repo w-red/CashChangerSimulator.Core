@@ -10,8 +10,8 @@ using CashChangerSimulator.Device.Virtual.Services;
 using CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.PointOfService;
 using Microsoft.Extensions.Time.Testing;
+using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
@@ -32,7 +32,7 @@ public class ExhaustiveDeviceTests : IDisposable
         inventory = Inventory.Create();
         var history = new TransactionHistory();
         var configProvider = new ConfigurationProvider();
-        manager = new CashChangerManager(inventory, history, (object?)null, null);
+        manager = new CashChangerManager(inventory, history, null, null);
         hardwareStatusManager = HardwareStatusManager.Create();
         simulatorMock = new Mock<IDeviceSimulator>();
         timeProvider = new FakeTimeProvider();
@@ -55,26 +55,26 @@ public class ExhaustiveDeviceTests : IDisposable
         inventory.SetCount(key, 10);
         simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await controller.DispenseChangeAsync((int)1000, false).ConfigureAwait(false);
+        await controller.DispenseChangeAsync(1000, false).ConfigureAwait(false);
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
 
         // Async mode
-        await controller.DispenseChangeAsync((int)1000, true).ConfigureAwait(false);
+        await controller.DispenseChangeAsync(1000, true).ConfigureAwait(false);
         timeProvider.Advance(TimeSpan.FromMilliseconds(200));
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
 
         // Error: Busy
         var tcs = new TaskCompletionSource();
         simulatorMock.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
-        var task = controller.DispenseChangeAsync((int)1000, false);
+        var task = controller.DispenseChangeAsync(1000, false);
         timeProvider.Advance(TimeSpan.FromMilliseconds(100));
-        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync((int)1000, false).ConfigureAwait(false)).ConfigureAwait(false);
+        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync(1000, false).ConfigureAwait(false)).ConfigureAwait(false);
         tcs.SetResult();
         controller.ClearOutput();
 
         // Error: Disconnected
         hardwareStatusManager.Input.IsConnected.Value = false;
-        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync((int)1000, false).ConfigureAwait(false)).ConfigureAwait(false);
+        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync(1000, false).ConfigureAwait(false)).ConfigureAwait(false);
         hardwareStatusManager.Input.IsConnected.Value = true;
     }
 

@@ -15,7 +15,7 @@ public class ScriptExecutionServiceCoverageTests
 
         if (method != null)
         {
-            var result = method.Invoke(null, new object[] { "123", context });
+            var result = method.Invoke(null, ["123", context]);
             result.ShouldBe(123);
         }
     }

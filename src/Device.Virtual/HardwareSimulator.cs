@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Services;
 using R3;

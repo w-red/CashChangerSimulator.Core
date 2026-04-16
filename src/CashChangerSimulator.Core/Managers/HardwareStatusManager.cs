@@ -1,4 +1,3 @@
-using System;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using R3;

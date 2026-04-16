@@ -23,12 +23,12 @@ public class StandardLifecycleHandler(
             {
                 return ControlState.Closed;
             }
- 
+
             if (mediator.IsBusy)
             {
                 return ControlState.Busy;
             }
- 
+
             return ControlState.Idle;
         }
     }

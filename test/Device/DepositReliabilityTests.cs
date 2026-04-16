@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet;
 using Microsoft.PointOfService;
 using Shouldly;
+using System.Collections.Concurrent;
 
 namespace CashChangerSimulator.Tests.Device;
 

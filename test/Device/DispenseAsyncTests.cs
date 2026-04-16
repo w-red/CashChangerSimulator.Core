@@ -7,10 +7,10 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.PointOfService;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
+using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
@@ -112,7 +112,8 @@ public class DispenseAsyncTests
         manager.DispenseFinishSignal.Set();
 
         // Wait for completion event
-        await WaitUntil(() => {
+        await WaitUntil(() =>
+        {
             lock (changer.QueuedEvents)
             {
                 return changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
@@ -162,7 +163,7 @@ public class DispenseAsyncTests
         // Cleanup: Finish the first dispense
         dispenseTcs.SetResult();
         timeProvider.Advance(TimeSpan.FromMilliseconds(20)); // Advance to complete Task.Delay in simulator
-        
+
         manager.DispenseFinishSignal.Set();
         await WaitUntil(() => !changer.DispenseController.IsBusy, timeProvider: timeProvider);
     }
@@ -324,10 +325,11 @@ public class DispenseAsyncTests
 
         // Act
         changer.DispenseChange(100);
-        
+
         manager.DispenseFinishSignal.Set();
 
-        await WaitUntil(() => {
+        await WaitUntil(() =>
+        {
             lock (changer.QueuedEvents)
             {
                 return changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);

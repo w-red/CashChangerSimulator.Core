@@ -194,7 +194,7 @@ public class InventoryTests : CoreTestBase
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill, string.Empty);
         Inventory.Add(key, 1);
-        
+
         // デフォルト通貨コードが特定の値（JPY）であることを厳密にチェック
         Inventory.GetCount(key).ShouldBe(1);
         var counts = Inventory.AllCounts.ToList();
@@ -218,7 +218,7 @@ public class InventoryTests : CoreTestBase
         // JPY のみの合計 (2*1000 + 1*5000 = 7000)
         // ここが Sum ではなく Max にされると 5000 になるため検知できる
         Inventory.CalculateTotal("JPY").ShouldBe(7000);
-        
+
         // USD のみの合計
         Inventory.CalculateTotal("USD").ShouldBe(10);
 
@@ -237,7 +237,7 @@ public class InventoryTests : CoreTestBase
 
         var dict = Inventory.ToDictionary();
         dict.Count.ShouldBe(3);
-        
+
         // 正規表現や Contains ではなく、完全一致で形式を固定することで Stryker による微細な置換を検知する
         dict.ContainsKey("JPY:B1000").ShouldBeTrue();
         dict["JPY:B1000"].ShouldBe(1);
@@ -245,7 +245,7 @@ public class InventoryTests : CoreTestBase
         dict["COL:JPY:B1000"].ShouldBe(2);
         dict.ContainsKey("REJ:JPY:B1000").ShouldBeTrue();
         dict["REJ:JPY:B1000"].ShouldBe(3);
-        
+
         // 文字列キーが空("")などに変異していないことを追加でアサート (Target M)
         dict.Keys.ShouldContain("JPY:B1000");
         dict.Keys.ShouldNotContain("");
@@ -289,13 +289,13 @@ public class InventoryTests : CoreTestBase
             { ":JPY:B1000", 300 },    // プレフィックス(COL/REJ)なし
             { "COL:JPY:B", 400 },     // 額面なし
         };
-        
+
         inventory.Clear();
         var notifyCount = 0;
         using var sub = inventory.Changed.Subscribe(_ => notifyCount++);
-        
+
         inventory.LoadFromDictionary(evilDict);
-        
+
         // 1つも処理されず、イベントも発生しないこと
         inventory.CalculateTotal().ShouldBe(0);
         notifyCount.ShouldBe(0);
@@ -345,7 +345,7 @@ public class InventoryTests : CoreTestBase
     public void HasDiscrepancyShouldReflectMultipleSources(bool forced, bool hasCollection, bool hasReject, bool expected)
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         Inventory.HasDiscrepancy = forced;
         if (hasCollection) Inventory.AddCollection(key, 1);
         if (hasReject) Inventory.AddReject(key, 1);
@@ -358,18 +358,18 @@ public class InventoryTests : CoreTestBase
     public void HasDiscrepancy_ShouldBeFalse_WhenKeysExistWithZeroValue()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         // 通常庫
         Inventory.Add(key, 1);
         Inventory.HasDiscrepancy.ShouldBeFalse(); // 通常庫は不一致に含まれない
         Inventory.Add(key, -1);
-        
+
         // 回収庫
         Inventory.AddCollection(key, 1);
         Inventory.HasDiscrepancy.ShouldBeTrue();
         Inventory.AddCollection(key, -1);
         Inventory.HasDiscrepancy.ShouldBeFalse(); // 0に戻ったらFalseであるべき (Any v > 0)
-        
+
         // リジェクト庫
         Inventory.AddReject(key, 1);
         Inventory.HasDiscrepancy.ShouldBeTrue();
@@ -392,10 +392,10 @@ public class InventoryTests : CoreTestBase
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         Inventory.AddEscrow(key, 5);
-        
+
         var notifyCount = 0;
         using var sub = Inventory.Changed.Subscribe(_ => notifyCount++);
-        
+
         Inventory.ClearEscrow();
         Inventory.EscrowCounts.ShouldBeEmpty();
         notifyCount.ShouldBe(1);
@@ -479,7 +479,7 @@ public class InventoryTests : CoreTestBase
     public void AllBucketsShouldNotGoBelowZero()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         // 初期状態 0 から -1 する
         Inventory.Add(key, -1);
         Inventory.AddCollection(key, -1);
@@ -487,7 +487,7 @@ public class InventoryTests : CoreTestBase
         Inventory.AddEscrow(key, -1);
 
         Inventory.GetCount(key).ShouldBe(0);
-        
+
         // エントリーが存在しても、値が 0 であることを検証する
         Inventory.CollectionCounts.All(kv => kv.Value == 0).ShouldBeTrue();
         Inventory.RejectCounts.All(kv => kv.Value == 0).ShouldBeTrue();
@@ -541,12 +541,12 @@ public class InventoryTests : CoreTestBase
     {
         var inv = Inventory.Create(mockLogger.Object);
         var subject = (Subject<DenominationKey>)inv.Changed;
-        
+
         // 破棄前は Disposed ではない
         subject.IsDisposed.ShouldBeFalse();
-        
+
         inv.Dispose();
-        
+
         // 破棄後は実際に Disposed になっていること (これにより Dispose(bool) 内の変異を殺す)
         subject.IsDisposed.ShouldBeTrue();
 
@@ -576,7 +576,7 @@ public class InventoryTests : CoreTestBase
             { "INVALID:PREFIX:JPY:B1000", 600 }
         };
         Inventory.LoadFromDictionary(data);
-        
+
         Inventory.CollectionCounts.ShouldBeEmpty();
         Inventory.RejectCounts.ShouldBeEmpty();
         Inventory.CalculateTotal().ShouldBe(0);
@@ -590,16 +590,16 @@ public class InventoryTests : CoreTestBase
         Inventory.Add(key, 10);
         Inventory.AddCollection(key, 5);
         Inventory.AddReject(key, 3);
-        
+
         var dict = Inventory.ToDictionary();
-        
+
         // プレフィックスなしが通常在庫
         dict.ShouldContainKey("JPY:B1000");
         dict["JPY:B1000"].ShouldBe(10);
-        
+
         dict.ShouldContainKey("COL:JPY:B1000");
         dict["COL:JPY:B1000"].ShouldBe(5);
-        
+
         dict.ShouldContainKey("REJ:JPY:B1000");
         dict["REJ:JPY:B1000"].ShouldBe(3);
     }
@@ -630,7 +630,7 @@ public class InventoryTests : CoreTestBase
     public void UpdateCountNegativeTotalShouldLogWarningAndClamp()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        
+
         // 1. SetCount で負数を指定 -> 0にクランプ & 警告
         Inventory.SetCount(key, -5);
         Inventory.GetCount(key).ShouldBe(0);
@@ -673,9 +673,9 @@ public class InventoryTests : CoreTestBase
 #pragma warning disable CS8625
         var key = new DenominationKey(1000, CurrencyCashType.Bill, null);
 #pragma warning restore CS8625
-        
+
         Inventory.Add(key, 1);
-        
+
         var counts = Inventory.AllCounts.ToList();
         counts.Count.ShouldBe(1);
         counts[0].Key.CurrencyCode.ShouldBe(DenominationKey.DefaultCurrencyCode);
@@ -686,7 +686,7 @@ public class InventoryTests : CoreTestBase
     public void UpdateBucketShouldClampToZeroAndLogWarning()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        
+
         // 通常庫で 5 -> -10 (結果 -5)
         Inventory.SetCount(key, 5);
         Inventory.Add(key, -10);
@@ -715,7 +715,7 @@ public class InventoryTests : CoreTestBase
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         const int ThreadCount = 10;
         const int AddsPerThread = 1000;
-        
+
         var tasks = new Task[ThreadCount];
         for (var i = 0; i < ThreadCount; i++)
         {
@@ -727,9 +727,9 @@ public class InventoryTests : CoreTestBase
                 }
             });
         }
-        
+
         Task.WaitAll(tasks);
-        
+
         // 合計が ThreadCount * AddsPerThread に一致すること
         // もし lock (@lock) が削除されていると、レースコンディションにより合計が少なくなります
         Inventory.GetCount(key).ShouldBe(ThreadCount * AddsPerThread);

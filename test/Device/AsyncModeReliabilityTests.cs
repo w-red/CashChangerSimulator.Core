@@ -5,9 +5,9 @@ using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.PointOfService;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
+using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
@@ -41,7 +41,7 @@ public class AsyncModeReliabilityTests
                     // [IMPORTANT] Capture internal state AT THE MOMENT of event notification.
                     // Access through the mediator's context to avoid any instance mismatch.
                     StatusAtEvent = DispenseController.Status;
-                    ResultCodeAtEvent = (int)AsyncResultCode;
+                    ResultCodeAtEvent = AsyncResultCode;
                     CompletionSignal.Set();
                 }
             }

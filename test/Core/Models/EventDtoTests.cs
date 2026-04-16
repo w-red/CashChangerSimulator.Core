@@ -1,7 +1,6 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Core.Models;
 
@@ -39,9 +38,9 @@ public class EventDtoTests
     {
         // Arrange
         var sut = new DeviceErrorEventArgs(
-            (DeviceErrorCode)1, 
-            2, 
-            (DeviceErrorLocus)3, 
+            (DeviceErrorCode)1,
+            2,
+            (DeviceErrorLocus)3,
             (DeviceErrorResponse)4);
 
         // Assert

@@ -25,7 +25,7 @@ public class AdvancedScriptingTests
         hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         // 1000円を3回投入するループ
@@ -66,7 +66,7 @@ public class AdvancedScriptingTests
         hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         // 変数 'amount' をセットし、それを Dispense で使用する
@@ -102,7 +102,7 @@ public class AdvancedScriptingTests
         hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         // ジャムを注入し、その後の操作が失敗することを確認する
@@ -129,7 +129,7 @@ public class AdvancedScriptingTests
         hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         // 在庫の枚数をアサーションする
@@ -162,7 +162,7 @@ public class AdvancedScriptingTests
         hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         // 特定の箇所でのジャムを注入
@@ -190,7 +190,7 @@ public class AdvancedScriptingTests
         hardware.Input.IsConnected.Value = true;
         var controller = new DepositController(inv, hardware);
         var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, (TimeProvider?)null);
+        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object, null);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         // 汎用デバイスエラーを注入
