@@ -4,7 +4,6 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Time.Testing;
 using Shouldly;
-using Xunit;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 

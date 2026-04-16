@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core.Exceptions;
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;

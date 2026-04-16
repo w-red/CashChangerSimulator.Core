@@ -2,14 +2,13 @@ using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
@@ -116,7 +115,7 @@ public class DispenseControllerTests : DeviceTestBase
         var task = controller.DispenseCashAsync(counts, true);
         await tcs.Task.ConfigureAwait(false);
         controller.ClearOutput();
-        
+
         await WaitUntil(() => !controller.IsBusy);
         await task.ConfigureAwait(false);
 

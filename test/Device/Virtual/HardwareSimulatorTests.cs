@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
+using System.Diagnostics;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
