@@ -1,20 +1,21 @@
+using System.Reflection;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
-using System.Reflection;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>DiagnosticController のミューテーションテストを補強するテストクラス。</summary>
 public class DiagnosticControllerMutationTests : DeviceTestBase
 {
-    private readonly DiagnosticController _controller;
+    private readonly DiagnosticController controller;
 
     /// <summary>テストの初期設定を行います。</summary>
     public DiagnosticControllerMutationTests()
     {
-        _controller = new DiagnosticController(Inventory, StatusManager);
+        controller = new DiagnosticController(Inventory, StatusManager);
+
         // テストのためにデバイスを接続状態にする
         StatusManager.Input.IsConnected.Value = true;
     }
@@ -29,6 +30,8 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     }
 
     /// <summary>コンストラクタの引数バリデーション（nullチェック）を検証します。</summary>
+    /// <param name="nullInventory">Inventory が null かどうか。</param>
+    /// <param name="nullStatus">StatusManager が null かどうか。</param>
     [Theory]
     [InlineData(true, false)]
     [InlineData(false, true)]
@@ -40,6 +43,9 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     }
 
     /// <summary>正常時に適切なヘルスレポートが生成されることを検証します（各レベルの網羅）。</summary>
+    /// <param name="level">ヘルスチェックのレベル。</param>
+    /// <param name="expectedTitle">期待されるタイトルのキーワード。</param>
+    /// <param name="expectedKeywords">期待される本文のキーワード群。</param>
     [Theory]
     [InlineData(DeviceHealthCheckLevel.Internal, "Internal", new[] { "Inventory: OK", "Total Denominations: 0", "Status: OK" })]
     [InlineData(DeviceHealthCheckLevel.External, "External", new[] { "Hardware: Connected", "Jam Status: Normal" })]
@@ -47,7 +53,7 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     public void GetHealthReportReturnsValidReportForEachLevel(DeviceHealthCheckLevel level, string expectedTitle, string[] expectedKeywords)
     {
         // Act
-        var report = _controller.GetHealthReport(level);
+        var report = controller.GetHealthReport(level);
 
         // Assert
         report.ShouldContain($"--- {expectedTitle} Health Check Report ---");
@@ -58,6 +64,9 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     }
 
     /// <summary>ハードウェアの状態が変化した際に、レポートに適切なキーワードが含まれることを検証します。</summary>
+    /// <param name="isConnected">接続状態。</param>
+    /// <param name="isJammed">詰まり状態。</param>
+    /// <param name="expectedKeyword">期待されるキーワード。</param>
     [Theory]
     [InlineData(false, false, "Disconnected")]
     [InlineData(true, true, "Jammed")]
@@ -69,7 +78,7 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
         StatusManager.Input.IsJammed.Value = isJammed;
 
         // Act
-        var report = _controller.GetHealthReport(DeviceHealthCheckLevel.External);
+        var report = controller.GetHealthReport(DeviceHealthCheckLevel.External);
 
         // Assert
         report.ShouldContain(expectedKeyword);
@@ -77,6 +86,9 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     }
 
     /// <summary>統計情報の取得において、ワイルドカードと個別指定の論理条件 (||) を網羅します（Logical mutation 対応）。</summary>
+    /// <param name="filter">統計情報のフィルタ。</param>
+    /// <param name="expectSuccess">成功数の期待値。</param>
+    /// <param name="expectFailed">失敗数の期待値。</param>
     [Theory]
     [InlineData(new[] { "*" }, true, true)]
     [InlineData(new[] { "SuccessfulDepletionCount" }, true, false)]
@@ -87,18 +99,26 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     public void RetrieveStatisticsFiltersCorrectly(string[] filter, bool expectSuccess, bool expectFailed)
     {
         // Arrange
-        _controller.IncrementSuccessfulDepletion();
-        _controller.IncrementFailedDepletion();
+        controller.IncrementSuccessfulDepletion();
+        controller.IncrementFailedDepletion();
 
         // Act
-        var stats = _controller.RetrieveStatistics(filter);
+        var stats = controller.RetrieveStatistics(filter);
 
         // Assert
         var normalizedStats = stats.Replace("\r\n", "\n");
         normalizedStats.ShouldStartWith("<CommonStatistics>\n");
 
-        if (expectSuccess) normalizedStats.ShouldContain("<SuccessfulDepletionCount>1</SuccessfulDepletionCount>");
-        if (expectFailed) normalizedStats.ShouldContain("<FailedDepletionCount>1</FailedDepletionCount>");
+        if (expectSuccess)
+        {
+            normalizedStats.ShouldContain("<SuccessfulDepletionCount>1</SuccessfulDepletionCount>");
+        }
+
+        if (expectFailed)
+        {
+            normalizedStats.ShouldContain("<FailedDepletionCount>1</FailedDepletionCount>");
+        }
+
         normalizedStats.ShouldEndWith("</CommonStatistics>\n");
 
         if (filter.Length == 1 && filter[0] == "*")
@@ -112,7 +132,7 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     public void RetrieveStatisticsWhenArgumentIsNullThrowsArgumentNullException()
     {
         // Act & Assert
-        var ex = Should.Throw<ArgumentNullException>(() => _controller.RetrieveStatistics(null!));
+        var ex = Should.Throw<ArgumentNullException>(() => controller.RetrieveStatistics(null!));
         ex.ParamName.ShouldBe("statistics");
     }
 
@@ -121,28 +141,33 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     public void IncrementMethodsWorkCorrectly()
     {
         // Act
-        _controller.IncrementSuccessfulDepletion();
-        _controller.IncrementFailedDepletion();
+        controller.IncrementSuccessfulDepletion();
+        controller.IncrementFailedDepletion();
 
         // Assert
-        _controller.SuccessfulDepletionCount.ShouldBe(1);
-        _controller.FailedDepletionCount.ShouldBe(1);
+        controller.SuccessfulDepletionCount.ShouldBe(1);
+        controller.FailedDepletionCount.ShouldBe(1);
     }
 
     /// <summary>Dispose 済み状態で公開メソッドが ObjectDisposedException を投げることを検証します。</summary>
+    /// <param name="methodName">メソッド名。</param>
     [Theory]
     [InlineData(nameof(DiagnosticController.GetHealthReport))]
     [InlineData(nameof(DiagnosticController.RetrieveStatistics))]
     public void AllPublicMethodsThrowObjectDisposedExceptionAfterDispose(string methodName)
     {
         // Arrange
-        _controller.Dispose();
+        controller.Dispose();
 
         // Act & Assert
         if (methodName == nameof(DiagnosticController.GetHealthReport))
-            Should.Throw<ObjectDisposedException>(() => _controller.GetHealthReport(DeviceHealthCheckLevel.Internal));
+        {
+            Should.Throw<ObjectDisposedException>(() => controller.GetHealthReport(DeviceHealthCheckLevel.Internal));
+        }
         else
-            Should.Throw<ObjectDisposedException>(() => _controller.RetrieveStatistics(new[] { "*" }));
+        {
+            Should.Throw<ObjectDisposedException>(() => controller.RetrieveStatistics(["*"]));
+        }
     }
 
     /// <summary>Dispose の内部挙動と副作用を厳密に検証します。</summary>
@@ -173,12 +198,12 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     public void DisposeSetsPrivateDisposedFlag()
     {
         // Act
-        _controller.Dispose();
+        controller.Dispose();
 
         // Assert
         var field = typeof(DiagnosticController).GetField("disposed", BindingFlags.NonPublic | BindingFlags.Instance);
         field.ShouldNotBeNull();
-        ((bool)field.GetValue(_controller)!).ShouldBeTrue();
+        ((bool)field.GetValue(controller)!).ShouldBeTrue();
     }
 
     /// <summary>内部レポートのフォーマットを厳密に検証します。</summary>
@@ -186,10 +211,10 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     public void GetHealthReportInternalFormattingIsStrict()
     {
         // Arrange
-        _controller.IncrementSuccessfulDepletion();
+        controller.IncrementSuccessfulDepletion();
 
         // Act
-        var report = _controller.GetHealthReport(DeviceHealthCheckLevel.Internal);
+        var report = controller.GetHealthReport(DeviceHealthCheckLevel.Internal);
 
         // Assert
         report.ShouldContain("--- Internal Health Check Report ---");
@@ -200,13 +225,9 @@ public class DiagnosticControllerMutationTests : DeviceTestBase
     /// <summary>
     /// DiagnosticController の内部保護メンバーを検証するためのテスト用クラス。
     /// </summary>
-    private class TestableDiagnosticController : DiagnosticController
+    private class TestableDiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)
+        : DiagnosticController(inventory, hardwareStatusManager)
     {
-        public TestableDiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)
-            : base(inventory, hardwareStatusManager)
-        {
-        }
-
         public bool OnDisposingCalled { get; private set; }
         public int OnDisposingCallCount { get; private set; }
 

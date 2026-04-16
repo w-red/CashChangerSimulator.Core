@@ -10,6 +10,8 @@ using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
 
+using CashChangerSimulator.Tests.Fixtures;
+
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>DispenseController の出金制御ロジックを網羅的に検証するテストクラス。</summary>
@@ -21,12 +23,15 @@ public class DispenseControllerTests : DeviceTestBase
 
     public DispenseControllerTests()
     {
-        mockManager = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), null);
         mockSimulator = new Mock<IDeviceSimulator>();
-        controller = new DispenseController(mockManager.Object, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object, TimeProvider);
+        
+        controller = new ControllerTestBuilder(Fixture)
+            .WithConnected(true)
+            .WithSimulator(mockSimulator)
+            .BuildDispenseController();
 
-        // Default connected state
-        StatusManager.Input.IsConnected.Value = true;
+        // 既存テストとの互換性のため、Fixture 側の ManagerMock と同期
+        mockManager = Fixture.ManagerMock;
     }
 
     /// <summary>未接続状態での出金要求時に Closed エラーが発生することを検証する。</summary>
@@ -170,7 +175,7 @@ public class DispenseControllerTests : DeviceTestBase
     [Fact]
     public void DisposeShouldNotThrow()
     {
-        var tempController = new DispenseController(mockManager.Object, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object, TimeProvider);
+        var tempController = new DispenseController(mockManager.Object, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object);
         tempController.Dispose();
         tempController.Dispose();
     }
@@ -244,7 +249,7 @@ public class DispenseControllerTests : DeviceTestBase
         // Arrange
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         Inventory.SetCount(key, 10);
-        var integrationController = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object, TimeProvider);
+        var integrationController = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object);
 
         // Act
         await integrationController.DispenseChangeAsync(1000, false).ConfigureAwait(false);
