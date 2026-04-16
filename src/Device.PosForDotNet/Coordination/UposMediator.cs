@@ -86,10 +86,7 @@ public class UposMediator : IUposMediator
         get => sink?.ClaimedByAnother ?? false;
         set
         {
-            if (sink != null)
-            {
-                sink.ClaimedByAnother = value;
-            }
+            sink?.ClaimedByAnother = value;
         }
     }
 

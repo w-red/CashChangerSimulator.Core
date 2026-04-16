@@ -45,7 +45,7 @@ public sealed class VirtualCashChangerDeviceFactory : ICashChangerDeviceFactory
     public ICashChangerDevice Create(CashChangerManager manager, Inventory inventory, HardwareStatusManager statusManager, string mutexName)
     {
         var depositController = new DepositController(inventory, statusManager, manager, configurationProvider, timeProvider);
-        var dispenseController = new DispenseController(manager, inventory, configurationProvider, loggerFactory, statusManager, HardwareSimulator.Create(configurationProvider, timeProvider), timeProvider);
+        var dispenseController = new DispenseController(manager, inventory, configurationProvider, loggerFactory, statusManager, HardwareSimulator.Create(configurationProvider, timeProvider));
         var diagnosticController = new DiagnosticController(inventory, statusManager);
 
         return new VirtualCashChangerDevice(

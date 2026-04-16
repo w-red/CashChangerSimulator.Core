@@ -77,10 +77,7 @@ public class UposEventNotifier : IUposEventNotifier
     {
         get => sink?.DeviceEnabled ?? false; set
         {
-            if (sink != null)
-            {
-                sink.DeviceEnabled = value;
-            }
+            sink?.DeviceEnabled = value;
         }
     }
 
@@ -89,10 +86,7 @@ public class UposEventNotifier : IUposEventNotifier
     {
         get => sink?.Claimed ?? false; set
         {
-            if (sink != null)
-            {
-                sink.Claimed = value;
-            }
+            sink?.Claimed = value;
         }
     }
 
@@ -101,10 +95,7 @@ public class UposEventNotifier : IUposEventNotifier
     {
         get => sink?.ClaimedByAnother ?? false; set
         {
-            if (sink != null)
-            {
-                sink.ClaimedByAnother = value;
-            }
+            sink?.ClaimedByAnother = value;
         }
     }
 
@@ -123,10 +114,7 @@ public class UposEventNotifier : IUposEventNotifier
         get => sink?.AsyncResultCode ?? 0;
         set
         {
-            if (sink != null)
-            {
-                sink.AsyncResultCode = value;
-            }
+            sink?.AsyncResultCode = value;
         }
     }
 
@@ -136,10 +124,7 @@ public class UposEventNotifier : IUposEventNotifier
         get => sink?.AsyncResultCodeExtended ?? 0;
         set
         {
-            if (sink != null)
-            {
-                sink.AsyncResultCodeExtended = value;
-            }
+            sink?.AsyncResultCodeExtended = value;
         }
     }
 }

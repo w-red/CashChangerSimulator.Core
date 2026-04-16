@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
@@ -11,86 +12,44 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー(仮想デバイス実装)。</summary>
-/// <remarks>
-/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして入金プロセスをシミュレートします。
-/// </remarks>
-public class DepositController : IDisposable
+/// <param name="inventory">在庫管理モデル。</param>
+/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+/// <param name="manager">釣銭機マネージャー。</param>
+/// <param name="configProvider">設定プロバイダー。</param>
+/// <param name="timeProvider">時間プロバイダー。</param>
+public class DepositController(
+    Inventory inventory,
+    HardwareStatusManager? hardwareStatusManager = null,
+    CashChangerManager? manager = null,
+    ConfigurationProvider? configProvider = null,
+    TimeProvider? timeProvider = null) : IDisposable
 {
-    private readonly Inventory inventory;
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly ConfigurationProvider configProvider;
-    private readonly ConfigurationProvider? internalConfigProvider;
-    private readonly CashChangerManager? manager;
-    private readonly TimeProvider timeProvider;
+    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
+    private readonly ConfigurationProvider configProvider = configProvider ?? new ConfigurationProvider();
+    private readonly bool isConfigInternal = configProvider == null;
+    private readonly CashChangerManager? manager = manager;
+    private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
     private readonly ILogger<DepositController>? logger = LogProvider.CreateLogger<DepositController>();
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
     private readonly Dictionary<DenominationKey, int> depositCounts = [];
     private readonly List<string> depositedSerials = [];
     private readonly List<string> lastDepositedSerials = [];
+    private readonly Subject<Unit> changedSubject = new();
+    private readonly Subject<DeviceDataEventArgs> dataEventsSubject = new();
+    private readonly Subject<DeviceErrorEventArgs> errorEventsSubject = new();
     private CancellationTokenSource? depositCts;
     private bool disposed;
 
-    /// <summary>依存コンポーネントを指定してインスタンスを初期化します。</summary>
-    /// <param name="inventory">現金在庫。</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-    /// <param name="manager">釣銭機マネージャー。</param>
-    /// <param name="configProvider">設定プロバイダー。</param>
-    /// <param name="timeProvider">時間プロバイダー。</param>
-    public DepositController(
-        Inventory inventory,
-        HardwareStatusManager? hardwareStatusManager = null,
-        CashChangerManager? manager = null,
-        ConfigurationProvider? configProvider = null,
-        TimeProvider? timeProvider = null)
-    {
-        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        this.hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
-        if (configProvider == null)
-        {
-            this.configProvider = new ConfigurationProvider();
-            internalConfigProvider = this.configProvider;
-        }
-        else
-        {
-            this.configProvider = configProvider;
-            internalConfigProvider = null;
-        }
-
-        this.manager = manager;
-        this.timeProvider = timeProvider ?? TimeProvider.System;
-
-        var changedSubject = new Subject<Unit>();
-
-        // Stryker disable once Statement : Event subscription lifecycle management
-        disposables.Add(changedSubject);
-        Changed = changedSubject;
-
-        var dataEventsSubject = new Subject<DeviceDataEventArgs>();
-
-        // Stryker disable once Statement : Event subscription lifecycle management
-        disposables.Add(dataEventsSubject);
-        DataEvents = dataEventsSubject;
-
-        var errorEventsSubject = new Subject<DeviceErrorEventArgs>();
-
-        // Stryker disable once Statement : Event subscription lifecycle management
-        disposables.Add(errorEventsSubject);
-        ErrorEvents = errorEventsSubject;
-
-        // Initialize properties
-        DepositStatus = DeviceDepositStatus.None;
-        LastErrorCode = DeviceErrorCode.Success;
-    }
-
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public virtual Observable<Unit> Changed { get; }
+    public virtual Observable<Unit> Changed => changedSubject;
 
     /// <summary>データイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceDataEventArgs> DataEvents { get; }
+    public virtual Observable<DeviceDataEventArgs> DataEvents => dataEventsSubject;
 
     /// <summary>エラーイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceErrorEventArgs> ErrorEvents { get; }
+    public virtual Observable<DeviceErrorEventArgs> ErrorEvents => errorEventsSubject;
 
     /// <summary>リアルタイムデータの通知。上位層(アダプター等)が利用します。</summary>
     public bool RealTimeDataEnabled { get; set; }
@@ -351,10 +310,7 @@ public class DepositController : IDisposable
         lock (stateLock)
         {
             /* Stryker disable all */
-            if (logger != null)
-            {
-                logger.ZLogInformation($"BeginDeposit called. Current Status: {DepositStatus}");
-            }
+            logger?.ZLogInformation($"BeginDeposit called. Current Status: {DepositStatus}");
 
             /* Stryker restore all */
 
@@ -471,10 +427,7 @@ public class DepositController : IDisposable
                 if (action == DepositAction.Repay)
                 {
                     /* Stryker disable all */
-                    if (logger != null)
-                    {
-                        logger.ZLogInformation($"Deposit Repay: Returning cash from escrow.");
-                    }
+                    logger?.ZLogInformation($"Deposit Repay: Returning cash from escrow.");
 
                     /* Stryker restore all */
 
@@ -486,10 +439,7 @@ public class DepositController : IDisposable
                     var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
 
                     /* Stryker disable all : Trace logging is non-functional */
-                    if (logger != null)
-                    {
-                        logger.ZLogTrace($"EndDepositAsync: {DepositAmount} - {RequiredAmount} = {changeAmount}");
-                    }
+                    logger?.ZLogTrace($"EndDepositAsync: {DepositAmount} - {RequiredAmount} = {changeAmount}");
 
                     /* Stryker restore all */
 
@@ -557,10 +507,7 @@ public class DepositController : IDisposable
                 {
                     // NoChange (or None)
                     /* Stryker disable all */
-                    if (logger != null)
-                    {
-                        logger.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
-                    }
+                    logger?.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
 
                     /* Stryker restore all */
 
@@ -613,10 +560,7 @@ public class DepositController : IDisposable
         catch (DeviceException dex)
         {
             /* Stryker disable all */
-            if (logger != null)
-            {
-                logger.ZLogError(dex, $"EndDeposit failed with device error.");
-            }
+            logger?.ZLogError(dex, $"EndDeposit failed with device error.");
 
             /* Stryker restore all */
             lock (stateLock)
@@ -634,10 +578,7 @@ public class DepositController : IDisposable
         catch (Exception ex)
         {
             /* Stryker disable all */
-            if (logger != null)
-            {
-                logger.ZLogError(ex, $"EndDeposit failed with unexpected error.");
-            }
+            logger?.ZLogError(ex, $"EndDeposit failed with unexpected error.");
 
             /* Stryker restore all */
             lock (stateLock)
@@ -825,8 +766,16 @@ public class DepositController : IDisposable
         {
             depositCts?.Cancel();
             depositCts?.Dispose();
+
+            changedSubject.Dispose();
+            dataEventsSubject.Dispose();
+            errorEventsSubject.Dispose();
             disposables.Dispose();
-            internalConfigProvider?.Dispose();
+
+            if (isConfigInternal)
+            {
+                configProvider.Dispose();
+            }
         }
     }
 

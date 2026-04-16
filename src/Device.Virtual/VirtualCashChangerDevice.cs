@@ -59,9 +59,9 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.mutexName = mutexName;
-        this.deviceMutex = new Mutex(false, mutexName);
-        this.isBusyReadOnly = this.isBusy.ToReadOnlyReactiveProperty().AddTo(this.disposables);
-        this.stateReadOnly = this.state.ToReadOnlyReactiveProperty().AddTo(this.disposables);
+        deviceMutex = new Mutex(false, mutexName);
+        isBusyReadOnly = isBusy.ToReadOnlyReactiveProperty().AddTo(disposables);
+        stateReadOnly = state.ToReadOnlyReactiveProperty().AddTo(disposables);
 
         // 状態の統合監視
         Observable.CombineLatest(
@@ -69,11 +69,11 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             this.dispenseController.Changed,
             (a, b) => Unit.Default)
             .Subscribe(_ => UpdateCompositeStatus())
-            .AddTo(this.disposables);
+            .AddTo(disposables);
 
         this.hardwareStatus.IsConnected
             .Subscribe(_ => UpdateCompositeStatus())
-            .AddTo(this.disposables);
+            .AddTo(disposables);
     }
 
     /// <summary>入金コントローラーを取得します。</summary>
@@ -116,10 +116,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         lock (stateLock)
         {
             hardwareStatus.Input.IsConnected.Value = true;
-            if (logger != null)
-            {
-                logger.ZLogInformation($"VirtualCashChangerDevice Opened.");
-            }
+            logger?.ZLogInformation($"VirtualCashChangerDevice Opened.");
         }
 
         return Task.CompletedTask;
@@ -140,10 +137,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         }
 
         UpdateCompositeStatus();
-        if (logger != null)
-        {
-            logger.ZLogInformation($"VirtualCashChangerDevice Closed.");
-        }
+        logger?.ZLogInformation($"VirtualCashChangerDevice Closed.");
 
         return Task.CompletedTask;
     }
@@ -164,18 +158,12 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
                 throw new DeviceException($"The device is already claimed. Mutex: {mutexName}", DeviceErrorCode.Claimed);
             }
 
-            if (logger != null)
-            {
-                logger.ZLogInformation($"VirtualCashChangerDevice Claimed. Mutex: {mutexName}");
-            }
+            logger?.ZLogInformation($"VirtualCashChangerDevice Claimed. Mutex: {mutexName}");
         }
         catch (AbandonedMutexException)
         {
             hasMutex = true;
-            if (logger != null)
-            {
-                logger.ZLogWarning($"VirtualCashChangerDevice Claimed (AbandonedMutex rescued). Mutex: {mutexName}");
-            }
+            logger?.ZLogWarning($"VirtualCashChangerDevice Claimed (AbandonedMutex rescued). Mutex: {mutexName}");
         }
 
         UpdateCompositeStatus();
@@ -198,10 +186,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         }
 
         hardwareStatus.Input.DeviceEnabled.Value = true;
-        if (logger != null)
-        {
-            logger.ZLogInformation($"VirtualCashChangerDevice Enabled.");
-        }
+        logger?.ZLogInformation($"VirtualCashChangerDevice Enabled.");
 
         UpdateCompositeStatus();
         return Task.CompletedTask;
@@ -211,10 +196,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     public Task DisableAsync()
     {
         hardwareStatus.Input.DeviceEnabled.Value = false;
-        if (logger != null)
-        {
-            logger.ZLogInformation($"VirtualCashChangerDevice Disabled.");
-        }
+        logger?.ZLogInformation($"VirtualCashChangerDevice Disabled.");
 
         UpdateCompositeStatus();
         return Task.CompletedTask;
@@ -351,10 +333,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
             }
 
             hasMutex = false;
-            if (logger != null)
-            {
-                logger.ZLogInformation($"VirtualCashChangerDevice Released. Mutex: {mutexName}");
-            }
+            logger?.ZLogInformation($"VirtualCashChangerDevice Released. Mutex: {mutexName}");
         }
     }
 

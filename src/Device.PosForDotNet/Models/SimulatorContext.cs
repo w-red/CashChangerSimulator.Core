@@ -53,7 +53,7 @@ public class SimulatorContext : IDisposable
 
         Manager = deps.Manager ?? new CashChangerManager(Inventory, History, ConfigProvider);
         DepositController = deps.DepositController ?? new DepositController(Inventory, HardwareStatusManager, Manager, ConfigProvider, deps.TimeProvider);
-        DispenseController = deps.DispenseController ?? new DispenseController(Manager, Inventory, ConfigProvider, LogProvider.Factory, HardwareStatusManager, HardwareSimulator.Create(ConfigProvider, deps.TimeProvider), deps.TimeProvider);
+        DispenseController = deps.DispenseController ?? new DispenseController(Manager, Inventory, ConfigProvider, LogProvider.Factory, HardwareStatusManager, HardwareSimulator.Create(ConfigProvider, deps.TimeProvider));
 
         Mediator = deps.Mediator ?? new UposMediator();
         EventNotifier = deps.EventNotifier ?? new UposEventNotifier();

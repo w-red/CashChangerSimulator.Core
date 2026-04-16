@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
@@ -7,86 +9,53 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Microsoft.Extensions.Logging;
 using R3;
-using System.Globalization;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>出金(払出)シーケンスを管理するコントローラー(仮想デバイス実装)。</summary>
-public class DispenseController : IDisposable
+/// <param name="manager">マネージャー。</param>
+/// <param name="inventory">在庫管理モデル。</param>
+/// <param name="configProvider">設定プロバイダー。</param>
+/// <param name="loggerFactory">ロガーファクトリ。</param>
+/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+/// <param name="simulator">デバイスシミュレーター。</param>
+public class DispenseController(
+    CashChangerManager manager,
+    Inventory inventory,
+    ConfigurationProvider configProvider,
+    ILoggerFactory loggerFactory,
+    HardwareStatusManager hardwareStatusManager,
+    IDeviceSimulator simulator) : IDisposable
 {
-    private readonly CashChangerManager manager;
-    private readonly Inventory inventory;
-    private readonly ConfigurationProvider configProvider;
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly IDeviceSimulator simulator;
-    private readonly TimeProvider timeProvider;
-    private readonly ILogger<DispenseController> logger;
+    private readonly CashChangerManager manager = manager ?? throw new ArgumentNullException(nameof(manager));
+    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+    private readonly ConfigurationProvider configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
+    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
+    private readonly IDeviceSimulator simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
+    private readonly ILogger<DispenseController> logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
+    private readonly Subject<Unit> changedSubject = new();
+    private readonly Subject<DeviceOutputCompleteEventArgs> outputCompleteEventsSubject = new();
+    private readonly Subject<DeviceErrorEventArgs> errorEventsSubject = new();
     private CancellationTokenSource? dispenseCts;
     private bool disposed;
 
-    /// <summary>依存コンポーネントを指定してインスタンスを初期化します。</summary>
-    /// <param name="manager">マネージャー。</param>
-    /// <param name="inventory">在庫。</param>
-    /// <param name="configProvider">設定プロバイダー。</param>
-    /// <param name="loggerFactory">ロガーファクトリ。</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-    /// <param name="simulator">デバイスシミュレーター。</param>
-    /// <param name="timeProvider">時間プロバイダー。</param>
-    public DispenseController(
-        CashChangerManager manager,
-        Inventory inventory,
-        ConfigurationProvider configProvider,
-        ILoggerFactory loggerFactory,
-        HardwareStatusManager hardwareStatusManager,
-        IDeviceSimulator simulator,
-        TimeProvider? timeProvider = null)
-    {
-        this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
-        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        this.configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
-        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
-        this.simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
-        this.timeProvider = timeProvider ?? TimeProvider.System;
-        this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
-        var changedSubject = new Subject<Unit>();
-
-        // Stryker disable once Statement : Event subscription lifecycle management
-        disposables.Add(changedSubject);
-        Changed = changedSubject;
-
-        var outputCompleteEventsSubject = new Subject<DeviceOutputCompleteEventArgs>();
-
-        // Stryker disable once Statement : Event subscription lifecycle management
-        disposables.Add(outputCompleteEventsSubject);
-        OutputCompleteEvents = outputCompleteEventsSubject;
-
-        var errorEventsSubject = new Subject<DeviceErrorEventArgs>();
-
-        // Stryker disable once Statement : Event subscription lifecycle management
-        disposables.Add(errorEventsSubject);
-        ErrorEvents = errorEventsSubject;
-
-        Status = CashDispenseStatus.Idle;
-        LastErrorCode = DeviceErrorCode.Success;
-    }
-
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public Observable<Unit> Changed { get; }
+    public Observable<Unit> Changed => changedSubject;
 
     /// <summary>出力完了イベントを受け取るためのストリーム。</summary>
-    public Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents { get; }
+    public Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEventsSubject;
 
     /// <summary>エラーイベントを受け取るためのストリーム。</summary>
-    public Observable<DeviceErrorEventArgs> ErrorEvents { get; }
+    public Observable<DeviceErrorEventArgs> ErrorEvents => errorEventsSubject;
 
     /// <summary>現在のステータスを取得します。</summary>
-    public CashDispenseStatus Status { get; private set; }
+    public CashDispenseStatus Status { get; private set; } = CashDispenseStatus.Idle;
 
     /// <summary>最後に発生したエラーコードを取得します。</summary>
-    public DeviceErrorCode LastErrorCode { get; private set; }
+    public DeviceErrorCode LastErrorCode { get; private set; } = DeviceErrorCode.Success;
 
     /// <summary>最後に発生した詳細エラーコードを取得します。</summary>
     public int LastErrorCodeExtended { get; private set; }
@@ -195,10 +164,7 @@ public class DispenseController : IDisposable
         catch (Exception ex)
         {
             /* Stryker disable all */
-            if (logger != null)
-            {
-                logger.ZLogError(ex, $"Dispense failed.");
-            }
+            logger?.ZLogError(ex, $"Dispense failed.");
 
             HandleDispenseError(ex, out var code, out var codeEx);
             /* Stryker restore all */
@@ -280,6 +246,10 @@ public class DispenseController : IDisposable
 
             // Stryker disable once Statement : CancellationTokenSource disposal
             dispenseCts?.Dispose();
+
+            changedSubject.Dispose();
+            outputCompleteEventsSubject.Dispose();
+            errorEventsSubject.Dispose();
 
             // Stryker disable once Statement : CompositeDisposable disposal
             disposables.Dispose();

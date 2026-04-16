@@ -1,28 +1,18 @@
-using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Models;
 using System.Globalization;
 using System.Text;
+using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>デバイスの診断機能(ヘルスチェック、統計情報)を管理するコントローラー(仮想デバイス実装)。</summary>
-/// <remarks>
-/// UPOS などのプラットフォーム固有の SDK に依存せず、純粋な C# ロジックとして診断機能を提供します。
-/// </remarks>
-public class DiagnosticController : IDisposable
+/// <param name="inventory">在庫管理モデル。</param>
+/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+public class DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager) : IDisposable
 {
-    private readonly Inventory inventory;
-    private readonly HardwareStatusManager hardwareStatusManager;
+    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
     private bool disposed;
-
-    /// <summary>依存コンポーネントを指定してインスタンスを初期化します。</summary>
-    /// <param name="inventory">現金在庫データを管理する <see cref="Inventory"/> モデル。</param>
-    /// <param name="hardwareStatusManager">デバイスの接続やジャム状態を管理する <see cref="HardwareStatusManager"/>。</param>
-    public DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager)
-    {
-        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
-    }
 
     /// <summary>入金成功回数を取得します。</summary>
     public int SuccessfulDepletionCount { get; private set; }

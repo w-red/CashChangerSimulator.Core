@@ -77,10 +77,7 @@ public class StandardLifecycleHandler(
             }
 
             mediator.DeviceEnabled = value;
-            if (logger != null)
-            {
-                logger.ZLogInformation($"DeviceEnabled set to {value}.");
-            }
+            logger?.ZLogInformation($"DeviceEnabled set to {value}.");
         }
     }
 
@@ -98,10 +95,7 @@ public class StandardLifecycleHandler(
 
         if (State != ControlState.Closed)
         {
-            if (logger != null)
-            {
-                logger.ZLogInformation($"Open called but device is already {State}.");
-            }
+            logger?.ZLogInformation($"Open called but device is already {State}.");
 
             mediator.SetSuccess();
             return;
@@ -115,10 +109,7 @@ public class StandardLifecycleHandler(
         {
             // POS for .NET often throws NRE or PosControlException when registry entries are missing.
             // We ignore these in the simulator's standard handler to allow testing logic without a full installation.
-            if (logger != null)
-            {
-                logger.LogWarning(ex, "POS for .NET internal Open() failed. This is expected in environments without full POS setup.");
-            }
+            logger?.LogWarning(ex, "POS for .NET internal Open() failed. This is expected in environments without full POS setup.");
         }
 
         hardware.Input.IsConnected.Value = true;
@@ -133,10 +124,7 @@ public class StandardLifecycleHandler(
 
         if (State == ControlState.Closed)
         {
-            if (logger != null)
-            {
-                logger.ZLogInformation($"Close called but device is already Closed.");
-            }
+            logger?.ZLogInformation($"Close called but device is already Closed.");
 
             mediator.SetSuccess();
             return;
@@ -167,18 +155,12 @@ public class StandardLifecycleHandler(
         }
         catch (Exception ex)
         {
-            if (logger != null)
-            {
-                logger.LogWarning(ex, "POS for .NET internal Close() failed (non-critical).");
-            }
+            logger?.LogWarning(ex, "POS for .NET internal Close() failed (non-critical).");
         }
 
         if (Claimed)
         {
-            if (logger != null)
-            {
-                logger.ZLogInformation($"Close called while device is Claimed. Adding implicit Release log.");
-            }
+            logger?.ZLogInformation($"Close called while device is Claimed. Adding implicit Release log.");
 
             history.Add(new TransactionEntry(DateTimeOffset.Now, TransactionType.Release, 0, new Dictionary<DenominationKey, int>()));
         }
@@ -199,20 +181,14 @@ public class StandardLifecycleHandler(
 
         if (State == ControlState.Closed)
         {
-            if (logger != null)
-            {
-                logger.LogWarning("Claim called while device is Closed.");
-            }
+            logger?.LogWarning("Claim called while device is Closed.");
 
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
         if (Claimed)
         {
-            if (logger != null)
-            {
-                logger.LogInformation("Claim called but device is already claimed.");
-            }
+            logger?.LogInformation("Claim called but device is already claimed.");
 
             mediator.SetSuccess();
             return;
@@ -222,10 +198,7 @@ public class StandardLifecycleHandler(
         {
             if (!hardware.TryAcquireGlobalLock())
             {
-                if (logger != null)
-                {
-                    logger.LogWarning("Claim failed due to global lock (claimed by another process).");
-                }
+                logger?.LogWarning("Claim failed due to global lock (claimed by another process).");
 
                 throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
             }
@@ -236,10 +209,7 @@ public class StandardLifecycleHandler(
         {
             // POS for .NET often throws NRE if internal state is not perfect (e.g. missing registry).
             // We MUST catch this to allow the simulator to proceed in a standalone/test environment.
-            if (logger != null)
-            {
-                logger.LogWarning(ex, "POS for .NET internal Claim({0}) failed. This is expected in environments without full POS setup.", timeout);
-            }
+            logger?.LogWarning(ex, "POS for .NET internal Claim({0}) failed. This is expected in environments without full POS setup.", timeout);
         }
 
         mediator.Claimed = true;
@@ -254,20 +224,14 @@ public class StandardLifecycleHandler(
 
         if (State == ControlState.Closed)
         {
-            if (logger != null)
-            {
-                logger.LogWarning("Release called while device is Closed.");
-            }
+            logger?.LogWarning("Release called while device is Closed.");
 
             throw new PosControlException("Device is closed.", ErrorCode.Closed);
         }
 
         if (!Claimed)
         {
-            if (logger != null)
-            {
-                logger.LogInformation("Release called but device is not claimed.");
-            }
+            logger?.LogInformation("Release called but device is not claimed.");
 
             mediator.SetSuccess();
             return;
@@ -279,10 +243,7 @@ public class StandardLifecycleHandler(
         }
         catch (Exception ex)
         {
-            if (logger != null)
-            {
-                logger.LogWarning(ex, "POS for .NET internal Release() failed (non-critical).");
-            }
+            logger?.LogWarning(ex, "POS for .NET internal Release() failed (non-critical).");
         }
 
         mediator.Claimed = false;
