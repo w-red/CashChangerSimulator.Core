@@ -1,5 +1,4 @@
 using CashChangerSimulator.Core.Exceptions;
-using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
@@ -172,7 +171,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.FixDeposit();
 
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 5000;
-        
+
         // Start an operation that sets isBusy = true
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
@@ -192,7 +191,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.FixDeposit();
 
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 5000;
-        
+
         // Start an operation that sets isBusy = true
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
@@ -212,7 +211,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.FixDeposit();
 
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 5000;
-        
+
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
         StatusManager.Input.IsOverlapped.Value = true;
