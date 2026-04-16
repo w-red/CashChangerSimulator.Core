@@ -1,15 +1,14 @@
-using R3;
-using System.Reflection;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
-using CashChangerSimulator.Core.Exceptions;
-using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Services.DeviceEventTypes;
+using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using R3;
 using Shouldly;
-using Xunit;
+using System.Reflection;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
@@ -30,7 +29,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
             StatusManager,
             _simulatorMock.Object,
             TimeProvider);
-        
+
         // テストのためにデバイスを接続状態にする
         StatusManager.Input.IsConnected.Value = true;
     }
@@ -81,14 +80,17 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public void HandleDispenseErrorWithPosControlExceptionExtractsErrorCodeUsingReflection()
     {
         // Arrange
-        var method = typeof(DispenseController).GetMethod("HandleDispenseError", BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(DispenseController)
+            .GetMethod(
+                "HandleDispenseError",
+                BindingFlags.NonPublic | BindingFlags.Static);
         method.ShouldNotBeNull();
 
         var posException = new MockPosControlException(99, 100);
-        object[] parameters = new object[] { posException, DeviceErrorCode.Success, 0 };
+        object[] parameters = [posException, DeviceErrorCode.Success, 0];
 
         // Act
-        method.Invoke(null, (object[])parameters);
+        method.Invoke(null, parameters);
 
         // Assert
         ((DeviceErrorCode)parameters[1]).ShouldBe((DeviceErrorCode)99);
@@ -144,7 +146,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         errorEvent.ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
     }
 
-    /// <summary>未接続状態での例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
+    /// <summary>未接続状態で DispenseCashAsync を呼んだ場合の例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
     [Fact]
     public async Task DispenseCashAsyncWhenNotConnectedThrowsWithDetailedMessage()
     {
@@ -154,6 +156,19 @@ public class DispenseControllerMutationTests : DeviceTestBase
 
         // Act & Assert
         var ex = await Should.ThrowAsync<DeviceException>(() => _controller.DispenseCashAsync(counts, false));
+        ex.Message.ShouldBe("Device is not connected.");
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
+    }
+
+    /// <summary>未接続状態で DispenseChangeAsync を呼んだ場合の例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
+    [Fact]
+    public async Task DispenseChangeAsyncWhenNotConnectedThrowsWithDetailedMessage()
+    {
+        // Arrange
+        StatusManager.Input.IsConnected.Value = false;
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<DeviceException>(() => _controller.DispenseChangeAsync(1000, false));
         ex.Message.ShouldBe("Device is not connected.");
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
     }
@@ -172,6 +187,19 @@ public class DispenseControllerMutationTests : DeviceTestBase
         ex.Message.ShouldBe("Already processing another dispense.");
     }
 
+    /// <summary>Jammed 状態での例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
+    [Fact]
+    public async Task DispenseCashAsyncWhenJammedThrowsWithDetailedMessage()
+    {
+        // Arrange
+        StatusManager.Input.IsJammed.Value = true;
+        var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<DeviceException>(() => _controller.DispenseCashAsync(counts, false));
+        ex.Message.ShouldBe("Hardware is jammed.");
+    }
+
     /// <summary>Dispose 済み状態で公開メソッドが ObjectDisposedException を投げることを検証します（!disposedガードの網羅）。</summary>
     [Theory]
     [InlineData(nameof(DispenseController.DispenseCashAsync))]
@@ -180,11 +208,15 @@ public class DispenseControllerMutationTests : DeviceTestBase
     {
         // Arrange
         _controller.Dispose();
+        _simulatorMock.Invocations.Clear();
 
         // Act & Assert
         if (methodName == nameof(DispenseController.DispenseCashAsync))
         {
+            // Await to ensure we hit the guard at the start of the async method
             await Should.ThrowAsync<ObjectDisposedException>(async () => await _controller.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false));
+            // 変異で ThrowIf が消えた場合、メソッドが進んでしまい別の場所で例外が出る可能性があるため、Simulator が呼ばれないことを厳密に検証
+            _simulatorMock.Verify(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
         else
         {
@@ -278,7 +310,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         // Arrange
         int callCount = 0;
         using var sub = _controller.Changed.Subscribe(_ => callCount++);
-        
+
         // Error 状態にして notifyChanged = true になる条件を作る
         var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
         statusField!.SetValue(_controller, CashDispenseStatus.Error);
@@ -297,7 +329,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     {
         // Reflection to set Status to Busy
         typeof(DispenseController).GetProperty("Status")?.SetValue(_controller, CashDispenseStatus.Busy);
-        
+
         // Act
         _controller.ClearOutput();
 
@@ -312,7 +344,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, _simulatorMock.Object, TimeProvider);
-        
+
         // Act
         controller.Dispose();
 
@@ -321,7 +353,8 @@ public class DispenseControllerMutationTests : DeviceTestBase
         field.ShouldNotBeNull();
         ((bool)field.GetValue(controller)!).ShouldBeTrue();
 
-        // L265 Dispose(bool) の内部変異 (Negate expression) を殺すために、副作用をチェック
+        // Dispose(bool) の内部変異 (Negate expression) を制御するために、副作用をチェック
+        // disposed が true の時に早期リターンされることを確認するため。
         // cts が Disposed されているか（キャンセル不可能になっているかなど）を確認したいが、
         // private なのでリフレクションで取得
         var ctsField = typeof(DispenseController).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -329,8 +362,8 @@ public class DispenseControllerMutationTests : DeviceTestBase
         // cts 自体が null (未初期化) か、破棄されているはず
         if (cts != null)
         {
-             // 破棄されている場合、Token を取得しようとすると ObjectDisposedException が出る可能性がある（実装依存だが）
-             // ここでは cts が存在しても Dispose 後にアクセスできないことを確認
+            // 破棄されている場合、Token を取得しようとすると ObjectDisposedException が出る可能性がある（実装依存だが）
+            // ここでは cts が存在しても Dispose 後にアクセスできないことを確認
         }
     }
 
@@ -354,8 +387,9 @@ public class DispenseControllerMutationTests : DeviceTestBase
         using (var sub = _controller.Changed.Subscribe(_ => callCount2++))
         {
             // Status を既に Idle にしておけば notifyChanged = false になる
-            _controller.ClearOutput(); 
+            _controller.ClearOutput();
         }
+
         callCount2.ShouldBe(0);
 
         // Case 3: notifyChanged = true, disposed = true (Baseline: No fire)
@@ -367,6 +401,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
             _controller.Dispose();
             Should.Throw<ObjectDisposedException>(() => _controller.ClearOutput());
         }
+
         callCount3.ShouldBe(0);
     }
 
@@ -376,10 +411,11 @@ public class DispenseControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, _simulatorMock.Object);
+
         // エラー状態にして notifyChanged が true になる条件を作る
         var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
         statusField!.SetValue(controller, CashDispenseStatus.Error);
-        
+
         int callCount = 0;
         using var sub = controller.Changed.Subscribe(_ => callCount++);
 
@@ -400,25 +436,139 @@ public class DispenseControllerMutationTests : DeviceTestBase
         method.ShouldNotBeNull();
 
         var complexEx = new MockPosControlException(777, 888);
-        object[] parameters = new object[] { complexEx, DeviceErrorCode.Success, 0 };
+        object[] parameters = [complexEx, DeviceErrorCode.Success, 0];
 
         // Act
-        method.Invoke(null, (object[])parameters);
+        method.Invoke(null, parameters);
 
         // Assert
         ((DeviceErrorCode)parameters[1]).ShouldBe((DeviceErrorCode)777);
         ((int)parameters[2]).ShouldBe(888);
     }
 
-    private class MockPosControlException : Exception
+    private class MockPosControlException(
+        int code,
+        int codeEx)
+        : Exception("Mock POS Error")
     {
-        public int ErrorCode { get; }
-        public int ErrorCodeExtended { get; }
+        public int ErrorCode { get; } = code;
+        public int ErrorCodeExtended { get; } = codeEx;
+    }
 
-        public MockPosControlException(int code, int codeEx) : base("Mock POS Error")
-        {
-            ErrorCode = code;
-            ErrorCodeExtended = codeEx;
-        }
+    /// <summary>Dispose 呼び出し時に、内部の CancellationTokenSource がキャンセル・破棄されることを検証します（disposing 変異撃破）。</summary>
+    [Fact]
+    public void DisposeWhenDisposingCancelsAndDisposesCancellationTokenSource()
+    {
+        // Arrange
+        // シミュレータが直ちに完了しないよう、完了しない Task を返すように設定
+        var mockSimulator = new Mock<IDeviceSimulator>();
+        var tcs = new TaskCompletionSource();
+        mockSimulator.Setup(
+                s => s
+                .SimulateDispenseAsync(
+                    It.IsAny<CancellationToken>()))
+            .Returns(tcs.Task);
+
+        var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object, TimeProvider);
+
+        var request = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
+        _ = controller.DispenseCashAsync(request, false);
+
+        // DispenseCashAsync の同期部分は直ちに実行され IsBusy になるため待機不要
+        controller.IsBusy.ShouldBeTrue();
+
+        // リフレクションで CancellationTokenSource を取得
+        var ctsField = typeof(DispenseController).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cts = (CancellationTokenSource)ctsField!.GetValue(controller)!;
+
+        // Act
+        controller.Dispose(); // これにより Dispose(true) が呼ばれる
+
+        // Assert
+        // !(disposing) に変異していると、Dispose(true) が無視されキャンセルされない。
+        cts.IsCancellationRequested.ShouldBeTrue();
+
+        // ObjectDisposedException が出ることで Dispose されたことを確認
+        Should.Throw<ObjectDisposedException>(() => cts.Token);
+    }
+
+    /// <summary>ビジー状態の時に追加の DispenseChangeAsync を呼び出すと例外がスローされることを検証します（IsBusyガード変異撃破）。</summary>
+    [Fact]
+    public async Task DispenseChangeAsyncWhenBusyThrowsDeviceException()
+    {
+        // Arrange
+        // Status を Busy に設定
+        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+        statusField!.SetValue(_controller, CashDispenseStatus.Busy);
+
+        // Act & Assert
+        // DispenseChangeAsync が内部で DispenseCashAsync を呼び出し、そこで IsBusy をチェックしていることを検証
+        await Should.ThrowAsync<DeviceException>(async () => await _controller.DispenseChangeAsync(1000, false));
+    }
+
+    /// <summary>ClearOutput がステータス変更時のみ通知を行い、かつ Dispose 済みでないことを検証します（真偽値変異撃破）。</summary>
+    [Fact]
+    public void ClearOutputNotifiesChangedOnlyWhenStatusChangesAndNotDisposed()
+    {
+        // Arrange
+        int callCount = 0;
+        using var sub = _controller.Changed.Subscribe(_ => callCount++);
+
+        // 1. ステータスが変わらない場合 (Idle -> Idle)
+        _controller.ClearOutput();
+        callCount.ShouldBe(0);
+
+        // 2. ステータスが変わる場合 (Error -> Idle)
+        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+        statusField!.SetValue(_controller, CashDispenseStatus.Error);
+        _controller.ClearOutput();
+        callCount.ShouldBe(1);
+
+        // 3. Dispose 済みの場合 (notifyChanged = true だが通知されない)
+        statusField!.SetValue(_controller, CashDispenseStatus.Error);
+        _controller.Dispose();
+
+        // ClearOutput 自体は ObjectDisposedException を投げる
+        Should.Throw<ObjectDisposedException>(() => _controller.ClearOutput());
+
+        // callCount が増えていない（通知されていない）ことを確認
+        callCount.ShouldBe(1);
+    }
+
+    /// <summary>Busy 状態の時に ClearOutput を呼び出すと Changed 通知が発生することを検証します。</summary>
+    [Fact]
+    public void ClearOutputWhenBusyNotifiesChanged()
+    {
+        // Arrange
+        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+        statusField!.SetValue(_controller, CashDispenseStatus.Busy);
+
+        int callCount = 0;
+        using var sub = _controller.Changed.Subscribe(_ => callCount++);
+
+        // Act
+        _controller.ClearOutput();
+
+        // Assert
+        callCount.ShouldBe(1);
+        _controller.Status.ShouldBe(CashDispenseStatus.Idle);
+    }
+
+    /// <summary>Dispose を複数回呼び出しても安全であり、二回目以降は早期リターンされることを検証します。</summary>
+    [Fact]
+    public void DisposeCalledMultipleTimesIsSafe()
+    {
+        // Arrange
+        var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, _simulatorMock.Object, TimeProvider);
+
+        // Act
+        controller.Dispose();
+
+        // 内部状態を変更してみる（リフレクションで disposed を false に戻さずに再度 Dispose する）
+        // 二回目の Dispose で何らかの例外が出ないこと、および内部の状態が不整合にならないことを確認
+        Action act = () => controller.Dispose();
+
+        // Assert
+        act.ShouldNotThrow();
     }
 }

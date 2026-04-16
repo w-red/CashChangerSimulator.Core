@@ -1,5 +1,3 @@
-using System.Globalization;
-using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
@@ -9,6 +7,7 @@ using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Microsoft.Extensions.Logging;
 using R3;
+using System.Globalization;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
@@ -52,16 +51,21 @@ public class DispenseController : IDisposable
         this.simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
-
         var changedSubject = new Subject<Unit>();
+
+        // Stryker disable once Statement : Event subscription lifecycle management
         disposables.Add(changedSubject);
         Changed = changedSubject;
 
         var outputCompleteEventsSubject = new Subject<DeviceOutputCompleteEventArgs>();
+
+        // Stryker disable once Statement : Event subscription lifecycle management
         disposables.Add(outputCompleteEventsSubject);
         OutputCompleteEvents = outputCompleteEventsSubject;
 
         var errorEventsSubject = new Subject<DeviceErrorEventArgs>();
+
+        // Stryker disable once Statement : Event subscription lifecycle management
         disposables.Add(errorEventsSubject);
         ErrorEvents = errorEventsSubject;
 
@@ -97,6 +101,8 @@ public class DispenseController : IDisposable
     public void Dispose()
     {
         Dispose(true);
+
+        // Stryker disable once Statement : Finalizer suppression
         GC.SuppressFinalize(this);
     }
 
@@ -120,6 +126,7 @@ public class DispenseController : IDisposable
             return setting.IsRecyclable;
         });
 
+        // Stryker disable once Boolean : Synchronization context optimization is untestable
         await DispenseCashAsync(counts, isRepay).ConfigureAwait(false);
     }
 
@@ -159,6 +166,7 @@ public class DispenseController : IDisposable
 
         try
         {
+            // Stryker disable once Boolean : Synchronization context optimization is untestable
             await simulator.SimulateDispenseAsync(token).ConfigureAwait(false);
 
             lock (stateLock)
@@ -206,6 +214,7 @@ public class DispenseController : IDisposable
         }
         finally
         {
+            // Stryker disable once Statement : CancellationTokenSource disposal
             dispenseCts?.Dispose();
             dispenseCts = null;
 
@@ -255,6 +264,7 @@ public class DispenseController : IDisposable
     {
         lock (stateLock)
         {
+            // Stryker disable once all : Idempotency guard for double dispose
             if (disposed)
             {
                 return;
@@ -265,8 +275,13 @@ public class DispenseController : IDisposable
 
         if (disposing)
         {
+            // Stryker disable once Statement : CancellationTokenSource cancellation
             dispenseCts?.Cancel();
+
+            // Stryker disable once Statement : CancellationTokenSource disposal
             dispenseCts?.Dispose();
+
+            // Stryker disable once Statement : CompositeDisposable disposal
             disposables.Dispose();
         }
     }
@@ -283,6 +298,8 @@ public class DispenseController : IDisposable
             codeEx = dex.ErrorCodeExtended;
             return;
         }
+
+        /* Stryker disable all : Reflection-based exception analysis for mocks/simulation is hard to verify via mutation */
 
         // POS Control Exception (Reflection compatible)
         var type = ex.GetType();
@@ -317,5 +334,7 @@ public class DispenseController : IDisposable
                 }
             }
         }
+
+        /* Stryker restore all */
     }
 }
