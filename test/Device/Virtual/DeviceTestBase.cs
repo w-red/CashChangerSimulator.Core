@@ -4,6 +4,7 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
@@ -13,41 +14,41 @@ namespace CashChangerSimulator.Tests.Device.Virtual;
 /// <summary>仮想デバイスコントローラーのテストセットアップを共通化するための基底クラス。</summary>
 public abstract class DeviceTestBase : IDisposable
 {
-    private bool _disposed;
+    private bool disposed;
 
     protected DeviceTestBase()
     {
-        Inventory = Inventory.Create();
-        ConfigurationProvider = new ConfigurationProvider();
+        Fixture = new CashChangerFixture();
+        
         // 仮想時間制御をテストするため、非ゼロの値を設定
-        ConfigurationProvider.Config.Simulation.DispenseDelayMs = 1000;
-        ConfigurationProvider.Config.Simulation.DepositDelayMs = 1000;
-        History = new TransactionHistory(ConfigurationProvider.Config);
-        StatusManager = HardwareStatusManager.Create();
-        Manager = new CashChangerManager(Inventory, History, ConfigurationProvider);
-        TimeProvider = new FakeTimeProvider();
+        Fixture.ConfigurationProvider.Config.Simulation.DispenseDelayMs = 1000;
+        Fixture.ConfigurationProvider.Config.Simulation.DepositDelayMs = 1000;
+        
         LoggerFactoryMock = new Mock<ILoggerFactory>();
         LoggerFactory = Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
         DeviceFactory = new VirtualCashChangerDeviceFactory(ConfigurationProvider, LoggerFactory, TimeProvider);
     }
 
+    /// <summary>共通フィクスチャへのアクセス</summary>
+    protected CashChangerFixture Fixture { get; }
+
     /// <summary>インベントリインスタンス</summary>
-    protected Inventory Inventory { get; }
+    protected Inventory Inventory => Fixture.Inventory;
 
     /// <summary>トランザクション履歴</summary>
-    protected TransactionHistory History { get; }
+    protected TransactionHistory History => Fixture.History;
 
     /// <summary>キャッシュチェンジャーマネージャー</summary>
-    protected CashChangerManager Manager { get; }
+    protected CashChangerManager Manager => Fixture.Manager;
 
     /// <summary>設定プロバイダー</summary>
-    protected ConfigurationProvider ConfigurationProvider { get; }
+    protected ConfigurationProvider ConfigurationProvider => Fixture.ConfigurationProvider;
 
     /// <summary>フェイクタイムプロバイダー</summary>
-    public FakeTimeProvider TimeProvider { get; }
+    public FakeTimeProvider TimeProvider => Fixture.TimeProvider;
 
     /// <summary>ハードウェア状態マネージャー</summary>
-    protected HardwareStatusManager StatusManager { get; }
+    protected HardwareStatusManager StatusManager => Fixture.StatusManager;
 
     /// <summary>ロガーファクトリーの Mock</summary>
     protected Mock<ILoggerFactory> LoggerFactoryMock { get; }
@@ -69,16 +70,13 @@ public abstract class DeviceTestBase : IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!_disposed)
+        if (!disposed)
         {
             if (disposing)
             {
-                Inventory.Dispose();
-                ConfigurationProvider.Dispose();
-                StatusManager.Dispose();
-                // History, Manager は IDisposable ではない
+                Fixture.Dispose();
             }
-            _disposed = true;
+            disposed = true;
         }
     }
 

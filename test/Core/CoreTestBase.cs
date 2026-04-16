@@ -2,6 +2,8 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Tests.Fixtures;
+using Moq;
 
 namespace CashChangerSimulator.Tests.Core;
 
@@ -12,50 +14,57 @@ public abstract class CoreTestBase : IDisposable
 
     protected CoreTestBase()
     {
-        Inventory = CreateInventory();
-        ConfigurationProvider = CreateConfigurationProvider();
-        History = CreateHistory(ConfigurationProvider);
-        Manager = CreateManager(Inventory, History, ConfigurationProvider);
+        Fixture = new CashChangerFixture();
+        
+        // 既存のオーバーライドを尊重し、フィクスチャの状態を同期させる
+        Fixture.Inventory = CreateInventory();
+        Fixture.ConfigurationProvider = CreateConfigurationProvider();
+        Fixture.History = CreateHistory(Fixture.ConfigurationProvider);
+        
+        // マネージャーの同期（オーバーライドにも対応）
+        var manager = CreateManager(Fixture.Inventory, Fixture.History, Fixture.ConfigurationProvider);
+        if (manager is not null)
+        {
+            if (manager is IMocked mocked)
+            {
+                Fixture.ManagerMock = (Mock<CashChangerManager>)mocked.Mock;
+            }
+            else
+            {
+                Fixture.Manager = manager;
+            }
+        }
     }
+
+    /// <summary>共通フィクスチャ</summary>
+    protected CashChangerFixture Fixture { get; }
 
     /// <summary>インベントリインスタンス(実クラスまたはMockオブジェクト)</summary>
-    protected Inventory Inventory { get; }
+    protected Inventory Inventory => Fixture.Inventory;
 
     /// <summary>トランザクション履歴</summary>
-    protected TransactionHistory History { get; }
+    protected TransactionHistory History => Fixture.History;
 
     /// <summary>キャッシュチェンジャーマネージャー</summary>
-    protected CashChangerManager Manager { get; }
+    protected CashChangerManager Manager => Fixture.Manager;
 
     /// <summary>設定プロバイダー</summary>
-    protected ConfigurationProvider ConfigurationProvider { get; }
+    protected ConfigurationProvider ConfigurationProvider => Fixture.ConfigurationProvider;
 
     /// <summary>Inventory を生成します。オーバーライドして Moq や Logger を注入できます。</summary>
-    protected virtual Inventory CreateInventory()
-    {
-        return CashChangerSimulator.Core.Models.Inventory.Create();
-    }
+    protected virtual Inventory CreateInventory() => Inventory.Create();
 
     /// <summary>TransactionHistory を生成します。Moq に差し替える場合はオーバーライドします。</summary>
-    protected virtual TransactionHistory CreateHistory(ConfigurationProvider configProvider)
-    {
-        return new TransactionHistory(configProvider.Config);
-    }
+    protected virtual TransactionHistory CreateHistory(ConfigurationProvider configProvider) => new TransactionHistory(configProvider.Config);
 
     /// <summary>ConfigurationProvider を生成します。Moq に差し替える場合はオーバーライドします。</summary>
-    protected virtual ConfigurationProvider CreateConfigurationProvider()
-    {
-        return new ConfigurationProvider();
-    }
+    protected virtual ConfigurationProvider CreateConfigurationProvider() => new ConfigurationProvider();
 
     /// <summary>CashChangerManager を生成します。Moq に差し替える場合はオーバーライドします。</summary>
     protected virtual CashChangerManager CreateManager(
         Inventory inventory,
         TransactionHistory history,
-        ConfigurationProvider configProvider)
-    {
-        return new CashChangerManager(inventory, history, configProvider);
-    }
+        ConfigurationProvider configProvider) => new CashChangerManager(inventory, history, configProvider);
 
     protected virtual void Dispose(bool disposing)
     {
