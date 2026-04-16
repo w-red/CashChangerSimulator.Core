@@ -148,10 +148,10 @@ public class DepositControllerMutationTests : DeviceTestBase
         controller.DepositCounts.ShouldBeEmpty();
         Inventory.EscrowCounts.ShouldBeEmpty();
 
-        // depositedSerials がクリアされていることを確認 (L380 撃破)
-        var field = typeof(DepositController).GetField("depositedSerials", BindingFlags.NonPublic | BindingFlags.Instance);
-        var serials = (List<string>)field!.GetValue(controller)!;
-        serials.ShouldBeEmpty();
+        // state.DepositedSerials がクリアされていることを確認
+        var stateField = typeof(DepositController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
+        var state = (dynamic)stateField!.GetValue(controller)!;
+        ((int)state.DepositedSerials.Count).ShouldBe(0);
 
         changedFired.ShouldBeTrue();
     }
@@ -383,8 +383,10 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         // リフレクションで IsBusy を true にする
-        var busyField = typeof(DepositController).GetField("<IsBusy>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        busyField!.SetValue(controller, true);
+        // リフレクションで IsBusy を true にする
+        var stateField = typeof(DepositController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
+        var state = (dynamic)stateField!.GetValue(controller)!;
+        state.IsBusy = true;
 
         // Act & Assert
         var ex = Should.Throw<DeviceException>(() => controller.BeginDeposit());
@@ -401,8 +403,9 @@ public class DepositControllerMutationTests : DeviceTestBase
         controller.FixDeposit();
 
         // リフレクションで IsBusy を true にする
-        var busyField = typeof(DepositController).GetField("<IsBusy>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        busyField!.SetValue(controller, true);
+        var stateField = typeof(DepositController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
+        var state = (dynamic)stateField!.GetValue(controller)!;
+        state.IsBusy = true;
 
         // Act & Assert
         var ex = await Should.ThrowAsync<DeviceException>(() => controller.EndDepositAsync(DepositAction.NoChange));
@@ -1144,9 +1147,9 @@ public class DepositControllerMutationTests : DeviceTestBase
 
         // Assert
         // ループカウンタ変異を抑制するために、生成されたシリアル番号の数を確認
-        var field = typeof(DepositController).GetField("depositedSerials", BindingFlags.NonPublic | BindingFlags.Instance);
-        var serials = (List<string>)field!.GetValue(controller)!;
-        serials.Count.ShouldBe(count);
+        var stateField = typeof(DepositController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
+        var state = (dynamic)stateField!.GetValue(controller)!;
+        ((int)state.DepositedSerials.Count).ShouldBe(count);
     }
 
     /// <summary>Dispose 時に内部リソース（CancellationTokenSource や CompositeDisposable）が破棄されることを検証します。</summary>
