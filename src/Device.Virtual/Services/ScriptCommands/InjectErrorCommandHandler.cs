@@ -27,10 +27,7 @@ public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManag
         ArgumentNullException.ThrowIfNull(logger);
 
         var errorType = cmd.Error?.ToUpperInvariant();
-        if (logger != null)
-        {
-            logger.ZLogInformation($"Injecting error: {errorType}");
-        }
+        logger?.ZLogInformation($"Injecting error: {errorType}");
 
         switch (errorType)
         {

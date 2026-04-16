@@ -22,10 +22,7 @@ public class DelayCommandHandler(TimeProvider timeProvider) : IScriptCommandHand
         ArgumentNullException.ThrowIfNull(logger);
 
         var ms = ScriptExecutionService.ResolveValue(cmd.Value, context);
-        if (logger != null)
-        {
-            logger.ZLogDebug($"Delaying for {ms}ms");
-        }
+        logger?.ZLogDebug($"Delaying for {ms}ms");
 
         await Task.Delay(TimeSpan.FromMilliseconds(ms), timeProvider).ConfigureAwait(false);
     }

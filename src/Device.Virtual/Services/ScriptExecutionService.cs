@@ -1,21 +1,27 @@
+using System.Text.Json;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System.Text.Json;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services;
 
 /// <summary>スクリプトデータに基づいてシミュレーターの操作を自動実行するサービス。</summary>
+/// <param name="depositController">入金コントローラー。</param>
+/// <param name="dispenseController">出金コントローラー。</param>
+/// <param name="inventory">在庫管理モデル。</param>
+/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+/// <param name="timeProvider">時間プロバイダー。</param>
 public class ScriptExecutionService(
     DepositController depositController,
     DispenseController dispenseController,
     Inventory inventory,
     HardwareStatusManager hardwareStatusManager,
-    TimeProvider? timeProvider = null) : IScriptExecutionService
+    TimeProvider? timeProvider = null)
+    : IScriptExecutionService
 {
     private static readonly JsonSerializerOptions JsonOptions =
         new() { PropertyNameCaseInsensitive = true };
@@ -86,26 +92,17 @@ public class ScriptExecutionService(
         var commands = JsonSerializer.Deserialize<List<ScriptCommand>>(json, JsonOptions);
         if (commands == null)
         {
-            if (logger != null)
-            {
-                logger.ZLogError($"Failed to deserialize script JSON.");
-            }
+            logger?.ZLogError($"Failed to deserialize script JSON.");
 
             return;
         }
 
-        if (logger != null)
-        {
-            logger.ZLogInformation($"Starting script execution. Commands count: {commands.Count}");
-        }
+        logger?.ZLogInformation($"Starting script execution. Commands count: {commands.Count}");
 
         var context = new ScriptExecutionContext();
         await ExecuteCommandsInternalAsync(commands, context, onProgress).ConfigureAwait(false);
 
-        if (logger != null)
-        {
-            logger.ZLogInformation($"Finished script execution.");
-        }
+        logger?.ZLogInformation($"Finished script execution.");
     }
 
     /// <summary>内部でコマンドリストを実行します。</summary>
@@ -163,10 +160,7 @@ public class ScriptExecutionService(
         ArgumentNullException.ThrowIfNull(cmd);
         ArgumentNullException.ThrowIfNull(context);
 
-        if (logger != null)
-        {
-            logger.ZLogDebug($"Executing command: {cmd.Op}");
-        }
+        logger?.ZLogDebug($"Executing command: {cmd.Op}");
 
         onProgress?.Invoke(cmd.Op);
 
@@ -176,20 +170,14 @@ public class ScriptExecutionService(
         if (opName == "REPEAT" && cmd.Commands != null)
         {
             var iterations = cmd.Count != null ? ResolveValue(cmd.Count, context) : 0;
-            if (logger != null)
-            {
-                logger.ZLogInformation($"Starting repeat loop: {iterations} times.");
-            }
+            logger?.ZLogInformation($"Starting repeat loop: {iterations} times.");
 
             for (int i = 0; i < iterations; i++)
             {
                 await ExecuteCommandsInternalAsync(cmd.Commands, context, onProgress).ConfigureAwait(false);
             }
 
-            if (logger != null)
-            {
-                logger.ZLogInformation($"Finished repeat loop.");
-            }
+            logger?.ZLogInformation($"Finished repeat loop.");
 
             return;
         }

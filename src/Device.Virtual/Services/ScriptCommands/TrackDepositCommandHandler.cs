@@ -27,10 +27,7 @@ public class TrackDepositCommandHandler(DepositController depositController, Tim
         var value = ScriptExecutionService.ResolveValue(cmd.Value, context);
         var count = cmd.Count != null ? ScriptExecutionService.ResolveValue(cmd.Count, context) : 1;
         var key = new DenominationKey(value, type, cmd.Currency ?? "JPY");
-        if (logger != null)
-        {
-            logger.ZLogDebug($"TrackDeposit: {key} (Count: {count})");
-        }
+        logger?.ZLogDebug($"TrackDeposit: {key} (Count: {count})");
 
         depositController.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });
         await Task.Delay(TimeSpan.FromMilliseconds(250), timeProvider).ConfigureAwait(false);
