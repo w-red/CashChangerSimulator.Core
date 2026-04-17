@@ -35,15 +35,13 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         }
     }
 
-    // テスト用に内部コンポーネントを公開
-
-    /// <inheritdoc/>
+    /// <summary>現在の現金在庫(Inventory)を取得します。</summary>
     public new Inventory Inventory => base.Inventory;
 
-    /// <inheritdoc/>
+    /// <summary>ハードウェア状態マネージャーを取得します。</summary>
     public new HardwareStatusManager HardwareStatusManager => base.HardwareStatusManager;
 
-    /// <inheritdoc/>
+    /// <summary>入金コントローラーを取得します。</summary>
     public new DepositController DepositController => base.DepositController;
 
     /// <inheritdoc/>

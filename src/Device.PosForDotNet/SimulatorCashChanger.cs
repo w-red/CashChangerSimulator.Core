@@ -134,7 +134,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <inheritdoc/>
     public override bool CapRepayDeposit => capFacade.CapRepayDeposit;
 
-    /// <inheritdoc/>
+    /// <summary>キャッシュのパージ機能をサポートしているかどうかを取得します。</summary>
     public virtual bool CapPurgeCash => capFacade.CapPurgeCash;
 
     /// <inheritdoc/>
@@ -225,16 +225,16 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     // Extra Public Properties
 
-    /// <inheritdoc/>
+    /// <summary>直近の操作の実行結果を取得または設定します。</summary>
     public int ResultCode { get => ctx.Mediator.ResultCode; set => ctx.Mediator.SetFailure((ErrorCode)value); }
 
-    /// <inheritdoc/>
+    /// <summary>直近の操作の拡張実行結果を取得または設定します。</summary>
     public int ResultCodeExtended { get => ctx.Mediator.ResultCodeExtended; set => ctx.Mediator.SetFailure((ErrorCode)ResultCode, value); }
 
-    /// <inheritdoc/>
+    /// <summary>必要な入金金額を取得または設定します。</summary>
     public decimal RequiredAmount { get => DepositController.RequiredAmount; set => DepositController.RequiredAmount = value; }
 
-    /// <inheritdoc/>
+    /// <summary>入金処理が進行中かどうかを取得します。</summary>
     public bool IsDepositInProgress => DepositController.IsDepositInProgress;
 
     /// <summary>状態検証(Open, Claim 等のシーケンスチェック)をスキップするかどうかを取得または設定します。</summary>
@@ -375,7 +375,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <inheritdoc/>
     public override void PauseDeposit(CashDepositPause control) => depositFacade.PauseDeposit(control);
 
-    /// <inheritdoc/>
+    /// <summary>入金中のキャッシュを返却します。</summary>
     public virtual void RepayDeposit() => depositFacade.RepayDeposit();
 
     /// <inheritdoc/>
@@ -384,7 +384,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <inheritdoc/>
     public override void DispenseCash(CashCount[] cashCounts) => dispenseFacade.DispenseByCashCounts(cashCounts, configManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(configManager.CurrencyCode), AsyncMode);
 
-    /// <inheritdoc/>
+    /// <summary>出力待ちのキャッシュをクリアします。</summary>
     public virtual void ClearOutput() => dispenseFacade.ClearOutput();
 
     /// <inheritdoc/>
@@ -449,7 +449,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         discrepancy = result.Discrepancy;
     }
 
-    /// <inheritdoc/>
+    /// <summary>キャッシュをパージします。</summary>
     public virtual void PurgeCash() => inventoryFacade.PurgeCash();
 
     // Diagnostics & Stats Methods
@@ -572,7 +572,8 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <inheritdoc/>
     public void QueueStatusUpdateEvent(StatusUpdateEventArgs se) => QueueEvent(se);
 
-    /// <inheritdoc/>
+    /// <summary>イベントを通知します。</summary>
+    /// <param name="e">イベント引数。</param>
     protected virtual void NotifyEvent(EventArgs e)
     {
         if (disposedValue)
