@@ -41,7 +41,16 @@ public abstract class UposTestBase : IDisposable
         {
             if (disposing)
             {
-                Changer.Dispose();
+                try
+                {
+                    Changer.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    // POS for .NET SDK 内部(StopListeningForGlobalEvents等)のクラッシュを無視し、
+                    // テストの完走を優先させる。
+                    System.Diagnostics.Debug.WriteLine($"[UposTestBase] Global SDK Dispose Error: {ex.Message}");
+                }
             }
             _disposed = true;
         }
