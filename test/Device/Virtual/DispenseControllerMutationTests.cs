@@ -526,14 +526,6 @@ public class DispenseControllerMutationTests : DeviceTestBase
         act.ShouldNotThrow();
     }
 
-    private void SetControllerStatus(CashDispenseStatus status)
-    {
-        var stateField = typeof(DispenseController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
-        var stateObj = stateField!.GetValue(controller);
-        var statusProp = typeof(DispenseState).GetProperty("Status", BindingFlags.Public | BindingFlags.Instance);
-        statusProp!.SetValue(stateObj, status);
-    }
-
     /// <summary>払い出しが正常終了した際、リソース(Token)が確実にリセットされることを検証します。</summary>
     /// <returns>非同期タスク。</returns>
     [Fact]
@@ -553,7 +545,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         var tracker = trackerField!.GetValue(controller);
         var ctsField = typeof(DispenseTracker).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
         var cts = ctsField!.GetValue(tracker);
-        
+
         cts.ShouldBeNull();
     }
 
@@ -564,7 +556,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         // Arrange
         var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
         var tracker = (DispenseTracker)trackerField!.GetValue(controller)!;
-        
+
         // トークンを作成（実行中状態を模倣）
         tracker.CreateNewToken();
 
@@ -587,7 +579,15 @@ public class DispenseControllerMutationTests : DeviceTestBase
 
         // Assert
         // Subscribe will not throw and dispose successfully
-        Assert.True(true); 
+        Assert.True(true);
+    }
+
+    private void SetControllerStatus(CashDispenseStatus status)
+    {
+        var stateField = typeof(DispenseController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
+        var stateObj = stateField!.GetValue(controller);
+        var statusProp = typeof(DispenseState).GetProperty("Status", BindingFlags.Public | BindingFlags.Instance);
+        statusProp!.SetValue(stateObj, status);
     }
 
     private class MockPosControlException(int errorCode, int extendedCode) : Exception

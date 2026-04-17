@@ -637,17 +637,25 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         }
 
         // POS for .NET SDK 基底クラスのクリーンアップ。
-        // ここでの NullReferenceException (StopListeningForGlobalEvents 等) は
-        // SDK内部の副作用によるため、完全にガードする。
-        // また、State 等のプロパティへのアクセス自体が例外を誘発するため、一切行わない。
-        try
+        // ここでの NullReferenceException (StopListeningForGlobalEvents 等) は SDK内部の副作用によるため、
+        // 1. 二重呼び出しを物理的に防ぐ (baseDisposed)
+        // 2. 例外を完全にガードする
+        // の二段階で対策する。
+        if (!baseDisposed)
         {
-            base.Dispose(disposing);
-        }
-        catch (Exception ex)
-        {
-            // SDK内部の不備による例外はログに留め、テスト実行を妨げないようにする。
-            System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] POS SDK Internal Dispose Error: {ex.Message}");
+            try
+            {
+                base.Dispose(disposing);
+            }
+            catch (Exception ex)
+            {
+                // SDK内部の不備による例外はログに留め、テスト実行を妨げないようにする。
+                System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] POS SDK Internal Dispose Error: {ex.Message}");
+            }
+            finally
+            {
+                baseDisposed = true;
+            }
         }
     }
 }
