@@ -618,20 +618,14 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     // IDisposable Implementation
 
+    private bool baseDisposed;
+
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)
     {
-        if (disposedValue)
-        {
-            return;
-        }
-
-        disposedValue = true;
-
+        // 我々のリソース(Context/Tracker等)を優先して破棄。
         if (disposing)
         {
-            // ライフサイクル管理(ctx)の破棄を最初に行う。
-            // これにより、コントローラー類が停止し、その後の基底クラスの破棄を邪魔しなくなる。
             try
             {
                 ctx?.Dispose();
