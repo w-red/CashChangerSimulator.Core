@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
@@ -14,66 +13,76 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>出金(払出)シーケンスを管理するコントローラー(仮想デバイス実装)。</summary>
-/// <param name="manager">マネージャー。</param>
-/// <param name="inventory">在庫管理モデル。</param>
-/// <param name="configProvider">設定プロバイダー。</param>
-/// <param name="loggerFactory">ロガーファクトリ。</param>
-/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-/// <param name="simulator">デバイスシミュレーター。</param>
-public class DispenseController(
-    CashChangerManager manager,
-    Inventory inventory,
-    ConfigurationProvider configProvider,
-    ILoggerFactory loggerFactory,
-    HardwareStatusManager hardwareStatusManager,
-    IDeviceSimulator simulator) : IDisposable
+public class DispenseController : IDisposable
 {
-    private readonly CashChangerManager manager = manager ?? throw new ArgumentNullException(nameof(manager));
-    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-    private readonly ConfigurationProvider configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
-    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
-    private readonly IDeviceSimulator simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
-    private readonly ILogger<DispenseController> logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
-    private readonly CompositeDisposable disposables = [];
+    private readonly CashChangerManager manager;
+    private readonly Inventory inventory;
+    private readonly ConfigurationProvider configProvider;
+    private readonly HardwareStatusManager hardwareStatusManager;
+    private readonly IDeviceSimulator simulator;
+    private readonly ILogger<DispenseController> logger;
+
     private readonly Lock stateLock = new();
-    private readonly Subject<Unit> changedSubject = new();
-    private readonly Subject<DeviceOutputCompleteEventArgs> outputCompleteEventsSubject = new();
-    private readonly Subject<DeviceErrorEventArgs> errorEventsSubject = new();
-    private CancellationTokenSource? dispenseCts;
+    private readonly DispenseState state = new();
+    private readonly DispenseTracker tracker = new();
     private bool disposed;
 
+    /// <summary>初期化します。</summary>
+    /// <param name="manager">マネージャー。</param>
+    /// <param name="inventory">在庫管理モデル。</param>
+    /// <param name="configProvider">設定プロバイダー。</param>
+    /// <param name="loggerFactory">ロガーファクトリ。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+    /// <param name="simulator">デバイスシミュレーター。</param>
+    public DispenseController(
+        CashChangerManager manager,
+        Inventory inventory,
+        ConfigurationProvider configProvider,
+        ILoggerFactory loggerFactory,
+        HardwareStatusManager hardwareStatusManager,
+        IDeviceSimulator simulator)
+    {
+        this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
+        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+        this.configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
+        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
+        this.simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
+        this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
+    }
+
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public Observable<Unit> Changed => changedSubject;
+    public Observable<Unit> Changed => tracker.Changed;
 
     /// <summary>出力完了イベントを受け取るためのストリーム。</summary>
-    public Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEventsSubject;
+    public Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => tracker.OutputCompleteEvents;
 
     /// <summary>エラーイベントを受け取るためのストリーム。</summary>
-    public Observable<DeviceErrorEventArgs> ErrorEvents => errorEventsSubject;
+    public Observable<DeviceErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
 
     /// <summary>現在のステータスを取得します。</summary>
-    public CashDispenseStatus Status { get; private set; } = CashDispenseStatus.Idle;
+    public CashDispenseStatus Status
+    {
+        get => state.Status;
+        private set
+        {
+            lock (stateLock)
+            {
+                state.Status = value;
+            }
+        }
+    }
 
     /// <summary>最後に発生したエラーコードを取得します。</summary>
-    public DeviceErrorCode LastErrorCode { get; private set; } = DeviceErrorCode.Success;
+    public DeviceErrorCode LastErrorCode => state.LastErrorCode;
 
     /// <summary>最後に発生した詳細エラーコードを取得します。</summary>
-    public int LastErrorCodeExtended { get; private set; }
+    public int LastErrorCodeExtended => state.LastErrorCodeExtended;
 
     /// <summary>処理中かどうかを取得します。</summary>
-    public bool IsBusy => Status == CashDispenseStatus.Busy;
+    public bool IsBusy => state.IsBusy;
 
     /// <summary>シミュレーターを取得します(テスト用)。</summary>
     public IDeviceSimulator Simulator => simulator;
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        Dispose(true);
-
-        // Stryker disable once Statement : Finalizer suppression
-        GC.SuppressFinalize(this);
-    }
 
     /// <summary>指定された金額を払い出します。</summary>
     /// <param name="amount">払い出す金額。</param>
@@ -109,7 +118,7 @@ public class DispenseController(
         {
             ObjectDisposedException.ThrowIf(disposed, this);
 
-            if (IsBusy)
+            if (state.IsBusy)
             {
                 throw new DeviceException("Already processing another dispense.", DeviceErrorCode.Busy);
             }
@@ -125,13 +134,13 @@ public class DispenseController(
             }
 
             Status = CashDispenseStatus.Busy;
-            LastErrorCode = DeviceErrorCode.Success;
+            state.Status = CashDispenseStatus.Busy;
+            state.LastErrorCode = DeviceErrorCode.Success;
         }
 
-        ((Subject<Unit>)Changed).OnNext(Unit.Default);
+        tracker.NotifyChanged();
 
-        dispenseCts = new CancellationTokenSource();
-        var token = dispenseCts.Token;
+        var token = tracker.CreateNewToken();
 
         try
         {
@@ -141,53 +150,49 @@ public class DispenseController(
             lock (stateLock)
             {
                 Status = CashDispenseStatus.Idle;
-                LastErrorCode = DeviceErrorCode.Success;
-                LastErrorCodeExtended = 0;
-
-                // Actual inventory update
+                state.Reset();
                 manager.Dispense(dispenseCounts);
             }
 
-            ((Subject<DeviceOutputCompleteEventArgs>)OutputCompleteEvents).OnNext(new DeviceOutputCompleteEventArgs(0));
+            tracker.NotifyComplete();
         }
         catch (OperationCanceledException)
         {
             lock (stateLock)
             {
                 Status = CashDispenseStatus.Idle;
-                LastErrorCode = DeviceErrorCode.Cancelled;
-                LastErrorCodeExtended = 0;
+                state.Status = CashDispenseStatus.Idle;
+                state.LastErrorCode = DeviceErrorCode.Cancelled;
+                state.LastErrorCodeExtended = 0;
             }
 
-            ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(DeviceErrorCode.Cancelled, 0, DeviceErrorLocus.Output, DeviceErrorResponse.None));
+            tracker.NotifyError(DeviceErrorCode.Cancelled, 0);
         }
         catch (Exception ex)
         {
             /* Stryker disable all */
             logger?.ZLogError(ex, $"Dispense failed.");
-
-            HandleDispenseError(ex, out var code, out var codeEx);
+            DispenseTracker.HandleDispenseError(ex, out var code, out var codeEx);
             /* Stryker restore all */
 
             lock (stateLock)
             {
                 Status = CashDispenseStatus.Error;
-                LastErrorCode = code;
-                LastErrorCodeExtended = codeEx;
+                state.Status = CashDispenseStatus.Error;
+                state.LastErrorCode = code;
+                state.LastErrorCodeExtended = codeEx;
             }
 
-            ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(LastErrorCode, LastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.None));
+            tracker.NotifyError(state.LastErrorCode, state.LastErrorCodeExtended);
         }
         finally
         {
             // Stryker disable once Statement : CancellationTokenSource disposal
-            dispenseCts?.Dispose();
-            dispenseCts = null;
+            tracker.ResetToken();
 
             if (!disposed)
             {
-                // Always notify state change at the end of operation
-                ((Subject<Unit>)Changed).OnNext(Unit.Default);
+                tracker.NotifyChanged();
             }
         }
     }
@@ -196,7 +201,7 @@ public class DispenseController(
     public virtual void ClearOutput()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        dispenseCts?.Cancel();
+        tracker.CancelCurrent();
 
         bool notifyChanged = false;
         lock (stateLock)
@@ -204,24 +209,31 @@ public class DispenseController(
             if (Status == CashDispenseStatus.Error)
             {
                 Status = CashDispenseStatus.Idle;
-                LastErrorCode = DeviceErrorCode.Success;
-                LastErrorCodeExtended = 0;
+                state.Reset();
                 notifyChanged = true;
             }
             else if (Status == CashDispenseStatus.Busy)
             {
                 // [UPOS] Stop in-progress output immediately for UI/Test consistency
                 Status = CashDispenseStatus.Idle;
-                LastErrorCode = DeviceErrorCode.Cancelled;
-                LastErrorCodeExtended = 0;
+                state.Status = CashDispenseStatus.Idle;
+                state.LastErrorCode = DeviceErrorCode.Cancelled;
+                state.LastErrorCodeExtended = 0;
                 notifyChanged = true;
             }
         }
 
         if (notifyChanged && !disposed)
         {
-            ((Subject<Unit>)Changed).OnNext(Unit.Default);
+            tracker.NotifyChanged();
         }
+    }
+
+    /// <summary>リソースを解放します。</summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>管理リソースを解放します。</summary>
@@ -241,70 +253,8 @@ public class DispenseController(
 
         if (disposing)
         {
-            // Stryker disable once Statement : CancellationTokenSource cancellation
-            dispenseCts?.Cancel();
-
-            // Stryker disable once Statement : CancellationTokenSource disposal
-            dispenseCts?.Dispose();
-
-            changedSubject.Dispose();
-            outputCompleteEventsSubject.Dispose();
-            errorEventsSubject.Dispose();
-
-            // Stryker disable once Statement : CompositeDisposable disposal
-            disposables.Dispose();
+            tracker.CancelCurrent();
+            tracker.Dispose();
         }
-    }
-
-    /// <summary>例外をエラーコードへマッピングします。</summary>
-    private static void HandleDispenseError(Exception ex, out DeviceErrorCode code, out int codeEx)
-    {
-        code = DeviceErrorCode.Failure;
-        codeEx = 0;
-
-        if (ex is DeviceException dex)
-        {
-            code = dex.ErrorCode;
-            codeEx = dex.ErrorCodeExtended;
-            return;
-        }
-
-        /* Stryker disable all : Reflection-based exception analysis for mocks/simulation is hard to verify via mutation */
-
-        // POS Control Exception (Reflection compatible)
-        var type = ex.GetType();
-        if (type.Name.Contains("PosControlException", StringComparison.Ordinal) || type.Name.Contains("MockPosControlException", StringComparison.Ordinal))
-        {
-            var errorCodeProp = type.GetProperty("ErrorCode");
-            var errorCodeExtendedProp = type.GetProperty("ErrorCodeExtended");
-
-            if (errorCodeProp != null)
-            {
-                var rawValue = errorCodeProp.GetValue(ex);
-                if (rawValue is int i)
-                {
-                    code = (DeviceErrorCode)i;
-                }
-                else if (rawValue != null)
-                {
-                    code = (DeviceErrorCode)Convert.ToInt32(rawValue, CultureInfo.InvariantCulture);
-                }
-            }
-
-            if (errorCodeExtendedProp != null)
-            {
-                var rawValue = errorCodeExtendedProp.GetValue(ex);
-                if (rawValue is int i)
-                {
-                    codeEx = i;
-                }
-                else if (rawValue != null)
-                {
-                    codeEx = Convert.ToInt32(rawValue, CultureInfo.InvariantCulture);
-                }
-            }
-        }
-
-        /* Stryker restore all */
     }
 }

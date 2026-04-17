@@ -1,13 +1,107 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services.DeviceEventTypes;
+using R3;
 
 namespace CashChangerSimulator.Device.Virtual;
 
-/// <summary>投入された現金の追跡とバリデーションを担当するクラス。</summary>
-internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider configProvider)
+/// <summary>投入された現金の追跡と通知、非同期リソースのライフサイクルを担当するクラス。</summary>
+internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider configProvider) : IDisposable
 {
     private readonly Inventory inventory = inventory;
     private readonly ConfigurationProvider configProvider = configProvider;
+    private readonly Subject<Unit> changedSubject = new();
+    private readonly Subject<DeviceDataEventArgs> dataEventsSubject = new();
+    private readonly Subject<DeviceErrorEventArgs> errorEventsSubject = new();
+    private readonly CompositeDisposable disposables = [];
+    private CancellationTokenSource? depositCts;
+    private bool disposed;
+
+    /// <summary>初期化します。</summary>
+    public DepositTracker()
+        : this(null!, null!)
+    {
+    }
+
+    /// <summary>状態が変更されたときに通知されるストリーム。</summary>
+    public Observable<Unit> Changed => changedSubject;
+
+    /// <summary>データイベントの通知ストリーム。</summary>
+    public Observable<DeviceDataEventArgs> DataEvents => dataEventsSubject;
+
+    /// <summary>エラーイベントの通知ストリーム。</summary>
+    public Observable<DeviceErrorEventArgs> ErrorEvents => errorEventsSubject;
+
+    /// <summary>新しい払い出しセッション用の CancellationToken を作成します。</summary>
+    /// <returns>新しいトークン。</returns>
+    public CancellationToken CreateNewToken()
+    {
+        depositCts?.Dispose();
+        depositCts = new CancellationTokenSource();
+        return depositCts.Token;
+    }
+
+    /// <summary>現在の操作を非同期でキャンセルします。</summary>
+    /// <returns>完了を示すタスク。</returns>
+    public async Task CancelCurrentAsync()
+    {
+        if (depositCts != null && !depositCts.IsCancellationRequested)
+        {
+            await depositCts.CancelAsync().ConfigureAwait(false);
+            depositCts.Dispose();
+            depositCts = null;
+        }
+    }
+
+    /// <summary>現在の操作をキャンセルします。</summary>
+    /// <returns>キャンセルが実行された場合は true。</returns>
+    public bool CancelCurrent()
+    {
+        if (depositCts == null || depositCts.IsCancellationRequested)
+        {
+            return false;
+        }
+
+        depositCts.Cancel();
+        return true;
+    }
+
+    /// <summary>トークンをリセット(破棄)します。</summary>
+    public void ResetToken()
+    {
+        depositCts?.Dispose();
+        depositCts = null;
+    }
+
+    /// <summary>状態変更を通知します。</summary>
+    public void NotifyChanged()
+    {
+        if (!disposed)
+        {
+            changedSubject.OnNext(Unit.Default);
+        }
+    }
+
+    /// <summary>データ受信を通知します。</summary>
+    /// <param name="data">データ値。</param>
+    public void NotifyData(int data)
+    {
+        if (!disposed)
+        {
+            dataEventsSubject.OnNext(new DeviceDataEventArgs(data));
+        }
+    }
+
+    /// <summary>エラー発生を通知します。</summary>
+    /// <param name="errorCode">エラーコード。</param>
+    /// <param name="extended">拡張エラーコード。</param>
+    public void NotifyError(DeviceErrorCode errorCode, int extended)
+    {
+        if (!disposed)
+        {
+            errorEventsSubject.OnNext(new DeviceErrorEventArgs(errorCode, extended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+        }
+    }
 
     /// <summary>投入された現金の追跡処理（集計、バリデーション、シリアル番号生成）を行います。</summary>
     /// <param name="key">投入された金種。</param>
@@ -47,5 +141,24 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
 
         // [LIFECYCLE] Finished identification
         state.Status = DeviceDepositStatus.Counting;
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        depositCts?.Dispose();
+        changedSubject.OnCompleted();
+        changedSubject.Dispose();
+        dataEventsSubject.OnCompleted();
+        dataEventsSubject.Dispose();
+        errorEventsSubject.OnCompleted();
+        errorEventsSubject.Dispose();
+        disposables.Dispose();
     }
 }

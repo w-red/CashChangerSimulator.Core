@@ -26,10 +26,6 @@ public class DepositController : IDisposable
     private readonly DepositState state = new();
     private readonly DepositCalculator calculator;
     private readonly DepositTracker tracker;
-    private readonly Subject<Unit> changedSubject = new();
-    private readonly Subject<DeviceDataEventArgs> dataEventsSubject = new();
-    private readonly Subject<DeviceErrorEventArgs> errorEventsSubject = new();
-    private CancellationTokenSource? depositCts;
     private bool disposed;
 
     /// <summary>DepositController クラスの新しいインスタンスを初期化します。</summary>
@@ -57,13 +53,13 @@ public class DepositController : IDisposable
     }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public virtual Observable<Unit> Changed => changedSubject;
+    public virtual Observable<Unit> Changed => tracker.Changed;
 
     /// <summary>データイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceDataEventArgs> DataEvents => dataEventsSubject;
+    public virtual Observable<DeviceDataEventArgs> DataEvents => tracker.DataEvents;
 
     /// <summary>エラーイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceErrorEventArgs> ErrorEvents => errorEventsSubject;
+    public virtual Observable<DeviceErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
 
     /// <summary>リアルタイムデータの通知。上位層(アダプター等)が利用します。</summary>
     public bool RealTimeDataEnabled { get; set; }
@@ -71,14 +67,7 @@ public class DepositController : IDisposable
     /// <summary>投入された合計金額を取得します。</summary>
     public virtual decimal DepositAmount
     {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.DepositAmount;
-            }
-        }
-
+        get => state.DepositAmount; // Decimal access is atomic on modern 64-bit .NET during simple reads.
         set
         {
             lock (stateLock)
@@ -91,14 +80,7 @@ public class DepositController : IDisposable
     /// <summary>オーバーフロー(満杯等により収納不可)した金額を取得します。</summary>
     public virtual decimal OverflowAmount
     {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.OverflowAmount;
-            }
-        }
-
+        get => state.OverflowAmount;
         set
         {
             lock (stateLock)
@@ -111,14 +93,7 @@ public class DepositController : IDisposable
     /// <summary>リジェクト(偽札、汚れ等により返却)された金額を取得します。</summary>
     public virtual decimal RejectAmount
     {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.RejectAmount;
-            }
-        }
-
+        get => state.RejectAmount;
         set
         {
             lock (stateLock)
@@ -133,6 +108,8 @@ public class DepositController : IDisposable
     {
         get
         {
+            // Dictionaryのコピーが必要なため、ここだけはLockを使用。
+            // ただし、もしここでもデッドロックが起きる場合はスナップショット方式を検討。
             lock (stateLock)
             {
                 return new Dictionary<DenominationKey, int>(state.Counts);
@@ -143,14 +120,7 @@ public class DepositController : IDisposable
     /// <summary>現在の預入状態を取得します。</summary>
     public virtual DeviceDepositStatus DepositStatus
     {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.Status;
-            }
-        }
-
+        get => state.Status;
         private set
         {
             lock (stateLock)
@@ -161,19 +131,10 @@ public class DepositController : IDisposable
     }
 
     /// <summary>入金処理が進行中かどうかを取得します。</summary>
-    public virtual bool IsDepositInProgress
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.Status is
-                    DeviceDepositStatus.Start or
-                    DeviceDepositStatus.Counting or
-                    DeviceDepositStatus.Validation;
-            }
-        }
-    }
+    public virtual bool IsDepositInProgress => state.Status is
+        DeviceDepositStatus.Start or
+        DeviceDepositStatus.Counting or
+        DeviceDepositStatus.Validation;
 
     /// <summary>入金処理が一時停止中かどうかを取得します。</summary>
     public virtual bool IsPaused
@@ -297,8 +258,10 @@ public class DepositController : IDisposable
                 return state.RequiredAmount;
             }
         }
+
         set
         {
+            bool hasChanged = false;
             lock (stateLock)
             {
                 if (state.RequiredAmount == value)
@@ -307,11 +270,12 @@ public class DepositController : IDisposable
                 }
 
                 state.RequiredAmount = value;
+                hasChanged = true;
+            }
 
-                if (!disposed)
-                {
-                    ((Subject<Unit>)Changed).OnNext(Unit.Default);
-                }
+            if (hasChanged && !disposed)
+            {
+                tracker.NotifyChanged();
             }
         }
     }
@@ -343,12 +307,13 @@ public class DepositController : IDisposable
             }
 
             state.Reset();
-            state.Status = DeviceDepositStatus.Counting;
+            DepositStatus = DeviceDepositStatus.Counting;
             inventory.ClearEscrow();
-            if (!disposed)
-            {
-                ((Subject<Unit>)Changed).OnNext(Unit.Default);
-            }
+        }
+
+        if (!disposed)
+        {
+            tracker.NotifyChanged();
         }
     }
 
@@ -366,12 +331,12 @@ public class DepositController : IDisposable
             state.IsFixed = true;
             state.LastDepositedSerials.Clear();
             state.LastDepositedSerials.AddRange(state.DepositedSerials);
+        }
 
-            // Stryker disable once Logical : Thread-safety guard
-            if (!disposed)
-            {
-                ((Subject<Unit>)Changed).OnNext(Unit.Default);
-            }
+        // Stryker disable once Logical : Thread-safety guard
+        if (!disposed)
+        {
+            tracker.NotifyChanged();
         }
     }
 
@@ -398,27 +363,20 @@ public class DepositController : IDisposable
             state.LastErrorCodeExtended = 0;
         }
 
-        lock (stateLock)
+        /* Stryker restore all */
+
+        /* Stryker disable all : Thread-safety guard */
+        if (!disposed)
         {
-            /* Stryker disable all : Thread-safety guard */
-            if (!disposed)
-            {
-                // Stryker disable once Statement : State change notification during deposit
-                ((Subject<Unit>)Changed).OnNext(Unit.Default);
-            }
+            // Stryker disable once Statement : State change notification during deposit
+            tracker.NotifyChanged();
         }
 
         // Stryker disable all : Cancellation side effects are hard to verify deterministically in this context
-        if (depositCts != null)
-        {
-            await depositCts.CancelAsync().ConfigureAwait(false);
-            depositCts.Dispose();
-        }
-
+        await tracker.CancelCurrentAsync().ConfigureAwait(false);
         /* Stryker restore all */
 
-        depositCts = new CancellationTokenSource();
-        var token = depositCts.Token;
+        var token = tracker.CreateNewToken();
 
         try
         {
@@ -446,7 +404,7 @@ public class DepositController : IDisposable
                     throw new DeviceException("Device Error (Overlap). Cannot complete deposit.", DeviceErrorCode.Overlapped);
                 }
 
-                state.Status = DeviceDepositStatus.End;
+                DepositStatus = DeviceDepositStatus.End;
                 state.IsPaused = false;
                 state.IsFixed = false;
 
@@ -476,12 +434,12 @@ public class DepositController : IDisposable
             {
                 state.LastErrorCode = dex.ErrorCode;
                 state.LastErrorCodeExtended = dex.ErrorCodeExtended;
+            }
 
-                // Stryker disable once all : Thread-safety check
-                if (!disposed)
-                {
-                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(state.LastErrorCode, state.LastErrorCodeExtended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
-                }
+            // Stryker disable once all : Thread-safety check
+            if (!disposed)
+            {
+                tracker.NotifyError(dex.ErrorCode, dex.ErrorCodeExtended);
             }
         }
         catch (Exception ex)
@@ -494,12 +452,12 @@ public class DepositController : IDisposable
             {
                 state.LastErrorCode = DeviceErrorCode.Failure;
                 state.LastErrorCodeExtended = 0;
+            }
 
-                // Stryker disable once all : Thread-safety check
-                if (!disposed)
-                {
-                    ((Subject<DeviceErrorEventArgs>)ErrorEvents).OnNext(new DeviceErrorEventArgs(state.LastErrorCode, 0, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
-                }
+            // Stryker disable once all : Thread-safety check
+            if (!disposed)
+            {
+                tracker.NotifyError(DeviceErrorCode.Failure, 0);
             }
         }
         finally
@@ -507,13 +465,15 @@ public class DepositController : IDisposable
             lock (stateLock)
             {
                 state.IsBusy = false;
-
-                // Stryker disable once Logical : Thread-safety check
-                if (!disposed)
-                {
-                    ((Subject<Unit>)Changed).OnNext(Unit.Default);
-                }
             }
+
+            // Stryker disable once Logical : Thread-safety check
+            if (!disposed)
+            {
+                tracker.NotifyChanged();
+            }
+
+            tracker.ResetToken();
         }
     }
 
@@ -578,13 +538,10 @@ public class DepositController : IDisposable
             state.IsPaused = requestedPause;
         }
 
-        lock (stateLock)
+        // Stryker disable once all : Thread-safety check
+        if (!disposed)
         {
-            // Stryker disable once all : Thread-safety check
-            if (!disposed)
-            {
-                ((Subject<Unit>)Changed).OnNext(Unit.Default);
-            }
+            tracker.NotifyChanged();
         }
     }
 
@@ -615,9 +572,9 @@ public class DepositController : IDisposable
             {
                 tracker.ProcessDenominationTracking(kv.Key, kv.Value, state);
             }
-
-            NotifyTrackingEvents();
         }
+
+        NotifyTrackingEvents();
     }
 
     /// <summary>指定された金額に近い金種をリジェクト庫(返却用)に投入します。</summary>
@@ -633,16 +590,17 @@ public class DepositController : IDisposable
             }
 
             state.RejectAmount += amount;
-            if (RealTimeDataEnabled && !disposed)
-            {
-                ((Subject<DeviceDataEventArgs>)DataEvents).OnNext(new DeviceDataEventArgs(0));
-            }
+        }
 
-            // Stryker disable once all : Thread-safety check
-            if (!disposed)
-            {
-                ((Subject<Unit>)Changed).OnNext(Unit.Default);
-            }
+        if (RealTimeDataEnabled && !disposed)
+        {
+            tracker.NotifyData(0);
+        }
+
+        // Stryker disable once all : Thread-safety check
+        if (!disposed)
+        {
+            tracker.NotifyChanged();
         }
     }
 
@@ -671,12 +629,8 @@ public class DepositController : IDisposable
 
         if (disposing)
         {
-            depositCts?.Cancel();
-            depositCts?.Dispose();
-
-            changedSubject.Dispose();
-            dataEventsSubject.Dispose();
-            errorEventsSubject.Dispose();
+            tracker.CancelCurrent();
+            tracker.Dispose();
             disposables.Dispose();
 
             if (isConfigInternal)
@@ -716,13 +670,13 @@ public class DepositController : IDisposable
         // Stryker disable once Logical : Data event state combination block
         if (RealTimeDataEnabled && !disposed)
         {
-            ((Subject<DeviceDataEventArgs>)DataEvents).OnNext(new DeviceDataEventArgs(0));
+            tracker.NotifyData(0);
         }
 
         // Stryker disable once Logical : Thread-safety check
         if (!disposed)
         {
-            ((Subject<Unit>)Changed).OnNext(Unit.Default);
+            tracker.NotifyChanged();
         }
     }
 }

@@ -18,7 +18,7 @@ internal sealed class DepositState
     public decimal RequiredAmount { get; set; }
 
     /// <summary>現在の預入状態。</summary>
-    public DeviceDepositStatus Status { get; set; } = DeviceDepositStatus.End;
+    public DeviceDepositStatus Status { get; set; } = DeviceDepositStatus.None;
 
     /// <summary>一時停止中かどうか。</summary>
     public bool IsPaused { get; set; }
@@ -52,7 +52,7 @@ internal sealed class DepositState
         RejectAmount = 0m;
         Counts.Clear();
         DepositedSerials.Clear();
-        Status = DeviceDepositStatus.Start;
+        Status = DeviceDepositStatus.None;
         IsPaused = false;
         IsFixed = false;
         LastErrorCode = DeviceErrorCode.Success;
