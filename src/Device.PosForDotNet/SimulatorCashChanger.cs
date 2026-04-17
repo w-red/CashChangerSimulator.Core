@@ -31,9 +31,9 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     private readonly Subject<CoreDeviceEventTypes.DeviceDirectIOEventArgs> directIOEvents = new();
     private readonly Subject<CoreDeviceEventTypes.DeviceOutputCompleteEventArgs> outputCompleteEvents = new();
     private readonly ReactiveProperty<DeviceControlState> stateProperty;
-    private readonly CompositeDisposable disposables = new();
+    private readonly CompositeDisposable disposables = [];
 
-    protected readonly SimulatorContext ctx;
+    private readonly SimulatorContext ctx;
     private readonly ILogger<SimulatorCashChanger> logger;
     private readonly UposDispenseFacade dispenseFacade;
     private readonly DepositFacade depositFacade;
@@ -203,7 +203,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override CashUnits CurrencyCashList => inventoryFacade.GetCashList(configManager.CurrencyCode);
 
     /// <inheritdoc/>
-    public override CashUnits DepositCashList => CapDeposit ? inventoryFacade.GetCashList(configManager.CurrencyCode) : default(CashUnits);
+    public override CashUnits DepositCashList => CapDeposit ? inventoryFacade.GetCashList(configManager.CurrencyCode) : default;
 
     /// <inheritdoc/>
     public override CashUnits ExitCashList => inventoryFacade.GetCashList(configManager.CurrencyCode);
