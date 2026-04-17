@@ -15,6 +15,7 @@ using CashChangerSimulator.Tests.Fixtures;
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>DispenseController の出金制御ロジックを網羅的に検証するテストクラス。</summary>
+[Collection("SequentialHardwareTests")]
 public class DispenseControllerTests : DeviceTestBase
 {
     private readonly Mock<CashChangerManager> mockManager;

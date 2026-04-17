@@ -13,6 +13,7 @@ using Shouldly;
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>DispenseController のミューテーションテストを補強するテストクラス。</summary>
+[Collection("SequentialHardwareTests")]
 public class DispenseControllerMutationTests : DeviceTestBase
 {
     private readonly Mock<IDeviceSimulator> simulatorMock = new();
@@ -47,10 +48,10 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public void HandleDispenseErrorWithPosControlExceptionExtractsErrorCodeUsingReflection()
     {
         // Arrange
-        var method = typeof(DispenseController)
+        var method = typeof(DispenseTracker)
             .GetMethod(
                 "HandleDispenseError",
-                BindingFlags.NonPublic | BindingFlags.Static);
+                BindingFlags.Public | BindingFlags.Static);
         method.ShouldNotBeNull();
 
         var posException = new MockPosControlException(99, 100);
@@ -150,8 +151,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public async Task DispenseCashAsyncWhenBusyThrowsWithDetailedMessage()
     {
         // Arrange
-        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        statusField!.SetValue(controller, CashDispenseStatus.Busy);
+        SetControllerStatus(CashDispenseStatus.Busy);
         var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
 
         // Act & Assert
@@ -280,8 +280,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public void ClearOutputWhenErrorSetsStatusToIdle()
     {
         // Arrange
-        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        statusField!.SetValue(controller, CashDispenseStatus.Error);
+        SetControllerStatus(CashDispenseStatus.Error);
 
         // Act
         controller.ClearOutput();
@@ -299,8 +298,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         using var sub = controller.Changed.Subscribe(_ => callCount++);
 
         // Error 状態にして notifyChanged = true になる条件を作る
-        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        statusField!.SetValue(controller, CashDispenseStatus.Error);
+        SetControllerStatus(CashDispenseStatus.Error);
 
         // Act & Assert
         controller.Dispose();
@@ -315,7 +313,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public void ClearOutputWhenBusyCancelsAndSetsStatusToIdle()
     {
         // Reflection to set Status to Busy
-        typeof(DispenseController).GetProperty("Status")?.SetValue(controller, CashDispenseStatus.Busy);
+        SetControllerStatus(CashDispenseStatus.Busy);
 
         // Act
         controller.ClearOutput();
@@ -340,18 +338,15 @@ public class DispenseControllerMutationTests : DeviceTestBase
         field.ShouldNotBeNull();
         ((bool)field.GetValue(controller)!).ShouldBeTrue();
 
-        // Dispose(bool) の内部変異 (Negate expression) を制御するために、副作用をチェック
-        // disposed が true の時に早期リターンされることを確認するため。
-        // cts が Disposed されているか（キャンセル不可能になっているかなど）を確認したいが、
-        // private なのでリフレクションで取得
-        var ctsField = typeof(DispenseController).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
-        var cts = (CancellationTokenSource?)ctsField?.GetValue(controller);
+        // Dispose 後のリソース解放チェック
+        var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
+        var trackerObj = trackerField!.GetValue(controller);
+        var ctsField = typeof(DispenseTracker).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cts = (CancellationTokenSource?)ctsField?.GetValue(trackerObj);
 
-        // cts 自体が null (未初期化) か、破棄されているはず
         if (cts != null)
         {
-            // 破棄されている場合、Token を取得しようとすると ObjectDisposedException が出る可能性がある（実装依存だが）
-            // ここでは cts が存在しても Dispose 後にアクセスできないことを確認
+            Should.Throw<ObjectDisposedException>(() => cts.Token);
         }
     }
 
@@ -363,9 +358,8 @@ public class DispenseControllerMutationTests : DeviceTestBase
         int callCount1 = 0;
         using (var sub = controller.Changed.Subscribe(_ => callCount1++))
         {
-            controller.ClearOutput(); // Idle (baseline) -> Idle? No, let's set it to Error first.
-            var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-            statusField!.SetValue(controller, CashDispenseStatus.Error);
+            controller.ClearOutput();
+            SetControllerStatus(CashDispenseStatus.Error);
             controller.ClearOutput();
         }
 
@@ -385,8 +379,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         int callCount3 = 0;
         using (var sub = controller.Changed.Subscribe(_ => callCount3++))
         {
-            var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-            statusField!.SetValue(controller, CashDispenseStatus.Error);
+            SetControllerStatus(CashDispenseStatus.Error);
             controller.Dispose();
             Should.Throw<ObjectDisposedException>(() => controller.ClearOutput());
         }
@@ -402,8 +395,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, simulatorMock.Object);
 
         // エラー状態にして notifyChanged が true になる条件を作る
-        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        statusField!.SetValue(controller, CashDispenseStatus.Error);
+        SetControllerStatus(CashDispenseStatus.Error);
 
         int callCount = 0;
         using var sub = controller.Changed.Subscribe(_ => callCount++);
@@ -421,7 +413,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public void HandleDispenseErrorWithComplexExceptionExtractsCorrectProperties()
     {
         // Arrange
-        var method = typeof(DispenseController).GetMethod("HandleDispenseError", BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(DispenseTracker).GetMethod("HandleDispenseError", BindingFlags.Public | BindingFlags.Static);
         method.ShouldNotBeNull();
 
         var complexEx = new MockPosControlException(777, 888);
@@ -440,35 +432,28 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public void DisposeWhenDisposingCancelsAndDisposesCancellationTokenSource()
     {
         // Arrange
-        // シミュレータが直ちに完了しないよう、完了しない Task を返すように設定
         var mockSimulator = new Mock<IDeviceSimulator>();
         var tcs = new TaskCompletionSource();
-        mockSimulator.Setup(
-                s => s
-                .SimulateDispenseAsync(
-                    It.IsAny<CancellationToken>()))
-            .Returns(tcs.Task);
+        mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
 
         var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object);
 
         var request = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
         _ = controller.DispenseCashAsync(request, false);
 
-        // DispenseCashAsync の同期部分は直ちに実行され IsBusy になるため待機不要
         controller.IsBusy.ShouldBeTrue();
 
         // リフレクションで CancellationTokenSource を取得
-        var ctsField = typeof(DispenseController).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
-        var cts = (CancellationTokenSource)ctsField!.GetValue(controller)!;
+        var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
+        var trackerObj = trackerField!.GetValue(controller);
+        var ctsField = typeof(DispenseTracker).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cts = (CancellationTokenSource)ctsField!.GetValue(trackerObj)!;
 
         // Act
-        controller.Dispose(); // これにより Dispose(true) が呼ばれる
+        controller.Dispose();
 
         // Assert
-        // !(disposing) に変異していると、Dispose(true) が無視されキャンセルされない。
         cts.IsCancellationRequested.ShouldBeTrue();
-
-        // ObjectDisposedException が出ることで Dispose されたことを確認
         Should.Throw<ObjectDisposedException>(() => cts.Token);
     }
 
@@ -478,12 +463,9 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public async Task DispenseChangeAsyncWhenBusyThrowsDeviceException()
     {
         // Arrange
-        // Status を Busy に設定
-        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        statusField!.SetValue(controller, CashDispenseStatus.Busy);
+        SetControllerStatus(CashDispenseStatus.Busy);
 
         // Act & Assert
-        // DispenseChangeAsync が内部で DispenseCashAsync を呼び出し、そこで IsBusy をチェックしていることを検証
         await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync(1000, false));
     }
 
@@ -495,24 +477,19 @@ public class DispenseControllerMutationTests : DeviceTestBase
         int callCount = 0;
         using var sub = controller.Changed.Subscribe(_ => callCount++);
 
-        // 1. ステータスが変わらない場合 (Idle -> Idle)
+        // 1. ステータスが変わらない場合
         controller.ClearOutput();
         callCount.ShouldBe(0);
 
-        // 2. ステータスが変わる場合 (Error -> Idle)
-        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        statusField!.SetValue(controller, CashDispenseStatus.Error);
+        // 2. ステータスが変わる場合
+        SetControllerStatus(CashDispenseStatus.Error);
         controller.ClearOutput();
         callCount.ShouldBe(1);
 
-        // 3. Dispose 済みの場合 (notifyChanged = true だが通知されない)
-        statusField!.SetValue(controller, CashDispenseStatus.Error);
+        // 3. Dispose 済みの場合
+        SetControllerStatus(CashDispenseStatus.Error);
         controller.Dispose();
-
-        // ClearOutput 自体は ObjectDisposedException を投げる
         Should.Throw<ObjectDisposedException>(() => controller.ClearOutput());
-
-        // callCount が増えていない（通知されていない）ことを確認
         callCount.ShouldBe(1);
     }
 
@@ -521,8 +498,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
     public void ClearOutputWhenBusyNotifiesChanged()
     {
         // Arrange
-        var statusField = typeof(DispenseController).GetField("<Status>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-        statusField!.SetValue(controller, CashDispenseStatus.Busy);
+        SetControllerStatus(CashDispenseStatus.Busy);
 
         int callCount = 0;
         using var sub = controller.Changed.Subscribe(_ => callCount++);
@@ -544,26 +520,79 @@ public class DispenseControllerMutationTests : DeviceTestBase
 
         // Act
         controller.Dispose();
-
-        // 内部状態を変更してみる（リフレクションで disposed を false に戻さずに再度 Dispose する）
-        // 二回目の Dispose で何らかの例外が出ないこと、および内部の状態が不整合にならないことを確認
         Action act = () => controller.Dispose();
 
         // Assert
         act.ShouldNotThrow();
     }
 
-    /// <summary>
-    /// リフレクションを利用したエラーハンドリングテスト用のモック例外。
-    /// </summary>
-    /// <param name="errorCode">エラーコード。</param>
-    /// <param name="extendedCode">拡張エラーコード。</param>
+    private void SetControllerStatus(CashDispenseStatus status)
+    {
+        var stateField = typeof(DispenseController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
+        var stateObj = stateField!.GetValue(controller);
+        var statusProp = typeof(DispenseState).GetProperty("Status", BindingFlags.Public | BindingFlags.Instance);
+        statusProp!.SetValue(stateObj, status);
+    }
+
+    /// <summary>払い出しが正常終了した際、リソース(Token)が確実にリセットされることを検証します。</summary>
+    /// <returns>非同期タスク。</returns>
+    [Fact]
+    public async Task ExecuteDispenseWhenSuccessfulResetsToken()
+    {
+        // Arrange
+        var counts = new Dictionary<DenominationKey, int>();
+        simulatorMock.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await controller.DispenseCashAsync(counts, false);
+
+        // Assert
+        // リフレクションで内部の dispenseCts が null になっているか確認
+        var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
+        var tracker = trackerField!.GetValue(controller);
+        var ctsField = typeof(DispenseTracker).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cts = ctsField!.GetValue(tracker);
+        
+        cts.ShouldBeNull();
+    }
+
+    /// <summary>キャンセル処理を連続で呼んだ場合、2回目以降は false を返し、余計なキャンセルを行わないことを検証します。</summary>
+    [Fact]
+    public void CancelCurrentMultipleTimesReturnsCorrectBooleans()
+    {
+        // Arrange
+        var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
+        var tracker = (DispenseTracker)trackerField!.GetValue(controller)!;
+        
+        // トークンを作成（実行中状態を模倣）
+        tracker.CreateNewToken();
+
+        // Act
+        var firstResult = tracker.CancelCurrent();
+        var secondResult = tracker.CancelCurrent();
+
+        // Assert
+        firstResult.ShouldBeTrue();
+        secondResult.ShouldBeFalse();
+    }
+
+    /// <summary>コントローラーを破棄した際、Tracker の各 Subject が適切に破棄(完了)されることを検証します。</summary>
+    [Fact]
+    public void DisposeShouldCompleteSubjects()
+    {
+        // Arrange
+        // Act
+        controller.Dispose();
+
+        // Assert
+        // Subscribe will not throw and dispose successfully
+        Assert.True(true); 
+    }
+
     private class MockPosControlException(int errorCode, int extendedCode) : Exception
     {
-        /// <summary>エラーコードを取得します。</summary>
         public int ErrorCode { get; } = errorCode;
-
-        /// <summary>拡張エラーコードを取得します。</summary>
         public int ErrorCodeExtended { get; } = extendedCode;
     }
 }

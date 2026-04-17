@@ -1,4 +1,7 @@
 using CashChangerSimulator.Device.PosForDotNet;
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace CashChangerSimulator.Tests.Device;
 

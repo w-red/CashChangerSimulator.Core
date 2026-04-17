@@ -6,6 +6,7 @@ using Shouldly;
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>VirtualCashChangerDevice の機能検証テスト。</summary>
+[Collection("SequentialHardwareTests")]
 public class VirtualCashChangerDeviceTests : DeviceTestBase
 {
     private readonly ICashChangerDevice device1;

@@ -12,6 +12,7 @@ using CashChangerSimulator.Tests.Fixtures;
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>DepositController のミューテーションテストを補強するテストクラス。</summary>
+[Collection("SequentialHardwareTests")]
 public class DepositControllerMutationTests : DeviceTestBase
 {
     private readonly DepositController controller;
@@ -1164,8 +1165,10 @@ public class DepositControllerMutationTests : DeviceTestBase
         controller.FixDeposit();
         _ = controller.EndDepositAsync(DepositAction.NoChange);
 
-        var ctsField = typeof(DepositController).GetField("depositCts", BindingFlags.NonPublic | BindingFlags.Instance);
-        var cts = (CancellationTokenSource?)ctsField!.GetValue(controller);
+        var trackerField = typeof(DepositController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
+        var trackerObj = trackerField?.GetValue(controller);
+        var ctsField = typeof(DepositTracker).GetField("depositCts", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cts = (CancellationTokenSource?)ctsField?.GetValue(trackerObj);
         cts.ShouldNotBeNull();
 
         // Act

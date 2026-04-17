@@ -6,6 +6,7 @@ using System.Diagnostics;
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>ハードウェアシミュレータの動作を検証するテストクラス。</summary>
+[Collection("SequentialHardwareTests")]
 public class HardwareSimulatorTests : DeviceTestBase
 {
     private class ConfigurationProviderScope : IDisposable

@@ -6,6 +6,7 @@ using Shouldly;
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
 /// <summary>DepositController の受入制御ロジックを網羅的に検証するテストクラス。</summary>
+[Collection("SequentialHardwareTests")]
 public class DepositControllerCoverageTests : DeviceTestBase
 {
     private readonly DepositController controller;
