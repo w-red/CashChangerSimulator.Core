@@ -45,7 +45,10 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     private readonly DirectIOHandler directIOHandler = new();
     private string checkHealthText = "OK";
     protected readonly object syncRoot = new();
-    protected bool disposedValue;
+    private bool baseDisposed;
+
+    /// <summary>オブジェクトが破棄済みかどうかを取得します。</summary>
+    protected bool IsDisposed { get; private set; }
 
     /// <summary><see cref="SimulatorCashChanger"/> クラスの新しいインスタンスを初期化します。</summary>
     /// <param name="deps">シミュレータの依存関係。</param>
@@ -494,7 +497,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <inheritdoc/>
     public void FireEvent(EventArgs e)
     {
-        if (disposedValue)
+        if (IsDisposed)
         {
             return;
         }
@@ -522,7 +525,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     void IUposEventSink.NotifyEvent(EventArgs e)
     {
-        if (disposedValue)
+        if (IsDisposed)
         {
             return;
         }
@@ -547,7 +550,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     void IUposEventSink.QueueEvent(EventArgs e)
     {
-        if (disposedValue)
+        if (IsDisposed)
         {
             return;
         }
@@ -576,7 +579,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     /// <param name="e">イベント引数。</param>
     protected virtual void NotifyEvent(EventArgs e)
     {
-        if (disposedValue)
+        if (IsDisposed)
         {
             return;
         }
@@ -619,11 +622,16 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     // IDisposable Implementation
 
-    private bool baseDisposed;
-
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)
     {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        IsDisposed = true;
+
         // 我々のリソース(Context/Tracker等)を優先して破棄。
         if (disposing)
         {

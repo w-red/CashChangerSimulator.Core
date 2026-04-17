@@ -196,7 +196,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     /// <summary>イベント通知をオーバーライドし、OnEventQueued フックを実行します。</summary>
     protected override void NotifyEvent(EventArgs e)
     {
-        if (disposedValue || isHandlingEvent)
+        if (IsDisposed || isHandlingEvent)
         {
             return;
         }
