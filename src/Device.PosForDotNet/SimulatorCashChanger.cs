@@ -627,49 +627,33 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         }
 
         disposedValue = true;
+
         if (disposing)
         {
+            // ライフサイクル管理(ctx)の破棄を最初に行う。
+            // これにより、コントローラー類が停止し、その後の基底クラスの破棄を邪魔しなくなる。
             try
             {
                 ctx?.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] Context Dispose Error: {ex.Message}");
             }
         }
 
+        // POS for .NET SDK 基底クラスのクリーンアップ。
+        // ここでの NullReferenceException (StopListeningForGlobalEvents 等) は
+        // SDK内部の副作用によるため、完全にガードする。
+        // また、State 等のプロパティへのアクセス自体が例外を誘発するため、一切行わない。
         try
         {
-            if (State != ControlState.Closed)
-            {
-                try
-                {
-                    if (DeviceEnabled)
-                    {
-                        DeviceEnabled = false;
-                    }
-                }
-                catch
-                {
-                }
-
-                if (CapRealTimeData)
-                {
-                    try
-                    {
-                        RealTimeDataEnabled = false;
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                base.Dispose(disposing);
-            }
+            base.Dispose(disposing);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] Dispose SDK Error: {ex}");
+            // SDK内部の不備による例外はログに留め、テスト実行を妨げないようにする。
+            System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] POS SDK Internal Dispose Error: {ex.Message}");
         }
     }
 }
