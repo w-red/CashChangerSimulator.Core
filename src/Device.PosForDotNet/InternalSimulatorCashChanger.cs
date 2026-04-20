@@ -45,7 +45,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     public new DepositController DepositController => base.DepositController;
 
     /// <inheritdoc/>
-    public DispenseController DispenseController => Context.DispenseController;
+    public new DispenseController DispenseController => Context.DispenseController;
 
     // Nullable に変更：LogProvider が null を返す可能性や、テスト環境での変動に対応
     private readonly ILogger<InternalSimulatorCashChanger>? internalLogger;
