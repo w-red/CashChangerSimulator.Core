@@ -55,7 +55,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     public InternalSimulatorCashChanger()
         : base(new SimulatorDependencies(GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
-        Context.Mediator.SkipStateVerification = true;
+        Context.Mediator.SkipStateVerification = false;
         internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
@@ -132,7 +132,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     public InternalSimulatorCashChanger(SimulatorDependencies deps)
         : base(deps with { GlobalLockFilePath = deps.GlobalLockFilePath ?? Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock") })
     {
-        Context.Mediator.SkipStateVerification = true;
+        Context.Mediator.SkipStateVerification = false;
         internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
@@ -159,7 +159,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             TimeProvider: timeProvider,
             GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
-        Context.Mediator.SkipStateVerification = true;
+        Context.Mediator.SkipStateVerification = false;
         internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
@@ -188,7 +188,7 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
             TimeProvider: timeProvider,
             GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
-        Context.Mediator.SkipStateVerification = true;
+        Context.Mediator.SkipStateVerification = false;
         internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
