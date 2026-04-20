@@ -51,6 +51,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     {
         get
         {
+            CheckDisposed();
             lock (@lock)
             {
                 return isForcedDiscrepancy || collectionCassette.HasDiscrepancy() || rejectCassette.HasDiscrepancy();
@@ -66,16 +67,44 @@ public class Inventory : IReadOnlyInventory, IDisposable
     }
 
     /// <summary>通常庫(リサイクル可能)の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts => recyclableCassette.GetAll();
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> AllCounts
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            return recyclableCassette.GetAll();
+        }
+    }
 
     /// <summary>回収庫(オーバーフロー等)の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts => collectionCassette.GetAll();
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> CollectionCounts
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            return collectionCassette.GetAll();
+        }
+    }
 
     /// <summary>リジェクト庫(汚損等)の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts => rejectCassette.GetAll();
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> RejectCounts
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            return rejectCassette.GetAll();
+        }
+    }
 
     /// <summary>入金トレイ(エスクロー)の全枚数。</summary>
-    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts => escrowCassette.GetAll();
+    public virtual IEnumerable<KeyValuePair<DenominationKey, int>> EscrowCounts
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            return escrowCassette.GetAll();
+        }
+    }
 
     /// <summary>在庫管理インスタンスを生成・初期化します。</summary>
     /// <param name="logger">使用するロガー(null の場合はデフォルトを使用)。</param>
@@ -198,60 +227,9 @@ public class Inventory : IReadOnlyInventory, IDisposable
                escrowCassette.CalculateTotal(currencyCode);
     }
 
-    /// <summary>現在の在庫を保存用のデータ形式に変換します。</summary>
-    /// <returns>保存用ディクショナリ。</returns>
-    public Dictionary<string, int> ToDictionary()
-    {
-        ObjectDisposedException.ThrowIf(disposed, this);
-        var result = new Dictionary<string, int>();
-        recyclableCassette.AddToDictionary(result, string.Empty);
-        collectionCassette.AddToDictionary(result, "COL");
-        rejectCassette.AddToDictionary(result, "REJ");
-        return result;
-    }
-
-    /// <summary>文字列キーのディクショナリから在庫を復元します。</summary>
-    /// <param name="data">復元元データ。</param>
-    public void LoadFromDictionary(IReadOnlyDictionary<string, int> data)
-    {
-        ObjectDisposedException.ThrowIf(disposed, this);
-        ArgumentNullException.ThrowIfNull(data);
-        foreach (var kv in data)
-        {
-            try
-            {
-                if (kv.Key.StartsWith("COL:", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (TryParseKey(kv.Key[4..], out var denKey))
-                    {
-                        AddCollection(denKey!, kv.Value);
-                    }
-                }
-                else if (kv.Key.StartsWith("REJ:", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (TryParseKey(kv.Key[4..], out var denKey))
-                    {
-                        AddReject(denKey!, kv.Value);
-                    }
-                }
-                else
-                {
-                    if (TryParseKey(kv.Key, out var denKey))
-                    {
-                        SetCount(denKey!, kv.Value);
-                    }
-                }
-            }
-            catch (ArgumentException ex)
-            {
-                logger.ZLogWarning($"Failed to load inventory key (ArgumentException): {kv.Key}. Error: {ex.Message}");
-            }
-            catch (InvalidOperationException ex)
-            {
-                logger.ZLogWarning($"Failed to load inventory key (InvalidOperationException): {kv.Key}. Error: {ex.Message}");
-            }
-        }
-    }
+    /// <summary>オブジェクトが破棄されているかどうかを確認します。</summary>
+    /// <exception cref="ObjectDisposedException">オブジェクトが破棄されている場合にスローされます。</exception>
+    public void CheckDisposed() => ObjectDisposedException.ThrowIf(disposed, this);
 
     /// <inheritdoc/>
     public void Dispose()

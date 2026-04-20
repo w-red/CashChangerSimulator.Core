@@ -13,6 +13,12 @@ public class DenominationSettings
     /// <summary>日本語の表示名。</summary>
     public string? DisplayNameJP { get; set; }
 
+    /// <summary>表示時のフォーマット指定子 (例: "N0", "N2")。</summary>
+    public string? FormatSpecifier { get; set; }
+
+    /// <summary>表示時の種別名称 (例: "Bill", "Coin", "Note")。</summary>
+    public string? TypeName { get; set; }
+
     /// <summary>初期枚数。</summary>
     public int InitialCount { get; set; }
 

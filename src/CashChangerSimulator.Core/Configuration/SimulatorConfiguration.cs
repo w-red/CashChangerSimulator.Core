@@ -13,6 +13,7 @@ public class SimulatorConfiguration
     {
         ["JPY"] = new InventorySettings
         {
+            Symbol = "¥",
             Denominations =
             {
                 ["B10000"] = new() { InitialCount = 10, DisplayName = "10,000 Yen Bill", DisplayNameJP = "一万円札" },
@@ -29,20 +30,43 @@ public class SimulatorConfiguration
         },
         ["USD"] = new InventorySettings
         {
+            Symbol = "$",
             Denominations =
             {
-                ["B100"] = new() { InitialCount = 5, DisplayName = "$100 Bill" },
-                ["B50"] = new() { InitialCount = 5, DisplayName = "$50 Bill" },
-                ["B20"] = new() { InitialCount = 10, DisplayName = "$20 Bill" },
-                ["B10"] = new() { InitialCount = 10, DisplayName = "$10 Bill" },
-                ["B5"] = new() { InitialCount = 20, DisplayName = "$5 Bill" },
-                ["B1"] = new() { InitialCount = 50, DisplayName = "$1 Bill" },
-                ["C1"] = new() { InitialCount = 50, DisplayName = "$1 Coin" },
-                ["C0.5"] = new() { InitialCount = 50, DisplayName = "50¢ Coin" },
-                ["C0.25"] = new() { InitialCount = 100, DisplayName = "25¢ Coin" },
-                ["C0.1"] = new() { InitialCount = 100, DisplayName = "10¢ Coin" },
-                ["C0.05"] = new() { InitialCount = 100, DisplayName = "5¢ Coin" },
-                ["C0.01"] = new() { InitialCount = 100, DisplayName = "1¢ Coin" },
+                ["B100"] = new() { InitialCount = 5, DisplayName = "$100 Bill", FormatSpecifier = "N0", TypeName = "Bill" },
+                ["B50"] = new() { InitialCount = 5, DisplayName = "$50 Bill", FormatSpecifier = "N0", TypeName = "Bill" },
+                ["B20"] = new() { InitialCount = 10, DisplayName = "$20 Bill", FormatSpecifier = "N0", TypeName = "Bill" },
+                ["B10"] = new() { InitialCount = 10, DisplayName = "$10 Bill", FormatSpecifier = "N0", TypeName = "Bill" },
+                ["B5"] = new() { InitialCount = 20, DisplayName = "$5 Bill", FormatSpecifier = "N0", TypeName = "Bill" },
+                ["B1"] = new() { InitialCount = 50, DisplayName = "$1 Bill", FormatSpecifier = "N0", TypeName = "Bill" },
+                ["C1"] = new() { InitialCount = 50, DisplayName = "$1 Coin", FormatSpecifier = "N0", TypeName = "Coin" },
+                ["C0.5"] = new() { InitialCount = 50, DisplayName = "50¢ Coin", FormatSpecifier = "N2", TypeName = "Coin" },
+                ["C0.25"] = new() { InitialCount = 100, DisplayName = "25¢ Coin", FormatSpecifier = "N2", TypeName = "Coin" },
+                ["C0.1"] = new() { InitialCount = 100, DisplayName = "10¢ Coin", FormatSpecifier = "N2", TypeName = "Coin" },
+                ["C0.05"] = new() { InitialCount = 100, DisplayName = "5¢ Coin", FormatSpecifier = "N2", TypeName = "Coin" },
+                ["C0.01"] = new() { InitialCount = 100, DisplayName = "1¢ Coin", FormatSpecifier = "N2", TypeName = "Coin" },
+            }
+        },
+        ["EUR"] = new InventorySettings
+        {
+            Symbol = "€",
+            Denominations =
+            {
+                ["B500"] = new() { InitialCount = 2, DisplayName = "€500 Note", FormatSpecifier = "N0", TypeName = "Note" },
+                ["B200"] = new() { InitialCount = 2, DisplayName = "€200 Note", FormatSpecifier = "N0", TypeName = "Note" },
+                ["B100"] = new() { InitialCount = 5, DisplayName = "€100 Note", FormatSpecifier = "N0", TypeName = "Note" },
+                ["B50"] = new() { InitialCount = 10, DisplayName = "€50 Note", FormatSpecifier = "N0", TypeName = "Note" },
+                ["B20"] = new() { InitialCount = 20, DisplayName = "€20 Note", FormatSpecifier = "N0", TypeName = "Note" },
+                ["B10"] = new() { InitialCount = 50, DisplayName = "€10 Note", FormatSpecifier = "N0", TypeName = "Note" },
+                ["B5"] = new() { InitialCount = 100, DisplayName = "€5 Note", FormatSpecifier = "N0", TypeName = "Note" },
+                ["C2"] = new() { InitialCount = 100, DisplayName = "€2 Coin", FormatSpecifier = "N0", TypeName = "Coin" },
+                ["C1"] = new() { InitialCount = 100, DisplayName = "€1 Coin", FormatSpecifier = "N0", TypeName = "Coin" },
+                ["C0.5"] = new() { InitialCount = 100, DisplayName = "50c Coin", FormatSpecifier = "N1", TypeName = "Coin" },
+                ["C0.2"] = new() { InitialCount = 100, DisplayName = "20c Coin", FormatSpecifier = "N1", TypeName = "Coin" },
+                ["C0.1"] = new() { InitialCount = 100, DisplayName = "10c Coin", FormatSpecifier = "N1", TypeName = "Coin" },
+                ["C0.05"] = new() { InitialCount = 100, DisplayName = "5c Coin", FormatSpecifier = "N2", TypeName = "Coin" },
+                ["C0.02"] = new() { InitialCount = 100, DisplayName = "2c Coin", FormatSpecifier = "N2", TypeName = "Coin" },
+                ["C0.01"] = new() { InitialCount = 100, DisplayName = "1c Coin", FormatSpecifier = "N2", TypeName = "Coin" },
             }
         }
     };
