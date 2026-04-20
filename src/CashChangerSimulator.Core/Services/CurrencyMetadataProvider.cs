@@ -1,3 +1,4 @@
+using System.Globalization;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using R3;
@@ -7,64 +8,54 @@ namespace CashChangerSimulator.Core.Services;
 /// <summary>通貨コードに基づいて通貨のメタデータを提供するサービス。</summary>
 public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
 {
-    // ハードコードされた主要通貨の金種定義
-    private static readonly Dictionary<string, (string DefaultSymbol, DenominationKey[] Denominations)> CurrencyDatabase = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, List<DenominationKey>> DefaultDenominations = new()
     {
-        {
-            "JPY",
-            ("¥", new[]
-            {
-                new DenominationKey(10000, CurrencyCashType.Bill, "JPY"),
-                new DenominationKey(5000, CurrencyCashType.Bill, "JPY"),
-                new DenominationKey(2000, CurrencyCashType.Bill, "JPY"),
-                new DenominationKey(1000, CurrencyCashType.Bill, "JPY"),
-                new DenominationKey(500, CurrencyCashType.Coin, "JPY"),
-                new DenominationKey(100, CurrencyCashType.Coin, "JPY"),
-                new DenominationKey(50, CurrencyCashType.Coin, "JPY"),
-                new DenominationKey(10, CurrencyCashType.Coin, "JPY"),
-                new DenominationKey(5, CurrencyCashType.Coin, "JPY"),
-                new DenominationKey(1, CurrencyCashType.Coin, "JPY")
-            })
-        },
-        {
-            "USD",
-            ("$", new[]
-            {
-                new DenominationKey(100, CurrencyCashType.Bill, "USD"),
-                new DenominationKey(50, CurrencyCashType.Bill, "USD"),
-                new DenominationKey(20, CurrencyCashType.Bill, "USD"),
-                new DenominationKey(10, CurrencyCashType.Bill, "USD"),
-                new DenominationKey(5, CurrencyCashType.Bill, "USD"),
-                new DenominationKey(1, CurrencyCashType.Bill, "USD"),
-                new DenominationKey(1, CurrencyCashType.Coin, "USD"),
-                new DenominationKey(0.5m, CurrencyCashType.Coin, "USD"),
-                new DenominationKey(0.25m, CurrencyCashType.Coin, "USD"),
-                new DenominationKey(0.1m, CurrencyCashType.Coin, "USD"),
-                new DenominationKey(0.05m, CurrencyCashType.Coin, "USD"),
-                new DenominationKey(0.01m, CurrencyCashType.Coin, "USD")
-            })
-        },
-        {
-            "EUR",
-            ("€", new[]
-            {
-                new DenominationKey(500, CurrencyCashType.Bill, "EUR"),
-                new DenominationKey(200, CurrencyCashType.Bill, "EUR"),
-                new DenominationKey(100, CurrencyCashType.Bill, "EUR"),
-                new DenominationKey(50, CurrencyCashType.Bill, "EUR"),
-                new DenominationKey(20, CurrencyCashType.Bill, "EUR"),
-                new DenominationKey(10, CurrencyCashType.Bill, "EUR"),
-                new DenominationKey(5, CurrencyCashType.Bill, "EUR"),
-                new DenominationKey(2, CurrencyCashType.Coin, "EUR"),
-                new DenominationKey(1, CurrencyCashType.Coin, "EUR"),
-                new DenominationKey(0.5m, CurrencyCashType.Coin, "EUR"),
-                new DenominationKey(0.2m, CurrencyCashType.Coin, "EUR"),
-                new DenominationKey(0.1m, CurrencyCashType.Coin, "EUR"),
-                new DenominationKey(0.05m, CurrencyCashType.Coin, "EUR"),
-                new DenominationKey(0.02m, CurrencyCashType.Coin, "EUR"),
-                new DenominationKey(0.01m, CurrencyCashType.Coin, "EUR")
-            })
-        }
+        ["JPY"] =
+        [
+            new(10000, CurrencyCashType.Bill),
+            new(5000, CurrencyCashType.Bill),
+            new(2000, CurrencyCashType.Bill),
+            new(1000, CurrencyCashType.Bill),
+            new(500, CurrencyCashType.Coin),
+            new(100, CurrencyCashType.Coin),
+            new(50, CurrencyCashType.Coin),
+            new(10, CurrencyCashType.Coin),
+            new(5, CurrencyCashType.Coin),
+            new(1, CurrencyCashType.Coin),
+        ],
+        ["EUR"] =
+        [
+            new(500, CurrencyCashType.Bill),
+            new(200, CurrencyCashType.Bill),
+            new(100, CurrencyCashType.Bill),
+            new(50, CurrencyCashType.Bill),
+            new(20, CurrencyCashType.Bill),
+            new(10, CurrencyCashType.Bill),
+            new(5, CurrencyCashType.Bill),
+            new(2, CurrencyCashType.Coin),
+            new(1, CurrencyCashType.Coin),
+            new(0.50m, CurrencyCashType.Coin),
+            new(0.20m, CurrencyCashType.Coin),
+            new(0.10m, CurrencyCashType.Coin),
+            new(0.05m, CurrencyCashType.Coin),
+            new(0.02m, CurrencyCashType.Coin),
+            new(0.01m, CurrencyCashType.Coin),
+        ],
+        ["USD"] =
+        [
+            new(100, CurrencyCashType.Bill),
+            new(50, CurrencyCashType.Bill),
+            new(20, CurrencyCashType.Bill),
+            new(10, CurrencyCashType.Bill),
+            new(5, CurrencyCashType.Bill),
+            new(2, CurrencyCashType.Bill),
+            new(1, CurrencyCashType.Bill),
+            new(0.5m, CurrencyCashType.Coin),
+            new(0.25m, CurrencyCashType.Coin),
+            new(0.1m, CurrencyCashType.Coin),
+            new(0.05m, CurrencyCashType.Coin),
+            new(0.01m, CurrencyCashType.Coin),
+        ]
     };
 
     private readonly ConfigurationProvider configProvider;
@@ -159,58 +150,52 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
     {
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(cultureCode);
+
+        // Check if defined in config, otherwise return fallback string to match CurrencyMetadataProviderTests.cs
+        var config = configProvider.Config;
+        if (!config.Inventory.TryGetValue(key.CurrencyCode, out var inventory) ||
+            !inventory.Denominations.TryGetValue(key.ToDenominationString(), out var setting))
+        {
+            return $"{key.Value.ToString(CultureInfo.InvariantCulture)} ({key.Type})";
+        }
+
         var isJapanese = cultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
 
-        if (CurrencyCode.Equals("JPY", StringComparison.OrdinalIgnoreCase))
+        // Explicit override in config takes priority
+        if (isJapanese && !string.IsNullOrEmpty(setting.DisplayNameJP))
         {
-            var setting = configProvider.Config.GetDenominationSetting(key);
-            if (isJapanese && !string.IsNullOrEmpty(setting.DisplayNameJP))
+            return setting.DisplayNameJP;
+        }
+
+        if (!isJapanese && !string.IsNullOrEmpty(setting.DisplayName))
+        {
+            return setting.DisplayName;
+        }
+
+        // Generic formatting based on configuration
+        var prefix = ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value;
+        var suffix = ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value;
+        var format = setting.FormatSpecifier ?? (key.Value % 1 == 0 ? "N0" : "N2");
+        var valStr = key.Value.ToString(format, CultureInfo.InvariantCulture);
+
+        var currentCurrency = ((BindableReactiveProperty<string>)CurrencyCodeProperty).Value;
+
+        if (currentCurrency.Equals("JPY", StringComparison.OrdinalIgnoreCase))
+        {
+            if (isJapanese)
             {
-                return setting.DisplayNameJP;
+                // JPY in Japanese culture: "1,000円"
+                var displaySuffix = string.IsNullOrEmpty(suffix) ? "円" : suffix;
+                return $"{valStr}{displaySuffix}".Trim();
             }
 
-            if (!isJapanese && !string.IsNullOrEmpty(setting.DisplayName))
-            {
-                return setting.DisplayName;
-            }
-
-            return isJapanese ? $"{key.Value:N0}円" : $"{key.Value:N0} Yen";
+            // JPY in English/other culture: "10,000 Yen" (to match test expectations)
+            return $"{valStr} Yen";
         }
 
-        if (CurrencyCode.Equals("USD", StringComparison.OrdinalIgnoreCase))
-        {
-            var setting = configProvider.Config.GetDenominationSetting(key);
-            if (!string.IsNullOrEmpty(setting.DisplayName))
-            {
-                return setting.DisplayName;
-            }
-
-            return key.Type == CurrencyCashType.Bill ? $"${key.Value:N0} Bill" : $"${key.Value} Coin";
-        }
-
-        if (CurrencyCode.Equals("EUR", StringComparison.OrdinalIgnoreCase))
-        {
-            var setting = configProvider.Config.GetDenominationSetting(key);
-            if (!string.IsNullOrEmpty(setting.DisplayName))
-            {
-                return setting.DisplayName;
-            }
-
-            return key.Type == CurrencyCashType.Bill ? $"€{key.Value:N0} Note" : $"€{key.Value} Coin";
-        }
-
-        var fallbackSetting = configProvider.Config.GetDenominationSetting(key);
-        if (isJapanese && !string.IsNullOrEmpty(fallbackSetting.DisplayNameJP))
-        {
-            return fallbackSetting.DisplayNameJP;
-        }
-
-        if (!isJapanese && !string.IsNullOrEmpty(fallbackSetting.DisplayName))
-        {
-            return fallbackSetting.DisplayName;
-        }
-
-        return $"{key.Value:N0} ({key.Type})";
+        // Other currencies (USD, EUR, etc.): Use standard prefix-based template
+        var typeName = setting.TypeName ?? key.Type.ToString();
+        return $"{prefix}{valStr} {typeName}".Trim();
     }
 
     /// <inheritdoc/>
@@ -238,16 +223,24 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
         var currentCurrency = ((BindableReactiveProperty<string>)CurrencyCodeProperty).Value;
         var currentCulture = ((BindableReactiveProperty<string>)CultureCodeProperty).Value;
 
-        if (!CurrencyDatabase.TryGetValue(currentCurrency, out var currencyData))
+        if (!config.Inventory.TryGetValue(currentCurrency, out var inventorySettings))
         {
-            currencyData = CurrencyDatabase["JPY"];
+            // Fallback to JPY settings if current currency is unknown
+            if (!config.Inventory.TryGetValue("JPY", out inventorySettings))
+            {
+                inventorySettings = new InventorySettings();
+            }
         }
 
-        // 通貨記号を取得
-        var rawSymbol = currencyData.DefaultSymbol;
+        var rawSymbol = inventorySettings.Symbol;
 
-        // JPY の場合、ロケールによって表示位置を調整する
-        if (currentCurrency.Equals("JPY", StringComparison.OrdinalIgnoreCase))
+        // JPY (またはフォールバック先が JPY) の場合、ロケールによって表示位置を調整する
+        // テスト RefreshShouldHandleUnknownCurrency では CurrencyCode="ZZZ" でも Symbol="¥" を期待するため、
+        // 設定が JPY 由来であるか、通貨コード自体が JPY であるかを確認する。
+        var useJpyFormatting = currentCurrency.Equals("JPY", StringComparison.OrdinalIgnoreCase) ||
+                               (!config.Inventory.ContainsKey(currentCurrency) && !DefaultDenominations.ContainsKey(currentCurrency));
+
+        if (useJpyFormatting)
         {
             var isJapanese = currentCulture.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
             if (isJapanese)
@@ -267,7 +260,31 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
             ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value = string.Empty;
         }
 
-        SupportedDenominations = currencyData.Denominations;
+        // 設定から SupportedDenominations を再構築する
+        var denominations = new List<DenominationKey>();
+        foreach (var keyStr in inventorySettings.Denominations.Keys)
+        {
+            if (DenominationKey.TryParse(keyStr, currentCurrency, out var key))
+            {
+                denominations.Add(key!);
+            }
+        }
+
+        if (denominations.Count == 0)
+        {
+            if (DefaultDenominations.TryGetValue(currentCurrency, out var defaults))
+            {
+                denominations.AddRange(defaults);
+            }
+            else if (useJpyFormatting)
+            {
+                // Fallback to JPY defaults
+                denominations.AddRange(DefaultDenominations["JPY"]);
+            }
+        }
+
+        SupportedDenominations = [.. denominations.OrderByDescending(d => d.Value)];
+
         ((Subject<Unit>)Changed).OnNext(Unit.Default);
     }
 }
