@@ -191,6 +191,7 @@ public class CurrencyMetadataProviderTests
         var setting = configProvider.Config.Inventory["JPY"].Denominations["B1000"];
         setting.DisplayNameJP = string.Empty;
         setting.DisplayName = string.Empty;
+        configProvider.Config.System.CultureCode = "ja-JP";
 
         configProvider.Update(configProvider.Config);
 
@@ -220,6 +221,7 @@ public class CurrencyMetadataProviderTests
         var setting = configProvider.Config.Inventory["JPY"].Denominations["B1000"];
         setting.DisplayNameJP = string.Empty;
         setting.DisplayName = "One Thousand Yen"; // 英語名はある
+        configProvider.Config.System.CultureCode = "ja-JP";
         configProvider.Update(configProvider.Config);
 
         // 日本語環境なので英語名ではなく「1,000円」を期待する (&& が || になると英語名が優先されてしまう)

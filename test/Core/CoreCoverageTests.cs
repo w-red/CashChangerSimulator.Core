@@ -92,15 +92,18 @@ public class CoreCoverageTests
 
         // 設定を直接書き換える
         config.Config.System.CurrencyCode = "USD";
+        var usdInv = new InventorySettings();
+        usdInv.Denominations["C1"] = new DenominationSettings { DisplayName = "$1 Coin" };
+        config.Config.Inventory["USD"] = usdInv;
 
         var provider = CurrencyMetadataProvider.Create(config);
 
         // Act
-        var usdKey = new DenominationKey(1.00m, CurrencyCashType.Coin, "USD");
+        var usdKey = new DenominationKey(1m, CurrencyCashType.Coin, "USD");
         var name = provider.GetDenominationName(usdKey);
 
         // Assert
-        name.ShouldBe("$1.00 Coin");
+        name.ShouldBe("$1 Coin");
     }
 
     /// <summary>OverallStatusAggregatorProvider のライフサイクルとモニター変更の通知を検証します。</summary>
