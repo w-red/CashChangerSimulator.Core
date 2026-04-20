@@ -2,6 +2,7 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
+using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.Virtual;
@@ -35,8 +36,7 @@ public class AsyncModeReliabilityTests
         {
             lock (@lock)
             {
-                eventHistory.Add(e);
-                if (e is StatusUpdateEventArgs se && se.Status == 91)
+                if (e is StatusUpdateEventArgs se && se.Status == (int)UposCashChangerStatusUpdateCode.AsyncFinished)
                 {
                     // [IMPORTANT] Capture internal state AT THE MOMENT of event notification.
                     // Access through the mediator's context to avoid any instance mismatch.
@@ -77,7 +77,7 @@ public class AsyncModeReliabilityTests
         var controller = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hardwareStatus, hardwareSim.Object);
         var changer = new ReliabilityTestChanger(inventory, manager, controller, hardwareStatus)
         {
-            SkipStateVerification = true
+            SkipStateVerification = false
         };
 
         // Act
