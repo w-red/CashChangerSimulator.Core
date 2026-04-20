@@ -101,7 +101,7 @@ public class DispenseAsyncTests
         // Assert: Immediate return, event should not have fired yet because simulator is still "running"
         lock (changer.QueuedEvents)
         {
-            changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91).ShouldBeFalse();
+            changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == (int)UposCashChangerStatusUpdateCode.AsyncFinished).ShouldBeFalse();
         }
 
         // Let simulator finish
@@ -116,7 +116,7 @@ public class DispenseAsyncTests
         {
             lock (changer.QueuedEvents)
             {
-                return changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
+                return changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == (int)UposCashChangerStatusUpdateCode.AsyncFinished);
             }
         }, timeProvider: timeProvider);
     }
@@ -294,7 +294,7 @@ public class DispenseAsyncTests
         // Verify no AsyncFinished event fired
         lock (changer.QueuedEvents)
         {
-            changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91).ShouldBeFalse("Cancelled operation should not fire AsyncFinished.");
+            changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == (int)UposCashChangerStatusUpdateCode.AsyncFinished).ShouldBeFalse("Cancelled operation should not fire AsyncFinished.");
         }
     }
 
@@ -332,7 +332,7 @@ public class DispenseAsyncTests
         {
             lock (changer.QueuedEvents)
             {
-                return changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == 91);
+                return changer.QueuedEvents.Any(e => e is StatusUpdateEventArgs se && se.Status == (int)UposCashChangerStatusUpdateCode.AsyncFinished);
             }
         }, timeoutSeconds: 5, timeProvider: timeProvider);
 
