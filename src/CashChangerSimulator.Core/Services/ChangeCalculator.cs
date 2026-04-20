@@ -40,23 +40,7 @@ public static class ChangeCalculator
                 break;
             }
 
-            int needed = (int)(remaining / key.Value);
-            if (needed <= 0)
-            {
-                continue;
-            }
-
-            int available = inventory.GetCount(key);
-            int countToTake = Math.Min(needed, available);
-
-            Console.WriteLine($"[DEBUG] ChangeCalculator: Checking {key.Value} (Needed: {needed}, Available: {available})");
-
-            if (countToTake > 0)
-            {
-                result[key] = countToTake;
-                remaining -= key.Value * countToTake;
-                Console.WriteLine($"[DEBUG] ChangeCalculator: Took {countToTake}. Remaining: {remaining}");
-            }
+            remaining = SelectDenominations(inventory, key, remaining, result);
         }
 
         if (remaining > 0)
@@ -66,6 +50,26 @@ public static class ChangeCalculator
         }
 
         return result;
+    }
+
+    private static decimal SelectDenominations(IReadOnlyInventory inventory, DenominationKey key, decimal remaining, Dictionary<DenominationKey, int> result)
+    {
+        int needed = (int)(remaining / key.Value);
+        if (needed <= 0)
+        {
+            return remaining;
+        }
+
+        int available = inventory.GetCount(key);
+        int countToTake = Math.Min(needed, available);
+
+        if (countToTake > 0)
+        {
+            result[key] = countToTake;
+            return remaining - (key.Value * countToTake);
+        }
+
+        return remaining;
     }
 
     private static IEnumerable<DenominationKey> GetAvailableDenominationKeys(IReadOnlyInventory inventory)

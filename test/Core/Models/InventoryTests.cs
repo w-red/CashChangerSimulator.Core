@@ -1,4 +1,5 @@
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using R3;
@@ -64,7 +65,7 @@ public class InventoryTests : CoreTestBase
 
         notificationCount.ShouldBe(0);
         Inventory.CalculateTotal().ShouldBe(0);
-        Inventory.ToDictionary().ShouldBeEmpty();
+        InventoryPersistenceMapper.ToDictionary(Inventory).ShouldBeEmpty();
     }
 
     /// <summary>負の値を加算した際に数量が減少することを検証する。</summary>
@@ -235,7 +236,7 @@ public class InventoryTests : CoreTestBase
         Inventory.AddCollection(pay, 2);
         Inventory.AddReject(pay, 3);
 
-        var dict = Inventory.ToDictionary();
+        var dict = InventoryPersistenceMapper.ToDictionary(Inventory);
         dict.Count.ShouldBe(3);
 
         // 正規表現や Contains ではなく、完全一致で形式を固定することで Stryker による微細な置換を検知する
@@ -251,7 +252,7 @@ public class InventoryTests : CoreTestBase
         dict.Keys.ShouldNotContain("");
 
         var newInventory = CashChangerSimulator.Core.Models.Inventory.Create();
-        newInventory.LoadFromDictionary(dict);
+        InventoryPersistenceMapper.LoadFromDictionary(newInventory, dict);
         newInventory.GetCount(pay).ShouldBe(1);
         newInventory.CollectionCounts.First(kv => kv.Key == pay).Value.ShouldBe(2);
         newInventory.RejectCounts.First(kv => kv.Key == pay).Value.ShouldBe(3);
@@ -275,7 +276,7 @@ public class InventoryTests : CoreTestBase
         };
 
         var inventory = CashChangerSimulator.Core.Models.Inventory.Create();
-        inventory.LoadFromDictionary(dict);
+        InventoryPersistenceMapper.LoadFromDictionary(inventory, dict);
 
         // 正しいものだけが取り込まれていること
         inventory.CollectionCounts.Count(kv => kv.Value > 0).ShouldBe(1);
@@ -294,7 +295,7 @@ public class InventoryTests : CoreTestBase
         var notifyCount = 0;
         using var sub = inventory.Changed.Subscribe(_ => notifyCount++);
 
-        inventory.LoadFromDictionary(evilDict);
+        InventoryPersistenceMapper.LoadFromDictionary(inventory, evilDict);
 
         // 1つも処理されず、イベントも発生しないこと
         inventory.CalculateTotal().ShouldBe(0);
@@ -312,7 +313,7 @@ public class InventoryTests : CoreTestBase
             { "reJ:JPY:B1000", 20 }
         };
 
-        Inventory.LoadFromDictionary(dict);
+        InventoryPersistenceMapper.LoadFromDictionary(Inventory, dict);
         Inventory.CollectionCounts.First(kv => kv.Key == pay).Value.ShouldBe(10);
         Inventory.RejectCounts.First(kv => kv.Key == pay).Value.ShouldBe(20);
     }
@@ -322,7 +323,7 @@ public class InventoryTests : CoreTestBase
     public void LoadFromDictionaryInvalidKeyShouldIgnore()
     {
         var dict = new Dictionary<string, int> { { "INVALID", 10 } };
-        Inventory.LoadFromDictionary(dict); // Should not throw
+        InventoryPersistenceMapper.LoadFromDictionary(Inventory, dict); // Should not throw
         Inventory.CalculateTotal().ShouldBe(0);
     }
 
@@ -555,7 +556,7 @@ public class InventoryTests : CoreTestBase
         Should.Throw<ObjectDisposedException>(() => inv.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 1));
         Should.Throw<ObjectDisposedException>(() => inv.Clear());
         Should.Throw<ObjectDisposedException>(() => inv.CalculateTotal());
-        Should.Throw<ObjectDisposedException>(() => inv.ToDictionary());
+        Should.Throw<ObjectDisposedException>(() => InventoryPersistenceMapper.ToDictionary(inv));
 
         // 2回目の呼出も安全であり、状態が変わらないこと
         inv.Dispose();
@@ -575,7 +576,7 @@ public class InventoryTests : CoreTestBase
             { "", 500 },
             { "INVALID:PREFIX:JPY:B1000", 600 }
         };
-        Inventory.LoadFromDictionary(data);
+        InventoryPersistenceMapper.LoadFromDictionary(Inventory, data);
 
         Inventory.CollectionCounts.ShouldBeEmpty();
         Inventory.RejectCounts.ShouldBeEmpty();
@@ -591,7 +592,7 @@ public class InventoryTests : CoreTestBase
         Inventory.AddCollection(key, 5);
         Inventory.AddReject(key, 3);
 
-        var dict = Inventory.ToDictionary();
+        var dict = InventoryPersistenceMapper.ToDictionary(Inventory);
 
         // プレフィックスなしが通常在庫
         dict.ShouldContainKey("JPY:B1000");
@@ -621,8 +622,8 @@ public class InventoryTests : CoreTestBase
         Should.Throw<ObjectDisposedException>(() => inv.ClearEscrow());
         Should.Throw<ObjectDisposedException>(() => inv.Clear());
         Should.Throw<ObjectDisposedException>(() => inv.CalculateTotal());
-        Should.Throw<ObjectDisposedException>(() => inv.ToDictionary());
-        Should.Throw<ObjectDisposedException>(() => inv.LoadFromDictionary(new Dictionary<string, int>()));
+        Should.Throw<ObjectDisposedException>(() => InventoryPersistenceMapper.ToDictionary(inv));
+        Should.Throw<ObjectDisposedException>(() => InventoryPersistenceMapper.LoadFromDictionary(inv, new Dictionary<string, int>()));
     }
 
     /// <summary>数量の更新(Add/SetCount)によって合計枚数が負数になる場合、警告ログを出力し、0にクランプされることを検証する。(Target L)</summary>
@@ -662,7 +663,7 @@ public class InventoryTests : CoreTestBase
     public void LoadFromDictionaryWithInvalidFormatsShouldIgnore(string input)
     {
         var data = new Dictionary<string, int> { { input, 100 } };
-        Inventory.LoadFromDictionary(data);
+        InventoryPersistenceMapper.LoadFromDictionary(Inventory, data);
         Inventory.CalculateTotal().ShouldBe(0);
     }
 
@@ -747,7 +748,7 @@ public class InventoryTests : CoreTestBase
         Should.Throw<ArgumentNullException>(() => Inventory.AddEscrow(null, 1));
         Should.Throw<ArgumentNullException>(() => Inventory.GetCount(null));
         Should.Throw<ArgumentNullException>(() => Inventory.GetTotalCount(null));
-        Should.Throw<ArgumentNullException>(() => Inventory.LoadFromDictionary(null));
+        Should.Throw<ArgumentNullException>(() => InventoryPersistenceMapper.LoadFromDictionary(Inventory, null!));
 #pragma warning restore CS8625
     }
 }

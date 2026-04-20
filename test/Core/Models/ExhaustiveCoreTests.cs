@@ -2,6 +2,7 @@ using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Shouldly;
@@ -134,7 +135,7 @@ public class ExhaustiveCoreTests : IDisposable
             { "JPY:C100", 20 },
             { "INVALID_KEY", 99 }
         };
-        inventory.LoadFromDictionary(dict);
+        InventoryPersistenceMapper.LoadFromDictionary(inventory, dict);
         inventory.CollectionCounts.First(kv => kv.Key.Value == 1000).Value.ShouldBe(10);
         inventory.RejectCounts.First(kv => kv.Key.Value == 500).Value.ShouldBe(5);
         inventory.GetCount(new DenominationKey(100, CurrencyCashType.Coin)).ShouldBe(20);
