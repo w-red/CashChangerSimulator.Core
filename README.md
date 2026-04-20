@@ -62,6 +62,7 @@ The Virtual Cash Changer API is available on Google Cloud Run for testing withou
 For more detailed information, please refer to the documents in the `docs/` directory:
 
 - [Architecture Overview](docs/Architecture.md): High-level system design.
+- [API Specification](docs/ApiSpecification.md): Detailed API reference for POS for .NET and Native C#.
 - [UPOS Compliance Mapping](docs/UposComplianceMapping.md): Status of UPOS interface implementation.
 - [OPOS Compliance Mapping](docs/OposComplianceMapping.md): Mapping of OPOS error codes and result codes.
 
