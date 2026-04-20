@@ -38,32 +38,42 @@ public class StatusCoordinator(
 
         isStarted = true;
 
-        // Initialize with current values
+        InitializeStatus();
+
+        ObserveAggregatorStatus();
+        ObserveHardwareEvents();
+        ObserveDepositEvents();
+        ObserveDispenseEvents();
+    }
+
+    private void InitializeStatus()
+    {
         LastFullStatus = statusAggregator.FullStatus.CurrentValue switch
         {
             CashStatus.Full => CashChangerFullStatus.Full,
             CashStatus.NearFull => CashChangerFullStatus.NearFull,
             _ => CashChangerFullStatus.OK
         };
+
         LastCashChangerStatus = statusAggregator.DeviceStatus.CurrentValue switch
         {
             CashStatus.Empty => CashChangerStatus.Empty,
             CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
             _ => CashChangerStatus.OK
         };
+    }
 
+    private void ObserveAggregatorStatus()
+    {
         disposables.Add(statusAggregator.DeviceStatus.Subscribe(status =>
         {
-            if (disposed)
-            {
-                return;
-            }
+            if (disposed) return;
 
             var newDeviceStatus = status switch
             {
                 CashStatus.Empty => CashChangerStatus.Empty,
                 CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
-                CashStatus.Normal => CashChangerStatus.OK, // Explicitly map Normal to OK
+                CashStatus.Normal => CashChangerStatus.OK,
                 _ => CashChangerStatus.OK
             };
 
@@ -92,10 +102,7 @@ public class StatusCoordinator(
 
         disposables.Add(statusAggregator.FullStatus.Subscribe(status =>
         {
-            if (disposed)
-            {
-                return;
-            }
+            if (disposed) return;
 
             var newFullStatus = status switch
             {
@@ -120,35 +127,27 @@ public class StatusCoordinator(
                 }
             }
         }));
+    }
 
+    private void ObserveHardwareEvents()
+    {
         disposables.Add(hardwareStatusManager.IsConnected.Skip(1).Subscribe(connected =>
         {
-            if (disposed)
-            {
-                return;
-            }
-
+            if (disposed) return;
             var code = connected ? UposCashChangerStatusUpdateCode.Inserted : UposCashChangerStatusUpdateCode.Removed;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
         disposables.Add(hardwareStatusManager.IsCollectionBoxRemoved.Skip(1).Subscribe(removed =>
         {
-            if (disposed)
-            {
-                return;
-            }
-
+            if (disposed) return;
             var code = removed ? UposCashChangerStatusUpdateCode.Removed : UposCashChangerStatusUpdateCode.Inserted;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
         disposables.Add(hardwareStatusManager.IsJammed.Skip(1).Subscribe(jammed =>
         {
-            if (disposed)
-            {
-                return;
-            }
+            if (disposed) return;
 
             if (jammed)
             {
@@ -156,7 +155,6 @@ public class StatusCoordinator(
             }
             else
             {
-                // Re-evaluate from aggregator when jam is cleared
                 var currentAggregatedStatus = statusAggregator.DeviceStatus.CurrentValue;
                 LastCashChangerStatus = currentAggregatedStatus switch
                 {
@@ -167,55 +165,54 @@ public class StatusCoordinator(
                 sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
             }
         }));
+    }
 
-        // Handle deposit state changes and event firing
-        disposables.Add(depositController.Changed
-            .Select(_ => (depositController.IsFixed, depositController.DepositStatus, depositController.IsPaused, depositController.DepositAmount))
-            .DistinctUntilChanged() // [FIX] Prevent multiple events for the same state transition
-            .Subscribe(state =>
+    private void ObserveDepositEvents()
+    {
+        disposables.Add(depositController.DataEvents.Subscribe(e =>
         {
-            if (disposed)
-            {
-                return;
-            }
-
-            bool isFixed = state.IsFixed;
-            bool isPaused = state.IsPaused;
-            var currentStatus = state.DepositStatus;
-
-            // [LIFECYCLE] Reset wasFixed flag at the start of a deposit session.
-            if (currentStatus == DeviceDepositStatus.Start)
-            {
-                wasFixed = false;
-                return;
-            }
-
-            // [UPOS] Check if we should fire DataEvent
-            bool eligibleForDataEvent = (currentStatus == DeviceDepositStatus.Counting || currentStatus == DeviceDepositStatus.Validation)
-                && !isPaused && sink.DataEventEnabled;
-
-            if (eligibleForDataEvent)
-            {
-                if (sink.RealTimeDataEnabled)
-                {
-                    // [REAL-TIME] Fire on every change (tracked money)
-                    sink.FireEvent(new DataEventArgs(0));
-                }
-                else if (isFixed && !wasFixed)
-                {
-                    // [BUFFERED] Fire exactly once when FixDeposit is called.
-                    wasFixed = true;
-                    sink.FireEvent(new DataEventArgs(0));
-                }
-            }
-
-            // [LIFECYCLE] Ensure _wasFixed is reset if we leave the active state (e.g. End)
-            if (currentStatus == DeviceDepositStatus.End || currentStatus == DeviceDepositStatus.None)
-            {
-                wasFixed = false;
-            }
+            if (disposed || !sink.RealTimeDataEnabled) return;
+            sink.FireEvent(new DataEventArgs(e.Status));
         }));
 
+        disposables.Add(depositController.Changed
+            .Select(_ => (depositController.IsFixed, depositController.DepositStatus, depositController.IsPaused))
+            .DistinctUntilChanged()
+            .Subscribe(state =>
+            {
+                if (disposed) return;
+
+                bool isFixed = state.IsFixed;
+                bool isPaused = state.IsPaused;
+                var currentStatus = state.DepositStatus;
+
+                if (currentStatus == DeviceDepositStatus.Start)
+                {
+                    wasFixed = false;
+                    return;
+                }
+
+                bool eligibleForDataEvent = (currentStatus == DeviceDepositStatus.Counting || currentStatus == DeviceDepositStatus.Validation)
+                    && !isPaused && sink.DataEventEnabled;
+
+                if (eligibleForDataEvent && !sink.RealTimeDataEnabled)
+                {
+                    if (isFixed && !wasFixed)
+                    {
+                        wasFixed = true;
+                        sink.FireEvent(new DataEventArgs(0));
+                    }
+                }
+
+                if (currentStatus == DeviceDepositStatus.End || currentStatus == DeviceDepositStatus.None)
+                {
+                    wasFixed = false;
+                }
+            }));
+    }
+
+    private void ObserveDispenseEvents()
+    {
         disposables.Add(dispenseController.Changed
             .Select(_ => dispenseController.IsBusy)
             .Prepend(dispenseController.IsBusy)
@@ -223,29 +220,20 @@ public class StatusCoordinator(
             .Pairwise()
             .Subscribe(x =>
             {
-                if (disposed)
-                {
-                    return;
-                }
+                if (disposed) return;
 
                 bool wasBusy = x.Previous;
                 bool isBusy = x.Current;
                 sink.SetAsyncProcessing(isBusy);
 
-                // Transition to Idle (isBusy: true -> false)
                 if (wasBusy && !isBusy)
                 {
-                    // Check if it was naturally completed or cancelled
                     if (dispenseController.LastErrorCode != DeviceErrorCode.Cancelled)
                     {
-                        // Update async result properties in the sink
                         sink.AsyncResultCode = (int)dispenseController.LastErrorCode;
                         sink.AsyncResultCodeExtended = dispenseController.LastErrorCodeExtended;
-
-                        // [COMPAT] Fire AsyncFinished (91) for tests and UI compatibility
                         sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
 
-                        // Result-specific event
                         if (dispenseController.LastErrorCode == DeviceErrorCode.Success)
                         {
                             sink.FireEvent(new OutputCompleteEventArgs(0));
