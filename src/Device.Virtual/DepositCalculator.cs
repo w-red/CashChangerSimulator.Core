@@ -55,15 +55,11 @@ internal sealed class DepositCalculator(ILogger? logger, Inventory inventory, Ca
                 }
             }
 
+            // 1. まずエスクローをクリアし、在庫を更新する。
             inventory.ClearEscrow();
-            foreach (var kv in storeCounts)
-            {
-                if (kv.Value > 0)
-                {
-                    inventory.AddEscrow(kv.Key, kv.Value);
-                }
-            }
+            UpdateInventoryAndManager(storeCounts);
 
+            // 2. その後で釣銭が必要な分だけ払い出す。
             if (remainingChange > 0 && manager != null)
             {
                 manager.Dispense(remainingChange);
@@ -72,9 +68,8 @@ internal sealed class DepositCalculator(ILogger? logger, Inventory inventory, Ca
         else
         {
             inventory.ClearEscrow();
+            UpdateInventoryAndManager(storeCounts);
         }
-
-        UpdateInventoryAndManager(storeCounts);
     }
 
     /// <summary>釣銭なしで全額を収納（NoChange）処理します。</summary>

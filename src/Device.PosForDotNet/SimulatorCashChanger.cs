@@ -300,9 +300,28 @@ public class SimulatorCashChanger : CashChangerBasic, IInternalUposEventSink, ID
     public virtual void ClearOutput() => core.DispenseFacade.ClearOutput();
 
     public Task BeginDepositAsync() => Task.Run(BeginDeposit);
-    public Task EndDepositAsync(DepositAction action) => Task.Run(() => EndDeposit((CashDepositAction)action));
+    public Task EndDepositAsync(DepositAction action)
+    {
+        var posAction = action switch
+        {
+            DepositAction.Repay => CashDepositAction.Repay,
+            DepositAction.NoChange => CashDepositAction.NoChange,
+            DepositAction.Change => CashDepositAction.Change,
+            _ => throw new ArgumentException("Invalid deposit action", nameof(action))
+        };
+        return Task.Run(() => EndDeposit(posAction));
+    }
     public Task FixDepositAsync() => Task.Run(FixDeposit);
-    public Task PauseDepositAsync(DeviceDepositPause control) => Task.Run(() => PauseDeposit((CashDepositPause)control));
+    public Task PauseDepositAsync(DeviceDepositPause control)
+    {
+        var pauseAction = control switch
+        {
+            DeviceDepositPause.Pause => CashDepositPause.Pause,
+            DeviceDepositPause.Resume => CashDepositPause.Restart,
+            _ => throw new ArgumentException("Invalid pause control", nameof(control))
+        };
+        return Task.Run(() => PauseDeposit(pauseAction));
+    }
     public Task RepayDepositAsync() => Task.Run(RepayDeposit);
     public Task DispenseChangeAsync(int amount) => Task.Run(() => DispenseChange(amount));
     public Task DispenseCashAsync(IEnumerable<CashDenominationCount> counts)
