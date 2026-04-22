@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core;
+using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -78,7 +78,7 @@ public class SimulatorServicesTests : IDisposable
     public void ResolveNotRegisteredShouldThrow()
     {
         SimulatorServices.Provider = null;
-        Should.Throw<InvalidOperationException>(() => SimulatorServices.Resolve<Inventory>());
+        Should.Throw<InvalidOperationException>(SimulatorServices.Resolve<Inventory>);
     }
 
     /// <summary>InternalSimulatorCashChanger が利用可能な場合にプロバイダーのインスタンスを使用することを検証します。</summary>

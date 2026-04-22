@@ -47,7 +47,7 @@ public class SimulatorCashChangerCoverageTests
         changer.Dispose();
 
         // Second call should not throw
-        Action act = () => changer.Dispose();
+        Action act = changer.Dispose;
 
         // Assert
         act.ShouldNotThrow();

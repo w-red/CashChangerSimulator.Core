@@ -5,7 +5,7 @@ using Shouldly;
 namespace CashChangerSimulator.Tests.Core.Configuration;
 
 /// <summary>ConfigurationLoader の永続化とエラーハンドリングを検証するテスト。</summary>
-public class ConfigurationLoaderTests : IDisposable
+public sealed class ConfigurationLoaderTests : IDisposable
 {
     private readonly string testConfigPath = "test_config.toml";
     private readonly string testInventoryPath = "test_inventory.toml";

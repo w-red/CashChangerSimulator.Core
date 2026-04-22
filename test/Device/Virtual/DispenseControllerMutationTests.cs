@@ -196,7 +196,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         }
         else
         {
-            Should.Throw<ObjectDisposedException>(() => controller.ClearOutput());
+            Should.Throw<ObjectDisposedException>(controller.ClearOutput);
         }
     }
 
@@ -302,7 +302,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
 
         // Act & Assert
         controller.Dispose();
-        Should.Throw<ObjectDisposedException>(() => controller.ClearOutput());
+        Should.Throw<ObjectDisposedException>(controller.ClearOutput);
 
         // Assert
         callCount.ShouldBe(0);
@@ -381,7 +381,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         {
             SetControllerStatus(CashDispenseStatus.Error);
             controller.Dispose();
-            Should.Throw<ObjectDisposedException>(() => controller.ClearOutput());
+            Should.Throw<ObjectDisposedException>(controller.ClearOutput);
         }
 
         callCount3.ShouldBe(0);
@@ -402,7 +402,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
 
         // Act & Assert
         controller.Dispose();
-        Should.Throw<ObjectDisposedException>(() => controller.ClearOutput());
+        Should.Throw<ObjectDisposedException>(controller.ClearOutput);
 
         // Assert
         callCount.ShouldBe(0);
@@ -489,7 +489,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         // 3. Dispose 済みの場合
         SetControllerStatus(CashDispenseStatus.Error);
         controller.Dispose();
-        Should.Throw<ObjectDisposedException>(() => controller.ClearOutput());
+        Should.Throw<ObjectDisposedException>(controller.ClearOutput);
         callCount.ShouldBe(1);
     }
 
@@ -520,7 +520,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
 
         // Act
         controller.Dispose();
-        Action act = () => controller.Dispose();
+        Action act = controller.Dispose;
 
         // Assert
         act.ShouldNotThrow();

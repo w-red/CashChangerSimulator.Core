@@ -52,6 +52,6 @@ public class OverlapSimulationTests : DeviceTestBase
         StatusManager.Input.IsOverlapped.Value = true;
 
         // Act & Assert
-        Should.Throw<DeviceException>(() => controller.BeginDeposit());
+        Should.Throw<DeviceException>(controller.BeginDeposit);
     }
 }

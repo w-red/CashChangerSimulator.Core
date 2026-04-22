@@ -101,7 +101,7 @@ public class OverallStatusAggregatorTests
         var aggregator = OverallStatusAggregator.Create([]);
 
         // Act & Assert
-        Should.NotThrow(() => aggregator.Dispose());
+        Should.NotThrow(aggregator.Dispose);
     }
 
     /// <summary>Refresh 呼び出しにより監視対象が更新され、集約結果が再計算されることを検証する。</summary>

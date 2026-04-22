@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -77,7 +77,7 @@ public class UposLifecycleTests
     public void BeginDepositShouldThrowWhenNotClaimed()
     {
         var cc = CreateCashChanger();
-        var ex = Should.Throw<PosControlException>(() => cc.BeginDeposit());
+        var ex = Should.Throw<PosControlException>(cc.BeginDeposit);
         ex.ErrorCode.ShouldBe(ErrorCode.Closed);
     }
 

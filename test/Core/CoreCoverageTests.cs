@@ -20,7 +20,7 @@ public class CoreCoverageTests
         SimulatorServices.Provider = null;
 
         // Act & Assert
-        Should.Throw<InvalidOperationException>(() => SimulatorServices.Resolve<IAsyncResult>());
+        Should.Throw<InvalidOperationException>(SimulatorServices.Resolve<IAsyncResult>);
     }
 
     /// <summary>SimulatorServices において、Provider が未設定の場合に TryResolve が null を返すことを検証します。</summary>

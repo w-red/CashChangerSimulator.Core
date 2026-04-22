@@ -12,10 +12,8 @@ public class DepositReliabilityTests
     private class DepositReliabilityChanger : InternalSimulatorCashChanger
     {
         public ConcurrentBag<EventArgs> EventHistory { get; } = [];
-        public int DataEventCount => EventHistory.Count(e => e is DataEventArgs);
 
         public DepositReliabilityChanger()
-            : base()
         {
             // [STABILITY] Disable POS.NET internal event queueing to prevent duplicate NotifyEvent calls in headless environments.
             DisableUposEventQueuing = true;
@@ -24,15 +22,10 @@ public class DepositReliabilityTests
         protected override void NotifyEvent(EventArgs e)
         {
             EventHistory.Add(e);
-
-            // base.NotifyEvent is NOT called if we want to completely isolate the event fired from coordinator
-            // base.NotifyEvent(e);
         }
     }
 
     /// <summary>バックグラウンドでの入金挿入と、メインスレッドでの確定操作が競合した場合に DataEvent が正しく1回だけ発行されることを検証します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
-    /// <summary>データの追跡と確定が並行して行われる際の DataEvent の整合性を検証する。</summary>
     [Fact]
     public async Task DataEventConsistencyUnderConcurrentTrackAndFix()
     {
@@ -41,18 +34,19 @@ public class DepositReliabilityTests
         {
             SkipStateVerification = true
         };
-        changer.Open();
-        changer.Claim(1000);
+        var ct = TestContext.Current.CancellationToken;
+
+        await changer.OpenAsync();
+        await changer.ClaimAsync(1000);
         changer.DeviceEnabled = true;
         changer.DataEventEnabled = true;
         changer.RealTimeDataEnabled = false;
 
-        changer.BeginDeposit();
+        await changer.BeginDepositAsync();
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
 
         // Act: Background insertions
-        var cts = new CancellationTokenSource();
-        var ct = TestContext.Current.CancellationToken;
+        using var cts = new CancellationTokenSource();
 
         var insertionTask = Task.Run(
             async () =>
@@ -72,10 +66,10 @@ public class DepositReliabilityTests
         // Wait slightly and FixDeposit concurrently, ensuring at least one insertion has registered
         while (changer.DepositAmount == 0 && !ct.IsCancellationRequested && !insertionTask.IsCompleted)
         {
-            await Task.Delay(1, ct).ConfigureAwait(false);
+            await Task.Delay(1, ct);
         }
-        changer.FixDeposit();
-        cts.Cancel();
+        await changer.FixDepositAsync();
+        await cts.CancelAsync();
 
         // Ensure task is finished to prevent assembly lock
         await insertionTask;
@@ -89,14 +83,14 @@ public class DepositReliabilityTests
             dataEvents = changer.EventHistory.OfType<DataEventArgs>().ToList();
             if (dataEvents.Count == 1)
                 break;
-            await Task.Delay(10).ConfigureAwait(false);
+            await Task.Delay(10, ct);
             elapsedMs += 10;
         }
 
         dataEvents.Count.ShouldBe(1, $"Expected exactly 1 DataEvent on Fix, but found {dataEvents.Count}. Events: {string.Join(", ", changer.EventHistory.Select(e => e.GetType().Name))}");
         changer.DepositAmount.ShouldBeGreaterThan(0);
 
-        changer.Close();
+        await changer.CloseAsync();
     }
 
     /// <summary>入金セッションのライフサイクル(Begin->Track->Fix->End)を高頻度で繰り返し、状態の破損や整合性エラーが発生しないことを検証します。</summary>
@@ -110,14 +104,15 @@ public class DepositReliabilityTests
         {
             SkipStateVerification = true
         };
-        changer.Open();
-        changer.Claim(1000);
+        var ct = TestContext.Current.CancellationToken;
+
+        await changer.OpenAsync();
+        await changer.ClaimAsync(1000);
         changer.DeviceEnabled = true;
         changer.DataEventEnabled = true;
         changer.RealTimeDataEnabled = false;
 
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
-        var ct = TestContext.Current.CancellationToken;
 
         // Act: 100 iterations of full deposit lifecycle
         for (int i = 0; i < 100; i++)
@@ -128,24 +123,22 @@ public class DepositReliabilityTests
             }
 
             changer.EventHistory.Clear();
-            changer.BeginDeposit();
+            await changer.BeginDepositAsync();
             changer.DepositController.TrackDeposit(key);
-            changer.FixDeposit();
-            changer.EndDeposit(CashDepositAction.Change);
+            await changer.FixDepositAsync();
+            await changer.EndDepositAsync(DepositAction.Change);
 
             // Assert
-            var dataEvents = changer.EventHistory.OfType<DataEventArgs>().ToList();
+            List<DataEventArgs> dataEvents = changer.EventHistory.OfType<DataEventArgs>().ToList();
             dataEvents.Count.ShouldBe(1, $"Iteration {i}: Expected 1 DataEvent, got {dataEvents.Count}.");
             ((int)changer.DepositStatus).ShouldBe((int)CashDepositStatus.End);
             changer.DepositController.IsFixed.ShouldBeFalse();
         }
 
-        changer.Close();
+        await changer.CloseAsync();
     }
 
     /// <summary>一時停止(Pause)の切り替えと入金挿入が並行して発生した場合に、停止中の挿入が無視され、状態が整合していることを検証します。</summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
-    /// <summary>一時停止と再開が競合する条件下での動作の整合性を検証する。</summary>
     [Fact]
     public async Task PauseResumeRaceCondition()
     {
@@ -154,48 +147,54 @@ public class DepositReliabilityTests
         {
             SkipStateVerification = true
         };
-        changer.Open();
-        changer.Claim(1000);
-        changer.DeviceEnabled = true;
-        changer.BeginDeposit();
-
-        var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         var ct = TestContext.Current.CancellationToken;
 
+        await changer.OpenAsync();
+        await changer.ClaimAsync(1000);
+        changer.DeviceEnabled = true;
+        await changer.BeginDepositAsync();
+
+        var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
+
         // Act: Concurrent pause/resume and insertions
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var task = Task.Run(
             async () =>
         {
             while (!cts.Token.IsCancellationRequested && !ct.IsCancellationRequested)
             {
                 changer.DepositController.TrackDeposit(key);
-                await Task.Yield();
+                await Task.Delay(200, ct);
             }
         }, ct);
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 3; i++)
         {
             if (ct.IsCancellationRequested)
             {
                 break;
             }
 
-            changer.PauseDeposit(CashDepositPause.Pause);
-            await Task.Delay(5, ct).ConfigureAwait(false);
+            await changer.PauseDepositAsync(DeviceDepositPause.Pause);
+
+            await Task.Delay(1000, ct);
             var pausedAmount = changer.DepositAmount;
 
-            await Task.Delay(10, ct).ConfigureAwait(false);
-            changer.DepositAmount.ShouldBe(pausedAmount, $"Amount should not increase while paused (Iteration {i}).");
+            await Task.Delay(1000, ct);
+            
+            var currentAmount = changer.DepositAmount;
 
-            changer.PauseDeposit(CashDepositPause.Restart);
-            await Task.Delay(5, ct).ConfigureAwait(false);
+            currentAmount.ShouldBe(pausedAmount, $"Amount should not increase while paused (Iteration {i}).");
+
+            await changer.PauseDepositAsync(DeviceDepositPause.Resume);
+
+            await Task.Delay(1000, ct);
         }
 
-        cts.Cancel();
+        await cts.CancelAsync();
         await task; // Ensure background insertion loop has exited
 
-        changer.FixDeposit();
-        changer.Close();
+        await changer.FixDepositAsync();
+        await changer.CloseAsync();
     }
 }

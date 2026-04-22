@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using Shouldly;
@@ -97,7 +97,7 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
     public async Task EnableShouldThrowWhenNotClaimed()
     {
         await device1.OpenAsync();
-        await Should.ThrowAsync<DeviceException>(async () => await device1.EnableAsync());
+        await Should.ThrowAsync<DeviceException>(device1.EnableAsync);
     }
 
     /// <summary>チE�E��E�イスが無効な状態で入金を開始しようとした場合に例外が発生することを確認します</summary>
@@ -108,7 +108,7 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
         await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
 
         // Not enabled
-        await Should.ThrowAsync<DeviceException>(async () => await device1.BeginDepositAsync());
+        await Should.ThrowAsync<DeviceException>(device1.BeginDepositAsync);
     }
 
     /// <summary>チE�E��E�イスが無効な状態で出金を開始しようとした場合に例外が発生することを確認します</summary>

@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Commands;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -31,7 +31,7 @@ public class CommandTests
         var cmd = new AdjustCashCountsCommand(inventory, counts, "JPY", 1, hardware);
 
         hardware.Input.IsJammed.Value = true;
-        var ex = Should.Throw<PosControlException>(() => cmd.Execute());
+        var ex = Should.Throw<PosControlException>(cmd.Execute);
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
     }
 

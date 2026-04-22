@@ -5,7 +5,7 @@ using Shouldly;
 namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>GlobalLockManager の排他制御機能を検証するテストクラス。</summary>
-public class GlobalLockManagerTests : IDisposable
+public sealed class GlobalLockManagerTests : IDisposable
 {
     private readonly string _testLockPath;
     private readonly GlobalLockManager _lockManager;
@@ -24,6 +24,7 @@ public class GlobalLockManagerTests : IDisposable
         {
             try { File.Delete(_testLockPath); } catch { /* ignore */ }
         }
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>ロックの取得、保持確認、解放が正しく動作することを検証します。</summary>
@@ -98,11 +99,7 @@ public class GlobalLockManagerTests : IDisposable
         await lockAcquired.Task;
 
         // Act - スレッド2で別のインスタンスから同じパスでロックを試行
-        var t2 = Task.Run(() =>
-        {
-            // 他者が持っているので失敗するはず
-            return otherManager.TryAcquire();
-        });
+        var t2 = Task.Run(otherManager.TryAcquire);
 
         var result2 = await t2;
         result2.ShouldBeFalse();

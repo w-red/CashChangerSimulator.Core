@@ -11,9 +11,9 @@ public class CurrencyCashTypeTests
     public void ShouldDefineExpectedValues()
     {
         // Assert
-        Enum.GetNames(typeof(CurrencyCashType)).ShouldContain("Undefined");
-        Enum.GetNames(typeof(CurrencyCashType)).ShouldContain("Coin");
-        Enum.GetNames(typeof(CurrencyCashType)).ShouldContain("Bill");
+        Enum.GetNames<CurrencyCashType>().ShouldContain("Undefined");
+        Enum.GetNames<CurrencyCashType>().ShouldContain("Coin");
+        Enum.GetNames<CurrencyCashType>().ShouldContain("Bill");
     }
 
     /// <summary>文字列からパースできることを確認します。</summary>

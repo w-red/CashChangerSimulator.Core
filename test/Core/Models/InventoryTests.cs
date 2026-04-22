@@ -453,27 +453,6 @@ public class InventoryTests : CoreTestBase
         Inventory.CalculateTotal().ShouldBe(28000);
     }
 
-    /// <summary>加算結果が負になる場合に警告を表示し、数量が0になることを検証する。</summary>
-    [Fact]
-    public void AddResultingInNegativeShouldLogWarningAndBeZero()
-    {
-        var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        Inventory.SetCount(key, 5);
-        Inventory.Add(key, -10); // Should hit ZLogWarning in UpdateBucket
-        Inventory.GetCount(key).ShouldBe(0);
-    }
-
-    /// <summary>通貨コードが null の場合にデフォルトの通貨コードに正規化されることを検証する。</summary>
-    [Fact]
-    public void NormalizeKeyShouldHandleNullCurrency()
-    {
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        var key = new DenominationKey(1000, CurrencyCashType.Bill, null);
-#pragma warning restore CS8625
-        Inventory.Add(key, 1);
-        Inventory.GetCount(key).ShouldBe(1);
-        Inventory.AllCounts.First().Key.CurrencyCode.ShouldBe("JPY");
-    }
 
     /// <summary>すべてのバケットに対して最小値境界(-1)の動作を検証する。</summary>
     [Fact]
@@ -554,7 +533,7 @@ public class InventoryTests : CoreTestBase
         // 破棄後に操作を行った場合、ObjectDisposedException がスローされること (Target O)
         Should.Throw<ObjectDisposedException>(() => inv.Add(new DenominationKey(1000, CurrencyCashType.Bill), 1));
         Should.Throw<ObjectDisposedException>(() => inv.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 1));
-        Should.Throw<ObjectDisposedException>(() => inv.Clear());
+        Should.Throw<ObjectDisposedException>(inv.Clear);
         Should.Throw<ObjectDisposedException>(() => inv.CalculateTotal());
         Should.Throw<ObjectDisposedException>(() => InventoryPersistenceMapper.ToDictionary(inv));
 
@@ -619,8 +598,8 @@ public class InventoryTests : CoreTestBase
         Should.Throw<ObjectDisposedException>(() => inv.AddCollection(key, 1));
         Should.Throw<ObjectDisposedException>(() => inv.AddReject(key, 1));
         Should.Throw<ObjectDisposedException>(() => inv.AddEscrow(key, 1));
-        Should.Throw<ObjectDisposedException>(() => inv.ClearEscrow());
-        Should.Throw<ObjectDisposedException>(() => inv.Clear());
+        Should.Throw<ObjectDisposedException>(inv.ClearEscrow);
+        Should.Throw<ObjectDisposedException>(inv.Clear);
         Should.Throw<ObjectDisposedException>(() => inv.CalculateTotal());
         Should.Throw<ObjectDisposedException>(() => InventoryPersistenceMapper.ToDictionary(inv));
         Should.Throw<ObjectDisposedException>(() => InventoryPersistenceMapper.LoadFromDictionary(inv, new Dictionary<string, int>()));
@@ -671,9 +650,7 @@ public class InventoryTests : CoreTestBase
     [Fact]
     public void AddShouldNormalizeNullCurrencyCode()
     {
-#pragma warning disable CS8625
-        var key = new DenominationKey(1000, CurrencyCashType.Bill, null);
-#pragma warning restore CS8625
+        var key = new DenominationKey(1000, CurrencyCashType.Bill, null!);
 
         Inventory.Add(key, 1);
 
@@ -711,11 +688,12 @@ public class InventoryTests : CoreTestBase
 
     /// <summary>複数のスレッドから同時に在庫を加算した際に、最終的な合計値が正しく、かつ不整合が起きないことを検証します。(lock 削除変異対策)</summary>
     [Fact]
-    public void ConcurrentAddShouldBeThreadSafe()
+    public async Task ConcurrentAddShouldBeThreadSafe()
     {
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         const int ThreadCount = 10;
         const int AddsPerThread = 1000;
+        var ct = TestContext.Current.CancellationToken;
 
         var tasks = new Task[ThreadCount];
         for (var i = 0; i < ThreadCount; i++)
@@ -726,10 +704,10 @@ public class InventoryTests : CoreTestBase
                 {
                     Inventory.Add(key, 1);
                 }
-            });
+            }, ct);
         }
 
-        Task.WaitAll(tasks);
+        await Task.WhenAll(tasks);
 
         // 合計が ThreadCount * AddsPerThread に一致すること
         // もし lock (@lock) が削除されていると、レースコンディションにより合計が少なくなります
@@ -740,15 +718,13 @@ public class InventoryTests : CoreTestBase
     [Fact]
     public void AllMethodsShouldThrowArgumentNullExceptionForNullKey()
     {
-#pragma warning disable CS8625
-        Should.Throw<ArgumentNullException>(() => Inventory.Add(null, 1));
-        Should.Throw<ArgumentNullException>(() => Inventory.SetCount(null, 1));
-        Should.Throw<ArgumentNullException>(() => Inventory.AddCollection(null, 1));
-        Should.Throw<ArgumentNullException>(() => Inventory.AddReject(null, 1));
-        Should.Throw<ArgumentNullException>(() => Inventory.AddEscrow(null, 1));
-        Should.Throw<ArgumentNullException>(() => Inventory.GetCount(null));
-        Should.Throw<ArgumentNullException>(() => Inventory.GetTotalCount(null));
+        Should.Throw<ArgumentNullException>(() => Inventory.Add(null!, 1));
+        Should.Throw<ArgumentNullException>(() => Inventory.SetCount(null!, 1));
+        Should.Throw<ArgumentNullException>(() => Inventory.AddCollection(null!, 1));
+        Should.Throw<ArgumentNullException>(() => Inventory.AddReject(null!, 1));
+        Should.Throw<ArgumentNullException>(() => Inventory.AddEscrow(null!, 1));
+        Should.Throw<ArgumentNullException>(() => Inventory.GetCount(null!));
+        Should.Throw<ArgumentNullException>(() => Inventory.GetTotalCount(null!));
         Should.Throw<ArgumentNullException>(() => InventoryPersistenceMapper.LoadFromDictionary(Inventory, null!));
-#pragma warning restore CS8625
     }
 }

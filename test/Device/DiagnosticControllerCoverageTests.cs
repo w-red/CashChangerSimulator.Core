@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
@@ -14,7 +14,7 @@ public class DiagnosticControllerCoverageTests
         var hw = HardwareStatusManager.Create();
         var controller = new DiagnosticController(Inventory.Create(), hw);
 
-        Should.NotThrow(() => controller.IncrementFailedDepletion());
+        Should.NotThrow(controller.IncrementFailedDepletion);
     }
 
     /// <summary>指定されたレベルに応じたヘルスレポートが生成され、適切な詳細が含まれていることを検証する。</summary>
@@ -39,6 +39,6 @@ public class DiagnosticControllerCoverageTests
         var hw = HardwareStatusManager.Create();
         var controller = new DiagnosticController(Inventory.Create(), hw);
         controller.Dispose();
-        Should.NotThrow(() => controller.Dispose());
+        Should.NotThrow(controller.Dispose);
     }
 }

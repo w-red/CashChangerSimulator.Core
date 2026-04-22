@@ -10,7 +10,7 @@ using Shouldly;
 namespace CashChangerSimulator.Tests.Core.Models;
 
 /// <summary>CashChangerSimulator.Core のカバレッジを 100% にするための網羅的テストクラス。</summary>
-public class ExhaustiveCoreTests : IDisposable
+public sealed class ExhaustiveCoreTests : IDisposable
 {
     /// <summary>ExhaustiveCoreTests の初期化。LogProvider をリセットします。</summary>
     public ExhaustiveCoreTests()

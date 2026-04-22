@@ -165,7 +165,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         StatusManager.Input.IsJammed.Value = true;
 
         // Act & Assert
-        var ex = Should.Throw<DeviceException>(() => controller.BeginDeposit());
+        var ex = Should.Throw<DeviceException>(controller.BeginDeposit);
         ex.Message.ShouldBe("Device is jammed. Cannot begin deposit.");
     }
 
@@ -177,7 +177,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         StatusManager.Input.IsOverlapped.Value = true;
 
         // Act & Assert
-        var ex = Should.Throw<DeviceException>(() => controller.BeginDeposit());
+        var ex = Should.Throw<DeviceException>(controller.BeginDeposit);
         ex.Message.ShouldBe("Device has overlapped cash. Cannot begin deposit.");
     }
 
@@ -282,7 +282,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         controller.Dispose();
 
         // Dispose 後はメソッド呼び出しで例外が飛ぶ
-        Should.Throw<ObjectDisposedException>(() => controller.BeginDeposit());
+        Should.Throw<ObjectDisposedException>(controller.BeginDeposit);
         Should.Throw<ObjectDisposedException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1));
 
         // Dispose 後の試行によりイベントが追加で飛ばないことを確認
@@ -311,7 +311,7 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Act & Assert
         // BeginDeposit() していないので Status は None
-        var ex = Should.Throw<DeviceException>(() => controller.FixDeposit());
+        var ex = Should.Throw<DeviceException>(controller.FixDeposit);
         ex.Message.ShouldBe("Counting is not in progress.");
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
@@ -390,7 +390,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         state.IsBusy = true;
 
         // Act & Assert
-        var ex = Should.Throw<DeviceException>(() => controller.BeginDeposit());
+        var ex = Should.Throw<DeviceException>(controller.BeginDeposit);
         ex.Message.ShouldContain("busy");
     }
 
@@ -1250,6 +1250,8 @@ public class DepositControllerMutationTests : DeviceTestBase
         controller.FixDeposit();
 
         // Act
+        // お釣り用の1000円札を準備
+        Inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 10);
         var task = controller.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;

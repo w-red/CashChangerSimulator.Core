@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
@@ -76,7 +76,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     public void DisposeWhenCalledMultipleTimesShouldNotThrow()
     {
         controller.Dispose();
-        Should.NotThrow(() => controller.Dispose());
+        Should.NotThrow(controller.Dispose);
     }
 
     /// <summary>一時停止と再開が受入処理に正しく反映されることを検証する。</summary>
@@ -101,7 +101,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     public void BeginDepositWhenJammedShouldThrow()
     {
         StatusManager.Input.IsJammed.Value = true;
-        Should.Throw<DeviceException>(() => controller.BeginDeposit())
+        Should.Throw<DeviceException>(controller.BeginDeposit)
             .ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
     }
 
@@ -110,7 +110,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     public void BeginDepositWhenOverlappedShouldThrow()
     {
         StatusManager.Input.IsOverlapped.Value = true;
-        Should.Throw<DeviceException>(() => controller.BeginDeposit())
+        Should.Throw<DeviceException>(controller.BeginDeposit)
             .ErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
     }
 
@@ -160,7 +160,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     {
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 0;
         controller.BeginDeposit();
-        Should.NotThrow(() => controller.RepayDeposit());
+        Should.NotThrow(controller.RepayDeposit);
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
     }
 
@@ -197,7 +197,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         var task = controller.EndDepositAsync(DepositAction.NoChange);
 
         // While EndDepositAsync is running, isBusy is true
-        Should.Throw<DeviceException>(() => controller.BeginDeposit())
+        Should.Throw<DeviceException>(controller.BeginDeposit)
             .ErrorCode.ShouldBe(DeviceErrorCode.Busy);
 
         TimeProvider.Advance(TimeSpan.FromMilliseconds(5000));

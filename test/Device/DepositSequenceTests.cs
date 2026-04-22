@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -144,8 +144,7 @@ public class DepositSequenceTests
     {
         var (controller, _, _) = CreateController();
 
-        var ex = Should.Throw<DeviceException>(() =>
-            controller.FixDeposit());
+        var ex = Should.Throw<DeviceException>(controller.FixDeposit);
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Illegal);
     }
 
