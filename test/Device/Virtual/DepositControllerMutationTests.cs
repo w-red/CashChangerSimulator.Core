@@ -58,11 +58,11 @@ public class DepositControllerMutationTests : DeviceTestBase
     public void ConstructorWhenTimeProviderIsNullUsesSystemTimeProvider()
     {
         // Act
-        var controller = new DepositController(Inventory, StatusManager);
+        var localController = new DepositController(Inventory, StatusManager);
 
         // Assert
         var field = typeof(DepositController).GetField("timeProvider", BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.GetValue(controller).ShouldBe(System.TimeProvider.System);
+        field!.GetValue(localController).ShouldBe(System.TimeProvider.System);
     }
 
     /// <summary>カスタム TimeProvider が保持されることを検証します（Null合体変異対応）。</summary>
@@ -73,11 +73,11 @@ public class DepositControllerMutationTests : DeviceTestBase
         var mockTime = new Mock<TimeProvider>();
 
         // Act
-        var controller = new DepositController(Inventory, StatusManager, null, null, mockTime.Object);
+        var localController = new DepositController(Inventory, StatusManager, null, null, mockTime.Object);
 
         // Assert
         var field = typeof(DepositController).GetField("timeProvider", BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.GetValue(controller).ShouldBe(mockTime.Object);
+        field!.GetValue(localController).ShouldBe(mockTime.Object);
     }
 
     /// <summary>Inventory に null を渡した場合に ArgumentNullException がスローされることを検証します。</summary>

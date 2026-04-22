@@ -78,7 +78,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         bool changedFired = false;
         controller.Changed.Subscribe(_ => changedFired = true);
 
-        DeviceErrorEventArgs? errorEvent = null;
+        PosSharp.Abstractions.UposErrorEventArgs? errorEvent = null;
         controller.ErrorEvents.Subscribe(e => errorEvent = e);
 
         // Act
@@ -89,7 +89,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
         changedFired.ShouldBeTrue();
         errorEvent.ShouldNotBeNull();
-        errorEvent.ErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
+        ((int)errorEvent.ErrorCode).ShouldBe((int)DeviceErrorCode.Cancelled);
     }
 
     /// <summary>デバイス例外発生時、適切なエラーコードがマッピングされイベントが通知されることを検証します。</summary>
@@ -102,7 +102,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         simulatorMock.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DeviceException("Hardware error", DeviceErrorCode.Jammed, 505));
 
-        DeviceErrorEventArgs? errorEvent = null;
+        PosSharp.Abstractions.UposErrorEventArgs? errorEvent = null;
         controller.ErrorEvents.Subscribe(e => errorEvent = e);
 
         // Act
@@ -113,7 +113,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Jammed);
         controller.LastErrorCodeExtended.ShouldBe(505);
         errorEvent.ShouldNotBeNull();
-        errorEvent.ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
+        ((int)errorEvent.ErrorCode).ShouldBe((int)DeviceErrorCode.Jammed);
     }
 
     /// <summary>未接続状態で DispenseCashAsync を呼んだ場合の例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
@@ -210,7 +210,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         simulatorMock.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        DeviceOutputCompleteEventArgs? completeEvent = null;
+        PosSharp.Abstractions.UposOutputCompleteEventArgs? completeEvent = null;
         controller.OutputCompleteEvents.Subscribe(e => completeEvent = e);
 
         // Act
@@ -596,3 +596,4 @@ public class DispenseControllerMutationTests : DeviceTestBase
         public int ErrorCodeExtended { get; } = extendedCode;
     }
 }
+
