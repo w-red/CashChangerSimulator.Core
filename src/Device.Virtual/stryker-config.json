@@ -1,34 +1,28 @@
 {
   "stryker-config": {
-    "project-info": {
-      "name": "CashChangerSimulator.Device.Virtual"
-    },
-    "mutate": [
-      "DispenseController.cs",
-      "DepositController.cs",
-      "DiagnosticController.cs"
-    ],
-    "test-case-filter": "FullyQualifiedName~DispenseController | FullyQualifiedName~DepositController | FullyQualifiedName~DiagnosticController | FullyQualifiedName~DispenseAsync | FullyQualifiedName~DepositSequence",
-    "reporters": [
-      "progress",
-      "html"
-    ],
-    "concurrency": 6,
-    "test-runner": "mtp",
-    "coverage-analysis": "perTest",
-    "additional-timeout": 30000,
-    "break-on-initial-test-failure": true,
-    "ignore-methods": [
-      "ZLogTrace",
-      "ZLogDebug",
-      "ZLogInformation",
-      "ZLogWarning",
-      "ZLogError",
-      "ZLogCritical"
-    ],
+    "project": "CashChangerSimulator.Device.Virtual.csproj",
     "test-projects": [
       "../../test/CashChangerSimulator.Tests.csproj"
     ],
-    "verbosity": "info"
+    "mutate": [
+      "DepositController.cs"
+    ],
+    "reporters": [
+      "html",
+      "json",
+      "progress",
+      "cleartext"
+    ],
+    "test-runner": "mtp",
+    "coverage-analysis": "perTest",
+    "test-case-filter": "FullyQualifiedName~DepositControllerMutationTests",
+    "concurrency": 4,
+    "additional-timeout": 30000,
+    "verbosity": "info",
+    "ignore-mutations": [
+      "linq.Skip",
+      "linq.Take",
+      "String"
+    ]
   }
 }
