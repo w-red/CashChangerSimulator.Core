@@ -24,16 +24,12 @@ public class EndDepositCommand(DepositController controller, CashDepositAction a
     /// <inheritdoc/>
     public async Task ExecuteAsync()
     {
-        var actionText = action.ToString();
-        var actionValue = (int)action;
 
-        var coreAction = actionText switch
+        var coreAction = action switch
         {
-            "Change" => DepositAction.Change,
-            "NoChange" => DepositAction.NoChange,
-            "Store" => DepositAction.NoChange, // Backward compatibility or synonym
-            "Repay" => DepositAction.Repay,
-            _ when actionValue == 3 || actionValue == 4 => DepositAction.Repay,
+            CashDepositAction.NoChange => DepositAction.NoChange,
+            CashDepositAction.Change => DepositAction.Change,
+            CashDepositAction.Repay => DepositAction.Repay,
             _ => DepositAction.NoChange
         };
         await controller.EndDepositAsync(coreAction).ConfigureAwait(false);
