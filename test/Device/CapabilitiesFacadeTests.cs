@@ -4,7 +4,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>デバイスの機能フラグ(Capabilities)が構成設定を正しく反映しているか検証するテストクラス。</summary>
+/// <summary>デバイスの能力(Capabilities)を公開するファサードを検証するテストクラス。</summary>
 public class CapabilitiesFacadeTests
 {
     private readonly SimulatorConfiguration config;
@@ -16,21 +16,21 @@ public class CapabilitiesFacadeTests
         sut = new CapabilitiesFacade(config);
     }
 
-    /// <summary>入金機能(CapDeposit)が有効であることを確認します。</summary>
+    /// <summary>入金能力(CapDeposit)が常に真であることを検証します。</summary>
     [Fact]
     public void CapDepositShouldBeTrue()
     {
-        sut.CapDeposit.ShouldBeTrue();
+        CapabilitiesFacade.CapDeposit.ShouldBeTrue();
     }
 
-    /// <summary>フルセンサー機能(CapFullSensor)が有効であることを確認します。</summary>
+    /// <summary>満杯センサー能力(CapFullSensor)が常に真であることを検証します。</summary>
     [Fact]
     public void CapFullSensorShouldBeTrue()
     {
-        sut.CapFullSensor.ShouldBeTrue();
+        CapabilitiesFacade.CapFullSensor.ShouldBeTrue();
     }
 
-    /// <summary>リアルタイムデータ機能(CapRealTimeData)が構成設定を正しく反映することを検証します。</summary>
+    /// <summary>リアルタイムデータ能力(CapRealTimeData)が設定を反映することを検証します。</summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -40,10 +40,10 @@ public class CapabilitiesFacadeTests
         sut.CapRealTimeData.ShouldBe(expected);
     }
 
-    /// <summary>統計情報報告機能(CapStatisticsReporting)が有効であることを確認します。</summary>
+    /// <summary>統計報告能力(CapStatisticsReporting)が常に真であることを検証します。</summary>
     [Fact]
     public void CapStatisticsReportingShouldBeTrue()
     {
-        sut.CapStatisticsReporting.ShouldBeTrue();
+        CapabilitiesFacade.CapStatisticsReporting.ShouldBeTrue();
     }
 }

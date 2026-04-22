@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
@@ -14,15 +14,15 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>非同期モードにおけるデバイス動作の信頼性と状態の整合性を検証するテストクラス。</summary>
+/// <summary>非同期モードにおけるデバイス動作�E信頼性と状態�E整合性を検証するチE��トクラス</summary>
 /// <remarks>
-/// 非同期払い出し操作において、完了イベントが通知された瞬間の内部状態(Status, ResultCode)が
-/// 規約通りであることをタイムクリティカルな条件下で検証します。
+/// 非同期払ぁE�Eし操作において、完亁E��ベントが通知された瞬間�E冁E��状慁EStatus, ResultCode)ぁE
+/// 規紁E��りであることをタイムクリチE��カルな条件下で検証します、E
 /// </remarks>
 public class AsyncModeReliabilityTests
 {
     private class ReliabilityTestChanger(Inventory inv, CashChangerManager manager, DispenseController controller, HardwareStatusManager hw) : InternalSimulatorCashChanger(
-        inventory: inv, manager: manager, dispenseController: controller, hardwareStatusManager: hw)
+        configProvider: null, inventory: inv, manager: manager, dispenseController: controller, hardwareStatusManager: hw)
     {
         public CashDispenseStatus StatusAtEvent { get; private set; }
         public int ResultCodeAtEvent { get; private set; }
@@ -52,7 +52,7 @@ public class AsyncModeReliabilityTests
         public bool WaitForEvent(int timeoutMs) => CompletionSignal.Wait(timeoutMs);
     }
 
-    /// <summary>非同期出金処理において、完了イベント通知時の内部状態が正しいことを検証します。</summary>
+    /// <summary>非同期�E金�E琁E��おいて、完亁E��ベント通知時�E冁E��状態が正しいことを検証します</summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task AsyncDispenseShouldHaveCorrectStateWhenEventFires()
@@ -112,3 +112,4 @@ public class AsyncModeReliabilityTests
             $"Capture Details: StatusAtEvent={changer.StatusAtEvent}, ResultCodeAtEvent={changer.ResultCodeAtEvent}, IsBusyNow={changer.DispenseController.IsBusy}");
     }
 }
+

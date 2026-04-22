@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Managers;
+﻿using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Device.PosForDotNet.Lifecycle;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;

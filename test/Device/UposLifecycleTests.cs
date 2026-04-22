@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -42,7 +42,7 @@ public class UposLifecycleTests
         var inv = Inventory.Create();
         var hw = HardwareStatusManager.Create();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history, null, null);
+        var manager = new CashChangerManager(inv, history, null);
         var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
         var monitorsProvider = MonitorsProvider.Create(inv, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
@@ -113,7 +113,7 @@ public class UposLifecycleTests
     public void CheckHealthShouldReturnOk()
     {
         var cc = CreateCashChanger();
-        cc.CheckHealth((HealthCheckLevel)DeviceHealthCheckLevel.Internal).ShouldContain("OK");
+        cc.CheckHealth((HealthCheckLevel)PosSharp.Abstractions.HealthCheckLevel.Internal).ShouldContain("OK");
     }
 
     /// <summary>検証スキップが有効な場合、ベースの Claim を呼ばずに成功することを検証する(NRE回避の確認)。</summary>

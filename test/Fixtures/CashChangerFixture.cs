@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;

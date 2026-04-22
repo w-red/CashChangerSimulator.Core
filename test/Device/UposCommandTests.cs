@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -133,7 +133,7 @@ public class UposCommandTests
     public void CheckHealthCommandExecuteShouldReturnReport()
     {
         var diagMock = new Mock<DiagnosticController>(Inventory.Create(), HardwareStatusManager.Create());
-        diagMock.Setup(d => d.GetHealthReport(DeviceHealthCheckLevel.Internal)).Returns("OK");
+        diagMock.Setup(d => d.GetHealthReport(PosSharp.Abstractions.HealthCheckLevel.Internal)).Returns("OK");
         var command = new CheckHealthCommand(diagMock.Object, HealthCheckLevel.Internal);
 
         command.Execute();

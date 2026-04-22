@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Managers;
+﻿using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
 using Shouldly;
@@ -24,11 +24,11 @@ public class DiagnosticControllerCoverageTests
         var hw = HardwareStatusManager.Create();
         var controller = new DiagnosticController(Inventory.Create(), hw);
 
-        var report1 = controller.GetHealthReport(DeviceHealthCheckLevel.External);
+        var report1 = controller.GetHealthReport(PosSharp.Abstractions.HealthCheckLevel.External);
         report1.ShouldContain("Jam Status: Normal");
 
         hw.Input.IsJammed.Value = true;
-        var report2 = controller.GetHealthReport(DeviceHealthCheckLevel.Interactive);
+        var report2 = controller.GetHealthReport(PosSharp.Abstractions.HealthCheckLevel.Interactive);
         report2.ShouldContain("Interactive check initiated");
     }
 

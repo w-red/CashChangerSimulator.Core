@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Opos;
@@ -36,7 +36,7 @@ public class StatusUpdateEventTests
         var inv = Inventory.Create();
         var hw = HardwareStatusManager.Create();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inv, history, null, null);
+        var manager = new CashChangerManager(inv, history, null);
         var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
 
         // Initialize all denominations to 50 to ensure they are NOT Empty/NearEmpty initially

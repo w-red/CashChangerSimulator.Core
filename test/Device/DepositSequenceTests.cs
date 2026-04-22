@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -15,7 +15,7 @@ public class DepositSequenceTests
     {
         var inventory = Inventory.Create();
         var history = new TransactionHistory();
-        _ = new CashChangerManager(inventory, history, null, null);
+        _ = new CashChangerManager(inventory, history, null);
         var hw = HardwareStatusManager.Create();
         hw.Input.IsConnected.Value = true;
         var controller = new DepositController(inventory, hw);

@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
@@ -6,10 +6,10 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core.Models;
 
-/// <summary>非還流(Non-Recyclable)や入金専用(Deposit-only)の設定における動作を検証するテストクラス。</summary>
+/// <summary>非還流ENon-Recyclable)めE�E金専用(Deposit-only)の設定における動作を検証するチE��トクラス</summary>
 public class DepositOnlyTests
 {
-    /// <summary>入金不可(IsDepositable=false)に設定された金種が、入金時に無視されることを検証します。</summary>
+    /// <summary>入金不可(IsDepositable=false)に設定された金種が、�E金時に無視されることを検証します</summary>
     [Fact]
     public void DepositWhenIsDepositableIsFalseShouldNotAddAnyCount()
     {
@@ -18,10 +18,10 @@ public class DepositOnlyTests
         var configProvider = new ConfigurationProvider();
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
 
-        // IsDepositable = false に設定
+        // IsDepositable = false に設宁E
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsDepositable = false;
 
-        var manager = new CashChangerManager(inventory, new TransactionHistory(), null, configProvider);
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), configProvider);
         var counts = new Dictionary<DenominationKey, int> { { b2000, 1 } };
 
         // Act
@@ -33,7 +33,7 @@ public class DepositOnlyTests
         inventory.CalculateTotal().ShouldBe(0m);
     }
 
-    /// <summary>入金可能だが非還流(IsRecyclable=false)の設定時、入金分が回収庫へ振り分けられることを検証します。</summary>
+    /// <summary>入金可能だが非邁E��EIsRecyclable=false)の設定時、�E金�Eが回収庫へ振り�Eけられることを検証します</summary>
     [Fact]
     public void DepositWhenIsRecyclableIsFalseButIsDepositableIsTrueShouldGoToCollection()
     {
@@ -42,11 +42,11 @@ public class DepositOnlyTests
         var configProvider = new ConfigurationProvider();
         var b2000 = new DenominationKey(2000, CurrencyCashType.Bill);
 
-        // 非還流だが入金は可能
+        // 非還流だが�E金�E可能
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsRecyclable = false;
         configProvider.Config.Inventory["JPY"].Denominations["B2000"].IsDepositable = true;
 
-        var manager = new CashChangerManager(inventory, new TransactionHistory(), null, configProvider);
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), configProvider);
         var counts = new Dictionary<DenominationKey, int> { { b2000, 1 } };
 
         // Act
@@ -58,3 +58,5 @@ public class DepositOnlyTests
         inventory.CalculateTotal().ShouldBe(2000m);
     }
 }
+
+

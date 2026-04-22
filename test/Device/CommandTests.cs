@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Managers;
+﻿using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Commands;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;

@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -6,12 +6,12 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
 using CashChangerSimulator.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
-/// <summary>仮想デバイスコントローラーのテストセットアップを共通化するための基底クラス。</summary>
 public abstract class DeviceTestBase : IDisposable
 {
     private bool disposed;
@@ -20,49 +20,32 @@ public abstract class DeviceTestBase : IDisposable
     {
         Fixture = new CashChangerFixture();
         
-        // 仮想時間制御をテストするため、非ゼロの値を設定
         Fixture.ConfigurationProvider.Config.Simulation.DispenseDelayMs = 1000;
         Fixture.ConfigurationProvider.Config.Simulation.DepositDelayMs = 1000;
         
         LoggerFactoryMock = new Mock<ILoggerFactory>();
-        LoggerFactory = Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+        LoggerFactory = NullLoggerFactory.Instance;
         DeviceFactory = new VirtualCashChangerDeviceFactory(ConfigurationProvider, LoggerFactory, TimeProvider);
     }
 
-    /// <summary>共通フィクスチャへのアクセス</summary>
     protected CashChangerFixture Fixture { get; }
 
-    /// <summary>インベントリインスタンス</summary>
     protected Inventory Inventory => Fixture.Inventory;
-
-    /// <summary>トランザクション履歴</summary>
     protected TransactionHistory History => Fixture.History;
-
-    /// <summary>キャッシュチェンジャーマネージャー</summary>
     protected CashChangerManager Manager => Fixture.Manager;
-
-    /// <summary>設定プロバイダー</summary>
     protected ConfigurationProvider ConfigurationProvider => Fixture.ConfigurationProvider;
+    
+    // Fixed: explicit cast to FakeTimeProvider if stored as TimeProvider in Fixture
+    // Or ensure Fixture stores it as FakeTimeProvider for tests.
+    public FakeTimeProvider TimeProvider => (FakeTimeProvider)Fixture.TimeProvider;
 
-    /// <summary>フェイクタイムプロバイダー</summary>
-    public FakeTimeProvider TimeProvider => Fixture.TimeProvider;
-
-    /// <summary>ハードウェア状態マネージャー</summary>
     protected HardwareStatusManager StatusManager => Fixture.StatusManager;
-
-    /// <summary>ロガーファクトリーの Mock</summary>
     protected Mock<ILoggerFactory> LoggerFactoryMock { get; }
-
-    /// <summary>ロガーファクトリー</summary>
     protected ILoggerFactory LoggerFactory { get; }
-
-    /// <summary>仮想デバイスファクトリー</summary>
     protected VirtualCashChangerDeviceFactory DeviceFactory { get; }
 
-    /// <summary>各テストで固有の Mutex 名(Global\\TestMutex_{Guid})を生成します。</summary>
     protected string GenerateUniqueMutexName() => $"Global\\TestMutex_{Guid.NewGuid()}";
 
-    /// <summary>仮想デバイスインスタンスを生成します。</summary>
     protected ICashChangerDevice CreateDevice(string? mutexName = null)
     {
         return DeviceFactory.Create(Manager, Inventory, StatusManager, mutexName ?? GenerateUniqueMutexName());
@@ -86,27 +69,21 @@ public abstract class DeviceTestBase : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>指定された条件が満たされるまで待機します(FakeTimeProvider 対応)。</summary>
     protected async Task WaitUntil(Func<bool> condition, int timeoutSeconds = 5)
     {
         var startTimestamp = TimeProvider.GetTimestamp();
-        var timeoutTicks = TimeSpan.FromSeconds(timeoutSeconds).Ticks;
+        var timeoutTicks = (long)(TimeSpan.FromSeconds(timeoutSeconds).TotalSeconds * 10_000_000); // 1 tick = 100ns, 1s = 10M ticks
 
         while (!condition())
         {
             var elapsedTicks = TimeProvider.GetTimestamp() - startTimestamp;
             if (elapsedTicks > timeoutTicks)
             {
-                // Last check before failing
                 if (condition()) return;
-
                 throw new Xunit.Sdk.XunitException($"Condition was not met within {timeoutSeconds}s (virtual time)");
             }
 
-            // [STABILITY] Automatically advance fake time to trigger background delays
             TimeProvider.Advance(TimeSpan.FromMilliseconds(10));
-
-            // [STABILITY] Yield to allow background tasks to schedule and process state changes
             await Task.Delay(1).ConfigureAwait(false);
         }
     }

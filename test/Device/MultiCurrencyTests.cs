@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -44,7 +44,7 @@ public class MultiCurrencyTests
 
         var hardware = HardwareStatusManager.Create();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, null, null);
+        var manager = new CashChangerManager(inventory, history, null);
         var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);

@@ -1,6 +1,7 @@
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Shouldly;
+using PosSharp.Abstractions;
 
 namespace CashChangerSimulator.Tests.Core.Models;
 
@@ -18,59 +19,55 @@ public class EventDtoTests
         // Assert
         sut.EventNumber.ShouldBe(123);
         sut.Data.ShouldBe(456);
-        sut.EventObject.ShouldBe(obj);
+        sut.ObjectData.ShouldBe(obj);
     }
 
-    /// <summary>DeviceDataEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>
+    /// <summary>UposDataEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>
     [Fact]
-    public void DeviceDataEventArgsShouldHoldValues()
+    public void UposDataEventArgsShouldHoldValues()
     {
         // Arrange
-        var sut = new DeviceDataEventArgs(789);
+        var sut = new UposDataEventArgs(789);
 
         // Assert
         sut.Status.ShouldBe(789);
     }
 
-    /// <summary>DeviceErrorEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>
+    /// <summary>UposErrorEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>
     [Fact]
-    public void DeviceErrorEventArgsShouldHoldValues()
+    public void UposErrorEventArgsShouldHoldValues()
     {
         // Arrange
-        var sut = new DeviceErrorEventArgs(
-            (DeviceErrorCode)1,
+        var sut = new UposErrorEventArgs(
+            (UposErrorCode)1,
             2,
-            (DeviceErrorLocus)3,
-            (DeviceErrorResponse)4);
+            (UposErrorLocus)3,
+            (UposErrorResponse)4);
 
         // Assert
-        sut.ErrorCode.ShouldBe((DeviceErrorCode)1);
-        sut.ErrorCodeExtended.ShouldBe(2);
-        sut.ErrorLocus.ShouldBe((DeviceErrorLocus)3);
-        sut.ErrorResponse.ShouldBe((DeviceErrorResponse)4);
-
-        // Verify setter
-        sut.ErrorResponse = (DeviceErrorResponse)100;
-        sut.ErrorResponse.ShouldBe((DeviceErrorResponse)100);
+        sut.ErrorCode.ShouldBe((UposErrorCode)1);
+        sut.ExtendedErrorCode.ShouldBe(2);
+        sut.ErrorLocus.ShouldBe((UposErrorLocus)3);
+        sut.ErrorResponse.ShouldBe((UposErrorResponse)4);
     }
 
-    /// <summary>DeviceOutputCompleteEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>
+    /// <summary>UposOutputCompleteEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>
     [Fact]
-    public void DeviceOutputCompleteEventArgsShouldHoldValues()
+    public void UposOutputCompleteEventArgsShouldHoldValues()
     {
         // Arrange
-        var sut = new DeviceOutputCompleteEventArgs(55);
+        var sut = new UposOutputCompleteEventArgs(55);
 
         // Assert
         sut.OutputId.ShouldBe(55);
     }
 
-    /// <summary>DeviceStatusUpdateEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>
+    /// <summary>UposStatusUpdateEventArgs のプロパティが正しく初期化および取得できることを検証します。</summary>
     [Fact]
-    public void DeviceStatusUpdateEventArgsShouldHoldValues()
+    public void UposStatusUpdateEventArgsShouldHoldValues()
     {
         // Arrange
-        var sut = new DeviceStatusUpdateEventArgs(200);
+        var sut = new UposStatusUpdateEventArgs(200);
 
         // Assert
         sut.Status.ShouldBe(200);

@@ -1,4 +1,4 @@
-using CashChangerSimulator.Device.PosForDotNet;
+﻿using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using Microsoft.PointOfService;

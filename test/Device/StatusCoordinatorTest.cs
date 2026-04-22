@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
@@ -32,7 +32,7 @@ public class StatusCoordinatorTest
 
         var inventory = Inventory.Create();
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, null, null);
+        var manager = new CashChangerManager(inventory, history, null);
 
         depositController = new DepositController(inventory, hardwareStatusManager, manager);
         dispenseController = new DispenseController(manager, inventory, new ConfigurationProvider(), NullLoggerFactory.Instance, hardwareStatusManager, new Mock<IDeviceSimulator>().Object);
