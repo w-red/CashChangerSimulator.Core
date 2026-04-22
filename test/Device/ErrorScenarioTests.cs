@@ -50,7 +50,7 @@ public class ErrorScenarioTests
         }
 
         var history = new TransactionHistory();
-        var manager = new CashChangerManager(inventory, history, null, null);
+        var manager = new CashChangerManager(inventory, history, null);
         var hardware = HardwareStatusManager.Create();
         var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
@@ -119,7 +119,7 @@ public class ErrorScenarioTests
         // 在庫 0 の状態で払出
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(1000));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense); // ECHAN_OVERDISPENSE
+        ex.ErrorCodeExtended.ShouldBe(201); // ECHAN_OVERDISPENSE
     }
 
     /// <summary>ジャムが発生している際、払出が ErrorCode.Failure で失敗することを検証する。</summary>
@@ -131,7 +131,7 @@ public class ErrorScenarioTests
 
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(1000));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.Jam);
+        ex.ErrorCodeExtended.ShouldBe(204);
     }
 
     /// <summary>ジャム発生・復旧時に正しい StatusUpdateEvent が発火することを検証する。</summary>
@@ -210,7 +210,7 @@ public class ErrorScenarioTests
 
         var ex = Should.Throw<PosControlException>(() => device.DispenseCash(counts));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense); // ECHAN_OVERDISPENSE
+        ex.ErrorCodeExtended.ShouldBe(201); // ECHAN_OVERDISPENSE
     }
 
     /// <summary>在庫の合計金額は足りているが、金種の組み合わせで端数が支払えない(Impossible Change)場合にエラーになることを検証する。</summary>
@@ -225,7 +225,7 @@ public class ErrorScenarioTests
         // 500円を要求(在庫金額はあるが、組み合わせがない)
         var ex = Should.Throw<PosControlException>(() => device.DispenseChange(500));
         ex.ErrorCode.ShouldBe(ErrorCode.Extended);
-        ex.ErrorCodeExtended.ShouldBe((int)UposCashChangerErrorCodeExtended.OverDispense);
+        ex.ErrorCodeExtended.ShouldBe(201);
     }
 
     /// <summary>インベントリに登録されていない不正な金種を DispenseCash で要求した際、ErrorCode.Illegal が発生することを検証する。</summary>
@@ -281,3 +281,4 @@ public class ErrorScenarioTests
         }
     }
 }
+

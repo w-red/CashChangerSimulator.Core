@@ -205,6 +205,6 @@ public class AdvancedScriptingTests
         // Assert
         hardware.IsDeviceError.CurrentValue.ShouldBeTrue();
         hardware.CurrentErrorCode.CurrentValue.ShouldBe(111);
-        hardware.CurrentErrorCodeExtended.CurrentValue.ShouldBe(222);
+        hardware.Input.CurrentErrorCodeExtended.CurrentValue.ShouldBe(222);
     }
 }
