@@ -4,7 +4,7 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Services.DeviceEventTypes;
+using PosSharp.Abstractions;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
@@ -18,7 +18,6 @@ public class DepositController : IDisposable
     private readonly HardwareStatusManager hardwareStatusManager;
     private readonly ConfigurationProvider configProvider;
     private readonly bool isConfigInternal;
-    private readonly CashChangerManager? manager;
     private readonly TimeProvider timeProvider;
     private readonly ILogger<DepositController>? logger = LogProvider.CreateLogger<DepositController>();
     private readonly CompositeDisposable disposables = [];
@@ -45,10 +44,9 @@ public class DepositController : IDisposable
         this.hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
         this.configProvider = configProvider ?? new ConfigurationProvider();
         this.isConfigInternal = configProvider == null;
-        this.manager = manager;
         this.timeProvider = timeProvider ?? TimeProvider.System;
 
-        calculator = new DepositCalculator(logger, this.inventory, this.manager);
+        calculator = new DepositCalculator(logger, this.inventory, manager);
         tracker = new DepositTracker(this.inventory, this.configProvider);
     }
 
@@ -56,10 +54,10 @@ public class DepositController : IDisposable
     public virtual Observable<Unit> Changed => tracker.Changed;
 
     /// <summary>データイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceDataEventArgs> DataEvents => tracker.DataEvents;
+    public virtual Observable<PosSharp.Abstractions.UposDataEventArgs> DataEvents => tracker.DataEvents;
 
     /// <summary>エラーイベントの通知ストリーム。</summary>
-    public virtual Observable<DeviceErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
+    public virtual Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
 
     /// <summary>リアルタイムデータの通知。上位層(アダプター等)が利用します。</summary>
     public bool RealTimeDataEnabled { get; set; }
@@ -146,14 +144,6 @@ public class DepositController : IDisposable
                 return state.IsPaused;
             }
         }
-
-        private set
-        {
-            lock (stateLock)
-            {
-                state.IsPaused = value;
-            }
-        }
     }
 
     /// <summary>入金が確定(Fixed)されたかどうかを取得します。</summary>
@@ -164,14 +154,6 @@ public class DepositController : IDisposable
             lock (stateLock)
             {
                 return state.IsFixed;
-            }
-        }
-
-        private set
-        {
-            lock (stateLock)
-            {
-                state.IsFixed = value;
             }
         }
     }
@@ -186,14 +168,6 @@ public class DepositController : IDisposable
                 return state.IsBusy;
             }
         }
-
-        private set
-        {
-            lock (stateLock)
-            {
-                state.IsBusy = value;
-            }
-        }
     }
 
     /// <summary>直近に発生したエラーコードを取得します。</summary>
@@ -204,14 +178,6 @@ public class DepositController : IDisposable
             lock (stateLock)
             {
                 return state.LastErrorCode;
-            }
-        }
-
-        private set
-        {
-            lock (stateLock)
-            {
-                state.LastErrorCode = value;
             }
         }
     }
@@ -226,7 +192,6 @@ public class DepositController : IDisposable
                 return state.LastErrorCodeExtended;
             }
         }
-
         private set
         {
             lock (stateLock)
@@ -346,6 +311,41 @@ public class DepositController : IDisposable
     public virtual async Task EndDepositAsync(DepositAction action)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
+        PrepareEndDeposit();
+
+        if (!disposed)
+        {
+            tracker.NotifyChanged();
+        }
+
+        await tracker.CancelCurrentAsync().ConfigureAwait(false);
+        var token = tracker.CreateNewToken();
+
+        try
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(configProvider.Config.Simulation.DepositDelayMs), timeProvider, token).ConfigureAwait(false);
+            PerformDepositAction(action);
+        }
+        catch (OperationCanceledException)
+        {
+            HandleEndDepositCancellation();
+        }
+        catch (DeviceException dex)
+        {
+            HandleEndDepositDeviceException(dex);
+        }
+        catch (Exception ex)
+        {
+            HandleEndDepositUnexpectedException(ex);
+        }
+        finally
+        {
+            FinalizeEndDeposit();
+        }
+    }
+
+    private void PrepareEndDeposit()
+    {
         lock (stateLock)
         {
             if (!state.IsFixed)
@@ -360,121 +360,99 @@ public class DepositController : IDisposable
 
             state.IsBusy = true;
             state.LastErrorCode = DeviceErrorCode.Success;
-            state.LastErrorCodeExtended = 0;
+            LastErrorCodeExtended = 0;
+        }
+    }
+
+    private void PerformDepositAction(DepositAction action)
+    {
+        lock (stateLock)
+        {
+            if (action == DepositAction.Repay)
+            {
+                calculator.ProcessRepay();
+            }
+            else if (action == DepositAction.Change)
+            {
+                calculator.ProcessChange(state.DepositAmount, state.RequiredAmount, state.Counts);
+            }
+            else
+            {
+                calculator.ProcessNoChange(state.Counts);
+            }
+
+            if (action != DepositAction.Repay && hardwareStatusManager.IsOverlapped.CurrentValue)
+            {
+                throw new DeviceException("Device Error (Overlap). Cannot complete deposit.", DeviceErrorCode.Overlapped);
+            }
+
+            DepositStatus = DeviceDepositStatus.End;
+            state.IsPaused = false;
+            state.IsFixed = false;
+
+            if (action == DepositAction.Repay)
+            {
+                state.DepositAmount = 0m;
+                state.Counts.Clear();
+            }
+
+            inventory.ClearEscrow();
+        }
+    }
+
+    private void HandleEndDepositCancellation()
+    {
+        lock (stateLock)
+        {
+            state.LastErrorCode = DeviceErrorCode.Cancelled;
+        }
+    }
+
+    private void HandleEndDepositDeviceException(DeviceException dex)
+    {
+        logger?.ZLogError(dex, $"EndDeposit failed with device error.");
+
+        lock (stateLock)
+        {
+            state.LastErrorCode = dex.ErrorCode;
+            LastErrorCodeExtended = dex.ErrorCodeExtended;
         }
 
-        /* Stryker restore all */
-
-        /* Stryker disable all : Thread-safety guard */
         if (!disposed)
         {
-            // Stryker disable once Statement : State change notification during deposit
+            tracker.NotifyError(dex.ErrorCode, dex.ErrorCodeExtended);
+        }
+    }
+
+    private void HandleEndDepositUnexpectedException(Exception ex)
+    {
+        logger?.ZLogError(ex, $"EndDeposit failed with unexpected error.");
+
+        lock (stateLock)
+        {
+            state.LastErrorCode = DeviceErrorCode.Failure;
+            LastErrorCodeExtended = 0;
+        }
+
+        if (!disposed)
+        {
+            tracker.NotifyError(DeviceErrorCode.Failure, 0);
+        }
+    }
+
+    private void FinalizeEndDeposit()
+    {
+        lock (stateLock)
+        {
+            state.IsBusy = false;
+        }
+
+        if (!disposed)
+        {
             tracker.NotifyChanged();
         }
 
-        // Stryker disable all : Cancellation side effects are hard to verify deterministically in this context
-        await tracker.CancelCurrentAsync().ConfigureAwait(false);
-        /* Stryker restore all */
-
-        var token = tracker.CreateNewToken();
-
-        try
-        {
-            // Stryker disable once Boolean : Simulation delay
-            await Task.Delay(TimeSpan.FromMilliseconds(configProvider.Config.Simulation.DepositDelayMs), timeProvider, token).ConfigureAwait(false);
-
-            lock (stateLock)
-            {
-                if (action == DepositAction.Repay)
-                {
-                    calculator.ProcessRepay();
-                }
-                else if (action == DepositAction.Change)
-                {
-                    calculator.ProcessChange(state.DepositAmount, state.RequiredAmount, state.Counts);
-                }
-                else
-                {
-                    calculator.ProcessNoChange(state.Counts);
-                }
-
-                if (action != DepositAction.Repay && hardwareStatusManager.IsOverlapped.CurrentValue)
-                {
-                    // Stryker disable once String : Exception message is swallowed and only logged
-                    throw new DeviceException("Device Error (Overlap). Cannot complete deposit.", DeviceErrorCode.Overlapped);
-                }
-
-                DepositStatus = DeviceDepositStatus.End;
-                state.IsPaused = false;
-                state.IsFixed = false;
-
-                if (action == DepositAction.Repay)
-                {
-                    state.DepositAmount = 0m;
-                    state.Counts.Clear();
-                }
-
-                inventory.ClearEscrow();
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            lock (stateLock)
-            {
-                state.LastErrorCode = DeviceErrorCode.Cancelled;
-            }
-        }
-        catch (DeviceException dex)
-        {
-            /* Stryker disable all */
-            logger?.ZLogError(dex, $"EndDeposit failed with device error.");
-
-            /* Stryker restore all */
-            lock (stateLock)
-            {
-                state.LastErrorCode = dex.ErrorCode;
-                state.LastErrorCodeExtended = dex.ErrorCodeExtended;
-            }
-
-            // Stryker disable once all : Thread-safety check
-            if (!disposed)
-            {
-                tracker.NotifyError(dex.ErrorCode, dex.ErrorCodeExtended);
-            }
-        }
-        catch (Exception ex)
-        {
-            /* Stryker disable all */
-            logger?.ZLogError(ex, $"EndDeposit failed with unexpected error.");
-
-            /* Stryker restore all */
-            lock (stateLock)
-            {
-                state.LastErrorCode = DeviceErrorCode.Failure;
-                state.LastErrorCodeExtended = 0;
-            }
-
-            // Stryker disable once all : Thread-safety check
-            if (!disposed)
-            {
-                tracker.NotifyError(DeviceErrorCode.Failure, 0);
-            }
-        }
-        finally
-        {
-            lock (stateLock)
-            {
-                state.IsBusy = false;
-            }
-
-            // Stryker disable once Logical : Thread-safety check
-            if (!disposed)
-            {
-                tracker.NotifyChanged();
-            }
-
-            tracker.ResetToken();
-        }
+        tracker.ResetToken();
     }
 
     /// <summary>入金を終了します(同期ラッパー)。</summary>

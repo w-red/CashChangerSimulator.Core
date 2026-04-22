@@ -10,13 +10,14 @@ using ZLogger;
 namespace CashChangerSimulator.Device.PosForDotNet.Services;
 
 /// <summary>シミュレータの設定と言語・通貨状態を管理するクラス。</summary>
-public class UposConfigurationManager : IUposConfigurationManager, IDisposable
+public sealed class UposConfigurationManager : IUposConfigurationManager, IDisposable
 {
     private readonly ConfigurationProvider configProvider;
     private readonly Inventory inventory;
     private readonly IDeviceStateProvider stateProvider;
     private readonly ILogger<UposConfigurationManager> logger = LogProvider.CreateLogger<UposConfigurationManager>();
     private string activeCurrencyCode = "JPY";
+    private string[] cachedCurrencyCodeList = [];
     private readonly CompositeDisposable disposables = [];
 
     /// <summary><see cref="UposConfigurationManager"/> クラスの新しいインスタンスを初期化します。</summary>
@@ -32,6 +33,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
         this.inventory = inventory;
         this.stateProvider = stateProvider;
 
+        UpdateCachedCurrencyList();
         this.configProvider.Reloaded.Subscribe(_ => OnConfigurationReloaded()).AddTo(disposables);
     }
 
@@ -51,10 +53,15 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
     }
 
     /// <summary>サポートされている通貨コードのリストを取得します。</summary>
-    public string[] CurrencyCodeList => configProvider.Config.Inventory.Keys.ToArray();
+    public string[] CurrencyCodeList => cachedCurrencyCodeList;
 
     /// <summary>入金可能な通貨コードのリストを取得します。</summary>
-    public string[] DepositCodeList => CurrencyCodeList;
+    public string[] DepositCodeList => cachedCurrencyCodeList;
+
+    private void UpdateCachedCurrencyList()
+    {
+        cachedCurrencyCodeList = configProvider.Config.Inventory.Keys.ToArray();
+    }
 
     /// <summary>現在の通貨に対応する現金単位を取得します。</summary>
     public CashUnits CurrencyCashList => UposCurrencyHelper.BuildCashUnits(inventory, activeCurrencyCode);
@@ -65,6 +72,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
     /// <summary>構成マネージャーを初期化します。</summary>
     public void Initialize()
     {
+        UpdateCachedCurrencyList();
         activeCurrencyCode = CurrencyCodeList.FirstOrDefault() ?? "JPY";
     }
 
@@ -101,6 +109,8 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
             return;
         }
 
+        UpdateCachedCurrencyList();
+
         // Re-detect active currency if current one is gone
         if (!CurrencyCodeList.Contains(activeCurrencyCode))
         {
@@ -109,7 +119,7 @@ public class UposConfigurationManager : IUposConfigurationManager, IDisposable
 
         // Clear inventory to avoid cross-currency pollution
         // ONLY if device is open, to avoid interference with startup sequence
-        if (stateProvider.State != DeviceControlState.Closed)
+        if (stateProvider.State != PosSharp.Abstractions.ControlState.Closed)
         {
             inventory.Clear();
         }
