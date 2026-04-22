@@ -1,11 +1,11 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Services.DeviceEventTypes;
+using PosSharp.Abstractions;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
@@ -54,10 +54,10 @@ public class DispenseController : IDisposable
     public Observable<Unit> Changed => tracker.Changed;
 
     /// <summary>出力完了イベントを受け取るためのストリーム。</summary>
-    public Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => tracker.OutputCompleteEvents;
+    public Observable<PosSharp.Abstractions.UposOutputCompleteEventArgs> OutputCompleteEvents => tracker.OutputCompleteEvents;
 
     /// <summary>エラーイベントを受け取るためのストリーム。</summary>
-    public Observable<DeviceErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
+    public Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
 
     /// <summary>現在のステータスを取得します。</summary>
     public CashDispenseStatus Status

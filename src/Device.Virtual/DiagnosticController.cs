@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -23,7 +23,7 @@ public class DiagnosticController(Inventory inventory, HardwareStatusManager har
     /// <summary>健康状態の報告書を作成します。</summary>
     /// <param name="level">ヘルスチェックのレベル。</param>
     /// <returns>ヘルスチェック報告書の文字列。</returns>
-    public virtual string GetHealthReport(DeviceHealthCheckLevel level)
+    public virtual string GetHealthReport(PosSharp.Abstractions.HealthCheckLevel level)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         var sb = new StringBuilder();
@@ -31,16 +31,16 @@ public class DiagnosticController(Inventory inventory, HardwareStatusManager har
 
         switch (level)
         {
-            case DeviceHealthCheckLevel.Internal:
+            case PosSharp.Abstractions.HealthCheckLevel.Internal:
                 sb.AppendLine("Inventory: OK");
                 sb.AppendFormat(CultureInfo.InvariantCulture, "Total Denominations: {0}{1}", inventory.AllCounts.Count(), Environment.NewLine);
                 sb.AppendLine("Status: OK");
                 break;
-            case DeviceHealthCheckLevel.External:
+            case PosSharp.Abstractions.HealthCheckLevel.External:
                 sb.AppendFormat(CultureInfo.InvariantCulture, "Hardware: {0}{1}", hardwareStatusManager.IsConnected.CurrentValue ? "Connected" : "Disconnected", Environment.NewLine);
                 sb.AppendFormat(CultureInfo.InvariantCulture, "Jam Status: {0}{1}", hardwareStatusManager.IsJammed.CurrentValue ? "Jammed" : "Normal", Environment.NewLine);
                 break;
-            case DeviceHealthCheckLevel.Interactive:
+            case PosSharp.Abstractions.HealthCheckLevel.Interactive:
                 sb.AppendLine("Interactive check initiated. Please verify LED patterns.");
                 break;
         }
@@ -54,7 +54,7 @@ public class DiagnosticController(Inventory inventory, HardwareStatusManager har
     public virtual string RetrieveStatistics(IEnumerable<string> statistics)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        ArgumentNullException.ThrowIfNull(statistics, nameof(statistics));
+        ArgumentNullException.ThrowIfNull(statistics);
 
         var filter = statistics.ToHashSet();
         var sb = new StringBuilder();

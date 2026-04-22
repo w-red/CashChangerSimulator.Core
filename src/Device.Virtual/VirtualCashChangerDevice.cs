@@ -1,7 +1,8 @@
-using CashChangerSimulator.Core.Exceptions;
+﻿using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
+using PosSharp.Abstractions;
 using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using Microsoft.Extensions.Logging;
 using R3;
@@ -24,9 +25,9 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     private readonly Lock stateLock = new();
     private readonly string mutexName;
 
-    private readonly ReactiveProperty<DeviceControlState> state = new(DeviceControlState.Closed);
+    private readonly ReactiveProperty<PosSharp.Abstractions.ControlState> state = new(PosSharp.Abstractions.ControlState.Closed);
     private readonly ReactiveProperty<bool> isBusy = new(false);
-    private readonly ReadOnlyReactiveProperty<DeviceControlState> stateReadOnly;
+    private readonly ReadOnlyReactiveProperty<PosSharp.Abstractions.ControlState> stateReadOnly;
     private readonly ReadOnlyReactiveProperty<bool> isBusyReadOnly;
 
     private bool hasMutex;
@@ -92,23 +93,23 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     public ReadOnlyReactiveProperty<bool> IsBusy => isBusyReadOnly;
 
     /// <inheritdoc/>
-    public ReadOnlyReactiveProperty<DeviceControlState> State => stateReadOnly;
+    public ReadOnlyReactiveProperty<PosSharp.Abstractions.ControlState> State => stateReadOnly;
 
     /// <inheritdoc/>
-    public Observable<DeviceDataEventArgs> DataEvents => depositController.DataEvents;
+    public Observable<PosSharp.Abstractions.UposDataEventArgs> DataEvents => depositController.DataEvents;
 
     /// <inheritdoc/>
-    public Observable<DeviceErrorEventArgs> ErrorEvents =>
+    public Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents =>
         Observable.Merge(depositController.ErrorEvents, dispenseController.ErrorEvents);
 
     /// <inheritdoc/>
-    public Observable<DeviceStatusUpdateEventArgs> StatusUpdateEvents => hardwareStatus.StatusUpdateEvents;
+    public Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents => hardwareStatus.StatusUpdateEvents;
 
     /// <inheritdoc/>
     public Observable<DeviceDirectIOEventArgs> DirectIOEvents => Observable.Empty<DeviceDirectIOEventArgs>();
 
     /// <inheritdoc/>
-    public Observable<DeviceOutputCompleteEventArgs> OutputCompleteEvents => dispenseController.OutputCompleteEvents;
+    public Observable<PosSharp.Abstractions.UposOutputCompleteEventArgs> OutputCompleteEvents => dispenseController.OutputCompleteEvents;
 
     /// <inheritdoc/>
     public Task OpenAsync()
@@ -287,7 +288,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     }
 
     /// <inheritdoc/>
-    public Task<string> CheckHealthAsync(DeviceHealthCheckLevel level)
+    public Task<string> CheckHealthAsync(PosSharp.Abstractions.HealthCheckLevel level)
     {
         return Task.FromResult(diagnosticController.GetHealthReport(level));
     }
@@ -364,21 +365,21 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
 
             if (!hardwareStatus.IsConnected.CurrentValue)
             {
-                state.Value = DeviceControlState.Closed;
+                state.Value = PosSharp.Abstractions.ControlState.Closed;
             }
             else if (busy)
             {
-                state.Value = DeviceControlState.Busy;
+                state.Value = PosSharp.Abstractions.ControlState.Busy;
             }
             else if (depositController.LastErrorCode != DeviceErrorCode.Success
                      || dispenseController.LastErrorCode != DeviceErrorCode.Success)
             {
                 // エラー状態の判定(リカバリ待ち等の詳細ロジックは必要に応じて拡張)
-                state.Value = DeviceControlState.Error;
+                state.Value = PosSharp.Abstractions.ControlState.Error;
             }
             else
             {
-                state.Value = DeviceControlState.Idle;
+                state.Value = PosSharp.Abstractions.ControlState.Idle;
             }
         }
     }

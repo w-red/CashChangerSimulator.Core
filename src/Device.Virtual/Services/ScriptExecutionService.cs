@@ -50,35 +50,51 @@ public class ScriptExecutionService(
 
         if (value is JsonElement element)
         {
-            if (element.ValueKind == JsonValueKind.Number)
-            {
-                return element.GetInt32();
-            }
-
-            if (element.ValueKind == JsonValueKind.String)
-            {
-                var str = element.GetString();
-                if (str != null && str.StartsWith('$'))
-                {
-                    var varName = str[1..];
-                    if (context.Variables.TryGetValue(varName, out var varValue))
-                    {
-                        return
-                            varValue is JsonElement varElement
-                            && varElement.ValueKind == JsonValueKind.Number
-                                ? varElement.GetInt32()
-                                : Convert.ToInt32(varValue, System.Globalization.CultureInfo.InvariantCulture);
-                    }
-                }
-
-                if (int.TryParse(str, out var parsedInt))
-                {
-                    return parsedInt;
-                }
-            }
+            return ResolveJsonElement(element, context);
         }
 
         return Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static int ResolveJsonElement(JsonElement element, ScriptExecutionContext context)
+    {
+        if (element.ValueKind == JsonValueKind.Number)
+        {
+            return element.GetInt32();
+        }
+
+        if (element.ValueKind == JsonValueKind.String)
+        {
+            return ResolveStringElement(element.GetString(), context);
+        }
+
+        return Convert.ToInt32(element, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static int ResolveStringElement(string? str, ScriptExecutionContext context)
+    {
+        if (str != null && str.StartsWith('$'))
+        {
+            var varName = str[1..];
+            if (context.Variables.TryGetValue(varName, out var varValue))
+            {
+                return ResolveVariableValue(varValue);
+            }
+        }
+
+        if (int.TryParse(str, out var parsedInt))
+        {
+            return parsedInt;
+        }
+
+        return Convert.ToInt32(str, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static int ResolveVariableValue(object? varValue)
+    {
+        return varValue is JsonElement varElement && varElement.ValueKind == JsonValueKind.Number
+            ? varElement.GetInt32()
+            : Convert.ToInt32(varValue, System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <summary>JSON スクリプトを解析して実行します。</summary>

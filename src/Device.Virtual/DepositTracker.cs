@@ -1,6 +1,6 @@
-using CashChangerSimulator.Core.Configuration;
+﻿using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Services.DeviceEventTypes;
+using PosSharp.Abstractions;
 using R3;
 
 namespace CashChangerSimulator.Device.Virtual;
@@ -11,8 +11,8 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
     private readonly Inventory inventory = inventory;
     private readonly ConfigurationProvider configProvider = configProvider;
     private readonly Subject<Unit> changedSubject = new();
-    private readonly Subject<DeviceDataEventArgs> dataEventsSubject = new();
-    private readonly Subject<DeviceErrorEventArgs> errorEventsSubject = new();
+    private readonly Subject<PosSharp.Abstractions.UposDataEventArgs> dataEventsSubject = new();
+    private readonly Subject<PosSharp.Abstractions.UposErrorEventArgs> errorEventsSubject = new();
     private readonly CompositeDisposable disposables = [];
     private CancellationTokenSource? depositCts;
     private bool disposed;
@@ -27,10 +27,10 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
     public Observable<Unit> Changed => changedSubject;
 
     /// <summary>データイベントの通知ストリーム。</summary>
-    public Observable<DeviceDataEventArgs> DataEvents => dataEventsSubject;
+    public Observable<PosSharp.Abstractions.UposDataEventArgs> DataEvents => dataEventsSubject;
 
     /// <summary>エラーイベントの通知ストリーム。</summary>
-    public Observable<DeviceErrorEventArgs> ErrorEvents => errorEventsSubject;
+    public Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents => errorEventsSubject;
 
     /// <summary>新しい払い出しセッション用の CancellationToken を作成します。</summary>
     /// <returns>新しいトークン。</returns>
@@ -88,7 +88,7 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
     {
         if (!disposed)
         {
-            dataEventsSubject.OnNext(new DeviceDataEventArgs(data));
+            dataEventsSubject.OnNext(new PosSharp.Abstractions.UposDataEventArgs(data));
         }
     }
 
@@ -99,7 +99,7 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
     {
         if (!disposed)
         {
-            errorEventsSubject.OnNext(new DeviceErrorEventArgs(errorCode, extended, DeviceErrorLocus.Output, DeviceErrorResponse.Retry));
+            errorEventsSubject.OnNext(new PosSharp.Abstractions.UposErrorEventArgs((PosSharp.Abstractions.UposErrorCode)errorCode, extended, PosSharp.Abstractions.UposErrorLocus.Output, PosSharp.Abstractions.UposErrorResponse.Retry));
         }
     }
 
