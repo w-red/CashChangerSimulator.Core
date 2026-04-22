@@ -136,8 +136,16 @@ public class OverallStatusAggregator : IDisposable
             return CashStatus.Normal;
         }
 
-        return recyclableStatuses.Exists(s => s == CashStatus.Full)
-            ? CashStatus.Full
-            : recyclableStatuses.Exists(s => s == CashStatus.NearFull) ? CashStatus.NearFull : CashStatus.Normal;
+        if (recyclableStatuses.Exists(s => s == CashStatus.Full))
+        {
+            return CashStatus.Full;
+        }
+
+        if (recyclableStatuses.Exists(s => s == CashStatus.NearFull))
+        {
+            return CashStatus.NearFull;
+        }
+
+        return CashStatus.Normal;
     }
 }

@@ -223,17 +223,31 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
         var currentCurrency = ((BindableReactiveProperty<string>)CurrencyCodeProperty).Value;
         var currentCulture = ((BindableReactiveProperty<string>)CultureCodeProperty).Value;
 
-        if (!config.Inventory.TryGetValue(currentCurrency, out var inventorySettings))
+        var inventorySettings = GetInventorySettings(config, currentCurrency);
+        UpdateSymbols(config, currentCurrency, currentCulture, inventorySettings);
+        UpdateSupportedDenominations(config, currentCurrency, inventorySettings);
+
+        ((Subject<Unit>)Changed).OnNext(Unit.Default);
+    }
+
+    private static InventorySettings GetInventorySettings(SimulatorConfiguration config, string currentCurrency)
+    {
+        if (config.Inventory.TryGetValue(currentCurrency, out var settings))
         {
-            // Fallback to JPY settings if current currency is unknown
-            if (!config.Inventory.TryGetValue("JPY", out inventorySettings))
-            {
-                inventorySettings = new InventorySettings();
-            }
+            return settings;
         }
 
-        var rawSymbol = inventorySettings.Symbol;
+        // Fallback to JPY settings if current currency is unknown
+        if (config.Inventory.TryGetValue("JPY", out settings))
+        {
+            return settings;
+        }
 
+        return new InventorySettings();
+    }
+
+    private void UpdateSymbols(SimulatorConfiguration config, string currentCurrency, string currentCulture, InventorySettings inventorySettings)
+    {
         // JPY (またはフォールバック先が JPY) の場合、ロケールによって表示位置を調整する
         // テスト RefreshShouldHandleUnknownCurrency では CurrencyCode="ZZZ" でも Symbol="¥" を期待するため、
         // 設定が JPY 由来であるか、通貨コード自体が JPY であるかを確認する。
@@ -256,11 +270,13 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
         }
         else
         {
-            ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value = rawSymbol;
+            ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value = inventorySettings.Symbol;
             ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value = string.Empty;
         }
+    }
 
-        // 設定から SupportedDenominations を再構築する
+    private void UpdateSupportedDenominations(SimulatorConfiguration config, string currentCurrency, InventorySettings inventorySettings)
+    {
         var denominations = new List<DenominationKey>();
         foreach (var keyStr in inventorySettings.Denominations.Keys)
         {
@@ -276,7 +292,8 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
             {
                 denominations.AddRange(defaults);
             }
-            else if (useJpyFormatting)
+            else if (currentCurrency.Equals("JPY", StringComparison.OrdinalIgnoreCase) ||
+                     (!config.Inventory.ContainsKey(currentCurrency) && !DefaultDenominations.ContainsKey(currentCurrency)))
             {
                 // Fallback to JPY defaults
                 denominations.AddRange(DefaultDenominations["JPY"]);
@@ -284,7 +301,5 @@ public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
         }
 
         SupportedDenominations = [.. denominations.OrderByDescending(d => d.Value)];
-
-        ((Subject<Unit>)Changed).OnNext(Unit.Default);
     }
 }

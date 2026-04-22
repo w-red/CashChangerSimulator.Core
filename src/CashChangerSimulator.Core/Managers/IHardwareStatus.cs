@@ -1,5 +1,5 @@
-using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Services.DeviceEventTypes;
+﻿using CashChangerSimulator.Core.Models;
+using PosSharp.Abstractions;
 using R3;
 
 namespace CashChangerSimulator.Core.Managers;
@@ -41,5 +41,5 @@ public interface IHardwareStatus
     ReadOnlyReactiveProperty<bool> IsNormal { get; }
 
     /// <summary>ステータス更新通知イベントのストリーム。</summary>
-    Observable<DeviceStatusUpdateEventArgs> StatusUpdateEvents { get; }
+    Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents { get; }
 }

@@ -11,13 +11,14 @@ public class ConfigurationProvider : IDisposable
 {
     private readonly Subject<Unit> reloaded = new();
     private FileSystemWatcher? watcher;
-    private DateTime lastRead = DateTime.MinValue;
+    private long lastReadTicks;
     private string? configPath;
     private bool disposed;
 
     /// <summary>Initializes a new instance of the <see cref="ConfigurationProvider"/> class.デフォルト設定ファイルを読み込むプロバイダーを初期化します。</summary>
     public ConfigurationProvider()
     {
+        lastReadTicks = Environment.TickCount64;
         configPath = null;
         Config = ConfigurationLoader.Load();
         SetupWatcher(ConfigurationLoader.DefaultConfigFilePath);
@@ -112,12 +113,13 @@ public class ConfigurationProvider : IDisposable
     private void OnFileChanged(object? sender, FileSystemEventArgs e)
     {
         // Simple debounce to avoid multiple reloads for a single save
-        if (DateTime.Now - lastRead < TimeSpan.FromMilliseconds(500))
+        var currentTicks = Environment.TickCount64;
+        if (currentTicks - lastReadTicks < 500)
         {
             return;
         }
 
-        lastRead = DateTime.Now;
+        lastReadTicks = currentTicks;
 
         // Give the file a moment to be released by the writer
         Thread.Sleep(100);

@@ -13,7 +13,21 @@ public partial class HistoryState
     public IReadOnlyList<TransactionEntry> Entries
     {
         get => entries;
-        set => entries = value == null ? [] : (value is List<TransactionEntry> list ? list : [.. value]);
+        set
+        {
+            if (value == null)
+            {
+                entries = [];
+            }
+            else if (value is List<TransactionEntry> list)
+            {
+                entries = list;
+            }
+            else
+            {
+                entries = [.. value];
+            }
+        }
     }
 
     [MemoryPackOnDeserialized]

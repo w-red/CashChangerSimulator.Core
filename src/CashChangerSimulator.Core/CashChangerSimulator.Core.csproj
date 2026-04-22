@@ -8,9 +8,9 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(MutationTesting)' == 'true'">
-        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+        <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
         <StyleCopAnalyzersEnabled>false</StyleCopAnalyzersEnabled>
-        <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     </PropertyGroup>
 
     <ItemGroup>
@@ -36,9 +36,10 @@
         <PackageReference Include="ZLogger" Version="2.5.10" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\PosSharp\src\PosSharp.Core\PosSharp.Core.csproj" />
+    </ItemGroup>
 
 </Project>
-
-
 
 

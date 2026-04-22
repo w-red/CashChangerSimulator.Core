@@ -255,27 +255,6 @@ public class Inventory : IReadOnlyInventory, IDisposable
         disposed = true;
     }
 
-    private static bool TryParseKey(string fullKey, out DenominationKey? key)
-    {
-        key = null;
-        var parts = fullKey.Split(DenominationKey.KeySeparator);
-        if (parts.Length == 2)
-        {
-            if (string.IsNullOrEmpty(parts[0]))
-            {
-                return false;
-            }
-
-            if (DenominationKey.TryParse(parts[1], parts[0], out var parsedKey))
-            {
-                key = parsedKey;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private static DenominationKey NormalizeKey(DenominationKey key) =>
         (key.CurrencyCode == null || string.IsNullOrEmpty(key.CurrencyCode))
             ? key with { CurrencyCode = DenominationKey.DefaultCurrencyCode }
@@ -363,18 +342,6 @@ public class Inventory : IReadOnlyInventory, IDisposable
                 return counts
                     .Where(kv => currencyCode == null || kv.Key.CurrencyCode == currencyCode)
                     .Sum(kv => kv.Key.Value * kv.Value);
-            }
-        }
-
-        public void AddToDictionary(Dictionary<string, int> result, string prefix)
-        {
-            lock (@lock)
-            {
-                foreach (var kv in counts)
-                {
-                    var formattedPrefix = string.IsNullOrEmpty(prefix) ? string.Empty : $"{prefix}:";
-                    result[$"{formattedPrefix}{kv.Key.CurrencyCode}{DenominationKey.KeySeparator}{kv.Key.PrefixChar}{kv.Key.Value}"] = kv.Value;
-                }
             }
         }
 

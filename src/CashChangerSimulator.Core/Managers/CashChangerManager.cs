@@ -24,25 +24,6 @@ public class CashChangerManager
     private readonly ConfigurationProvider configProvider;
     private readonly ILogger<CashChangerManager> logger = LogProvider.CreateLogger<CashChangerManager>();
 
-    /// <summary>在庫と取引履歴を指定してマネージャーを初期化します(後方互換用)。</summary>
-    /// <param name="inventory">在庫。</param>
-    /// <param name="history">取引履歴。</param>
-    public CashChangerManager(Inventory inventory, TransactionHistory history)
-        : this(inventory, history, null)
-    {
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="CashChangerManager"/> class.(後方互換: calculator 引数は無視されます).</summary>
-    /// <param name="inventory">在庫。</param>
-    /// <param name="history">取引履歴。</param>
-    /// <param name="calculator">使用されません (互換性維持のみ)。</param>
-    /// <param name="configProvider">設定プロバイダー。</param>
-    [Obsolete("Use the 3-argument constructor (inventory, history, configProvider) instead.")]
-    public CashChangerManager(Inventory inventory, TransactionHistory history, object? calculator, ConfigurationProvider? configProvider)
-        : this(inventory, history, configProvider)
-    {
-    }
-
     /// <summary>Initializes a new instance of the <see cref="CashChangerManager"/> class.必要な依存コンポーネントを注入してマネージャーを初期化します。</summary>
     /// <remarks>指定されない場合はデフォルトの設定プロバイダーが使用されます。</remarks>
     /// <param name="inventory">在庫。</param>

@@ -1,5 +1,5 @@
-using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Services.DeviceEventTypes;
+﻿using CashChangerSimulator.Core.Models;
+using PosSharp.Abstractions;
 using R3;
 
 namespace CashChangerSimulator.Core.Managers;
@@ -73,7 +73,7 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     public ReadOnlyReactiveProperty<bool> IsNormal { get; private set; } = null!;
 
     /// <inheritdoc/>
-    public Observable<DeviceStatusUpdateEventArgs> StatusUpdateEvents { get; private set; } = null!;
+    public Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents { get; private set; } = null!;
 
     /// <summary>このインスタンスが破棄されているかどうかを取得します。</summary>
     public bool IsDisposed => isDisposed;
@@ -209,8 +209,8 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     private void SetupEvents()
     {
         StatusUpdateEvents = Observable.Merge(
-            IsConnected.Select(c => new DeviceStatusUpdateEventArgs((int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
-            IsJammed.Select(j => new DeviceStatusUpdateEventArgs((int)(j ? DeviceStatus.JournalEmpty : DeviceStatus.JournalOk))));
+            IsConnected.Select(c => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
+            IsJammed.Select(j => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(j ? DeviceStatus.JournalEmpty : DeviceStatus.JournalOk))));
     }
 
     private void SetupErrorResolutionSideEffects()

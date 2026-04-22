@@ -67,33 +67,35 @@ public class MonitorsProvider : IDisposable
             monitor.Dispose();
         }
 
-        monitors = keys.Select(k =>
+        monitors = keys.Select(k => CreateMonitor(config, k)).ToList();
+        ((Subject<Unit>)Changed).OnNext(Unit.Default);
+    }
+
+    private CashStatusMonitor CreateMonitor(SimulatorConfiguration config, DenominationKey k)
+    {
+        var activeCurrency = config.System.CurrencyCode ?? "JPY";
+        var keyStr = k.ToDenominationString();
+
+        if (config.Inventory.TryGetValue(activeCurrency, out var inventorySettings) &&
+            inventorySettings.Denominations.TryGetValue(keyStr, out var setting))
         {
-            var activeCurrency = config.System.CurrencyCode ?? "JPY";
-            var keyStr = k.ToDenominationString();
-
-            if (config.Inventory.TryGetValue(activeCurrency, out var inventorySettings) &&
-                inventorySettings.Denominations.TryGetValue(keyStr, out var setting))
-            {
-                return new CashStatusMonitor(
-                    inventory,
-                    k,
-                    setting.IsRecyclable ? setting.NearEmpty : -1,
-                    setting.IsRecyclable ? setting.NearFull : -1,
-                    setting.IsRecyclable ? setting.Full : -1,
-                    setting.IsRecyclable);
-            }
-
-            var globalSetting = config.GetDenominationSetting(k);
             return new CashStatusMonitor(
                 inventory,
                 k,
-                globalSetting.IsRecyclable ? config.Thresholds.NearEmpty : -1,
-                globalSetting.IsRecyclable ? config.Thresholds.NearFull : -1,
-                globalSetting.IsRecyclable ? config.Thresholds.Full : -1,
-                globalSetting.IsRecyclable);
-        }).ToList();
-        ((Subject<Unit>)Changed).OnNext(Unit.Default);
+                setting.IsRecyclable ? setting.NearEmpty : -1,
+                setting.IsRecyclable ? setting.NearFull : -1,
+                setting.IsRecyclable ? setting.Full : -1,
+                setting.IsRecyclable);
+        }
+
+        var globalSetting = config.GetDenominationSetting(k);
+        return new CashStatusMonitor(
+            inventory,
+            k,
+            globalSetting.IsRecyclable ? config.Thresholds.NearEmpty : -1,
+            globalSetting.IsRecyclable ? config.Thresholds.NearFull : -1,
+            globalSetting.IsRecyclable ? config.Thresholds.Full : -1,
+            globalSetting.IsRecyclable);
     }
 
     /// <summary>設定オブジェクトを元に、全モニターのしきい値を更新する(ホットリロード用)。</summary>
@@ -104,25 +106,30 @@ public class MonitorsProvider : IDisposable
         var activeCurrency = config.System.CurrencyCode ?? "JPY";
         foreach (var monitor in Monitors)
         {
-            var k = monitor.Key;
-            var keyStr = k.ToDenominationString();
+            UpdateMonitorThresholds(config, activeCurrency, monitor);
+        }
+    }
 
-            if (config.Inventory.TryGetValue(activeCurrency, out var inventorySettings) &&
-                inventorySettings.Denominations.TryGetValue(keyStr, out var setting))
-            {
-                monitor.UpdateThresholds(
-                    setting.IsRecyclable ? setting.NearEmpty : -1,
-                    setting.IsRecyclable ? setting.NearFull : -1,
-                    setting.IsRecyclable ? setting.Full : -1);
-            }
-            else
-            {
-                var globalSetting = config.GetDenominationSetting(k);
-                monitor.UpdateThresholds(
-                    globalSetting.IsRecyclable ? config.Thresholds.NearEmpty : -1,
-                    globalSetting.IsRecyclable ? config.Thresholds.NearFull : -1,
-                    globalSetting.IsRecyclable ? config.Thresholds.Full : -1);
-            }
+    private static void UpdateMonitorThresholds(SimulatorConfiguration config, string activeCurrency, CashStatusMonitor monitor)
+    {
+        var k = monitor.Key;
+        var keyStr = k.ToDenominationString();
+
+        if (config.Inventory.TryGetValue(activeCurrency, out var inventorySettings) &&
+            inventorySettings.Denominations.TryGetValue(keyStr, out var setting))
+        {
+            monitor.UpdateThresholds(
+                setting.IsRecyclable ? setting.NearEmpty : -1,
+                setting.IsRecyclable ? setting.NearFull : -1,
+                setting.IsRecyclable ? setting.Full : -1);
+        }
+        else
+        {
+            var globalSetting = config.GetDenominationSetting(k);
+            monitor.UpdateThresholds(
+                globalSetting.IsRecyclable ? config.Thresholds.NearEmpty : -1,
+                globalSetting.IsRecyclable ? config.Thresholds.NearFull : -1,
+                globalSetting.IsRecyclable ? config.Thresholds.Full : -1);
         }
     }
 

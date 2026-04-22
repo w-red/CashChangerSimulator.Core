@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Models;
+﻿using CashChangerSimulator.Core.Models;
 
 namespace CashChangerSimulator.Core.Services;
 
@@ -7,5 +7,5 @@ namespace CashChangerSimulator.Core.Services;
 public interface IDeviceStateProvider
 {
     /// <summary>デバイスの現在の制御状態を取得します。</summary>
-    DeviceControlState State { get; }
+    PosSharp.Abstractions.ControlState State { get; }
 }

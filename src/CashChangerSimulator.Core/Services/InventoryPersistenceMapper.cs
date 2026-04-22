@@ -46,34 +46,39 @@ public static class InventoryPersistenceMapper
 
         foreach (var kv in data)
         {
-            try
+            ProcessEntry(inventory, kv.Key, kv.Value);
+        }
+    }
+
+    private static void ProcessEntry(Inventory inventory, string key, int value)
+    {
+        try
+        {
+            if (key.StartsWith("COL:", StringComparison.OrdinalIgnoreCase))
             {
-                if (kv.Key.StartsWith("COL:", StringComparison.OrdinalIgnoreCase))
+                if (TryParseKey(key[4..], out var denKey))
                 {
-                    if (TryParseKey(kv.Key[4..], out var denKey))
-                    {
-                        inventory.AddCollection(denKey!, kv.Value);
-                    }
-                }
-                else if (kv.Key.StartsWith("REJ:", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (TryParseKey(kv.Key[4..], out var denKey))
-                    {
-                        inventory.AddReject(denKey!, kv.Value);
-                    }
-                }
-                else
-                {
-                    if (TryParseKey(kv.Key, out var denKey))
-                    {
-                        inventory.SetCount(denKey!, kv.Value);
-                    }
+                    inventory.AddCollection(denKey!, value);
                 }
             }
-            catch (Exception ex)
+            else if (key.StartsWith("REJ:", StringComparison.OrdinalIgnoreCase))
             {
-                Logger.ZLogWarning($"Failed to load inventory key: {kv.Key}. Error: {ex.Message}");
+                if (TryParseKey(key[4..], out var denKey))
+                {
+                    inventory.AddReject(denKey!, value);
+                }
             }
+            else
+            {
+                if (TryParseKey(key, out var denKey))
+                {
+                    inventory.SetCount(denKey!, value);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.ZLogWarning($"Failed to load inventory key: {key}. Error: {ex.Message}");
         }
     }
 
