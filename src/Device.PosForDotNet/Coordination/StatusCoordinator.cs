@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Managers;
+﻿using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
@@ -10,7 +10,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
 /// <summary>釣銭機の各コンポーネントからの通知を集約する調整クラス。</summary>
 /// <remarks>内部状態の変化を UPOS イベントへ変換して通知します。</remarks>
-public class StatusCoordinator(
+public sealed class StatusCoordinator(
     ICashChangerStatusSink sink,
     OverallStatusAggregator statusAggregator,
     HardwareStatusManager hardwareStatusManager,
@@ -23,10 +23,10 @@ public class StatusCoordinator(
     private bool wasFixed;
 
     /// <summary>現在のデバイスステータスを取得します。</summary>
-    public CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerStatus.OK;
+    public CashChangerSimulator.Core.Models.CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerStatus.OK;
 
     /// <summary>現在のフルステータスを取得します。</summary>
-    public CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerFullStatus.OK;
+    public CashChangerSimulator.Core.Models.CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerFullStatus.OK;
 
     /// <inheritdoc/>
     public void Start()
@@ -50,83 +50,93 @@ public class StatusCoordinator(
     {
         LastFullStatus = statusAggregator.FullStatus.CurrentValue switch
         {
-            CashStatus.Full => CashChangerFullStatus.Full,
-            CashStatus.NearFull => CashChangerFullStatus.NearFull,
-            _ => CashChangerFullStatus.OK
+            CashStatus.Full => CashChangerSimulator.Core.Models.CashChangerFullStatus.Full,
+            CashStatus.NearFull => CashChangerSimulator.Core.Models.CashChangerFullStatus.NearFull,
+            _ => CashChangerSimulator.Core.Models.CashChangerFullStatus.OK
         };
 
         LastCashChangerStatus = statusAggregator.DeviceStatus.CurrentValue switch
         {
-            CashStatus.Empty => CashChangerStatus.Empty,
-            CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
-            _ => CashChangerStatus.OK
+            CashStatus.Empty => CashChangerSimulator.Core.Models.CashChangerStatus.Empty,
+            CashStatus.NearEmpty => CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty,
+            _ => CashChangerSimulator.Core.Models.CashChangerStatus.OK
         };
     }
 
     private void ObserveAggregatorStatus()
     {
-        disposables.Add(statusAggregator.DeviceStatus.Subscribe(status =>
+        disposables.Add(statusAggregator.DeviceStatus.Subscribe(OnDeviceStatusChanged));
+        disposables.Add(statusAggregator.FullStatus.Subscribe(OnFullStatusChanged));
+    }
+
+    private void OnDeviceStatusChanged(CashStatus status)
+    {
+        if (disposed) return;
+
+        var newDeviceStatus = status switch
         {
-            if (disposed) return;
+            CashStatus.Empty => CashChangerSimulator.Core.Models.CashChangerStatus.Empty,
+            CashStatus.NearEmpty => CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty,
+            _ => CashChangerSimulator.Core.Models.CashChangerStatus.OK
+        };
 
-            var newDeviceStatus = status switch
-            {
-                CashStatus.Empty => CashChangerStatus.Empty,
-                CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
-                CashStatus.Normal => CashChangerStatus.OK,
-                _ => CashChangerStatus.OK
-            };
-
-            if (newDeviceStatus != LastCashChangerStatus)
-            {
-                var previousStatus = LastCashChangerStatus;
-                LastCashChangerStatus = newDeviceStatus;
-
-                if (newDeviceStatus == CashChangerStatus.OK &&
-                    previousStatus is CashChangerStatus.Empty or CashChangerStatus.NearEmpty)
-                {
-                    sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.EmptyOk));
-                }
-                else
-                {
-                    var code = newDeviceStatus switch
-                    {
-                        CashChangerStatus.Empty => (int)UposCashChangerStatusUpdateCode.Empty,
-                        CashChangerStatus.NearEmpty => (int)UposCashChangerStatusUpdateCode.NearEmpty,
-                        _ => (int)UposCashChangerStatusUpdateCode.Ok
-                    };
-                    sink.FireEvent(new StatusUpdateEventArgs(code));
-                }
-            }
-        }));
-
-        disposables.Add(statusAggregator.FullStatus.Subscribe(status =>
+        if (newDeviceStatus != LastCashChangerStatus)
         {
-            if (disposed) return;
+            var previousStatus = LastCashChangerStatus;
+            LastCashChangerStatus = newDeviceStatus;
+            FireDeviceStatusEvent(newDeviceStatus, previousStatus);
+        }
+    }
 
-            var newFullStatus = status switch
+    private void FireDeviceStatusEvent(CashChangerSimulator.Core.Models.CashChangerStatus newStatus, CashChangerSimulator.Core.Models.CashChangerStatus previousStatus)
+    {
+        if (newStatus == CashChangerSimulator.Core.Models.CashChangerStatus.OK &&
+            previousStatus is CashChangerSimulator.Core.Models.CashChangerStatus.Empty or CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty)
+        {
+            sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.EmptyOk));
+        }
+        else
+        {
+            var code = newStatus switch
             {
-                CashStatus.Full => CashChangerFullStatus.Full,
-                CashStatus.NearFull => CashChangerFullStatus.NearFull,
-                _ => CashChangerFullStatus.OK
+                CashChangerSimulator.Core.Models.CashChangerStatus.Empty => (int)UposCashChangerStatusUpdateCode.Empty,
+                CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty => (int)UposCashChangerStatusUpdateCode.NearEmpty,
+                _ => (int)UposCashChangerStatusUpdateCode.Ok
             };
+            sink.FireEvent(new StatusUpdateEventArgs(code));
+        }
+    }
 
-            if (newFullStatus != LastFullStatus)
-            {
-                var previousFullStatus = LastFullStatus;
-                LastFullStatus = newFullStatus;
+    private void OnFullStatusChanged(CashStatus status)
+    {
+        if (disposed) return;
 
-                if (newFullStatus == CashChangerFullStatus.OK &&
-                    previousFullStatus is CashChangerFullStatus.Full or CashChangerFullStatus.NearFull)
-                {
-                    sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.FullOk));
-                }
-                else
-                {
-                    sink.FireEvent(new StatusUpdateEventArgs((int)newFullStatus));
-                }
-            }
-        }));
+        var newFullStatus = status switch
+        {
+            CashStatus.Full => CashChangerSimulator.Core.Models.CashChangerFullStatus.Full,
+            CashStatus.NearFull => CashChangerSimulator.Core.Models.CashChangerFullStatus.NearFull,
+            _ => CashChangerSimulator.Core.Models.CashChangerFullStatus.OK
+        };
+
+        if (newFullStatus != LastFullStatus)
+        {
+            var previousFullStatus = LastFullStatus;
+            LastFullStatus = newFullStatus;
+            FireFullStatusEvent(newFullStatus, previousFullStatus);
+        }
+    }
+
+    private void FireFullStatusEvent(CashChangerSimulator.Core.Models.CashChangerFullStatus newStatus, CashChangerSimulator.Core.Models.CashChangerFullStatus previousStatus)
+    {
+        if (newStatus == CashChangerSimulator.Core.Models.CashChangerFullStatus.OK &&
+            previousStatus is CashChangerSimulator.Core.Models.CashChangerFullStatus.Full or CashChangerSimulator.Core.Models.CashChangerFullStatus.NearFull)
+        {
+            sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.FullOk));
+        }
+        else
+        {
+            sink.FireEvent(new StatusUpdateEventArgs((int)newStatus));
+        }
     }
 
     private void ObserveHardwareEvents()
@@ -145,26 +155,27 @@ public class StatusCoordinator(
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
-        disposables.Add(hardwareStatusManager.IsJammed.Skip(1).Subscribe(jammed =>
-        {
-            if (disposed) return;
+        disposables.Add(hardwareStatusManager.IsJammed.Skip(1).Subscribe(OnJammedChanged));
+    }
 
-            if (jammed)
+    private void OnJammedChanged(bool jammed)
+    {
+        if (disposed) return;
+
+        if (jammed)
+        {
+            sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Jam));
+        }
+        else
+        {
+            LastCashChangerStatus = statusAggregator.DeviceStatus.CurrentValue switch
             {
-                sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Jam));
-            }
-            else
-            {
-                var currentAggregatedStatus = statusAggregator.DeviceStatus.CurrentValue;
-                LastCashChangerStatus = currentAggregatedStatus switch
-                {
-                    CashStatus.Empty => CashChangerStatus.Empty,
-                    CashStatus.NearEmpty => CashChangerStatus.NearEmpty,
-                    _ => CashChangerStatus.OK
-                };
-                sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
-            }
-        }));
+                CashStatus.Empty => CashChangerSimulator.Core.Models.CashChangerStatus.Empty,
+                CashStatus.NearEmpty => CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty,
+                _ => CashChangerSimulator.Core.Models.CashChangerStatus.OK
+            };
+            sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
+        }
     }
 
     private void ObserveDepositEvents()
@@ -178,37 +189,32 @@ public class StatusCoordinator(
         disposables.Add(depositController.Changed
             .Select(_ => (depositController.IsFixed, depositController.DepositStatus, depositController.IsPaused))
             .DistinctUntilChanged()
-            .Subscribe(state =>
-            {
-                if (disposed) return;
+            .Subscribe(OnDepositStateChanged));
+    }
 
-                bool isFixed = state.IsFixed;
-                bool isPaused = state.IsPaused;
-                var currentStatus = state.DepositStatus;
+    private void OnDepositStateChanged((bool IsFixed, DeviceDepositStatus DepositStatus, bool IsPaused) state)
+    {
+        if (disposed) return;
 
-                if (currentStatus == DeviceDepositStatus.Start)
-                {
-                    wasFixed = false;
-                    return;
-                }
+        if (state.DepositStatus == DeviceDepositStatus.Start)
+        {
+            wasFixed = false;
+            return;
+        }
 
-                bool eligibleForDataEvent = (currentStatus == DeviceDepositStatus.Counting || currentStatus == DeviceDepositStatus.Validation)
-                    && !isPaused && sink.DataEventEnabled;
+        bool eligibleForDataEvent = (state.DepositStatus == DeviceDepositStatus.Counting || state.DepositStatus == DeviceDepositStatus.Validation)
+            && !state.IsPaused && sink.DataEventEnabled;
 
-                if (eligibleForDataEvent && !sink.RealTimeDataEnabled)
-                {
-                    if (isFixed && !wasFixed)
-                    {
-                        wasFixed = true;
-                        sink.FireEvent(new DataEventArgs(0));
-                    }
-                }
+        if (eligibleForDataEvent && !sink.RealTimeDataEnabled && state.IsFixed && !wasFixed)
+        {
+            wasFixed = true;
+            sink.FireEvent(new DataEventArgs(0));
+        }
 
-                if (currentStatus == DeviceDepositStatus.End || currentStatus == DeviceDepositStatus.None)
-                {
-                    wasFixed = false;
-                }
-            }));
+        if (state.DepositStatus == DeviceDepositStatus.End || state.DepositStatus == DeviceDepositStatus.None)
+        {
+            wasFixed = false;
+        }
     }
 
     private void ObserveDispenseEvents()
@@ -218,29 +224,26 @@ public class StatusCoordinator(
             .Prepend(dispenseController.IsBusy)
             .DistinctUntilChanged()
             .Pairwise()
-            .Subscribe(x =>
+            .Subscribe(OnDispenseBusyChanged));
+    }
+
+    private void OnDispenseBusyChanged((bool Previous, bool Current) x)
+    {
+        if (disposed) return;
+
+        sink.SetAsyncProcessing(x.Current);
+
+        if (x.Previous && !x.Current && dispenseController.LastErrorCode != DeviceErrorCode.Cancelled)
+        {
+            sink.AsyncResultCode = (int)dispenseController.LastErrorCode;
+            sink.AsyncResultCodeExtended = dispenseController.LastErrorCodeExtended;
+            sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
+
+            if (dispenseController.LastErrorCode == DeviceErrorCode.Success)
             {
-                if (disposed) return;
-
-                bool wasBusy = x.Previous;
-                bool isBusy = x.Current;
-                sink.SetAsyncProcessing(isBusy);
-
-                if (wasBusy && !isBusy)
-                {
-                    if (dispenseController.LastErrorCode != DeviceErrorCode.Cancelled)
-                    {
-                        sink.AsyncResultCode = (int)dispenseController.LastErrorCode;
-                        sink.AsyncResultCodeExtended = dispenseController.LastErrorCodeExtended;
-                        sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.AsyncFinished));
-
-                        if (dispenseController.LastErrorCode == DeviceErrorCode.Success)
-                        {
-                            sink.FireEvent(new OutputCompleteEventArgs(0));
-                        }
-                    }
-                }
-            }));
+                sink.FireEvent(new OutputCompleteEventArgs(0));
+            }
+        }
     }
 
     /// <inheritdoc/>

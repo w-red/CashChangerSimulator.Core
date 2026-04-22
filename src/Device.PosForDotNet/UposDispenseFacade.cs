@@ -20,7 +20,6 @@ public class UposDispenseFacade
     private readonly HardwareStatusManager hardwareStatusManager;
     private readonly Inventory inventory;
     private readonly IUposMediator mediator;
-    private readonly ILogger logger;
 
     /// <summary>Initializes a new instance of the <see cref="UposDispenseFacade"/> class.必要なコントローラーとサービスを注入して Facade を初期化します。</summary>
     /// <param name="dispenseController">出金コントローラー。</param>
@@ -28,28 +27,24 @@ public class UposDispenseFacade
     /// <param name="hardwareStatusManager">ハードウェアステータスマネージャー。</param>
     /// <param name="inventory">在庫管理オブジェクト。</param>
     /// <param name="mediator">UPOS メディエーター。</param>
-    /// <param name="logger">ロガー。</param>
     public UposDispenseFacade(
         DispenseController dispenseController,
         DepositController depositController,
         HardwareStatusManager hardwareStatusManager,
         Inventory inventory,
-        IUposMediator mediator,
-        ILogger logger)
+        IUposMediator mediator)
     {
         ArgumentNullException.ThrowIfNull(dispenseController);
         ArgumentNullException.ThrowIfNull(depositController);
         ArgumentNullException.ThrowIfNull(hardwareStatusManager);
         ArgumentNullException.ThrowIfNull(inventory);
         ArgumentNullException.ThrowIfNull(mediator);
-        ArgumentNullException.ThrowIfNull(logger);
 
         this.dispenseController = dispenseController;
         this.depositController = depositController;
         this.hardwareStatusManager = hardwareStatusManager;
         this.inventory = inventory;
         this.mediator = mediator;
-        this.logger = logger;
     }
 
     /// <summary>金額指定の出金を実行します。</summary>

@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core.Models;
+﻿using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
@@ -20,7 +20,7 @@ public class CheckHealthCommand(DiagnosticController controller, HealthCheckLeve
     /// <inheritdoc/>
     public Task ExecuteAsync()
     {
-        Result = controller.GetHealthReport((DeviceHealthCheckLevel)level);
+        Result = controller.GetHealthReport((PosSharp.Abstractions.HealthCheckLevel)level);
         return Task.CompletedTask;
     }
 

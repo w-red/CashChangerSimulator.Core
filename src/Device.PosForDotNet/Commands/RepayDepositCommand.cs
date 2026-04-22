@@ -6,11 +6,9 @@ using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>投入返却操作をカプセル化するコマンド。</summary>
+/// <param name="controller">入金制御を司るコントローラー。</param>
 public class RepayDepositCommand(DepositController controller) : IUposCommand
 {
-    private readonly DepositController controller = controller;
-    private IUposMediator? mediator;
-
     /// <inheritdoc/>
     public void Execute()
     {
@@ -30,7 +28,7 @@ public class RepayDepositCommand(DepositController controller) : IUposCommand
     /// <inheritdoc/>
     public void Verify(IUposMediator mediator)
     {
-        this.mediator = mediator;
+        ArgumentNullException.ThrowIfNull(mediator);
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

@@ -7,12 +7,10 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>投入終了操作をカプセル化するコマンド。</summary>
+/// <param name="controller">入金制御を司るコントローラー。</param>
+/// <param name="action">終了時のアクション。</param>
 public class EndDepositCommand(DepositController controller, CashDepositAction action) : IUposCommand
 {
-    private readonly DepositController controller = controller;
-    private readonly CashDepositAction action = action;
-    private IUposMediator? mediator;
-
     /// <inheritdoc/>
     public void Execute()
     {
@@ -44,7 +42,7 @@ public class EndDepositCommand(DepositController controller, CashDepositAction a
     /// <inheritdoc/>
     public void Verify(IUposMediator mediator)
     {
-        this.mediator = mediator;
+        ArgumentNullException.ThrowIfNull(mediator);
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

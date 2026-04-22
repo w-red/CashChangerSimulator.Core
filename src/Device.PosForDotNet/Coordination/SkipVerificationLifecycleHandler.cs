@@ -11,7 +11,18 @@ namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 public class SkipVerificationLifecycleHandler(HardwareStatusManager hardware, IUposMediator mediator, TransactionHistory history, ILogger logger) : IUposLifecycleHandler
 {
     /// <inheritdoc/>
-    public ControlState State => !hardware.IsConnected.CurrentValue ? ControlState.Closed : mediator.IsBusy ? ControlState.Busy : ControlState.Idle;
+    public ControlState State
+    {
+        get
+        {
+            if (!hardware.IsConnected.CurrentValue)
+            {
+                return ControlState.Closed;
+            }
+
+            return mediator.IsBusy ? ControlState.Busy : ControlState.Idle;
+        }
+    }
 
     /// <inheritdoc/>
     public bool Claimed => mediator.Claimed;

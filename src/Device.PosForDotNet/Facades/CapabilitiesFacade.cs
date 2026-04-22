@@ -10,40 +10,40 @@ namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 public class CapabilitiesFacade(SimulatorConfiguration config)
 {
     /// <inheritdoc/>
-    public bool CapDeposit => true;
+    public static bool CapDeposit => true;
 
     /// <inheritdoc/>
-    public bool CapDepositDataEvent => true;
+    public static bool CapDepositDataEvent => true;
 
     /// <inheritdoc/>
-    public bool CapPauseDeposit => true;
+    public static bool CapPauseDeposit => true;
 
     /// <inheritdoc/>
-    public bool CapRepayDeposit => true;
+    public static bool CapRepayDeposit => true;
 
     /// <inheritdoc/>
-    public bool CapPurgeCash => true;
+    public static bool CapPurgeCash => true;
 
     /// <inheritdoc/>
-    public bool CapDiscrepancy => true;
+    public static bool CapDiscrepancy => true;
 
     /// <inheritdoc/>
-    public bool CapFullSensor => true;
+    public static bool CapFullSensor => true;
 
     /// <inheritdoc/>
-    public bool CapNearFullSensor => true;
+    public static bool CapNearFullSensor => true;
 
     /// <inheritdoc/>
-    public bool CapNearEmptySensor => true;
+    public static bool CapNearEmptySensor => true;
 
     /// <inheritdoc/>
-    public bool CapEmptySensor => true;
+    public static bool CapEmptySensor => true;
 
     /// <inheritdoc/>
-    public bool CapStatisticsReporting => true;
+    public static bool CapStatisticsReporting => true;
 
     /// <inheritdoc/>
-    public bool CapUpdateStatistics => true;
+    public static bool CapUpdateStatistics => true;
 
     /// <inheritdoc/>
     public bool CapRealTimeData => config.Simulation.CapRealTimeData;
@@ -52,5 +52,5 @@ public class CapabilitiesFacade(SimulatorConfiguration config)
     public int CurrentExit { get; set; } = 1;
 
     /// <inheritdoc/>
-    public int DeviceExits => 1;
+    public static int DeviceExits => 1;
 }

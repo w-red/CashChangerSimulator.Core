@@ -16,7 +16,7 @@ public class DispenseCashCommand : IUposCommand
     private readonly HardwareStatusManager hardwareStatusManager;
     private readonly DepositController depositController;
     private readonly IReadOnlyDictionary<DenominationKey, int> counts;
-    private readonly bool async;
+    private readonly bool isAsync;
     private IUposMediator? mediator;
 
     /// <summary>Initializes a new instance of the <see cref="DispenseCashCommand"/> class.金種指定出金コマンドのインスタンスを初期化します。</summary>
@@ -25,28 +25,28 @@ public class DispenseCashCommand : IUposCommand
     /// <param name="hardwareStatusManager">ハードウェア状態を管理するマネージャー。</param>
     /// <param name="depositController">入金状態を確認するためのコントローラー。</param>
     /// <param name="counts">出金する金種と枚数のセット。</param>
-    /// <param name="async">非同期実行するかどうか。</param>
+    /// <param name="isAsync">非同期実行するかどうか。</param>
     public DispenseCashCommand(
         DispenseController controller,
         Inventory inventory,
         HardwareStatusManager hardwareStatusManager,
         DepositController depositController,
         IReadOnlyDictionary<DenominationKey, int> counts,
-        bool async)
+        bool isAsync)
     {
         this.controller = controller;
         this.inventory = inventory;
         this.hardwareStatusManager = hardwareStatusManager;
         this.depositController = depositController;
         this.counts = counts;
-        this.async = async;
+        this.isAsync = isAsync;
     }
 
     /// <summary>金種指定出金操作を実行します。</summary>
     public void Execute()
     {
         ExecuteAsync().GetAwaiter().GetResult();
-        if (!async && controller.LastErrorCode != DeviceErrorCode.Success)
+        if (!isAsync && controller.LastErrorCode != DeviceErrorCode.Success)
         {
             throw new DeviceException("DispenseCash failed", controller.LastErrorCode, controller.LastErrorCodeExtended);
         }
@@ -56,12 +56,12 @@ public class DispenseCashCommand : IUposCommand
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task ExecuteAsync()
     {
-        if (async && mediator != null)
+        if (isAsync && mediator != null)
         {
             mediator.IsBusy = true;
         }
 
-        await controller.DispenseCashAsync(counts, async).ConfigureAwait(false);
+        await controller.DispenseCashAsync(counts, isAsync).ConfigureAwait(false);
     }
 
     /// <summary>コマンド実行前の状態および事前条件(在庫やハードウェア状態)を検証します。</summary>

@@ -38,13 +38,13 @@ internal sealed class UposCashChangerCore : IDisposable
         ConfigManager = deps.ConfigurationManager ?? new UposConfigurationManager(configProvider, Context.Inventory, (IDeviceStateProvider)eventSink);
         ConfigManager.Initialize();
 
-        DispenseFacade = new UposDispenseFacade(Context.DispenseController, Context.DepositController, Context.HardwareStatusManager, Context.Inventory, Context.Mediator, logger);
+        DispenseFacade = new UposDispenseFacade(Context.DispenseController, Context.DepositController, Context.HardwareStatusManager, Context.Inventory, Context.Mediator);
         DepositFacade = new DepositFacade(Context.DepositController, Context.Mediator, Context.DiagnosticController);
         InventoryFacade = new InventoryFacade(Context.Inventory, Context.Manager, Context.Mediator);
         DiagnosticsFacade = new DiagnosticsFacade(Context.DiagnosticController, Context.Mediator);
         CapFacade = new CapabilitiesFacade(configProvider.Config);
 
-        StateProperty = new ReactiveProperty<DeviceControlState>(InternalStatusMonitor.MapToDeviceControlState(Context.LifecycleManager.State)).AddTo(disposables);
+        StateProperty = new ReactiveProperty<PosSharp.Abstractions.ControlState>(InternalStatusMonitor.MapToControlState(Context.LifecycleManager.State)).AddTo(disposables);
         StatusMonitor = new InternalStatusMonitor(Context);
 
         Context.HardwareStatusManager.IsConnected
@@ -61,7 +61,7 @@ internal sealed class UposCashChangerCore : IDisposable
     public DiagnosticsFacade DiagnosticsFacade { get; }
     public CapabilitiesFacade CapFacade { get; }
     public InternalStatusMonitor StatusMonitor { get; }
-    public ReactiveProperty<DeviceControlState> StateProperty { get; }
+    public ReactiveProperty<PosSharp.Abstractions.ControlState> StateProperty { get; }
 
     public void Dispose()
     {

@@ -3,19 +3,8 @@ using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>投入確定操作をカプセル化するコマンド。</summary>
-public class FixDepositCommand : IUposCommand
+public class FixDepositCommand(DepositController controller) : IUposCommand
 {
-    private readonly DepositController controller;
-
-    private IUposMediator? mediator;
-
-    /// <summary>Initializes a new instance of the <see cref="FixDepositCommand"/> class.投入確定コマンドのインスタンスを初期化します。</summary>
-    /// <param name="controller">投入制御を司るコントローラー。</param>
-    public FixDepositCommand(DepositController controller)
-    {
-        this.controller = controller;
-    }
-
     /// <summary>投入確定操作を実行します。</summary>
     /// <remarks>
     /// RealTimeData無効時にバッファリングされた通知を再現するため、
@@ -34,7 +23,7 @@ public class FixDepositCommand : IUposCommand
     /// <param name="mediator">検証に使用するメディエーター。</param>
     public void Verify(IUposMediator mediator)
     {
-        this.mediator = mediator;
+        ArgumentNullException.ThrowIfNull(mediator);
         mediator.VerifyState(mustBeClaimed: true, mustBeEnabled: false);
     }
 }

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace CashChangerSimulator.Device.PosForDotNet.Testing;
 
 /// <summary>SimulatorCashChanger のテスト用拡張を提供します。</summary>
@@ -14,6 +16,7 @@ public static class SimulatorTestingExtensions
         /// テストセットアップ用。
         /// true を設定すると、UPOS の状態遷移ルールを無視して、任意のタイミングでテストデータの投入が可能になります。
         /// </remarks>
+        [SuppressMessage("Roslyn", "S2325:Methods and properties that don't access instance data should be static", Justification = "Extension members follow instance access pattern")]
         public bool SkipStateVerification
         {
             get => sim.Context.Mediator.SkipStateVerification;
@@ -22,11 +25,13 @@ public static class SimulatorTestingExtensions
 
         /// <summary>UPOS イベントを強制的に発生させます。</summary>
         /// <remarks>特定のステータス変更イベントが発生した際の、アプリケーション側の応答を検証するために使用します。</remarks>
+        [SuppressMessage("Roslyn", "S2325:Methods and properties that don't access instance data should be static", Justification = "Extension members follow instance access pattern")]
         public void FireEvent(EventArgs e)
             => sim.FireEventInternal(e);
 
         /// <summary>非同期処理の実行状態を強制的に設定します。</summary>
         /// <remarks>デバイスが通信中や動作中(ビジー状態)である場合の排他制御ロジックをテストするために使用します。</remarks>
+        [SuppressMessage("Roslyn", "S2325:Methods and properties that don't access instance data should be static", Justification = "Extension members follow instance access pattern")]
         public void SetAsyncProcessing(bool isBusy)
             => sim.SetAsyncProcessingInternal(isBusy);
     }

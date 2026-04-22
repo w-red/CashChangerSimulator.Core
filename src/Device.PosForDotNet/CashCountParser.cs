@@ -39,9 +39,11 @@ public static class CashCountParser
             }
 
             // UPOS Standard: 0 = Coin, 1 = Bill (if 2 sections exist)
-            var sectionType = sections.Length == 2
-                ? (index == 0 ? CurrencyCashType.Coin : CurrencyCashType.Bill)
-                : (CurrencyCashType?)null;
+            CurrencyCashType? sectionType = null;
+            if (sections.Length == 2)
+            {
+                sectionType = (index == 0 ? CurrencyCashType.Coin : CurrencyCashType.Bill);
+            }
 
             return trimmedSection.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(part => ParsePart(part, sectionType, activeKeys, currencyFactor));

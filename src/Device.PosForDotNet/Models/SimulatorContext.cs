@@ -1,4 +1,4 @@
-using CashChangerSimulator.Core;
+﻿using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -16,7 +16,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Models;
 /// <remarks>
 /// 実行時に必要なオブジェクトを一元管理し、<see cref="SimulatorCashChanger"/> 内部でのデータ共有やイベント通知を円滑にします。
 /// </remarks>
-public class SimulatorContext : IDisposable
+public sealed class SimulatorContext : IDisposable
 {
     private bool disposed;
 
@@ -52,7 +52,7 @@ public class SimulatorContext : IDisposable
         Aggregator = OverallStatusAggregator.Create(MonitorsProvider.Monitors);
 
         Manager = deps.Manager ?? new CashChangerManager(Inventory, History, ConfigProvider);
-        DepositController = deps.DepositController ?? new DepositController(Inventory, HardwareStatusManager, Manager, ConfigProvider, deps.TimeProvider);
+        DepositController = deps.DepositController ?? new DepositController(Inventory);
         DispenseController = deps.DispenseController ?? new DispenseController(Manager, Inventory, ConfigProvider, LogProvider.Factory, HardwareStatusManager, HardwareSimulator.Create(ConfigProvider, deps.TimeProvider));
 
         Mediator = deps.Mediator ?? new UposMediator();

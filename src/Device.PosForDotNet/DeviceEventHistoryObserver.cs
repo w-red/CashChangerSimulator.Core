@@ -6,7 +6,7 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet;
 
 /// <summary>デバイスから発火されるイベントを購読し、取引履歴を記録するオブザーバークラス。</summary>
-public class DeviceEventHistoryObserver : IDisposable
+public sealed class DeviceEventHistoryObserver : IDisposable
 {
     private readonly InternalSimulatorCashChanger device;
     private readonly TransactionHistory history;

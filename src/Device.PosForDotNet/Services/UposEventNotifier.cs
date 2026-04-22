@@ -37,26 +37,29 @@ public class UposEventNotifier : IUposEventNotifier
     }
 
     /// <inheritdoc/>
-    public void QueueEvent(EventArgs args)
+    public void QueueEvent(EventArgs e)
     {
-        if (args is StatusUpdateEventArgs statusArgs)
+        if (e is StatusUpdateEventArgs statusArgs)
         {
             // [FIX] Specific queueing for StatusUpdateEventArgs (required by coordinator/notifier tests)
             // [修正] コーディネーター/通知テストで必要な StatusUpdateEventArgs 用の特定のキューイング
-            sink?.QueueStatusUpdateEvent(statusArgs);
+            if (sink != null)
+            {
+                sink.QueueStatusUpdateEvent(statusArgs);
+            }
         }
-        else if (args is DataEventArgs dataArgs)
+        else if (e is DataEventArgs dataArgs)
         {
             // [FIX] Specific queueing for DataEventArgs with filtering
             // [修正] フィルタリング付きの DataEventArgs 用の特定のキューイング
-            if (DataEventEnabled && CapDepositDataEvent)
+            if (DataEventEnabled && CapDepositDataEvent && sink != null)
             {
-                sink?.QueueDataEvent(dataArgs);
+                sink.QueueDataEvent(dataArgs);
             }
         }
-        else
+        else if (sink != null)
         {
-            sink?.QueueEvent(args);
+            sink.QueueEvent(e);
         }
     }
 
@@ -75,27 +78,39 @@ public class UposEventNotifier : IUposEventNotifier
     /// <inheritdoc/>
     public bool DeviceEnabled
     {
-        get => sink?.DeviceEnabled ?? false; set
+        get => sink?.DeviceEnabled ?? false;
+        set
         {
-            sink?.DeviceEnabled = value;
+            if (sink != null)
+            {
+                sink.DeviceEnabled = value;
+            }
         }
     }
 
     /// <inheritdoc/>
     public bool Claimed
     {
-        get => sink?.Claimed ?? false; set
+        get => sink?.Claimed ?? false;
+        set
         {
-            sink?.Claimed = value;
+            if (sink != null)
+            {
+                sink.Claimed = value;
+            }
         }
     }
 
     /// <inheritdoc/>
     public bool ClaimedByAnother
     {
-        get => sink?.ClaimedByAnother ?? false; set
+        get => sink?.ClaimedByAnother ?? false;
+        set
         {
-            sink?.ClaimedByAnother = value;
+            if (sink != null)
+            {
+                sink.ClaimedByAnother = value;
+            }
         }
     }
 
@@ -114,7 +129,10 @@ public class UposEventNotifier : IUposEventNotifier
         get => sink?.AsyncResultCode ?? 0;
         set
         {
-            sink?.AsyncResultCode = value;
+            if (sink != null)
+            {
+                sink.AsyncResultCode = value;
+            }
         }
     }
 
@@ -124,7 +142,10 @@ public class UposEventNotifier : IUposEventNotifier
         get => sink?.AsyncResultCodeExtended ?? 0;
         set
         {
-            sink?.AsyncResultCodeExtended = value;
+            if (sink != null)
+            {
+                sink.AsyncResultCodeExtended = value;
+            }
         }
     }
 }

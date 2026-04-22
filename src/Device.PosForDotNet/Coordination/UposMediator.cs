@@ -16,7 +16,6 @@ public class UposMediator : IUposMediator
 
     private ICashChangerStatusSink? sink;
     private ILogger? logger;
-    private StatusCoordinator? coordinator;
     private HardwareStatusManager? hardwareStatusManager;
 
     /// <summary>Initializes a new instance of the <see cref="UposMediator"/> class.依存関係を指定せずに初期化します(後で Initialize を呼ぶ必要があります)。</summary>
@@ -29,7 +28,6 @@ public class UposMediator : IUposMediator
     {
         this.sink = sink;
         this.logger = logger;
-        this.coordinator = coordinator;
         this.hardwareStatusManager = hardwareStatusManager;
     }
 
@@ -86,7 +84,10 @@ public class UposMediator : IUposMediator
         get => sink?.ClaimedByAnother ?? false;
         set
         {
-            sink?.ClaimedByAnother = value;
+            if (sink != null)
+            {
+                sink.ClaimedByAnother = value;
+            }
         }
     }
 

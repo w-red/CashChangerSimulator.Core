@@ -12,6 +12,7 @@ using Microsoft.PointOfService.BasicServiceObjects;
 using R3;
 using ZLogger;
 using CoreDeviceEventTypes = CashChangerSimulator.Core.Services.DeviceEventTypes;
+using IInternalUposEventSink = CashChangerSimulator.Device.PosForDotNet.Services.IUposEventSink;
 
 namespace CashChangerSimulator.Device.PosForDotNet;
 
@@ -22,13 +23,13 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 /// 物理デバイスなしでのアプリケーション開発とテストを支援します。
 /// </remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
-public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceStateProvider, ICashChangerStatusSink, ICashChangerDevice, IDisposable
+public class SimulatorCashChanger : CashChangerBasic, IInternalUposEventSink, IDeviceStateProvider, ICashChangerStatusSink, ICashChangerDevice
 {
-    private readonly Subject<CoreDeviceEventTypes.DeviceDataEventArgs> dataEvents = new();
-    private readonly Subject<CoreDeviceEventTypes.DeviceErrorEventArgs> errorEvents = new();
-    private readonly Subject<CoreDeviceEventTypes.DeviceStatusUpdateEventArgs> statusUpdateEvents = new();
+    private readonly Subject<PosSharp.Abstractions.UposDataEventArgs> dataEvents = new();
+    private readonly Subject<PosSharp.Abstractions.UposErrorEventArgs> errorEvents = new();
+    private readonly Subject<PosSharp.Abstractions.UposStatusUpdateEventArgs> statusUpdateEvents = new();
     private readonly Subject<CoreDeviceEventTypes.DeviceDirectIOEventArgs> directIOEvents = new();
-    private readonly Subject<CoreDeviceEventTypes.DeviceOutputCompleteEventArgs> outputCompleteEvents = new();
+    private readonly Subject<PosSharp.Abstractions.UposOutputCompleteEventArgs> outputCompleteEvents = new();
     private readonly UposCashChangerCore core;
     private readonly DirectIOHandler directIOHandler = new();
     private string checkHealthText = "OK";
@@ -73,63 +74,63 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override bool DataEventEnabled { get => core.Context.LifecycleManager.DataEventEnabled; set => core.Context.LifecycleManager.DataEventEnabled = value; }
 
     /// <inheritdoc/>
-    public Observable<CoreDeviceEventTypes.DeviceDataEventArgs> DataEvents => dataEvents;
+    public Observable<PosSharp.Abstractions.UposDataEventArgs> DataEvents => dataEvents;
 
     /// <inheritdoc/>
-    public Observable<CoreDeviceEventTypes.DeviceErrorEventArgs> ErrorEvents => errorEvents;
+    public Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents => errorEvents;
 
     /// <inheritdoc/>
-    public Observable<CoreDeviceEventTypes.DeviceStatusUpdateEventArgs> StatusUpdateEvents => statusUpdateEvents;
+    public Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents => statusUpdateEvents;
 
     /// <inheritdoc/>
     public Observable<CoreDeviceEventTypes.DeviceDirectIOEventArgs> DirectIOEvents => directIOEvents;
 
     /// <inheritdoc/>
-    public Observable<CoreDeviceEventTypes.DeviceOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEvents;
+    public Observable<PosSharp.Abstractions.UposOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEvents;
 
     /// <inheritdoc/>
     public ReadOnlyReactiveProperty<bool> IsBusy => core.Context.Mediator.IsBusyProperty;
 
     /// <inheritdoc/>
-    ReadOnlyReactiveProperty<DeviceControlState> ICashChangerDevice.State => core.StateProperty;
+    ReadOnlyReactiveProperty<PosSharp.Abstractions.ControlState> ICashChangerDevice.State => core.StateProperty;
 
     // Capabilities (Delegated)
 
     /// <inheritdoc/>
-    public override bool CapDeposit => core.CapFacade.CapDeposit;
+    public override bool CapDeposit => CapabilitiesFacade.CapDeposit;
 
     /// <inheritdoc/>
-    public override bool CapDepositDataEvent => core.CapFacade.CapDepositDataEvent;
+    public override bool CapDepositDataEvent => CapabilitiesFacade.CapDepositDataEvent;
 
     /// <inheritdoc/>
-    public override bool CapPauseDeposit => core.CapFacade.CapPauseDeposit;
+    public override bool CapPauseDeposit => CapabilitiesFacade.CapPauseDeposit;
 
     /// <inheritdoc/>
-    public override bool CapRepayDeposit => core.CapFacade.CapRepayDeposit;
+    public override bool CapRepayDeposit => CapabilitiesFacade.CapRepayDeposit;
 
     /// <summary>キャッシュのパージ機能をサポートしているかどうかを取得します。</summary>
-    public virtual bool CapPurgeCash => core.CapFacade.CapPurgeCash;
+    public virtual bool CapPurgeCash => CapabilitiesFacade.CapPurgeCash;
 
     /// <inheritdoc/>
-    public override bool CapDiscrepancy => core.CapFacade.CapDiscrepancy;
+    public override bool CapDiscrepancy => CapabilitiesFacade.CapDiscrepancy;
 
     /// <inheritdoc/>
-    public override bool CapFullSensor => core.CapFacade.CapFullSensor;
+    public override bool CapFullSensor => CapabilitiesFacade.CapFullSensor;
 
     /// <inheritdoc/>
-    public override bool CapNearFullSensor => core.CapFacade.CapNearFullSensor;
+    public override bool CapNearFullSensor => CapabilitiesFacade.CapNearFullSensor;
 
     /// <inheritdoc/>
-    public override bool CapNearEmptySensor => core.CapFacade.CapNearEmptySensor;
+    public override bool CapNearEmptySensor => CapabilitiesFacade.CapNearEmptySensor;
 
     /// <inheritdoc/>
-    public override bool CapEmptySensor => core.CapFacade.CapEmptySensor;
+    public override bool CapEmptySensor => CapabilitiesFacade.CapEmptySensor;
 
     /// <inheritdoc/>
-    public override bool CapStatisticsReporting => core.CapFacade.CapStatisticsReporting;
+    public override bool CapStatisticsReporting => CapabilitiesFacade.CapStatisticsReporting;
 
     /// <inheritdoc/>
-    public override bool CapUpdateStatistics => core.CapFacade.CapUpdateStatistics;
+    public override bool CapUpdateStatistics => CapabilitiesFacade.CapUpdateStatistics;
 
     /// <inheritdoc/>
     public override bool CapRealTimeData => core.CapFacade.CapRealTimeData;
@@ -149,10 +150,10 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override string DeviceDescription => "Virtual Cash Changer Simulator";
 
     /// <inheritdoc/>
-    public override CashChangerStatus DeviceStatus => core.StatusMonitor.DeviceStatus;
+    public override Microsoft.PointOfService.CashChangerStatus DeviceStatus => core.StatusMonitor.DeviceStatus;
 
     /// <inheritdoc/>
-    public override CashChangerFullStatus FullStatus => core.StatusMonitor.FullStatus;
+    public override Microsoft.PointOfService.CashChangerFullStatus FullStatus => core.StatusMonitor.FullStatus;
 
     /// <inheritdoc/>
     public override bool AsyncMode { get; set; }
@@ -194,7 +195,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override int CurrentExit { get => core.CapFacade.CurrentExit; set => core.CapFacade.CurrentExit = value; }
 
     /// <inheritdoc/>
-    public override int DeviceExits => core.CapFacade.DeviceExits;
+    public override int DeviceExits => CapabilitiesFacade.DeviceExits;
 
     // Extra Public Properties (Delegated)
 
@@ -227,28 +228,35 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     // Interface Implementation Properties (Delegated)
     bool ICashChangerStatusSink.Claimed { get => core.Context.Mediator.Claimed; set => core.Context.Mediator.Claimed = value; }
-    bool IUposEventSink.Claimed { get => core.Context.Mediator.Claimed; set => core.Context.Mediator.Claimed = value; }
-    bool ICashChangerStatusSink.ClaimedByAnother { get => core.Context.HardwareStatusManager.IsClaimedByAnother.CurrentValue; set { } }
-    bool IUposEventSink.ClaimedByAnother { get => core.Context.HardwareStatusManager.IsClaimedByAnother.CurrentValue; set { } }
+    bool IInternalUposEventSink.Claimed { get => core.Context.Mediator.Claimed; set => core.Context.Mediator.Claimed = value; }
+    bool ICashChangerStatusSink.ClaimedByAnother { get => core.Context.HardwareStatusManager.IsClaimedByAnother.CurrentValue; set { /* Ignore */ } }
+    bool IInternalUposEventSink.ClaimedByAnother { get => core.Context.HardwareStatusManager.IsClaimedByAnother.CurrentValue; set { /* Ignore */ } }
     bool ICashChangerStatusSink.DeviceEnabled { get => core.Context.Mediator.DeviceEnabled; set => core.Context.Mediator.DeviceEnabled = value; }
-    bool IUposEventSink.DeviceEnabled { get => core.Context.Mediator.DeviceEnabled; set => core.Context.Mediator.DeviceEnabled = value; }
+    bool IInternalUposEventSink.DeviceEnabled { get => core.Context.Mediator.DeviceEnabled; set => core.Context.Mediator.DeviceEnabled = value; }
     int ICashChangerStatusSink.AsyncResultCode { get => core.Context.Mediator.AsyncResultCode; set => core.Context.Mediator.AsyncResultCode = value; }
-    int IUposEventSink.AsyncResultCode { get => core.Context.Mediator.AsyncResultCode; set => core.Context.Mediator.AsyncResultCode = value; }
+    int IInternalUposEventSink.AsyncResultCode { get => core.Context.Mediator.AsyncResultCode; set => core.Context.Mediator.AsyncResultCode = value; }
     int ICashChangerStatusSink.AsyncResultCodeExtended { get => core.Context.Mediator.AsyncResultCodeExtended; set => core.Context.Mediator.AsyncResultCodeExtended = value; }
-    int IUposEventSink.AsyncResultCodeExtended { get => core.Context.Mediator.AsyncResultCodeExtended; set => core.Context.Mediator.AsyncResultCodeExtended = value; }
+    int IInternalUposEventSink.AsyncResultCodeExtended { get => core.Context.Mediator.AsyncResultCodeExtended; set => core.Context.Mediator.AsyncResultCodeExtended = value; }
     bool ICashChangerStatusSink.RealTimeDataEnabled => RealTimeDataEnabled;
-    bool IUposEventSink.DataEventEnabled => core.Context.Mediator.DataEventEnabled;
-    bool IUposEventSink.DisableUposEventQueuing => SkipStateVerification;
-    ControlState IUposEventSink.State => State;
-    DeviceControlState IDeviceStateProvider.State => InternalStatusMonitor.MapToDeviceControlState(State);
+    bool IInternalUposEventSink.DataEventEnabled => core.Context.Mediator.DataEventEnabled;
+    bool IInternalUposEventSink.DisableUposEventQueuing => SkipStateVerification;
+    Microsoft.PointOfService.ControlState IInternalUposEventSink.State => State;
+    PosSharp.Abstractions.ControlState IDeviceStateProvider.State => InternalStatusMonitor.MapToControlState(State);
 
     // Lifecycle Methods (Delegated with base calls)
+
+    /// <inheritdoc/>
+    private bool isPosSdkOpened;
 
     /// <inheritdoc/>
     public override void Open()
     {
         core.Context.LifecycleManager.UpdateHandler(SkipStateVerification);
-        core.Context.LifecycleManager.Open(base.Open);
+        core.Context.LifecycleManager.Open(() => 
+        {
+            base.Open();
+            isPosSdkOpened = true;
+        });
     }
 
     /// <inheritdoc/>
@@ -273,13 +281,13 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     public override void BeginDeposit() => core.DepositFacade.BeginDeposit();
 
     /// <inheritdoc/>
-    public override void EndDeposit(CashDepositAction action) => core.DepositFacade.EndDeposit(action);
+    public override void EndDeposit(CashDepositAction successAction) => core.DepositFacade.EndDeposit(successAction);
 
     /// <inheritdoc/>
     public override void FixDeposit() => core.DepositFacade.FixDeposit();
 
     /// <inheritdoc/>
-    public override void PauseDeposit(CashDepositPause control) => core.DepositFacade.PauseDeposit(control);
+    public override void PauseDeposit(CashDepositPause pauseAction) => core.DepositFacade.PauseDeposit(pauseAction);
 
     public virtual void RepayDeposit() => core.DepositFacade.RepayDeposit();
 
@@ -309,15 +317,15 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
         return Task.Run(() => AdjustCashCounts(posCounts));
     }
     public Task PurgeCashAsync() => Task.Run(PurgeCash);
-    public Task<string> CheckHealthAsync(DeviceHealthCheckLevel level) => Task.Run(() => CheckHealth((HealthCheckLevel)level));
+    public Task<string> CheckHealthAsync(PosSharp.Abstractions.HealthCheckLevel level) => Task.Run(() => CheckHealth((Microsoft.PointOfService.HealthCheckLevel)level));
 
     /// <inheritdoc/>
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts) => core.InventoryFacade.AdjustCashCounts(cashCounts, core.ConfigManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(core.ConfigManager.CurrencyCode), core.Context.HardwareStatusManager);
 
+    public void AdjustCashCounts(string cashCounts) => core.InventoryFacade.AdjustCashCounts(cashCounts, core.ConfigManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(core.ConfigManager.CurrencyCode), core.Context.HardwareStatusManager);
+
     /// <inheritdoc/>
     public override CashCounts ReadCashCounts() => core.InventoryFacade.ReadCashCounts(core.ConfigManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(core.ConfigManager.CurrencyCode));
-
-    public void AdjustCashCounts(string cashCounts) => core.InventoryFacade.AdjustCashCounts(cashCounts, core.ConfigManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(core.ConfigManager.CurrencyCode), core.Context.HardwareStatusManager);
 
     public void ReadCashCounts(ref string cashCounts, ref bool discrepancy)
     {
@@ -330,7 +338,7 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
     // Diagnostics & Stats (Delegated)
     /// <inheritdoc/>
-    public override string CheckHealth(HealthCheckLevel level) => checkHealthText = core.DiagnosticsFacade.CheckHealth(level);
+    public override string CheckHealth(Microsoft.PointOfService.HealthCheckLevel level) => checkHealthText = core.DiagnosticsFacade.CheckHealth(level);
     /// <inheritdoc/>
     public override string RetrieveStatistics(string[] statistics) => core.DiagnosticsFacade.RetrieveStatistics(statistics);
     /// <inheritdoc/>
@@ -357,23 +365,29 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
     internal void FireEventInternal(EventArgs e) => FireEvent(e);
     internal void SetAsyncProcessingInternal(bool isBusy) => SetAsyncProcessing(isBusy);
 
-    void IUposEventSink.NotifyEvent(EventArgs e) { if (!IsDisposed) NotifyEvent(e); }
-    void IUposEventSink.QueueEvent(EventArgs e) { if (IsDisposed) return; if (e is DataEventArgs de) QueueEvent(de); else if (e is StatusUpdateEventArgs se) QueueEvent(se); else if (e is DirectIOEventArgs die) QueueEvent(die); }
+    void IInternalUposEventSink.NotifyEvent(EventArgs e) { if (!IsDisposed) NotifyEvent(e); }
+    void IInternalUposEventSink.QueueEvent(EventArgs e)
+    {
+        if (IsDisposed) return;
+        if (e is DataEventArgs de) { QueueEvent(de); }
+        else if (e is StatusUpdateEventArgs se) { QueueEvent(se); }
+        else if (e is DirectIOEventArgs die) { QueueEvent(die); }
+    }
     public void QueueDataEvent(DataEventArgs e) => QueueEvent(e);
-    public void QueueStatusUpdateEvent(StatusUpdateEventArgs se) => QueueEvent(se);
+    public void QueueStatusUpdateEvent(StatusUpdateEventArgs e) => QueueEvent(e);
 
     protected virtual void NotifyEvent(EventArgs e)
     {
         if (IsDisposed) return;
-        ((IUposEventSink)this).QueueEvent(e);
+        ((IInternalUposEventSink)this).QueueEvent(e);
 
-        if (e is DataEventArgs de) dataEvents.OnNext(new CoreDeviceEventTypes.DeviceDataEventArgs(de.Status));
-        else if (e is DeviceErrorEventArgs ee) errorEvents.OnNext(new CoreDeviceEventTypes.DeviceErrorEventArgs((DeviceErrorCode)ee.ErrorCode, ee.ErrorCodeExtended, (DeviceErrorLocus)ee.ErrorLocus, (DeviceErrorResponse)ee.ErrorResponse));
-        else if (e is StatusUpdateEventArgs se) statusUpdateEvents.OnNext(new CoreDeviceEventTypes.DeviceStatusUpdateEventArgs(se.Status));
+        if (e is DataEventArgs de) dataEvents.OnNext(new PosSharp.Abstractions.UposDataEventArgs(de.Status));
+        else if (e is DeviceErrorEventArgs ee) errorEvents.OnNext(new PosSharp.Abstractions.UposErrorEventArgs((PosSharp.Abstractions.UposErrorCode)ee.ErrorCode, ee.ErrorCodeExtended, (PosSharp.Abstractions.UposErrorLocus)ee.ErrorLocus, (PosSharp.Abstractions.UposErrorResponse)ee.ErrorResponse));
+        else if (e is StatusUpdateEventArgs se) statusUpdateEvents.OnNext(new PosSharp.Abstractions.UposStatusUpdateEventArgs(se.Status));
         else if (e is DirectIOEventArgs die) directIOEvents.OnNext(new CoreDeviceEventTypes.DeviceDirectIOEventArgs(die.EventNumber, die.Data, die.Object));
-        else if (e is OutputCompleteEventArgs oce) outputCompleteEvents.OnNext(new CoreDeviceEventTypes.DeviceOutputCompleteEventArgs(oce.OutputId));
+        else if (e is OutputCompleteEventArgs oce) outputCompleteEvents.OnNext(new PosSharp.Abstractions.UposOutputCompleteEventArgs(oce.OutputId));
 
-        core.StateProperty.Value = InternalStatusMonitor.MapToDeviceControlState(State);
+        core.StateProperty.Value = InternalStatusMonitor.MapToControlState(State);
     }
 
     // IDisposable Implementation
@@ -385,7 +399,18 @@ public class SimulatorCashChanger : CashChangerBasic, IUposEventSink, IDeviceSta
 
         if (!baseDisposed)
         {
-            try { base.Dispose(disposing); }
+            try 
+            { 
+                if (isPosSdkOpened)
+                {
+                    base.Dispose(disposing); 
+                }
+                else
+                {
+                    // SDK has not been initialized. Calling base.Dispose() here causes a fatal NullReferenceException (CSE) in StopListeningForGlobalEvents.
+                    // To prevent test runner crashes, we skip base cleanup for uninitialized devices.
+                }
+            }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[SimulatorCashChanger] POS SDK Internal Dispose Error: {ex.Message}"); }
             finally { baseDisposed = true; }
         }

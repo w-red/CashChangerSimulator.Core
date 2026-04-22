@@ -16,12 +16,10 @@ public class SetJamStrategy : IDirectIOCommand
         var jam = data != 0;
         var location = JamLocation.None;
 
-        if (jam && obj is string locationStr && !string.IsNullOrEmpty(locationStr))
+        if (jam && obj is string locationStr && !string.IsNullOrEmpty(locationStr) &&
+            Enum.TryParse<JamLocation>(locationStr, true, out var parsedLocation))
         {
-            if (Enum.TryParse<JamLocation>(locationStr, true, out var parsedLocation))
-            {
-                location = parsedLocation;
-            }
+            location = parsedLocation;
         }
 
         device.HardwareStatusManager.Input.IsJammed.Value = jam;

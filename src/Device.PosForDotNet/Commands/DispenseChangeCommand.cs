@@ -15,7 +15,7 @@ public class DispenseChangeCommand : IUposCommand
     private readonly HardwareStatusManager hardwareStatusManager;
     private readonly DepositController depositController;
     private readonly decimal amount;
-    private readonly bool async;
+    private readonly bool isAsync;
     private IUposMediator? mediator;
 
     /// <summary>Initializes a new instance of the <see cref="DispenseChangeCommand"/> class.金額指定出金コマンドのインスタンスを初期化します。</summary>
@@ -35,13 +35,13 @@ public class DispenseChangeCommand : IUposCommand
         this.hardwareStatusManager = hardwareStatusManager;
         this.depositController = depositController;
         this.amount = amount;
-        async = asyncMode;
+        isAsync = asyncMode;
     }
 
     /// <summary>金額指定出金操作を実行します。</summary>
     public void Execute()
     {
-        if (async)
+        if (isAsync)
         {
             // In asynchronous mode, we must return control immediately.
             // The task will run in the background.
@@ -60,7 +60,7 @@ public class DispenseChangeCommand : IUposCommand
     /// <inheritdoc/>
     public async Task ExecuteAsync()
     {
-        if (async && mediator != null)
+        if (isAsync && mediator != null)
         {
             mediator.IsBusy = true;
         }
@@ -77,7 +77,7 @@ public class DispenseChangeCommand : IUposCommand
         }
         finally
         {
-            if (async && mediator != null)
+            if (isAsync && mediator != null)
             {
                 mediator.IsBusy = false;
             }

@@ -47,20 +47,78 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     /// <inheritdoc/>
     public new DispenseController DispenseController => Context.DispenseController;
 
-    // Nullable に変更：LogProvider が null を返す可能性や、テスト環境での変動に対応
-    private readonly ILogger<InternalSimulatorCashChanger>? internalLogger;
     private bool isHandlingEvent;
+
+    /// <summary>テスト用のイベント通知アクション。UIのアクティビティフィードやテストでの検証に使用されます。</summary>
+    public Action<EventArgs>? OnEventQueued { get; set; }
 
     /// <summary>テスト用：構成を指定せずに初期化します。</summary>
     public InternalSimulatorCashChanger()
         : base(new SimulatorDependencies(GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
     {
         Context.Mediator.SkipStateVerification = false;
-        internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
-    /// <summary>テスト用のイベント通知アクション。UIのアクティビティフィードやテストでの検証に使用されます。</summary>
-    public Action<EventArgs>? OnEventQueued;
+    /// <summary>指定された引数で新しいインスタンスを初期化します。</summary>
+    public InternalSimulatorCashChanger(SimulatorDependencies deps)
+        : base(deps with { GlobalLockFilePath = deps.GlobalLockFilePath ?? Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock") })
+    {
+        Context.Mediator.SkipStateVerification = false;
+    }
+
+    /// <summary>テスト用：個別の依存関係を指定して初期化します(8個の引数版)。</summary>
+    public InternalSimulatorCashChanger(
+        ConfigurationProvider configProvider,
+        Inventory inventory,
+        TransactionHistory history,
+        CashChangerManager manager,
+        DepositController depositController,
+        DispenseController dispenseController,
+        OverallStatusAggregatorProvider aggregatorProvider,
+        HardwareStatusManager hardwareStatusManager,
+        TimeProvider? timeProvider)
+        : base(new SimulatorDependencies(
+            configProvider,
+            inventory,
+            history,
+            manager,
+            depositController,
+            dispenseController,
+            aggregatorProvider,
+            hardwareStatusManager,
+            TimeProvider: timeProvider,
+            GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
+    {
+        Context.Mediator.SkipStateVerification = false;
+    }
+
+    /// <summary>テスト用：依存関係を指定して初期化します(named parameters推奨)。</summary>
+    public InternalSimulatorCashChanger(
+        ConfigurationProvider? configProvider,
+        Inventory? inventory = null,
+        TransactionHistory? history = null,
+        CashChangerManager? manager = null,
+        DepositController? depositController = null,
+        DispenseController? dispenseController = null,
+        OverallStatusAggregatorProvider? aggregatorProvider = null,
+        HardwareStatusManager? hardwareStatusManager = null,
+        DiagnosticController? diagnosticController = null,
+        TimeProvider? timeProvider = null)
+        : base(new SimulatorDependencies(
+            configProvider,
+            inventory,
+            history,
+            manager,
+            depositController,
+            dispenseController,
+            aggregatorProvider,
+            hardwareStatusManager,
+            diagnosticController,
+            TimeProvider: timeProvider,
+            GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
+    {
+        Context.Mediator.SkipStateVerification = false;
+    }
 
     /// <summary>テスト用：Open 時に例外をシミュレートするかどうかを取得または設定します。</summary>
     public bool SimulateOpenException { get; set; }
@@ -126,70 +184,6 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
         }
 
         await Task.Delay(TimeSpan.FromMilliseconds(10), Context.TimeProvider, ct).ConfigureAwait(false);
-    }
-
-    /// <summary>指定された引数で新しいインスタンスを初期化します。</summary>
-    public InternalSimulatorCashChanger(SimulatorDependencies deps)
-        : base(deps with { GlobalLockFilePath = deps.GlobalLockFilePath ?? Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock") })
-    {
-        Context.Mediator.SkipStateVerification = false;
-        internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
-    }
-
-    /// <summary>テスト用：個別の依存関係を指定して初期化します(8個の引数版)。</summary>
-    public InternalSimulatorCashChanger(
-        ConfigurationProvider configProvider,
-        Inventory inventory,
-        TransactionHistory history,
-        CashChangerManager manager,
-        DepositController depositController,
-        DispenseController dispenseController,
-        OverallStatusAggregatorProvider aggregatorProvider,
-        HardwareStatusManager hardwareStatusManager,
-        TimeProvider? timeProvider = null)
-        : base(new SimulatorDependencies(
-            configProvider,
-            inventory,
-            history,
-            manager,
-            depositController,
-            dispenseController,
-            aggregatorProvider,
-            hardwareStatusManager,
-            TimeProvider: timeProvider,
-            GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
-    {
-        Context.Mediator.SkipStateVerification = false;
-        internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
-    }
-
-    /// <summary>テスト用：最小限の依存関係で初期化します(named parameters対応)。</summary>
-    public InternalSimulatorCashChanger(
-        ConfigurationProvider? configProvider = null,
-        Inventory? inventory = null,
-        TransactionHistory? history = null,
-        CashChangerManager? manager = null,
-        DepositController? depositController = null,
-        DispenseController? dispenseController = null,
-        OverallStatusAggregatorProvider? aggregatorProvider = null,
-        HardwareStatusManager? hardwareStatusManager = null,
-        DiagnosticController? diagnosticController = null,
-        TimeProvider? timeProvider = null)
-        : base(new SimulatorDependencies(
-            configProvider,
-            inventory,
-            history,
-            manager,
-            depositController,
-            dispenseController,
-            aggregatorProvider,
-            hardwareStatusManager,
-            diagnosticController,
-            TimeProvider: timeProvider,
-            GlobalLockFilePath: Path.Combine(AppContext.BaseDirectory, "LocalSettings", $"test_{Guid.NewGuid():N}.lock")))
-    {
-        Context.Mediator.SkipStateVerification = false;
-        internalLogger = LogProvider.CreateLogger<InternalSimulatorCashChanger>();
     }
 
 
