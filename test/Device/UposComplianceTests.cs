@@ -34,7 +34,6 @@ public class UposComplianceTests
         managerMock = new Mock<CashChangerManager>(
             inventory,
             new Mock<TransactionHistory>().Object,
-            null,
             new ConfigurationProvider());
         hardwareStatusManager = HardwareStatusManager.Create();
         facade = new InventoryFacade(inventory, managerMock.Object, mediatorMock.Object);

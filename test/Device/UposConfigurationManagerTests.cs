@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
 
-/// <summary>UPOS 設定マネージャによる通貨設定、設定リロード、初期化処理を検証するテストクラス。</summary>
+/// <summary>UPOS �ݒ�}�l�[�W���ɂ��ʉݐݒ�A�ݒ胊���[�h�A���������������؂���e�X�g�N���X�B</summary>
 public class UposConfigurationManagerTests
 {
     private readonly ConfigurationProvider configProvider;
@@ -24,7 +24,7 @@ public class UposConfigurationManagerTests
         manager = new UposConfigurationManager(configProvider, inventory, stateProvider.Object);
     }
 
-    /// <summary>サポートされていない通貨コードを設定しようとした際に例外が発生することを検証します。</summary>
+    /// <summary>�T�|�[�g����Ă��Ȃ��ʉ݃R�[�h��ݒ肵�悤�Ƃ����ۂɗ�O���������邱�Ƃ����؂��܂��B</summary>
     [Fact]
     public void CurrencyCodeShouldThrowWhenUnsupported()
     {
@@ -32,7 +32,7 @@ public class UposConfigurationManagerTests
             .ErrorCode.ShouldBe(ErrorCode.Illegal);
     }
 
-    /// <summary>正当な通貨コードが正常に設定・取得できることを検証します。</summary>
+    /// <summary>�����Ȓʉ݃R�[�h������ɐݒ�E�擾�ł��邱�Ƃ����؂��܂��B</summary>
     [Fact]
     public void CurrencyCodeShouldWorkWhenSupported()
     {
@@ -41,11 +41,11 @@ public class UposConfigurationManagerTests
         manager.CurrencyCode.ShouldBe("USD");
     }
 
-    /// <summary>設定変更時に内部状態(在庫等)が正しくリセットされることを検証します。</summary>
+    /// <summary>�ݒ�ύX���ɓ������(�݌ɓ�)�����������Z�b�g����邱�Ƃ����؂��܂��B</summary>
     [Fact]
     public void ResetStateWhenConfigurationChanges()
     {
-        stateProvider.Setup(s => s.State).Returns(DeviceControlState.Idle);
+        stateProvider.Setup(s => s.State).Returns((PosSharp.Abstractions.ControlState)ControlState.Idle);
         inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
 
         // Trigger reload
@@ -54,11 +54,11 @@ public class UposConfigurationManagerTests
         inventory.AllCounts.ShouldBeEmpty();
     }
 
-    /// <summary>手動リロード実行時に内部状態がリセットされることを検証します。</summary>
+    /// <summary>�蓮�����[�h���s���ɓ�����Ԃ����Z�b�g����邱�Ƃ����؂��܂��B</summary>
     [Fact]
     public void ReloadShouldManuallyTriggerUpdate()
     {
-        stateProvider.Setup(s => s.State).Returns(DeviceControlState.Idle);
+        stateProvider.Setup(s => s.State).Returns((PosSharp.Abstractions.ControlState)ControlState.Idle);
         inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill), 10);
 
         manager.Reload();
@@ -66,18 +66,18 @@ public class UposConfigurationManagerTests
         inventory.AllCounts.ShouldBeEmpty();
     }
 
-    /// <summary>初期化処理によってアクティブな通貨が正しく設定されることを検証します。</summary>
+    /// <summary>�����������ɂ���ăA�N�e�B�u�Ȓʉ݂��������ݒ肳��邱�Ƃ����؂��܂��B</summary>
     [Fact]
     public void InitializeShouldSetActiveCurrency()
     {
         configProvider.Config.Inventory.Clear();
         configProvider.Config.Inventory["EUR"] = new InventorySettings();
-
+ 
         manager.Initialize();
         manager.CurrencyCode.ShouldBe("EUR");
     }
 
-    /// <summary>破棄(Dispose)後に設定変更を受け取っても副作用が発生しないことを検証します。</summary>
+    /// <summary>�j��(Dispose)��ɐݒ�ύX���󂯎���Ă�����p���������Ȃ����Ƃ����؂��܂��B</summary>
     [Fact]
     public void DisposeShouldUnsubscribe()
     {
@@ -87,7 +87,7 @@ public class UposConfigurationManagerTests
         configProvider.Update(new SimulatorConfiguration());
     }
 
-    /// <summary>CurrencyCashList プロパティが UPOS 規定の形式でデータを返却することを検証します。</summary>
+    /// <summary>CurrencyCashList �v���p�e�B�� UPOS �K��̌`���Ńf�[�^��ԋp���邱�Ƃ����؂��܂��B</summary>
     [Fact]
     public void CurrencyCashListShouldReturnUposUnits()
     {
@@ -96,3 +96,4 @@ public class UposConfigurationManagerTests
         // CashUnits is a struct, so it cannot be null.
     }
 }
+
