@@ -65,12 +65,11 @@ public class DepositController : IDisposable
     /// <summary>投入された合計金額を取得します。</summary>
     public virtual decimal DepositAmount
     {
-        get => state.DepositAmount; // Decimal access is atomic on modern 64-bit .NET during simple reads.
-        set
+        get
         {
             lock (stateLock)
             {
-                state.DepositAmount = value;
+                return state.DepositAmount;
             }
         }
     }
@@ -78,12 +77,11 @@ public class DepositController : IDisposable
     /// <summary>オーバーフロー(満杯等により収納不可)した金額を取得します。</summary>
     public virtual decimal OverflowAmount
     {
-        get => state.OverflowAmount;
-        set
+        get
         {
             lock (stateLock)
             {
-                state.OverflowAmount = value;
+                return state.OverflowAmount;
             }
         }
     }
@@ -91,12 +89,11 @@ public class DepositController : IDisposable
     /// <summary>リジェクト(偽札、汚れ等により返却)された金額を取得します。</summary>
     public virtual decimal RejectAmount
     {
-        get => state.RejectAmount;
-        set
+        get
         {
             lock (stateLock)
             {
-                state.RejectAmount = value;
+                return state.RejectAmount;
             }
         }
     }
