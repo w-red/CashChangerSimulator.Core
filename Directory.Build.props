@@ -9,7 +9,7 @@
     <PackageTags>Simulator;POS;CashChanger;UPOS</PackageTags>
     <Description>Core logic and hardware emulation for the CashChanger Simulator. Provides platform-independent managers and virtual device controllers. / 自動釣銭機シミュレータのコアロジックとハードウェア・エミュレーション層。プラットフォームに依存しないマネージャと仮想デバイスコントローラを提供します。</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    
+
     <!-- Code Quality Settings -->
     <AnalysisLevel>latest-all</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -20,7 +20,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="all" Condition="$(MSBuildProjectExtension) == '.csproj'" />
+    <PackageReference
+      Include="SonarAnalyzer.CSharp"
+      Version="10.10.0.116381"
+      PrivateAssets="all"
+      Condition="$(MSBuildProjectExtension) == '.csproj'"
+    />
     <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
