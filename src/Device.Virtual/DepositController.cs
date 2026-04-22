@@ -410,6 +410,7 @@ public class DepositController : IDisposable
 
     private void HandleEndDepositDeviceException(DeviceException dex)
     {
+        /* Stryker disable once all : Mutation causes CS1620 in ZLogger call */
         logger?.ZLogError(dex, $"EndDeposit failed with device error.");
 
         lock (stateLock)
@@ -426,6 +427,7 @@ public class DepositController : IDisposable
 
     private void HandleEndDepositUnexpectedException(Exception ex)
     {
+        /* Stryker disable once all : Mutation causes CS1620 in ZLogger call */
         logger?.ZLogError(ex, $"EndDeposit failed with unexpected error.");
 
         lock (stateLock)
