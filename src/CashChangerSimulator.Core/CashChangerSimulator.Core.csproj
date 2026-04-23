@@ -35,9 +35,8 @@
         <PackageReference Include="Tomlyn" Version="2.3.0" />
         <PackageReference Include="ZLogger" Version="2.5.10" />
     </ItemGroup>
-
     <ItemGroup>
-        <ProjectReference Include="..\..\..\PosSharp\src\PosSharp.Core\PosSharp.Core.csproj" />
+        <PackageReference Include="PosSharp.Core" Version="1.0.1" />
     </ItemGroup>
 
 </Project>

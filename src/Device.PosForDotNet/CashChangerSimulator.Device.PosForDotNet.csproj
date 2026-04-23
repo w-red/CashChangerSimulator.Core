@@ -37,7 +37,7 @@
     <ItemGroup>
         <ProjectReference Include="..\CashChangerSimulator.Core\CashChangerSimulator.Core.csproj" />
         <ProjectReference Include="..\Device.Virtual\CashChangerSimulator.Device.Virtual.csproj" />
-        <ProjectReference Include="..\..\..\PosSharp\src\PosSharp.Core\PosSharp.Core.csproj" />
+        <PackageReference Include="PosSharp.Core" Version="1.0.1" />
     </ItemGroup>
 
 </Project>
