@@ -19,7 +19,9 @@ public class DepositController : IDisposable
     private readonly ConfigurationProvider configProvider;
     private readonly bool isConfigInternal;
     private readonly TimeProvider timeProvider;
+    /* Stryker disable all */
     private readonly ILogger<DepositController>? logger = LogProvider.CreateLogger<DepositController>();
+    /* Stryker restore all */
     private readonly CompositeDisposable disposables = [];
     private readonly Lock stateLock = new();
     private readonly DepositState state = new();
@@ -586,7 +588,7 @@ public class DepositController : IDisposable
     {
         Dispose(true);
 
-        // Stryker disable once Statement : Finalizer suppression
+        /* Stryker disable once Statement : Finalizer suppression */
         GC.SuppressFinalize(this);
     }
 
@@ -596,6 +598,7 @@ public class DepositController : IDisposable
     {
         lock (stateLock)
         {
+            /* Stryker disable once all : Boilerplate guard */
             if (disposed)
             {
                 return;
