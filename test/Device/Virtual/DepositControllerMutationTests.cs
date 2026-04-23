@@ -30,27 +30,27 @@ public class DepositControllerMutationTests : DeviceTestBase
     public void ConstructorWhenArgumentsAreNullCreatesDefaultInstances()
     {
         // Act
-        var controller = new DepositController(Inventory, null, null, null, null);
+        var targetController = new DepositController(Inventory, null, null, null, null);
 
         // Assert
         // HardwareStatusManager がデフォルトで作成されていることを確認
         var statusField = typeof(DepositController).GetField("hardwareStatusManager", BindingFlags.NonPublic | BindingFlags.Instance);
         statusField.ShouldNotBeNull();
-        statusField.GetValue(controller).ShouldNotBeNull();
+        statusField.GetValue(targetController).ShouldNotBeNull();
 
         // configProvider が内部で新規作成されていることを確認
         var configField = typeof(DepositController).GetField("configProvider", BindingFlags.NonPublic | BindingFlags.Instance);
         configField.ShouldNotBeNull();
-        configField.GetValue(controller).ShouldNotBeNull();
+        configField.GetValue(targetController).ShouldNotBeNull();
 
         // TimeProvider がデフォルト(System)であることを確認
         var timeProviderField = typeof(DepositController).GetField("timeProvider", BindingFlags.NonPublic | BindingFlags.Instance);
         timeProviderField.ShouldNotBeNull();
-        timeProviderField.GetValue(controller).ShouldBe(System.TimeProvider.System);
+        timeProviderField.GetValue(targetController).ShouldBe(System.TimeProvider.System);
 
         // HardwareStatusManager もデフォルトが作成されていること
         var hardwareStatusField = typeof(DepositController).GetField("hardwareStatusManager", BindingFlags.NonPublic | BindingFlags.Instance);
-        hardwareStatusField!.GetValue(controller).ShouldNotBeNull();
+        hardwareStatusField!.GetValue(targetController).ShouldNotBeNull();
     }
 
     /// <summary>TimeProvider が null の場合に System.TimeProvider が使用されることを検証します（Null合体変異対応）。</summary>
@@ -58,11 +58,11 @@ public class DepositControllerMutationTests : DeviceTestBase
     public void ConstructorWhenTimeProviderIsNullUsesSystemTimeProvider()
     {
         // Act
-        var localController = new DepositController(Inventory, StatusManager);
+        var targetController = new DepositController(Inventory, StatusManager);
 
         // Assert
         var field = typeof(DepositController).GetField("timeProvider", BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.GetValue(localController).ShouldBe(System.TimeProvider.System);
+        field!.GetValue(targetController).ShouldBe(System.TimeProvider.System);
     }
 
     /// <summary>カスタム TimeProvider が保持されることを検証します（Null合体変異対応）。</summary>
@@ -73,11 +73,11 @@ public class DepositControllerMutationTests : DeviceTestBase
         var mockTime = new Mock<TimeProvider>();
 
         // Act
-        var localController = new DepositController(Inventory, StatusManager, null, null, mockTime.Object);
+        var targetController = new DepositController(Inventory, StatusManager, null, null, mockTime.Object);
 
         // Assert
         var field = typeof(DepositController).GetField("timeProvider", BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.GetValue(localController).ShouldBe(mockTime.Object);
+        field!.GetValue(targetController).ShouldBe(mockTime.Object);
     }
 
     /// <summary>Inventory に null を渡した場合に ArgumentNullException がスローされることを検証します。</summary>
@@ -136,8 +136,8 @@ public class DepositControllerMutationTests : DeviceTestBase
         controller.DepositAmount.ShouldBe(1000m);
         Inventory.EscrowCounts.Sum(kv => kv.Key.Value * kv.Value).ShouldBe(1000m);
 
-        bool changedFired = false;
-        using var sub = controller.Changed.Subscribe(_ => changedFired = true);
+        int changedFiredCount = 0;
+        using var sub = controller.Changed.Subscribe(_ => changedFiredCount++);
 
         // Act
         // 再度 BeginDeposit を呼ぶことで、内部状態が Clear() されることを検証する (Statement mutation 対応)
@@ -154,7 +154,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         var state = (dynamic)stateField!.GetValue(controller)!;
         ((int)state.DepositedSerials.Count).ShouldBe(0);
 
-        changedFired.ShouldBeTrue();
+        changedFiredCount.ShouldBe(1); // 確実に1回飛ぶことを検証
     }
 
     /// <summary>ハードウェアがスタックしている場合に BeginDeposit が例外を投げることを検証します。</summary>
@@ -209,18 +209,18 @@ public class DepositControllerMutationTests : DeviceTestBase
         // Arrange
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         var managerMock = new Mock<CashChangerManager>(Inventory, History, ConfigurationProvider);
-        var controller = new DepositController(Inventory, StatusManager, managerMock.Object);
+        var targetController = new DepositController(Inventory, StatusManager, managerMock.Object);
 
-        controller.BeginDeposit();
-        controller.TrackDeposit(key, 5); // 5000円投入
-        controller.RequiredAmount = 1000m; // 4000円のお釣りが必要
+        targetController.BeginDeposit();
+        targetController.TrackDeposit(key, 5); // 5000円投入
+        targetController.RequiredAmount = 1000m; // 4000円のお釣りが必要
 
         // インベントリを空にする (お釣りが払えない状態)
         Inventory.Clear();
 
         // Act
-        controller.FixDeposit();
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        targetController.FixDeposit();
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -235,38 +235,16 @@ public class DepositControllerMutationTests : DeviceTestBase
     public async Task EndDepositAsyncChangeWhenManagerIsNullDoesNotThrow()
     {
         // Arrange
-        var controller = new DepositController(Inventory, StatusManager, null); // Manager is null
-        controller.BeginDeposit();
-        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 5);
-        controller.RequiredAmount = 1000m;
+        var targetController = new DepositController(Inventory, StatusManager, null); // Manager is null
+        targetController.BeginDeposit();
+        targetController.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 5);
+        targetController.RequiredAmount = 1000m;
 
         // Act & Assert
-        controller.FixDeposit();
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        targetController.FixDeposit();
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task.ShouldNotThrowAsync();
-    }
-
-    /// <summary>EndDepositAsync(Change) において、manager が null で釣銭が必要な場合、例外を投げずにスキップすることを検証します（Logical mutation 対応）。</summary>
-    /// <returns>非同期タスク。</returns>
-    [Fact]
-    public async Task EndDepositAsyncChangeWhenManagerIsNullAndChangeNeededSuppressesDispense()
-    {
-        // Arrange
-        var controller = new DepositController(Inventory, StatusManager, null); // Manager is null
-        controller.BeginDeposit();
-        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 5);
-        controller.RequiredAmount = 1000m; // 4000円のお釣りが必要
-
-        // Act
-        controller.FixDeposit();
-        var task = controller.EndDepositAsync(DepositAction.Change);
-        TimeProvider.Advance(TimeSpan.FromSeconds(2));
-
-        // Assert
-        await task.ShouldNotThrowAsync();
-
-        // manager が null なので内部で Skip される（&& manager != null)
     }
 
     /// <summary>Dispose された後にイベントが通知されないことを検証します。</summary>
@@ -294,15 +272,21 @@ public class DepositControllerMutationTests : DeviceTestBase
     public void DisposeSetsDisposedFlagAndDisposesResources()
     {
         // Arrange
-        var controller = new DepositController(Inventory, StatusManager);
+        var targetController = new DepositController(Inventory, StatusManager);
 
         // Act
-        controller.Dispose();
+        targetController.Dispose();
 
         // Assert
         var disposedField = typeof(DepositController).GetField("disposed", BindingFlags.NonPublic | BindingFlags.Instance);
         disposedField.ShouldNotBeNull();
-        ((bool)disposedField.GetValue(controller)!).ShouldBeTrue();
+        ((bool)disposedField.GetValue(targetController)!).ShouldBeTrue();
+
+        // 内部の tracker も Dispose されていることを検証
+        var trackerField = typeof(DepositController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
+        var tracker = trackerField!.GetValue(targetController);
+        var trackerDisposedField = typeof(DepositTracker).GetField("disposed", BindingFlags.NonPublic | BindingFlags.Instance);
+        ((bool)trackerDisposedField!.GetValue(tracker)!).ShouldBeTrue();
     }
 
     /// <summary>入金確定時に Counting ステータスでない場合に例外を投げることを検証します。</summary>
@@ -344,6 +328,9 @@ public class DepositControllerMutationTests : DeviceTestBase
         controller.PauseDeposit(DeviceDepositPause.Pause);
         controller.FixDeposit();
 
+        int changedFiredCount = 0;
+        using var sub = controller.Changed.Subscribe(_ => changedFiredCount++);
+
         // Act
         var endTask = controller.EndDepositAsync(DepositAction.NoChange);
 
@@ -354,11 +341,16 @@ public class DepositControllerMutationTests : DeviceTestBase
         // Assert
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
         controller.IsBusy.ShouldBeFalse();
-        controller.IsPaused.ShouldBeFalse(); // L593 Boolean/Statement mutation 撃破
-        controller.IsFixed.ShouldBeFalse();  // L594 Statement mutation 撃破
+        controller.IsPaused.ShouldBeFalse();
+        controller.IsFixed.ShouldBeFalse();
 
         // エスクローが空になっていること
-        Inventory.EscrowCounts.ShouldBeEmpty(); // L567 Statement mutation 撃破
+        Inventory.EscrowCounts.ShouldBeEmpty();
+
+        // イベントが通知されていること
+        // EndDepositAsync 内で PrepareEndDeposit, PerformDepositAction, FinalizeEndDeposit 
+        // の各フェーズで NotifyChanged が呼ばれるため、複数回発火することを期待
+        changedFiredCount.ShouldBeGreaterThanOrEqualTo(1);
     }
 
     /// <summary>入金データの追跡時に金額が正しく更新され、Changed イベントが発火することを検証します。</summary>
@@ -367,15 +359,15 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         controller.BeginDeposit();
-        var amountSet = false;
-        using var sub = controller.Changed.Subscribe(_ => amountSet = true);
+        int changedFiredCount = 0;
+        using var sub = controller.Changed.Subscribe(_ => changedFiredCount++);
 
         // Act
         controller.TrackDeposit(new DenominationKey(1000m, CurrencyCashType.Bill), 5);
 
         // Assert
         controller.DepositAmount.ShouldBe(5000);
-        amountSet.ShouldBeTrue();
+        changedFiredCount.ShouldBe(1); // 確実に1回飛ぶことを検証
     }
 
     /// <summary>例外発生時にメッセージに期待されるキーワードが含まれていることを検証します。</summary>
@@ -462,31 +454,30 @@ public class DepositControllerMutationTests : DeviceTestBase
         // Arrange
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         var managerMock = new Mock<CashChangerManager>(Inventory, History, ConfigurationProvider);
-        var controller = new DepositController(Inventory, StatusManager, managerMock.Object, ConfigurationProvider, TimeProvider);
+        var targetController = new DepositController(Inventory, StatusManager, managerMock.Object, ConfigurationProvider, TimeProvider);
 
-        controller.BeginDeposit();
+        targetController.BeginDeposit();
 
-        // 5000円投入 (お釣りに使えるエスクロー残高となる)
-        controller.TrackDeposit(new DenominationKey(5000, CurrencyCashType.Bill), 1);
+        // 1000円札 5枚投入 (お釣りに使えるエスクロー残高となる)
+        targetController.TrackDeposit(key, 5);
 
         // 4000円要求 -> お釣り 1000円
-        controller.RequiredAmount = 4000m;
+        targetController.RequiredAmount = 4000m;
 
         // インベントリに 1000円を補充しておく
         Inventory.Add(key, 10);
 
-        controller.FixDeposit();
+        targetController.FixDeposit();
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
         // Assert
-        // お釣りの 1000円は、エスクローにある 5000円から 0枚 引かれる（使えない）ので、
-        // 結局 inventory の 1000円が使われる... と思いきや、Escrowには5000円しかないので 1000円のお釣りは払えない！
-        // なので RemainingChange = 1000 のまま、最終的な Dispense() 判定に到達して Dispense() が呼ばれてしまう。
-        // Wait, ぴったり 0 になるためには、1000円投入して、お釣りにも1000円が必要な状況を作らなければならない。
+        // Escrow にある 5000円札は対象外（1000円が必要）なので、
+        // 最終的にマネージャーの Dispense は呼ばれない（インベントリから払われる）
+        managerMock.Verify(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string?>()), Times.Never);
     }
 
     /// <summary>残りの釣銭額がちょうど 0 に到達し、かつ manager が非 null の場合に manager.Dispense(0) が呼ばれないことを検証します（論理変異対応）。</summary>
@@ -496,24 +487,23 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var key1k = new DenominationKey(1000, CurrencyCashType.Bill);
-        var key5k = new DenominationKey(5000, CurrencyCashType.Bill);
 
         var managerMock = new Mock<CashChangerManager>(Inventory, History, ConfigurationProvider);
-        var controller = new DepositController(Inventory, StatusManager, managerMock.Object, ConfigurationProvider, TimeProvider);
+        var targetController = new DepositController(Inventory, StatusManager, managerMock.Object, ConfigurationProvider, TimeProvider);
 
-        controller.BeginDeposit();
+        targetController.BeginDeposit();
 
         // 1000円札 2枚投入 (Escrow に 1000円 x 2)
-        controller.TrackDeposit(key1k, 2);
+        targetController.TrackDeposit(key1k, 2);
 
         // 要求額 1000円、お釣り 1000円
-        controller.RequiredAmount = 1000m;
+        targetController.RequiredAmount = 1000m;
 
-        controller.FixDeposit();
+        targetController.FixDeposit();
 
         // Act
         // 釣銭計算が走り、Escrow の 1000円札がお釣りに使われるため、RemainingChange は 1000 - 1000 = 0 になる
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -589,25 +579,25 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var mockManager = hasManager ? new Mock<CashChangerManager>(Inventory, History, ConfigurationProvider) : null;
-        var controller = new DepositController(Inventory, StatusManager, mockManager?.Object);
-        controller.BeginDeposit();
+        var depositController = new DepositController(Inventory, StatusManager, mockManager?.Object);
+        depositController.BeginDeposit();
 
         // 投入金額を調整
         if (changeNeeded > 0)
         {
             // 5000円を1枚投入
-            controller.TrackDeposit(new DenominationKey(5000, CurrencyCashType.Bill), 1);
-            controller.RequiredAmount = 5000 - changeNeeded;
+            depositController.TrackDeposit(new DenominationKey(5000, CurrencyCashType.Bill), 1);
+            depositController.RequiredAmount = 5000 - changeNeeded;
         }
         else
         {
-            controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1);
-            controller.RequiredAmount = 1000;
+            depositController.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1);
+            depositController.RequiredAmount = 1000;
         }
 
         // Act
-        controller.FixDeposit();
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        depositController.FixDeposit();
+        var task = depositController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -643,12 +633,12 @@ public class DepositControllerMutationTests : DeviceTestBase
         // Note: Inventory.Add は virtual ではないため Mock できないので、
         // 実際の Inventory クラスを使用して、内部状態が変わっていないことを確認する。
         var inventory = Inventory.Create();
-        var controller = new DepositController(inventory, StatusManager);
-        controller.BeginDeposit();
+        var targetController = new DepositController(inventory, StatusManager);
+        targetController.BeginDeposit();
 
         // Act
-        controller.FixDeposit();
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        targetController.FixDeposit();
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -669,8 +659,12 @@ public class DepositControllerMutationTests : DeviceTestBase
 
         // Case 1: Enabled = false, Disposed = false (Baseline: No fire)
         controller.RealTimeDataEnabled = false;
+        int changedFiredCount = 0;
+        using var subChanged = controller.Changed.Subscribe(_ => changedFiredCount++);
+        
         controller.TrackReject(1000m);
         dataFired.ShouldBeFalse();
+        changedFiredCount.ShouldBe(1); // RealTimeDataEnabled に関係なく Changed は飛ぶはず
 
         // Case 2: Enabled = true, Disposed = true (Baseline: No fire)
         controller.RealTimeDataEnabled = true;
@@ -817,15 +811,15 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         // FakeTimeProvider を使用して実行を決定的にする
-        var controller = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
-        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 5); // 5000円投入
-        controller.RequiredAmount = 1000m; // 4000円お釣りが必要
+        var targetController = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
+        targetController.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 5); // 5000円投入
+        targetController.RequiredAmount = 1000m; // 4000円お釣りが必要
         Inventory.Clear(); // インベントリにお釣りなし
 
         // Act
-        controller.FixDeposit();
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        targetController.FixDeposit();
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -833,7 +827,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         // 変異 (&& -> ||) があると、manager != null が false でも remainingChange > 0 が true なので
         // manager.Dispense(4000) が呼ばれ、NullReferenceException が発生する。
         // その例外は内部で catch され、LastErrorCode が Failure になるため、Successであることを確認して変異対応。
-        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
+        targetController.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
     }
 
     /// <summary>RealTimeDataEnabled が false の場合、TrackDeposit を呼んでも DataEvents が発火しないことを検証します（論理変異の対応）。</summary>
@@ -862,18 +856,18 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 100;
-        var controller = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
-        controller.FixDeposit();
+        var targetController = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
+        targetController.FixDeposit();
 
         int errorCallCount = 0;
-        using var errSub = controller.ErrorEvents.Subscribe(_ => errorCallCount++);
+        using var errSub = targetController.ErrorEvents.Subscribe(_ => errorCallCount++);
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.NoChange);
+        var task = targetController.EndDepositAsync(DepositAction.NoChange);
 
         // Delay 中 (まだタスクは完了していない) に Dispose
-        controller.Dispose();
+        targetController.Dispose();
 
         // 時間を進めて EndDepositAsync の後半を続行させる
         TimeProvider.Advance(TimeSpan.FromMilliseconds(100));
@@ -892,20 +886,20 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 100;
-        var controller = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
-        controller.FixDeposit();
+        var targetController = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
+        targetController.FixDeposit();
 
         int errorCallCount = 0;
-        using var errSub = controller.ErrorEvents.Subscribe(_ => errorCallCount++);
+        using var errSub = targetController.ErrorEvents.Subscribe(_ => errorCallCount++);
 
         // デバイスエラー(Overlapped)をシミュレート
         StatusManager.Input.IsOverlapped.Value = true;
 
-        var task = controller.EndDepositAsync(DepositAction.NoChange);
+        var task = targetController.EndDepositAsync(DepositAction.NoChange);
 
         // Delay 中に Dispose して disposed フラグを立てる
-        controller.Dispose();
+        targetController.Dispose();
         TimeProvider.Advance(TimeSpan.FromMilliseconds(100));
 
         // キャッチされたDeviceExceptionにより ErrorEvents が飛ばないことを確認
@@ -922,19 +916,19 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var mockInventory = new Mock<Inventory>() { CallBase = true };
-        var controller = new DepositController(mockInventory.Object, StatusManager, null, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
+        var targetController = new DepositController(mockInventory.Object, StatusManager, null, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
 
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        controller.TrackDeposit(key, 1);
-        controller.RequiredAmount = 1000m; // 投入額1000円、要求1000円 -> changeAmount = 0
-        controller.FixDeposit();
+        targetController.TrackDeposit(key, 1);
+        targetController.RequiredAmount = 1000m; // 投入額1000円、要求1000円 -> changeAmount = 0
+        targetController.FixDeposit();
 
         // これまでの TrackDeposit 等による AddEscrow 呼び出し履歴をクリア
         mockInventory.Invocations.Clear();
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -950,20 +944,20 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var mockInventory = new Mock<Inventory>() { CallBase = true };
-        var controller = new DepositController(mockInventory.Object, StatusManager, null, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
+        var targetController = new DepositController(mockInventory.Object, StatusManager, null, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
 
         // 5000円札1枚投入、要求額1000円 -> 釣銭4000円
         var key5k = new DenominationKey(5000, CurrencyCashType.Bill);
-        controller.TrackDeposit(key5k, 1);
-        controller.RequiredAmount = 1000m;
-        controller.FixDeposit();
+        targetController.TrackDeposit(key5k, 1);
+        targetController.RequiredAmount = 1000m;
+        targetController.FixDeposit();
 
         // 履歴をクリア
         mockInventory.Invocations.Clear();
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -1088,26 +1082,21 @@ public class DepositControllerMutationTests : DeviceTestBase
     {
         // Arrange
         var mockInventory = new Mock<Inventory>() { CallBase = true };
-        var controller = new DepositController(mockInventory.Object, StatusManager, null, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
+        var targetController = new DepositController(mockInventory.Object, StatusManager, null, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
 
         // 1000円札5枚投入、要求額1000円 -> おつり4000円
         var key1k = new DenominationKey(1000, CurrencyCashType.Bill);
-        controller.TrackDeposit(key1k, 5);
-        controller.RequiredAmount = 1000m;
-        controller.FixDeposit();
-
-        // 期待値: 4000円分が再利用（おつりとして返る）され、1000円分だけが最終的にインベントリに入る。
-        // 在庫の減算処理 (5 - 4 = 1)
+        targetController.TrackDeposit(key1k, 5);
+        targetController.RequiredAmount = 1000m;
+        targetController.FixDeposit();
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
         // Assert
-        // 釣銭有無の論理変異対応
-        // インベントリには 1枚だけ入っているはず
         mockInventory.Object.GetCount(key1k).ShouldBe(1);
     }
 
@@ -1117,20 +1106,18 @@ public class DepositControllerMutationTests : DeviceTestBase
     public async Task EndDepositAsyncChangeWhenManagerIsNullFallback()
     {
         // Arrange
-        // Manager を渡さずに初期化
-        var controller = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
+        var targetController = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        controller.TrackDeposit(key, 2);
-        controller.FixDeposit();
+        targetController.TrackDeposit(key, 2);
+        targetController.FixDeposit();
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.NoChange);
+        var task = targetController.EndDepositAsync(DepositAction.NoChange);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
         // Assert
-        // manager == null ブロック が実行され、Inventory に直接入ることを確認
         Inventory.GetCount(key).ShouldBe(2);
     }
 
@@ -1158,31 +1145,27 @@ public class DepositControllerMutationTests : DeviceTestBase
     public void DisposeCleansUpAllResources()
     {
         // Arrange
-        var controller = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
+        var targetController = new DepositController(Inventory, StatusManager, null, ConfigurationProvider, TimeProvider);
 
         // 動作中のタスクを作るために BeginDeposit -> FixDeposit -> EndDepositAsync
-        controller.BeginDeposit();
-        controller.FixDeposit();
-        _ = controller.EndDepositAsync(DepositAction.NoChange);
+        targetController.BeginDeposit();
+        targetController.FixDeposit();
+        _ = targetController.EndDepositAsync(DepositAction.NoChange);
 
         var trackerField = typeof(DepositController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
-        var trackerObj = trackerField?.GetValue(controller);
+        var trackerObj = trackerField?.GetValue(targetController);
         var ctsField = typeof(DepositTracker).GetField("depositCts", BindingFlags.NonPublic | BindingFlags.Instance);
         var cts = (CancellationTokenSource?)ctsField?.GetValue(trackerObj);
         cts.ShouldNotBeNull();
 
         // Act
-        controller.Dispose();
+        targetController.Dispose();
 
         // Assert
-        // !disposed ガード変異対応のための副作用確認
-        // CTS が破棄されていること
         Should.Throw<ObjectDisposedException>(() => cts.Token);
 
-        // CompositeDisposable に関しては内部状態を覗くのが難しいため、
-        // disposed フラグが true になっていることを確認
         var disposedField = typeof(DepositController).GetField("disposed", BindingFlags.NonPublic | BindingFlags.Instance);
-        ((bool)disposedField!.GetValue(controller)!).ShouldBeTrue();
+        ((bool)disposedField!.GetValue(targetController)!).ShouldBeTrue();
     }
 
     /// <summary>入金額と要求額が同じ（お釣りが0円）の場合に、エスクローが正しくクリアされることを検証します（境界変異撃退）。</summary>
@@ -1191,14 +1174,15 @@ public class DepositControllerMutationTests : DeviceTestBase
     public async Task EndDepositAsyncChangeWithZeroChangeAmount()
     {
         // Arrange
-        controller.BeginDeposit();
+        var targetController = controller; // フィールドのインスタンスをそのまま使うが、名前を target にして他と統一
+        targetController.BeginDeposit();
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
-        controller.TrackDeposit(key, 1);
-        controller.RequiredAmount = 1000m; // 1000 - 1000 = 0
-        controller.FixDeposit();
+        targetController.TrackDeposit(key, 1);
+        targetController.RequiredAmount = 1000m; // 1000 - 1000 = 0
+        targetController.FixDeposit();
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -1220,21 +1204,20 @@ public class DepositControllerMutationTests : DeviceTestBase
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>())).Callback(() => dispenseCalled = true);
 
         // Manager をセットした新しいインスタンスを使用
-        var controller = new DepositController(Inventory, StatusManager, mockManager.Object, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
-        controller.TrackDeposit(key, 2);
-        controller.RequiredAmount = 1000m; // Change = 1000
-        controller.FixDeposit();
+        var targetController = new DepositController(Inventory, StatusManager, mockManager.Object, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
+        targetController.TrackDeposit(key, 2);
+        targetController.RequiredAmount = 1000m; // Change = 1000
+        targetController.FixDeposit();
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
         // Assert
-        // 釣銭計算が完了(remainingChange == 0)し、ループを継続しないことを確認。
         dispenseCalled.ShouldBeFalse();
-        Inventory.GetTotalCount(key).ShouldBe(1); // 1000円追加
+        Inventory.GetTotalCount(key).ShouldBe(1);
     }
 
     /// <summary>エスクロー内の硬貨の額がお釣りよりも大きく、useCount が 0 になるケースを検証します（境界変異撃退）。</summary>
@@ -1243,16 +1226,17 @@ public class DepositControllerMutationTests : DeviceTestBase
     public async Task EndDepositAsyncChangeWhenEscrowIsTooLarge()
     {
         // Arrange
-        controller.BeginDeposit();
+        var targetController = controller;
+        targetController.BeginDeposit();
         var key5k = new DenominationKey(5000, CurrencyCashType.Bill, "JPY");
-        controller.TrackDeposit(key5k, 1);
-        controller.RequiredAmount = 4000m; // Change = 1000 (エスクローは 5000円のみ)
-        controller.FixDeposit();
+        targetController.TrackDeposit(key5k, 1);
+        targetController.RequiredAmount = 4000m; // Change = 1000 (エスクローは 5000円のみ)
+        targetController.FixDeposit();
 
         // Act
         // お釣り用の1000円札を準備
         Inventory.SetCount(new DenominationKey(1000, CurrencyCashType.Bill, "JPY"), 10);
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -1285,13 +1269,14 @@ public class DepositControllerMutationTests : DeviceTestBase
 
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
 
-        // Act
-        try
+        // Act & Assert
+        if (disposeBefore)
+        {
+            Should.Throw<ObjectDisposedException>(() => controller.TrackDeposit(key, 1));
+        }
+        else
         {
             controller.TrackDeposit(key, 1);
-        }
-        catch (ObjectDisposedException)
-        {
         }
 
         // Assert
@@ -1329,14 +1314,14 @@ public class DepositControllerMutationTests : DeviceTestBase
         var mockManager = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), ConfigurationProvider) { CallBase = true };
         mockManager.Setup(m => m.Dispense(It.IsAny<decimal>(), It.IsAny<string>())).Callback(() => dispenseCalled = true);
 
-        var controller = new DepositController(Inventory, StatusManager, mockManager.Object, ConfigurationProvider, TimeProvider);
-        controller.BeginDeposit();
-        controller.TrackDeposit(key, 1);
-        controller.RequiredAmount = 1000m; // Change = 0
-        controller.FixDeposit();
+        var targetController = new DepositController(Inventory, StatusManager, mockManager.Object, ConfigurationProvider, TimeProvider);
+        targetController.BeginDeposit();
+        targetController.TrackDeposit(key, 1);
+        targetController.RequiredAmount = 1000m; // Change = 0
+        targetController.FixDeposit();
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.Change);
+        var task = targetController.EndDepositAsync(DepositAction.Change);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
@@ -1352,18 +1337,19 @@ public class DepositControllerMutationTests : DeviceTestBase
     public async Task EndDepositAsyncWhenOverlappedSetsErrorCode()
     {
         // Arrange
-        controller.BeginDeposit();
-        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1);
-        controller.FixDeposit();
+        var targetController = controller;
+        targetController.BeginDeposit();
+        targetController.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1);
+        targetController.FixDeposit();
         StatusManager.Input.IsOverlapped.Value = true;
 
         // Act
-        var task = controller.EndDepositAsync(DepositAction.NoChange);
+        var task = targetController.EndDepositAsync(DepositAction.NoChange);
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
         await task;
 
         // Assert
-        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
+        targetController.LastErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
     }
 
     /// <summary>オーバーラップ時の入金開始において例外メッセージが正確であることを検証します（文字列変異撃退）。</summary>
@@ -1371,11 +1357,12 @@ public class DepositControllerMutationTests : DeviceTestBase
     public void TrackDepositWhenOverlappedThrowsWithCorrectMessage()
     {
         // Arrange
-        controller.BeginDeposit();
+        var targetController = controller;
+        targetController.BeginDeposit();
         StatusManager.Input.IsOverlapped.Value = true;
 
         // Act & Assert
-        var ex = Should.Throw<DeviceException>(() => controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1));
+        var ex = Should.Throw<DeviceException>(() => targetController.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1));
         ex.Message.ShouldBe("Device has overlapped cash. Cannot track deposit.");
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
     }
