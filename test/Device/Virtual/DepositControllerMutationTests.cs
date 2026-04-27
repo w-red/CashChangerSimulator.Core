@@ -3,7 +3,9 @@ using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Device.Virtual;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using R3;
 using Shouldly;
@@ -1365,5 +1367,96 @@ public class DepositControllerMutationTests : DeviceTestBase
         var ex = Should.Throw<DeviceException>(() => targetController.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1));
         ex.Message.ShouldBe("Device has overlapped cash. Cannot track deposit.");
         ex.ErrorCode.ShouldBe(DeviceErrorCode.Overlapped);
+    }
+
+    /// <summary>FixDeposit が IsFixed を true にし、シリアル番号をコピーすることを検証します (ID 136 撃破)。</summary>
+    [Fact]
+    public void FixDepositSetsIsFixedAndCopiesSerials()
+    {
+        // Arrange
+        controller.BeginDeposit();
+        var stateField = typeof(DepositController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
+        var state = (dynamic)stateField!.GetValue(controller)!;
+        state.DepositedSerials.Add("SN001");
+
+        // Act
+        controller.FixDeposit();
+
+        // Assert
+        controller.IsFixed.ShouldBeTrue();
+        ((IEnumerable<string>)controller.LastDepositedSerials).ShouldContain("SN001");
+    }
+
+    /// <summary>EndDepositAsync(Repay) が実際に金額をリセットすることを検証します (ID 176 撃破)。</summary>
+    /// <returns>タスク。</returns>
+    [Fact]
+    public async Task EndDepositRepayActuallyResetsAmount()
+    {
+        // Arrange
+        controller.BeginDeposit();
+        controller.TrackDeposit(new DenominationKey(1000, CurrencyCashType.Bill), 1);
+        controller.FixDeposit();
+        controller.DepositAmount.ShouldBe(1000m);
+
+        // Act
+        var task = controller.EndDepositAsync(DepositAction.Repay);
+        TimeProvider.Advance(TimeSpan.FromSeconds(2));
+        await task;
+
+        // Assert
+        controller.DepositAmount.ShouldBe(0m);
+        controller.DepositCounts.ShouldBeEmpty();
+    }
+
+    /// <summary>内部で作成された ConfigProvider が破棄されることを検証します (ID 61, 304 撃破)。</summary>
+    [Fact]
+    public void InternalConfigProviderIsDisposedOnControllerDispose()
+    {
+        // Arrange
+        var target = new DepositController(Inventory); // configProvider は内部生成される
+
+        var configField = typeof(DepositController).GetField("configProvider", BindingFlags.NonPublic | BindingFlags.Instance);
+        var configProvider = (ConfigurationProvider)configField!.GetValue(target)!;
+
+        // Act
+        target.Dispose();
+
+        // Assert
+        // ConfigurationProvider が Dispose されているかを確認 (内部フラグ等をチェック)
+        var disposedField = typeof(ConfigurationProvider).GetField("disposed", BindingFlags.NonPublic | BindingFlags.Instance);
+        ((bool)disposedField!.GetValue(configProvider)!).ShouldBeTrue();
+    }
+
+    /// <summary>外部から渡された ConfigProvider が破棄されないことを検証します (ID 61, 304 撃破)。</summary>
+    [Fact]
+    public void ExternalConfigProviderIsNotDisposedOnControllerDispose()
+    {
+        // Arrange
+        using var externalConfig = new ConfigurationProvider();
+        var target = new DepositController(Inventory, configProvider: externalConfig);
+
+        // Act
+        target.Dispose();
+
+        // Assert
+        var disposedField = typeof(ConfigurationProvider).GetField("disposed", BindingFlags.NonPublic | BindingFlags.Instance);
+        ((bool)disposedField!.GetValue(externalConfig)!).ShouldBeFalse();
+    }
+
+    /// <summary>EndDeposit 後にトークンがリセットされ、次の操作が可能であることを検証します (ID 216 撃破)。</summary>
+    /// <returns>タスク。</returns>
+    [Fact]
+    public async Task ResetTokenAllowsSubsequentOperations()
+    {
+        // Arrange
+        controller.BeginDeposit();
+        controller.FixDeposit();
+        var task = controller.EndDepositAsync(DepositAction.NoChange);
+        TimeProvider.Advance(TimeSpan.FromSeconds(2));
+        await task;
+
+        // Act & Assert
+        // トークンがリセットされていれば、次の BeginDeposit が正常に行える
+        Should.NotThrow(controller.BeginDeposit);
     }
 }

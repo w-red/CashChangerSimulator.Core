@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using Shouldly;
 
@@ -146,6 +147,33 @@ public class VirtualCashChangerDeviceTests : DeviceTestBase
             device2.Dispose();
         }
         base.Dispose(disposing);
+    }
+
+    /// <summary>DirectIO を使用して出金口の現金取得とクリアができることを確認します。</summary>
+    [Fact]
+    public async Task DirectIOShouldHandleTakeCashAndGetCounts()
+    {
+        await device1.OpenAsync();
+        await device1.ClaimAsync(TestTimingConstants.ShortDelayMs);
+        await device1.EnableAsync();
+
+        var bill = new DenominationKey(1000, CurrencyCashType.Bill);
+        var counts = new Dictionary<DenominationKey, int> { { bill, 2 } };
+
+        // 1. 出金完了をシミュレートして枚数を追加
+        StatusManager.Input.AddExitPortCounts(ExitPort.Normal, counts);
+
+        // 2. DirectIO (GetExitPortCounts) で枚数取得
+        var resultDict = new Dictionary<DenominationKey, int>();
+        await device1.DirectIOAsync(DirectIOCommands.GetExitPortCounts, (int)ExitPort.Normal, resultDict);
+        resultDict[bill].ShouldBe(2);
+
+        // 3. DirectIO (TakeCash) で現金回収
+        await device1.DirectIOAsync(DirectIOCommands.TakeCash, (int)ExitPort.Normal, null!);
+        
+        // 4. クリアされていることを確認
+        await device1.DirectIOAsync(DirectIOCommands.GetExitPortCounts, (int)ExitPort.Normal, resultDict);
+        resultDict.ShouldBeEmpty();
     }
 }
 

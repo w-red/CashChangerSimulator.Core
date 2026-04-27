@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
@@ -258,5 +258,34 @@ public class DispenseControllerTests : DeviceTestBase
         // Assert
         Inventory.GetCount(key).ShouldBe(9);
         integrationController.Status.ShouldBe(CashDispenseStatus.Idle);
+    }
+
+    /// <summary>出金完了時に出金口の状態が更新されることを検証する。</summary>
+    [Fact]
+    public async Task DispenseCashAsyncShouldUpdateExitPortStatus()
+    {
+        var bill = new DenominationKey(1000, CurrencyCashType.Bill);
+        var counts = new Dictionary<DenominationKey, int> { { bill, 1 } };
+        
+        await controller.DispenseCashAsync(counts, false).ConfigureAwait(false);
+
+        StatusManager.State.IsBillRemainingNormal.CurrentValue.ShouldBeTrue();
+        var exitCounts = StatusManager.State.GetExitPortCounts(ExitPort.Normal);
+        exitCounts[bill].ShouldBe(1);
+    }
+
+    /// <summary>返却処理完了時に回収口の状態が更新されることを検証する。</summary>
+    [Fact]
+    public async Task DispenseCashAsyncShouldUpdateCollectionPortStatusOnRepay()
+    {
+        var bill = new DenominationKey(1000, CurrencyCashType.Bill);
+        var counts = new Dictionary<DenominationKey, int> { { bill, 1 } };
+        
+        // isRepay = true
+        await controller.DispenseCashAsync(counts, true).ConfigureAwait(false);
+
+        StatusManager.State.IsBillRemainingCollection.CurrentValue.ShouldBeTrue();
+        var exitCounts = StatusManager.State.GetExitPortCounts(ExitPort.Collection);
+        exitCounts[bill].ShouldBe(1);
     }
 }
