@@ -60,7 +60,7 @@ public sealed class UposConfigurationManager : IUposConfigurationManager, IDispo
 
     private void UpdateCachedCurrencyList()
     {
-        cachedCurrencyCodeList = configProvider.Config.Inventory.Keys.ToArray();
+        cachedCurrencyCodeList = [.. configProvider.Config.Inventory.Keys];
     }
 
     /// <summary>現在の通貨に対応する現金単位を取得します。</summary>

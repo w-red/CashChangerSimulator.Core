@@ -80,7 +80,7 @@ public class DepositReliabilityTests
         int elapsedMs = 0;
         while (elapsedMs < timeoutMs)
         {
-            dataEvents = changer.EventHistory.OfType<DataEventArgs>().ToList();
+            dataEvents = [.. changer.EventHistory.OfType<DataEventArgs>()];
             if (dataEvents.Count == 1)
                 break;
             await Task.Delay(10, ct);
@@ -129,7 +129,7 @@ public class DepositReliabilityTests
             await changer.EndDepositAsync(DepositAction.Change);
 
             // Assert
-            List<DataEventArgs> dataEvents = changer.EventHistory.OfType<DataEventArgs>().ToList();
+            List<DataEventArgs> dataEvents = [.. changer.EventHistory.OfType<DataEventArgs>()];
             dataEvents.Count.ShouldBe(1, $"Iteration {i}: Expected 1 DataEvent, got {dataEvents.Count}.");
             ((int)changer.DepositStatus).ShouldBe((int)CashDepositStatus.End);
             changer.DepositController.IsFixed.ShouldBeFalse();

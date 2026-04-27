@@ -67,7 +67,7 @@ public class MonitorsProvider : IDisposable
             monitor.Dispose();
         }
 
-        monitors = keys.Select(k => CreateMonitor(config, k)).ToList();
+        monitors = [.. keys.Select(k => CreateMonitor(config, k))];
         ((Subject<Unit>)Changed).OnNext(Unit.Default);
     }
 
