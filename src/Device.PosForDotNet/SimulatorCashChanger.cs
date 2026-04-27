@@ -375,6 +375,16 @@ public class SimulatorCashChanger : CashChangerBasic, IInternalUposEventSink, ID
         return result;
     }
 
+    /// <inheritdoc/>
+    public Task<int> DirectIOAsync(int command, int data, object obj)
+    {
+        return Task.Run(() =>
+        {
+            var result = DirectIO(command, data, obj);
+            return result.Data;
+        });
+    }
+
     // Event Management (Delegated)
     /// <inheritdoc/>
     public void FireEvent(EventArgs e) { if (!IsDisposed) NotifyEvent(e); }

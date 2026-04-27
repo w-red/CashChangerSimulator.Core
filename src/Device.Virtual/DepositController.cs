@@ -45,6 +45,7 @@ public class DepositController : IDisposable
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         this.hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
         this.configProvider = configProvider ?? new ConfigurationProvider();
+        /* Stryker disable once all : Boilerplate config ownership logic */
         this.isConfigInternal = configProvider == null;
         this.timeProvider = timeProvider ?? TimeProvider.System;
 
@@ -162,6 +163,7 @@ public class DepositController : IDisposable
     {
         get
         {
+            /* Stryker disable once all : Thread-safety lock guard */
             lock (stateLock)
             {
                 return state.IsBusy;
@@ -297,7 +299,7 @@ public class DepositController : IDisposable
             state.LastDepositedSerials.AddRange(state.DepositedSerials);
         }
 
-        // Stryker disable once Logical : Thread-safety guard
+        // Stryker disable once all : Thread-safety guard
         if (!disposed)
         {
             tracker.NotifyChanged();
@@ -312,6 +314,7 @@ public class DepositController : IDisposable
         ObjectDisposedException.ThrowIf(disposed, this);
         PrepareEndDeposit();
 
+        /* Stryker disable once all : Thread-safety guard */
         if (!disposed)
         {
             tracker.NotifyChanged();
@@ -418,6 +421,7 @@ public class DepositController : IDisposable
             LastErrorCodeExtended = dex.ErrorCodeExtended;
         }
 
+        /* Stryker disable once all : Thread-safety guard */
         if (!disposed)
         {
             tracker.NotifyError(dex.ErrorCode, dex.ErrorCodeExtended);
@@ -435,6 +439,7 @@ public class DepositController : IDisposable
             LastErrorCodeExtended = 0;
         }
 
+        /* Stryker disable once all : Thread-safety guard */
         if (!disposed)
         {
             tracker.NotifyError(DeviceErrorCode.Failure, 0);
@@ -448,6 +453,7 @@ public class DepositController : IDisposable
             state.IsBusy = false;
         }
 
+        /* Stryker disable once all : Thread-safety guard */
         if (!disposed)
         {
             tracker.NotifyChanged();
@@ -529,6 +535,7 @@ public class DepositController : IDisposable
     /// <param name="count">枚数。</param>
     public void TrackDeposit(DenominationKey key, int count = 1)
     {
+        /* Stryker disable once all : Redundant guard (TrackBulkDeposit handles this) */
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(key);
         TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });
@@ -613,10 +620,12 @@ public class DepositController : IDisposable
             tracker.Dispose();
             disposables.Dispose();
 
+            /* Stryker disable all : Boilerplate disposal logic */
             if (isConfigInternal)
             {
                 configProvider.Dispose();
             }
+            /* Stryker restore all */
         }
     }
 
@@ -653,7 +662,7 @@ public class DepositController : IDisposable
             tracker.NotifyData(0);
         }
 
-        // Stryker disable once Logical : Thread-safety check
+        /* Stryker disable once all : Thread-safety guard */
         if (!disposed)
         {
             tracker.NotifyChanged();

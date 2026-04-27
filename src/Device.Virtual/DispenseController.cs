@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
@@ -152,6 +152,11 @@ public class DispenseController : IDisposable
                 Status = CashDispenseStatus.Idle;
                 state.Reset();
                 manager.Dispense(dispenseCounts);
+
+                // 出金口の状態を更新
+                // isRepay が true の場合は回収口、それ以外は通常口
+                var targetPort = isRepay ? ExitPort.Collection : ExitPort.Normal;
+                hardwareStatusManager.Input.AddExitPortCounts(targetPort, dispenseCounts);
             }
 
             tracker.NotifyComplete();

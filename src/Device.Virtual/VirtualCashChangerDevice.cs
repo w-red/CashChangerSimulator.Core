@@ -1,6 +1,7 @@
-﻿using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Core.Services;
 using PosSharp.Abstractions;
 using CashChangerSimulator.Core.Services.DeviceEventTypes;
@@ -282,7 +283,11 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     public async Task PurgeCashAsync()
     {
         EnsureEnabled();
-        manager.PurgeCash();
+        var counts = manager.PurgeCash();
+
+        // 回収口の状態を更新
+        hardwareStatus.Input.AddExitPortCounts(ExitPort.Collection, counts);
+
         UpdateCompositeStatus();
         await Task.Yield();
     }
@@ -291,6 +296,36 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     public Task<string> CheckHealthAsync(PosSharp.Abstractions.HealthCheckLevel level)
     {
         return Task.FromResult(diagnosticController.GetHealthReport(level));
+    }
+
+    /// <inheritdoc/>
+    public Task<int> DirectIOAsync(int command, int data, object obj)
+    {
+        EnsureEnabled();
+
+        switch (command)
+        {
+            case DirectIOCommands.TakeCash: // TakeCash
+                var port = (ExitPort)data;
+                hardwareStatus.Input.ClearExitPort(port);
+                return Task.FromResult(0);
+
+            case DirectIOCommands.GetExitPortCounts: // GetExitPortCounts
+                var targetPort = (ExitPort)data;
+                var counts = hardwareStatus.State.GetExitPortCounts(targetPort);
+                if (obj is IDictionary<DenominationKey, int> outDict)
+                {
+                    outDict.Clear();
+                    foreach (var kv in counts)
+                    {
+                        outDict.Add(kv.Key, kv.Value);
+                    }
+                }
+                return Task.FromResult(0);
+
+            default:
+                throw new DeviceException($"Unsupported DirectIO command: {command}", DeviceErrorCode.Illegal);
+        }
     }
 
     /// <inheritdoc/>

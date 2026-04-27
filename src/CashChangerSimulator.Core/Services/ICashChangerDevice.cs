@@ -103,4 +103,11 @@ public interface ICashChangerDevice : IDisposable
     /// <param name="level">診断レベル。</param>
     /// <returns>診断結果メッセージ。</returns>
     Task<string> CheckHealthAsync(PosSharp.Abstractions.HealthCheckLevel level);
+
+    /// <summary>ベンダー独自のコマンドを実行します。</summary>
+    /// <param name="command">コマンド番号。</param>
+    /// <param name="data">数値データ。</param>
+    /// <param name="obj">オブジェクトデータ。</param>
+    /// <returns>実行結果の数値データ。</returns>
+    Task<int> DirectIOAsync(int command, int data, object obj);
 }
