@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 
+using System.Threading;
 using R3;
 using ZLogger;
 
@@ -23,8 +24,9 @@ public class Inventory : IReadOnlyInventory, IDisposable
     private readonly CompositeDisposable disposables = [];
     private readonly Lock @lock = new();
 
-    private bool disposed;
-    private bool isForcedDiscrepancy;
+    private int _disposed;
+    private bool IsDisposed => Volatile.Read(ref _disposed) == 1;
+    private int _isForcedDiscrepancy;
 
     /// <inheritdoc/>
     protected Inventory()
@@ -54,16 +56,10 @@ public class Inventory : IReadOnlyInventory, IDisposable
             CheckDisposed();
             lock (@lock)
             {
-                return isForcedDiscrepancy || collectionCassette.HasDiscrepancy() || rejectCassette.HasDiscrepancy();
+                return Volatile.Read(ref _isForcedDiscrepancy) == 1 || collectionCassette.HasDiscrepancy() || rejectCassette.HasDiscrepancy();
             }
         }
-        set
-        {
-            lock (@lock)
-            {
-                isForcedDiscrepancy = value;
-            }
-        }
+        set => Interlocked.Exchange(ref _isForcedDiscrepancy, value ? 1 : 0);
     }
 
     /// <summary>通常庫(リサイクル可能)の全枚数。</summary>
@@ -71,7 +67,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     {
         get
         {
-            ObjectDisposedException.ThrowIf(disposed, this);
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             return recyclableCassette.GetAll();
         }
     }
@@ -81,7 +77,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     {
         get
         {
-            ObjectDisposedException.ThrowIf(disposed, this);
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             return collectionCassette.GetAll();
         }
     }
@@ -91,7 +87,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     {
         get
         {
-            ObjectDisposedException.ThrowIf(disposed, this);
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             return rejectCassette.GetAll();
         }
     }
@@ -101,7 +97,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     {
         get
         {
-            ObjectDisposedException.ThrowIf(disposed, this);
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             return escrowCassette.GetAll();
         }
     }
@@ -119,7 +115,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数(負の値も可)。</param>
     public virtual void Add(DenominationKey key, int count)
     {
-        ObjectDisposedException.ThrowIf(disposed, this);
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         UpdateBucket(recyclableCassette, key, count, "Inventory.Add");
     }
 
@@ -128,7 +124,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">設定する枚数。</param>
     public virtual void SetCount(DenominationKey key, int count)
     {
-        ObjectDisposedException.ThrowIf(disposed, this);
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         ArgumentNullException.ThrowIfNull(key);
         key = NormalizeKey(key);
         if (count < 0)
@@ -146,7 +142,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddCollection(DenominationKey key, int count)
     {
-        ObjectDisposedException.ThrowIf(disposed, this);
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         UpdateBucket(collectionCassette, key, count, "Inventory.AddCollection");
     }
 
@@ -155,7 +151,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddReject(DenominationKey key, int count)
     {
-        ObjectDisposedException.ThrowIf(disposed, this);
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         UpdateBucket(rejectCassette, key, count, "Inventory.AddReject");
     }
 
@@ -164,14 +160,14 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="count">追加する枚数。</param>
     public virtual void AddEscrow(DenominationKey key, int count)
     {
-        ObjectDisposedException.ThrowIf(disposed, this);
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         UpdateBucket(escrowCassette, key, count, "Inventory.AddEscrow");
     }
 
     /// <summary>入金トレイ(エスクロー)をクリアします。</summary>
     public virtual void ClearEscrow()
     {
-        ObjectDisposedException.ThrowIf(disposed, this);
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         var keys = escrowCassette.Clear();
 
         foreach (var key in keys)
@@ -208,7 +204,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <summary>在庫をすべてクリアします。</summary>
     public void Clear()
     {
-        ObjectDisposedException.ThrowIf(disposed, this);
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         recyclableCassette.Clear();
         collectionCassette.Clear();
         rejectCassette.Clear();
@@ -220,7 +216,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <returns>合計金額。</returns>
     public virtual decimal CalculateTotal(string? currencyCode = null)
     {
-        ObjectDisposedException.ThrowIf(disposed, this);
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         return recyclableCassette.CalculateTotal(currencyCode) +
                collectionCassette.CalculateTotal(currencyCode) +
                rejectCassette.CalculateTotal(currencyCode) +
@@ -229,7 +225,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
 
     /// <summary>オブジェクトが破棄されているかどうかを確認します。</summary>
     /// <exception cref="ObjectDisposedException">オブジェクトが破棄されている場合にスローされます。</exception>
-    public void CheckDisposed() => ObjectDisposedException.ThrowIf(disposed, this);
+    public void CheckDisposed() => ObjectDisposedException.ThrowIf(IsDisposed, this);
 
     /// <inheritdoc/>
     public void Dispose()
@@ -242,7 +238,7 @@ public class Inventory : IReadOnlyInventory, IDisposable
     /// <param name="disposing">明示的な破棄かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (disposed)
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
         {
             return;
         }
@@ -251,8 +247,6 @@ public class Inventory : IReadOnlyInventory, IDisposable
         {
             disposables.Dispose();
         }
-
-        disposed = true;
     }
 
     private static DenominationKey NormalizeKey(DenominationKey key) =>

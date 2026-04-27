@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Threading;
 using CashChangerSimulator.Core.Models;
 using PosSharp.Abstractions;
 using R3;
@@ -25,16 +27,16 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     private ReactiveProperty<bool> isBillRemainingCollectionInput = null!;
     private ReactiveProperty<bool> isCoinRemainingCollectionInput = null!;
 
-    private readonly Dictionary<ExitPort, Dictionary<DenominationKey, int>> exitPortInventories = new()
+    private readonly ConcurrentDictionary<ExitPort, ConcurrentDictionary<DenominationKey, int>> exitPortInventories = new()
     {
-        { ExitPort.Normal, [] },
-        { ExitPort.Collection, [] }
+        [ExitPort.Normal] = new(),
+        [ExitPort.Collection] = new()
     };
 
+    private int _disposed;
     private Subject<UposStatusUpdateEventArgs> vendorStatusEvents = null!;
 
     private GlobalLockManager? globalLockManager;
-    private bool isDisposed;
 
     /// <summary><see cref="HardwareStatusManager"/> クラスのインスタンスを生成します。</summary>
     protected HardwareStatusManager()
@@ -99,17 +101,14 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     /// <inheritdoc/>
     public IReadOnlyDictionary<DenominationKey, int> GetExitPortCounts(ExitPort port)
     {
-        lock (exitPortInventories)
-        {
-            return new Dictionary<DenominationKey, int>(exitPortInventories[port]);
-        }
+        return new Dictionary<DenominationKey, int>(exitPortInventories[port]);
     }
 
     /// <inheritdoc/>
     public Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents { get; private set; } = null!;
 
     /// <summary>このインスタンスが破棄されているかどうかを取得します。</summary>
-    public bool IsDisposed => isDisposed;
+    public bool IsDisposed => Volatile.Read(ref _disposed) == 1;
 
     /// <summary>インスタンスを生成します。</summary>
     /// <returns>生成されたインスタンス。</returns>
@@ -123,7 +122,7 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     /// <returns>占有されている場合は true。</returns>
     public bool RefreshClaimedStatus()
     {
-        if (isDisposed)
+        if (IsDisposed)
         {
             return false;
         }
@@ -165,7 +164,7 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     /// <param name="disposing">マネージド・リソースを解放する場合は true。</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (isDisposed)
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
         {
             return;
         }
@@ -175,8 +174,6 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
             disposables.Dispose();
             globalLockManager?.Dispose();
         }
-
-        isDisposed = true;
     }
 
     private void InitializeInputProperties()
@@ -316,37 +313,34 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
 
         public void AddExitPortCounts(ExitPort port, IReadOnlyDictionary<DenominationKey, int> counts)
         {
-            if (owner.isDisposed) return;
+            if (owner.IsDisposed) return;
 
-            lock (owner.exitPortInventories)
+            var inventory = owner.exitPortInventories[port];
+            foreach (var kv in counts)
             {
-                var inventory = owner.exitPortInventories[port];
-                foreach (var kv in counts)
-                {
-                    inventory[kv.Key] = inventory.GetValueOrDefault(kv.Key) + kv.Value;
-                }
+                inventory.AddOrUpdate(kv.Key, kv.Value, (_, current) => current + kv.Value);
+            }
 
-                // 状態更新
-                if (counts.Any(c => c.Key.Type == CurrencyCashType.Bill))
-                {
-                    if (port == ExitPort.Normal) owner.isBillRemainingNormalInput.Value = true;
-                    else owner.isBillRemainingCollectionInput.Value = true;
-                }
-                if (counts.Any(c => c.Key.Type == CurrencyCashType.Coin))
-                {
-                    if (port == ExitPort.Normal) owner.isCoinRemainingNormalInput.Value = true;
-                    else owner.isCoinRemainingCollectionInput.Value = true;
-                }
+            // 状態更新
+            if (counts.Any(c => c.Key.Type == CurrencyCashType.Bill))
+            {
+                if (port == ExitPort.Normal) owner.isBillRemainingNormalInput.Value = true;
+                else owner.isBillRemainingCollectionInput.Value = true;
+            }
+            if (counts.Any(c => c.Key.Type == CurrencyCashType.Coin))
+            {
+                if (port == ExitPort.Normal) owner.isCoinRemainingNormalInput.Value = true;
+                else owner.isCoinRemainingCollectionInput.Value = true;
             }
         }
 
         public void ClearExitPort(ExitPort port)
         {
-            if (owner.isDisposed) return;
+            if (owner.IsDisposed) return;
 
-            lock (owner.exitPortInventories)
+            if (owner.exitPortInventories.TryGetValue(port, out var inventory))
             {
-                owner.exitPortInventories[port].Clear();
+                inventory.Clear();
 
                 if (port == ExitPort.Normal)
                 {

@@ -1,9 +1,10 @@
-﻿using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
+using System.Threading;
 using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -18,9 +19,9 @@ public sealed class StatusCoordinator(
     DispenseController dispenseController) : IDisposable
 {
     private readonly CompositeDisposable disposables = [];
-    private bool disposed;
-    private bool isStarted;
-    private bool wasFixed;
+    private int _disposed;
+    private int _isStarted;
+    private int _wasFixed;
 
     /// <summary>現在のデバイスステータスを取得します。</summary>
     public CashChangerSimulator.Core.Models.CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerStatus.OK;
@@ -31,12 +32,12 @@ public sealed class StatusCoordinator(
     /// <inheritdoc/>
     public void Start()
     {
-        if (disposed || isStarted)
+        if (Volatile.Read(ref _disposed) == 1 || Volatile.Read(ref _isStarted) == 1)
         {
             return;
         }
 
-        isStarted = true;
+        Interlocked.Exchange(ref _isStarted, 1);
 
         InitializeStatus();
 
@@ -71,7 +72,7 @@ public sealed class StatusCoordinator(
 
     private void OnDeviceStatusChanged(CashStatus status)
     {
-        if (disposed) return;
+        if (Volatile.Read(ref _disposed) == 1) return;
 
         var newDeviceStatus = status switch
         {
@@ -109,7 +110,7 @@ public sealed class StatusCoordinator(
 
     private void OnFullStatusChanged(CashStatus status)
     {
-        if (disposed) return;
+        if (Volatile.Read(ref _disposed) == 1) return;
 
         var newFullStatus = status switch
         {
@@ -143,14 +144,14 @@ public sealed class StatusCoordinator(
     {
         disposables.Add(hardwareStatusManager.IsConnected.Skip(1).Subscribe(connected =>
         {
-            if (disposed) return;
+            if (Volatile.Read(ref _disposed) == 1) return;
             var code = connected ? UposCashChangerStatusUpdateCode.Inserted : UposCashChangerStatusUpdateCode.Removed;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
 
         disposables.Add(hardwareStatusManager.IsCollectionBoxRemoved.Skip(1).Subscribe(removed =>
         {
-            if (disposed) return;
+            if (Volatile.Read(ref _disposed) == 1) return;
             var code = removed ? UposCashChangerStatusUpdateCode.Removed : UposCashChangerStatusUpdateCode.Inserted;
             sink.FireEvent(new StatusUpdateEventArgs((int)code));
         }));
@@ -160,7 +161,7 @@ public sealed class StatusCoordinator(
 
     private void OnJammedChanged(bool jammed)
     {
-        if (disposed) return;
+        if (Volatile.Read(ref _disposed) == 1) return;
 
         if (jammed)
         {
@@ -182,7 +183,7 @@ public sealed class StatusCoordinator(
     {
         disposables.Add(depositController.DataEvents.Subscribe(e =>
         {
-            if (disposed || !sink.RealTimeDataEnabled) return;
+            if (Volatile.Read(ref _disposed) == 1 || !sink.RealTimeDataEnabled) return;
             sink.FireEvent(new DataEventArgs(e.Status));
         }));
 
@@ -194,26 +195,26 @@ public sealed class StatusCoordinator(
 
     private void OnDepositStateChanged((bool IsFixed, DeviceDepositStatus DepositStatus, bool IsPaused) state)
     {
-        if (disposed) return;
+        if (Volatile.Read(ref _disposed) == 1) return;
 
         if (state.DepositStatus == DeviceDepositStatus.Start)
         {
-            wasFixed = false;
+            Interlocked.Exchange(ref _wasFixed, 0);
             return;
         }
 
         bool eligibleForDataEvent = (state.DepositStatus == DeviceDepositStatus.Counting || state.DepositStatus == DeviceDepositStatus.Validation)
             && !state.IsPaused && sink.DataEventEnabled;
 
-        if (eligibleForDataEvent && !sink.RealTimeDataEnabled && state.IsFixed && !wasFixed)
+        if (eligibleForDataEvent && !sink.RealTimeDataEnabled && state.IsFixed && Volatile.Read(ref _wasFixed) == 0)
         {
-            wasFixed = true;
+            Interlocked.Exchange(ref _wasFixed, 1);
             sink.FireEvent(new DataEventArgs(0));
         }
 
         if (state.DepositStatus == DeviceDepositStatus.End || state.DepositStatus == DeviceDepositStatus.None)
         {
-            wasFixed = false;
+            Interlocked.Exchange(ref _wasFixed, 0);
         }
     }
 
@@ -229,7 +230,7 @@ public sealed class StatusCoordinator(
 
     private void OnDispenseBusyChanged((bool Previous, bool Current) x)
     {
-        if (disposed) return;
+        if (Volatile.Read(ref _disposed) == 1) return;
 
         sink.SetAsyncProcessing(x.Current);
 
@@ -249,12 +250,11 @@ public sealed class StatusCoordinator(
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (disposed)
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
         {
             return;
         }
 
-        disposed = true;
         disposables.Dispose();
         GC.SuppressFinalize(this);
     }

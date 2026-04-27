@@ -106,11 +106,13 @@ public class UposMediator : IUposMediator
         }
         set
         {
+            bool changed = false;
             lock (stateLock)
             {
+                if (field == value) return;
                 field = value;
-                isBusyProperty.Value = value;
-                if (field)
+                changed = true;
+                if (value)
                 {
                     ResultCode = (int)ErrorCode.Busy;
                 }
@@ -121,7 +123,11 @@ public class UposMediator : IUposMediator
                 }
             }
 
-            sink?.SetAsyncProcessing(value);
+            if (changed)
+            {
+                isBusyProperty.Value = value;
+                sink?.SetAsyncProcessing(value);
+            }
         }
     }
 
