@@ -5,7 +5,10 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>在庫読み取り操作をカプセル化するコマンド。</summary>
-public class ReadCashCountsCommand(Inventory inventory, string currencyCode, decimal currencyFactor) : IUposCommand
+public class ReadCashCountsCommand(
+    Inventory inventory,
+    string currencyCode,
+    decimal currencyFactor) : IUposCommand
 {
     private readonly Inventory inventory = inventory;
     private readonly string currencyCode = currencyCode;

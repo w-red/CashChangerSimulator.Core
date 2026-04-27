@@ -9,7 +9,9 @@ namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 /// <summary>投入終了操作をカプセル化するコマンド。</summary>
 /// <param name="controller">入金制御を司るコントローラー。</param>
 /// <param name="action">終了時のアクション。</param>
-public class EndDepositCommand(DepositController controller, CashDepositAction action) : IUposCommand
+public class EndDepositCommand(
+    DepositController controller,
+    CashDepositAction action) : IUposCommand
 {
     /// <inheritdoc/>
     public void Execute()

@@ -4,7 +4,8 @@ namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>統計情報リセット操作をカプセル化するコマンド。</summary>
 /// <param name="statistics">リセット対象の統計情報名の配列。</param>
-public class ResetStatisticsCommand(string[] statistics) : IUposCommand
+public class ResetStatisticsCommand(
+    string[] statistics) : IUposCommand
 {
     /// <inheritdoc/>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();

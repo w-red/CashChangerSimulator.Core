@@ -3,7 +3,8 @@ using CashChangerSimulator.Device.PosForDotNet.Coordination;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>在庫回収操作をカプセル化するコマンド。</summary>
-public class PurgeCashCommand(CashChangerManager manager) : IUposCommand
+public class PurgeCashCommand(
+    CashChangerManager manager) : IUposCommand
 {
     private readonly CashChangerManager manager = manager;
 

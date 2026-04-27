@@ -6,7 +6,9 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>投入一時停止操作をカプセル化するコマンド。</summary>
-public class PauseDepositCommand(DepositController controller, CashDepositPause pause) : IUposCommand
+public class PauseDepositCommand(
+    DepositController controller,
+    CashDepositPause pause) : IUposCommand
 {
     private readonly DepositController controller = controller;
     private readonly CashDepositPause pause = pause;

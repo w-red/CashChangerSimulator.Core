@@ -3,7 +3,8 @@ using CashChangerSimulator.Device.Virtual;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>投入確定操作をカプセル化するコマンド。</summary>
-public class FixDepositCommand(DepositController controller) : IUposCommand
+public class FixDepositCommand(
+    DepositController controller) : IUposCommand
 {
     /// <summary>投入確定操作を実行します。</summary>
     /// <remarks>
