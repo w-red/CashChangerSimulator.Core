@@ -6,7 +6,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 public interface IScriptCommandHandler
 {
     /// <summary>対応するコマンド名(大文字)。</summary>
-    string OpName { get; }
+    ScriptCommandType OpName { get; }
 
     /// <summary>コマンドを実行します。</summary>
     /// <param name="cmd">コマンド。</param>

@@ -29,7 +29,7 @@ public class ScriptExecutionService(
     private readonly ILogger<ScriptExecutionService>? logger =
         LogProvider.CreateLogger<ScriptExecutionService>();
 
-    private readonly Dictionary<string, IScriptCommandHandler> handlers =
+    private readonly Dictionary<ScriptCommandType, IScriptCommandHandler> handlers =
         InitializeHandlers(
             depositController,
             dispenseController,
@@ -140,7 +140,7 @@ public class ScriptExecutionService(
         }
     }
 
-    private static Dictionary<string, IScriptCommandHandler> InitializeHandlers(
+    private static Dictionary<ScriptCommandType, IScriptCommandHandler> InitializeHandlers(
         DepositController depositController,
         DispenseController dispenseController,
         Inventory inventory,
@@ -159,6 +159,7 @@ public class ScriptExecutionService(
             new EndDepositCommandHandler(depositController),
             new DispenseCommandHandler(dispenseController),
             new DelayCommandHandler(timeProvider),
+            new EnableCommandHandler(hardwareStatusManager),
         };
         return handlers.ToDictionary(h => h.OpName, h => h);
     }
@@ -178,12 +179,11 @@ public class ScriptExecutionService(
 
         logger?.ZLogDebug($"Executing command: {cmd.Op}");
 
+        var commandType = ScriptCommandType.FromString(cmd.Op);
         onProgress?.Invoke(cmd.Op);
 
-        var opName = cmd.Op.ToUpperInvariant().Replace("-", string.Empty, StringComparison.Ordinal);
-
         // Special case: repeat needs access to ExecuteCommandsInternalAsync
-        if (opName == "REPEAT" && cmd.Commands != null)
+        if (commandType == ScriptCommandType.Repeat && cmd.Commands != null)
         {
             var iterations = cmd.Count != null ? ResolveValue(cmd.Count, context) : 0;
             logger?.ZLogInformation($"Starting repeat loop: {iterations} times.");
@@ -198,8 +198,7 @@ public class ScriptExecutionService(
             return;
         }
 
-        // identifiers などの正規化は ToUpperInvariant が推奨される (CA1308)
-        if (handlers.TryGetValue(opName, out var handler))
+        if (handlers.TryGetValue(commandType, out var handler))
         {
             // Use explicit cast and NullLogger to avoid CS0019
             await handler.ExecuteAsync(cmd, context, (ILogger?)logger ?? NullLogger.Instance, onProgress).ConfigureAwait(false);

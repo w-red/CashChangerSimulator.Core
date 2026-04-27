@@ -8,7 +8,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 public class EndDepositCommandHandler(DepositController depositController) : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
-    public string OpName => "ENDDEPOSIT";
+    public ScriptCommandType OpName => ScriptCommandType.EndDeposit;
 
     /// <summary>スクリプトコマンドを実行します。</summary>
     /// <param name="cmd">コマンド。</param>

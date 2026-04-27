@@ -8,7 +8,7 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 public class AssertCommandHandler(Inventory inventory) : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
-    public string OpName => "ASSERT";
+    public ScriptCommandType OpName => ScriptCommandType.Assert;
 
     /// <summary>スクリプトコマンドを実行します。</summary>
     /// <param name="cmd">コマンド。</param>
