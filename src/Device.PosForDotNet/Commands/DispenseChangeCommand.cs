@@ -9,34 +9,14 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>出金確定操作をカプセル化するコマンド。</summary>
-public class DispenseChangeCommand : IUposCommand
+public class DispenseChangeCommand(
+    DispenseController controller,
+    HardwareStatusManager hardwareStatusManager,
+    DepositController depositController,
+    decimal amount,
+    bool isAsync) : IUposCommand
 {
-    private readonly DispenseController controller;
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly DepositController depositController;
-    private readonly decimal amount;
-    private readonly bool isAsync;
     private IUposMediator? mediator;
-
-    /// <summary>Initializes a new instance of the <see cref="DispenseChangeCommand"/> class.金額指定出金コマンドのインスタンスを初期化します。</summary>
-    /// <param name="controller">出金制御を司るコントローラー。</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態を管理するマネージャー。</param>
-    /// <param name="depositController">入金状態を確認するためのコントローラー。</param>
-    /// <param name="amount">出金する金額。</param>
-    /// <param name="asyncMode">非同期実行するかどうか。</param>
-    public DispenseChangeCommand(
-        DispenseController controller,
-        HardwareStatusManager hardwareStatusManager,
-        DepositController depositController,
-        decimal amount,
-        bool asyncMode)
-    {
-        this.controller = controller;
-        this.hardwareStatusManager = hardwareStatusManager;
-        this.depositController = depositController;
-        this.amount = amount;
-        isAsync = asyncMode;
-    }
 
     /// <summary>金額指定出金操作を実行します。</summary>
     public void Execute()

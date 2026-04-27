@@ -9,38 +9,15 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>金種指定出金操作をカプセル化するコマンド。</summary>
-public class DispenseCashCommand : IUposCommand
+public class DispenseCashCommand(
+    DispenseController controller,
+    Inventory inventory,
+    HardwareStatusManager hardwareStatusManager,
+    DepositController depositController,
+    IReadOnlyDictionary<DenominationKey, int> counts,
+    bool isAsync) : IUposCommand
 {
-    private readonly DispenseController controller;
-    private readonly Inventory inventory;
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly DepositController depositController;
-    private readonly IReadOnlyDictionary<DenominationKey, int> counts;
-    private readonly bool isAsync;
     private IUposMediator? mediator;
-
-    /// <summary>Initializes a new instance of the <see cref="DispenseCashCommand"/> class.金種指定出金コマンドのインスタンスを初期化します。</summary>
-    /// <param name="controller">出金制御を司るコントローラー。</param>
-    /// <param name="inventory">在庫情報を管理するインベントリ。</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態を管理するマネージャー。</param>
-    /// <param name="depositController">入金状態を確認するためのコントローラー。</param>
-    /// <param name="counts">出金する金種と枚数のセット。</param>
-    /// <param name="isAsync">非同期実行するかどうか。</param>
-    public DispenseCashCommand(
-        DispenseController controller,
-        Inventory inventory,
-        HardwareStatusManager hardwareStatusManager,
-        DepositController depositController,
-        IReadOnlyDictionary<DenominationKey, int> counts,
-        bool isAsync)
-    {
-        this.controller = controller;
-        this.inventory = inventory;
-        this.hardwareStatusManager = hardwareStatusManager;
-        this.depositController = depositController;
-        this.counts = counts;
-        this.isAsync = isAsync;
-    }
 
     /// <summary>金種指定出金操作を実行します。</summary>
     public void Execute()
