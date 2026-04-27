@@ -1,17 +1,14 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
-using PosSharp.Abstractions;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
-/// <summary>
-/// UPOS デバイスの標準的なライフサイクル(Open, Close, Claim, Release)を制御するハンドラー。
-/// </summary>
+/// <summary>UPOS デバイスの標準的なライフサイクル(Open, Close, Claim, Release)を制御するハンドラー。</summary>
 public class StandardLifecycleHandler(
     HardwareStatusManager hardware,
     IUposMediator mediator,
@@ -23,9 +20,9 @@ public class StandardLifecycleHandler(
     {
         get
         {
-            if (hardware.IsDisposed || !hardware.IsConnected.CurrentValue) return Microsoft.PointOfService.ControlState.Closed;
-            if (mediator.IsBusy) return Microsoft.PointOfService.ControlState.Busy;
-            return Microsoft.PointOfService.ControlState.Idle;
+            if (hardware.IsDisposed || !hardware.IsConnected.CurrentValue) return ControlState.Closed;
+            if (mediator.IsBusy) return ControlState.Busy;
+            return ControlState.Idle;
         }
     }
 
@@ -40,7 +37,7 @@ public class StandardLifecycleHandler(
         {
             if (value)
             {
-                if (State == Microsoft.PointOfService.ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
+                if (State == ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
                 hardware.RefreshClaimedStatus();
                 mediator.ClaimedByAnother = hardware.IsClaimedByAnother.CurrentValue;
                 if (mediator.ClaimedByAnother) throw new PosControlException("Device is claimed by another application.", ErrorCode.Claimed);
@@ -64,7 +61,7 @@ public class StandardLifecycleHandler(
     public void Open(Action baseOpen)
     {
         ArgumentNullException.ThrowIfNull(baseOpen);
-        if (State != Microsoft.PointOfService.ControlState.Closed)
+        if (State != ControlState.Closed)
         {
             mediator.SetSuccess();
             return;
@@ -79,7 +76,7 @@ public class StandardLifecycleHandler(
     public void Close(Action baseClose)
     {
         ArgumentNullException.ThrowIfNull(baseClose);
-        if (State == Microsoft.PointOfService.ControlState.Closed)
+        if (State == ControlState.Closed)
         {
             mediator.SetSuccess();
             return;
@@ -101,7 +98,7 @@ public class StandardLifecycleHandler(
     public void Claim(int timeout, Action<int> baseClaim)
     {
         ArgumentNullException.ThrowIfNull(baseClaim);
-        if (State == Microsoft.PointOfService.ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
+        if (State == ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
         if (Claimed) { mediator.SetSuccess(); return; }
         try
         {
@@ -127,7 +124,7 @@ public class StandardLifecycleHandler(
     public void Release(Action baseRelease)
     {
         ArgumentNullException.ThrowIfNull(baseRelease);
-        if (State == Microsoft.PointOfService.ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
+        if (State == ControlState.Closed) throw new PosControlException("Device is closed.", ErrorCode.Closed);
         if (!Claimed) { mediator.SetSuccess(); return; }
         try { baseRelease(); } catch (Exception ex) { logger?.LogWarning(ex, "Release() failed."); }
         mediator.Claimed = false;

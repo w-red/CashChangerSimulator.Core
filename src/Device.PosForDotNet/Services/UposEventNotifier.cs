@@ -42,29 +42,26 @@ public class UposEventNotifier : IUposEventNotifier
         if (e is StatusUpdateEventArgs statusArgs)
         {
             // [FIX] Specific queueing for StatusUpdateEventArgs (required by coordinator/notifier tests)
-            // [修正] コーディネーター/通知テストで必要な StatusUpdateEventArgs 用の特定のキューイング
-            if (sink != null)
-            {
-                sink.QueueStatusUpdateEvent(statusArgs);
-            }
+            sink?.QueueStatusUpdateEvent(statusArgs);
         }
         else if (e is DataEventArgs dataArgs)
         {
             // [FIX] Specific queueing for DataEventArgs with filtering
             // [修正] フィルタリング付きの DataEventArgs 用の特定のキューイング
-            if (DataEventEnabled && CapDepositDataEvent && sink != null)
+            if (DataEventEnabled && CapDepositDataEvent)
             {
-                sink.QueueDataEvent(dataArgs);
+                sink?.QueueDataEvent(dataArgs);
             }
         }
-        else if (sink != null)
+        else
         {
-            sink.QueueEvent(e);
+            sink?.QueueEvent(e);
         }
     }
 
     /// <inheritdoc/>
-    public bool CapDepositDataEvent => sink?.CapDepositDataEvent ?? false;
+    public bool CapDepositDataEvent =>
+        sink?.CapDepositDataEvent ?? false;
 
     /// <inheritdoc/>
     public void SetAsyncProcessing(bool isBusy)
@@ -73,7 +70,8 @@ public class UposEventNotifier : IUposEventNotifier
     }
 
     /// <inheritdoc/>
-    public ControlState State => sink?.State ?? ControlState.Closed;
+    public ControlState State =>
+        sink?.State ?? ControlState.Closed;
 
     /// <inheritdoc/>
     public bool DeviceEnabled

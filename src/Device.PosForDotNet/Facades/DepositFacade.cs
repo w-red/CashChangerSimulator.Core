@@ -10,9 +10,7 @@ namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 /// <param name="depositController">入金処理を制御する <see cref="DepositController"/>。</param>
 /// <param name="mediator">コマンド実行を仲介する <see cref="IUposMediator"/>。</param>
 /// <param name="diagnosticController">診断情報(統計など)を管理するコントローラー。</param>
-/// <remarks>
-/// 入金処理のすべての操作、および <see cref="SimulatorCashChanger"/> から呼び出されるコマンドの実行を集約します。
-/// </remarks>
+/// <remarks>入金処理のすべての操作、および <see cref="SimulatorCashChanger"/> から呼び出されるコマンドの実行を集約します。</remarks>
 public class DepositFacade(
     DepositController depositController,
     IUposMediator mediator,

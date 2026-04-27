@@ -66,7 +66,7 @@ public static class UposCurrencyHelper
 
         // Find match by value
         var key = availableKeys.FirstOrDefault(k => k.Value == c.Denomination);
-        var type = key?.Type == CurrencyCashType.Bill ? Microsoft.PointOfService.CashCountType.Bill : Microsoft.PointOfService.CashCountType.Coin;
+        var type = key?.Type == CurrencyCashType.Bill ? CashCountType.Bill : CashCountType.Coin;
 
         return new CashCount(type, (int)c.Denomination, c.Count);
     }

@@ -20,7 +20,6 @@ public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulat
     {
         // [FIX] Pre-create LocalSettings directory in a static constructor to avoid race conditions
         // during high-concurrency test initialization.
-        // [修正] 高並列なテスト初期化時の競合を避けるため、静的コンストラクタで LocalSettings ディレクトリを事前作成します。
         var settingsDir = Path.Combine(AppContext.BaseDirectory, "LocalSettings");
         if (!Directory.Exists(settingsDir))
         {

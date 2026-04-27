@@ -6,9 +6,7 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 
 /// <summary>サービスオブジェクトの各コンポーネント間の通信を仲介するインターフェース。</summary>
-/// <remarks>
-/// Mediator パターンを定義し、デバイスの状態検証、結果設定、およびコマンドの実行を一貫したインターフェースで提供します。
-/// </remarks>
+/// <remarks>Mediator パターンを定義し、デバイスの状態検証、結果設定、およびコマンドの実行を一貫したインターフェースで提供します。</remarks>
 public interface IUposMediator
 {
     /// <summary>メディエータを初期化します。</summary>

@@ -46,7 +46,9 @@ public partial record DenominationKey(
             return true;
         }
 
-        return Value == other.Value && Type == other.Type && CurrencyCode == other.CurrencyCode;
+        return Value == other.Value
+            && Type == other.Type
+            && CurrencyCode == other.CurrencyCode;
     }
 
     /// <summary>額面を正規化したハッシュ値を取得します。</summary>
@@ -64,7 +66,8 @@ public partial record DenominationKey(
 
     /// <summary>設定ファイル等で使用する文字列形式を取得します(例: "B1000", "C500", "C0.25")。</summary>
     /// <returns>文字列形式の金種。</returns>
-    public string ToDenominationString() => $"{PrefixChar}{Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+    public string ToDenominationString() =>
+        $"{PrefixChar}{Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
     /// <summary>文字列形式から金種キーを解析します。</summary>
     /// <param name="s">解析対象の文字列。</param>
