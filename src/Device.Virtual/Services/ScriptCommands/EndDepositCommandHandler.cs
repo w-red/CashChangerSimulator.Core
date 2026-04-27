@@ -22,14 +22,7 @@ public class EndDepositCommandHandler(DepositController depositController) : ISc
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var action = cmd.Action?.ToUpperInvariant() switch
-        {
-            "REPAY" => DepositAction.Repay,
-            "CHANGE" => DepositAction.Change,
-            "NOCHANGE" => DepositAction.NoChange,
-            "STORE" => DepositAction.NoChange,
-            _ => DepositAction.NoChange
-        };
+        var action = ScriptCommandType.ToDepositAction(cmd.Action);
         logger?.ZLogDebug($"EndDeposit Action: {action}");
 
         await depositController.EndDepositAsync(action).ConfigureAwait(false);

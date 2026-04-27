@@ -22,11 +22,10 @@ public class TrackDepositCommandHandler(DepositController depositController, Tim
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var isCoin = string.Equals(cmd.Type, "coin", StringComparison.OrdinalIgnoreCase);
-        var type = isCoin ? CurrencyCashType.Coin : CurrencyCashType.Bill;
+        var cashType = ScriptCommandType.ToCurrencyCashType(cmd.Type);
         var value = ScriptExecutionService.ResolveValue(cmd.Value, context);
         var count = cmd.Count != null ? ScriptExecutionService.ResolveValue(cmd.Count, context) : 1;
-        var key = new DenominationKey(value, type, cmd.Currency ?? "JPY");
+        var key = new DenominationKey(value, cashType, cmd.Currency ?? "JPY");
         logger?.ZLogDebug($"TrackDeposit: {key} (Count: {count})");
 
         depositController.TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });

@@ -71,4 +71,29 @@ public sealed record ScriptCommandType
             _ => new ScriptCommandType(normalized)
         };
     }
+
+    /// <summary>文字列から CurrencyCashType を取得します。</summary>
+    /// <param name="type">種別文字列。</param>
+    /// <returns>対応する CurrencyCashType。</returns>
+    public static Core.Models.CurrencyCashType ToCurrencyCashType(string? type)
+    {
+        return string.Equals(type, "coin", StringComparison.OrdinalIgnoreCase)
+            ? Core.Models.CurrencyCashType.Coin
+            : Core.Models.CurrencyCashType.Bill;
+    }
+
+    /// <summary>文字列から DepositAction を取得します。</summary>
+    /// <param name="action">アクション文字列。</param>
+    /// <returns>対応する DepositAction。</returns>
+    public static Core.Models.DepositAction ToDepositAction(string? action)
+    {
+        return (action?.ToUpperInvariant()) switch
+        {
+            "REPAY" => Core.Models.DepositAction.Repay,
+            "CHANGE" => Core.Models.DepositAction.Change,
+            "NOCHANGE" => Core.Models.DepositAction.NoChange,
+            "STORE" => Core.Models.DepositAction.NoChange,
+            _ => Core.Models.DepositAction.NoChange
+        };
+    }
 }

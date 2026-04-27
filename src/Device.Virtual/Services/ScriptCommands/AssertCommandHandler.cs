@@ -22,15 +22,15 @@ public class AssertCommandHandler(Inventory inventory) : IScriptCommandHandler
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var target = cmd.Target?.ToUpperInvariant();
+        var target = ScriptTargetType.FromString(cmd.Target);
         var expected = ScriptExecutionService.ResolveValue(cmd.Value, context);
         logger?.ZLogInformation($"Asserting {target} == {expected}");
 
-        if (target == "INVENTORY")
+        if (target == ScriptTargetType.Inventory)
         {
             var denomValue = ScriptExecutionService.ResolveValue(cmd.Denom ?? 0, context);
-            var isCoin = string.Equals(cmd.Type, "coin", StringComparison.OrdinalIgnoreCase);
-            var key = new DenominationKey(denomValue, isCoin ? CurrencyCashType.Coin : CurrencyCashType.Bill, cmd.Currency ?? "JPY");
+            var cashType = ScriptCommandType.ToCurrencyCashType(cmd.Type);
+            var key = new DenominationKey(denomValue, cashType, cmd.Currency ?? "JPY");
             var count = inventory.GetCount(key);
             if (count != expected)
             {

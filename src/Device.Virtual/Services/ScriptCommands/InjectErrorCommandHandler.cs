@@ -26,44 +26,45 @@ public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManag
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var errorType = cmd.Error?.ToUpperInvariant();
+        var errorType = ScriptErrorType.FromString(cmd.Error);
         logger?.ZLogInformation($"Injecting error: {errorType}");
 
-        switch (errorType)
+        if (errorType == ScriptErrorType.Jam)
         {
-            case "JAM":
-                var location = JamLocation.None;
-                if (!string.IsNullOrEmpty(cmd.Location))
-                {
-                    Enum.TryParse(cmd.Location, true, out location);
-                }
+            var location = JamLocation.None;
+            if (!string.IsNullOrEmpty(cmd.Location))
+            {
+                Enum.TryParse(cmd.Location, true, out location);
+            }
 
-                if (!hardwareStatusManager.IsConnected.CurrentValue)
-                {
-                    throw new DeviceException("Device is not connected.", DeviceErrorCode.Failure);
-                }
+            if (!hardwareStatusManager.IsConnected.CurrentValue)
+            {
+                throw new DeviceException("Device is not connected.", DeviceErrorCode.Failure);
+            }
 
-                hardwareStatusManager.Input.IsJammed.Value = true;
-                hardwareStatusManager.Input.CurrentJamLocation.Value = location;
-                break;
-            case "OVERLAP":
-                hardwareStatusManager.Input.IsOverlapped.Value = true;
-                break;
-            case "DEVICE":
-                var code = cmd.ErrorCode != null ? ScriptExecutionService.ResolveValue(cmd.ErrorCode, context) : 0;
-                var extended = cmd.ErrorCodeExtended != null ? ScriptExecutionService.ResolveValue(cmd.ErrorCodeExtended, context) : 0;
-                hardwareStatusManager.Input.CurrentErrorCode.Value = code;
-                hardwareStatusManager.Input.CurrentErrorCodeExtended.Value = extended;
-                hardwareStatusManager.Input.IsDeviceError.Value = true;
-                break;
-            case "NONE":
-            case "RESET":
-                hardwareStatusManager.Input.ResetTrigger.OnNext(Unit.Default);
-                break;
-            default:
-                hardwareStatusManager.Input.IsJammed.Value = false;
-                hardwareStatusManager.Input.IsOverlapped.Value = false;
-                break;
+            hardwareStatusManager.Input.IsJammed.Value = true;
+            hardwareStatusManager.Input.CurrentJamLocation.Value = location;
+        }
+        else if (errorType == ScriptErrorType.Overlap)
+        {
+            hardwareStatusManager.Input.IsOverlapped.Value = true;
+        }
+        else if (errorType == ScriptErrorType.Device)
+        {
+            var code = cmd.ErrorCode != null ? ScriptExecutionService.ResolveValue(cmd.ErrorCode, context) : 0;
+            var extended = cmd.ErrorCodeExtended != null ? ScriptExecutionService.ResolveValue(cmd.ErrorCodeExtended, context) : 0;
+            hardwareStatusManager.Input.CurrentErrorCode.Value = code;
+            hardwareStatusManager.Input.CurrentErrorCodeExtended.Value = extended;
+            hardwareStatusManager.Input.IsDeviceError.Value = true;
+        }
+        else if (errorType == ScriptErrorType.None || errorType == ScriptErrorType.Reset)
+        {
+            hardwareStatusManager.Input.ResetTrigger.OnNext(Unit.Default);
+        }
+        else
+        {
+            hardwareStatusManager.Input.IsJammed.Value = false;
+            hardwareStatusManager.Input.IsOverlapped.Value = false;
         }
 
         return Task.CompletedTask;
