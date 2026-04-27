@@ -1,27 +1,27 @@
-﻿namespace CashChangerSimulator.Core.Models;
+namespace CashChangerSimulator.Core.Models;
 
-/// <summary>驥｣驫ｭ讖溘・蝨ｨ蠎ｫ荳崎ｶｳ迥ｶ諷九ｒ陦ｨ縺吝・謖吝梛縲・/summary></summary>
+/// <summary>釣銭機の在庫不足状態を表す列挙型。</summary>
 public enum CashChangerStatus
 {
-    /// <summary>豁｣蟶ｸ縲・/summary></summary>
+    /// <summary>正常。</summary>
     OK = 0,
 
-    /// <summary>遨ｺ縺ｮ迥ｶ諷九・/summary></summary>
+    /// <summary>空の状態。</summary>
     Empty = 11,
 
-    /// <summary>遨ｺ縺ｫ霑代＞迥ｶ諷九・/summary></summary>
+    /// <summary>空に近い状態。</summary>
     NearEmpty = 12,
 }
 
-/// <summary>驥｣驫ｭ讖溘・貅譚ｯ迥ｶ諷九ｒ陦ｨ縺吝・謖吝梛縲・/summary></summary>
+/// <summary>釣銭機の満杯状態を表す列挙型。</summary>
 public enum CashChangerFullStatus
 {
-    /// <summary>豁｣蟶ｸ縲・/summary></summary>
+    /// <summary>正常。</summary>
     OK = 0,
 
-    /// <summary>貅譚ｯ縺ｮ迥ｶ諷九・/summary></summary>
+    /// <summary>満杯の状態。</summary>
     Full = 21,
 
-    /// <summary>貅譚ｯ縺ｫ霑代＞迥ｶ諷九・/summary></summary>
+    /// <summary>満杯に近い状態。</summary>
     NearFull = 22,
 }
