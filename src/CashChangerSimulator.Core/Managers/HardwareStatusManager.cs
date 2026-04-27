@@ -258,7 +258,7 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     {
         StatusUpdateEvents = Observable.Merge(
             IsConnected.Select(c => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
-            IsJammed.Select(j => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(j ? DeviceStatus.JournalEmpty : DeviceStatus.JournalOk))),
+            IsJammed.Select(j => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(j ? DeviceStatus.Jam : DeviceStatus.Ok))),
             SetupExitPortEvents(),
             vendorStatusEvents);
     }
