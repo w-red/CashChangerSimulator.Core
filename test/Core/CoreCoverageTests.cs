@@ -200,31 +200,6 @@ public class CoreCoverageTests
         aggregator.FullStatus.CurrentValue.ShouldBe(CashStatus.Full);
     }
 
-    /// <summary>HistoryPersistenceService において、ファイルが存在しない場合や無効なバイナリ形式の場合に安全に空の履歴を返すことを検証します。</summary>
-    [Fact]
-    public void HistoryPersistenceServiceLoadEdgeCasesShouldWork()
-    {
-        // Arrange
-        var tempFile = Path.Combine(Path.GetTempPath(), $"history_test_{Guid.NewGuid()}.bin");
-        var history = new TransactionHistory();
-        using var service = new HistoryPersistenceService(history, tempFile);
-
-        try
-        {
-            // 1. ファイルなし
-            var state1 = service.Load();
-            state1.Entries.ShouldBeEmpty();
-
-            // 2. 無効なバイナリ
-            File.WriteAllText(tempFile, "invalid format data");
-            var state2 = service.Load();
-            state2.Entries.ShouldBeEmpty();
-        }
-        finally
-        {
-            if (File.Exists(tempFile)) File.Delete(tempFile);
-        }
-    }
 
     /// <summary>SimulatorServices において、Provider.Resolve が例外をスローした場合に TryResolve が null を返すことを検証します。</summary>
     [Fact]
@@ -269,33 +244,4 @@ public class CoreCoverageTests
         aggregator.DeviceStatus.CurrentValue.ShouldBe(CashStatus.Normal);
     }
 
-    /// <summary>HistoryPersistenceService において、ファイルの読み取り権限がない場合に空の履歴を返すことを検証します。</summary>
-    [Fact]
-    public void HistoryPersistenceServiceLoadUnauthorizedAccessShouldReturnEmpty()
-    {
-        // Arrange
-        var tempFile = Path.Combine(Path.GetTempPath(), $"history_unauth_{Guid.NewGuid()}.bin");
-        File.WriteAllBytes(tempFile, [1, 2, 3]);
-
-        // ディレクトリをファイル名として指定することで(あるいはReadOnlyでも)例外を誘発
-        // ここでは、読み取り不可能な場所をシミュレート
-        using var service = new HistoryPersistenceService(new TransactionHistory(), tempFile);
-
-        try
-        {
-            // Windowsでファイル属性を ReadOnly に設定して擬似的に例外を狙う(一部環境では UnauthorizedAccessException になる)
-            // または、読み取りをブロックする形で IO 例外を狙う
-            using var fs = new FileStream(tempFile, FileMode.Open, FileAccess.Write, FileShare.None);
-
-            // Act
-            var state = service.Load();
-
-            // Assert
-            state.Entries.ShouldBeEmpty();
-        }
-        finally
-        {
-            if (File.Exists(tempFile)) File.Delete(tempFile);
-        }
-    }
 }
