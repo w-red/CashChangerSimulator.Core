@@ -36,6 +36,27 @@ public interface IHardwareStatusInput
     /// <summary>拡張エラーコードを操作するためのプロパティ。</summary>
     ReactiveProperty<int> CurrentErrorCodeExtended { get; }
 
+    /// <summary>通常口の紙幣残状態を操作するためのプロパティ。</summary>
+    ReactiveProperty<bool> IsBillRemainingNormal { get; }
+
+    /// <summary>通常口の硬貨残状態を操作するためのプロパティ。</summary>
+    ReactiveProperty<bool> IsCoinRemainingNormal { get; }
+
+    /// <summary>回収口の紙幣残状態を操作するためのプロパティ。</summary>
+    ReactiveProperty<bool> IsBillRemainingCollection { get; }
+
+    /// <summary>回収口の硬貨残状態を操作するためのプロパティ。</summary>
+    ReactiveProperty<bool> IsCoinRemainingCollection { get; }
+
+    /// <summary>指定された出金口に留まっている現金の枚数内訳を更新します。</summary>
+    /// <param name="port">出金口。</param>
+    /// <param name="counts">加算する金種別の枚数内訳。</param>
+    void AddExitPortCounts(ExitPort port, IReadOnlyDictionary<DenominationKey, int> counts);
+
+    /// <summary>指定された出金口の現金をすべて取り出し、状態をクリアします。</summary>
+    /// <param name="port">出金口。</param>
+    void ClearExitPort(ExitPort port);
+
     /// <summary>すべての状態をリセットするためのトリガー。</summary>
     Subject<Unit> ResetTrigger { get; }
 }

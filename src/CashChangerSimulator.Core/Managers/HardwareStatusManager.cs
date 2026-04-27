@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Models;
 using PosSharp.Abstractions;
 using R3;
 
@@ -20,6 +20,18 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     private ReactiveProperty<bool> isCollectionBoxRemovedInput = null!;
     private ReactiveProperty<int?> currentErrorCodeInput = null!;
     private ReactiveProperty<int> currentErrorCodeExtendedInput = null!;
+    private ReactiveProperty<bool> isBillRemainingNormalInput = null!;
+    private ReactiveProperty<bool> isCoinRemainingNormalInput = null!;
+    private ReactiveProperty<bool> isBillRemainingCollectionInput = null!;
+    private ReactiveProperty<bool> isCoinRemainingCollectionInput = null!;
+
+    private readonly Dictionary<ExitPort, Dictionary<DenominationKey, int>> exitPortInventories = new()
+    {
+        { ExitPort.Normal, [] },
+        { ExitPort.Collection, [] }
+    };
+
+    private Subject<UposStatusUpdateEventArgs> vendorStatusEvents = null!;
 
     private GlobalLockManager? globalLockManager;
     private bool isDisposed;
@@ -71,6 +83,27 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
 
     /// <inheritdoc/>
     public ReadOnlyReactiveProperty<bool> IsNormal { get; private set; } = null!;
+
+    /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<bool> IsBillRemainingNormal { get; private set; } = null!;
+
+    /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<bool> IsCoinRemainingNormal { get; private set; } = null!;
+
+    /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<bool> IsBillRemainingCollection { get; private set; } = null!;
+
+    /// <inheritdoc/>
+    public ReadOnlyReactiveProperty<bool> IsCoinRemainingCollection { get; private set; } = null!;
+
+    /// <inheritdoc/>
+    public IReadOnlyDictionary<DenominationKey, int> GetExitPortCounts(ExitPort port)
+    {
+        lock (exitPortInventories)
+        {
+            return new Dictionary<DenominationKey, int>(exitPortInventories[port]);
+        }
+    }
 
     /// <inheritdoc/>
     public Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents { get; private set; } = null!;
@@ -159,6 +192,14 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
         currentErrorCodeInput = new ReactiveProperty<int?>(null).AddTo(disposables);
         currentErrorCodeExtendedInput = new ReactiveProperty<int>(0).AddTo(disposables);
 
+        isBillRemainingNormalInput = new ReactiveProperty<bool>(false).AddTo(disposables);
+        isCoinRemainingNormalInput = new ReactiveProperty<bool>(false).AddTo(disposables);
+        isBillRemainingCollectionInput = new ReactiveProperty<bool>(false).AddTo(disposables);
+        isCoinRemainingCollectionInput = new ReactiveProperty<bool>(false).AddTo(disposables);
+
+        var vendorStatusEventsSubject = new Subject<UposStatusUpdateEventArgs>().AddTo(disposables);
+        this.vendorStatusEvents = vendorStatusEventsSubject;
+
         var resetTrigger = new Subject<Unit>().AddTo(disposables);
         Input = new HardwareStatusInputHandler(this, resetTrigger);
 
@@ -172,6 +213,8 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
                 isCollectionBoxRemovedInput.Value = false;
                 currentErrorCodeInput.Value = null;
                 currentErrorCodeExtendedInput.Value = 0;
+                Input.ClearExitPort(ExitPort.Normal);
+                Input.ClearExitPort(ExitPort.Collection);
             })
             .AddTo(disposables);
     }
@@ -195,6 +238,11 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
         CurrentErrorCode = currentErrorCodeInput.ToReadOnlyReactiveProperty().AddTo(disposables);
         CurrentErrorCodeExtended = currentErrorCodeExtendedInput.ToReadOnlyReactiveProperty().AddTo(disposables);
 
+        IsBillRemainingNormal = isBillRemainingNormalInput.ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsCoinRemainingNormal = isCoinRemainingNormalInput.ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsBillRemainingCollection = isBillRemainingCollectionInput.ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsCoinRemainingCollection = isCoinRemainingCollectionInput.ToReadOnlyReactiveProperty().AddTo(disposables);
+
         // 合成ステータスの構築: エラーがない場合に true
         IsNormal = Observable.CombineLatest(
             IsJammed,
@@ -210,7 +258,19 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     {
         StatusUpdateEvents = Observable.Merge(
             IsConnected.Select(c => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
-            IsJammed.Select(j => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(j ? DeviceStatus.JournalEmpty : DeviceStatus.JournalOk))));
+            IsJammed.Select(j => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(j ? DeviceStatus.JournalEmpty : DeviceStatus.JournalOk))),
+            SetupExitPortEvents(),
+            vendorStatusEvents);
+    }
+
+    private Observable<UposStatusUpdateEventArgs> SetupExitPortEvents()
+    {
+        return Observable.Merge(
+            IsBillRemainingNormal.DistinctUntilChanged().Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusBillRemainingNormal : ExitPortStatusEvents.StatusBillClearedNormal)),
+            IsCoinRemainingNormal.DistinctUntilChanged().Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusCoinRemainingNormal : ExitPortStatusEvents.StatusCoinClearedNormal)),
+            IsBillRemainingCollection.DistinctUntilChanged().Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusBillRemainingCollection : ExitPortStatusEvents.StatusBillClearedCollection)),
+            IsCoinRemainingCollection.DistinctUntilChanged().Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusCoinRemainingCollection : ExitPortStatusEvents.StatusCoinClearedCollection))
+        );
     }
 
     private void SetupErrorResolutionSideEffects()
@@ -248,6 +308,58 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
         public ReactiveProperty<int?> CurrentErrorCode => owner.currentErrorCodeInput;
 
         public ReactiveProperty<int> CurrentErrorCodeExtended => owner.currentErrorCodeExtendedInput;
+
+        public ReactiveProperty<bool> IsBillRemainingNormal => owner.isBillRemainingNormalInput;
+        public ReactiveProperty<bool> IsCoinRemainingNormal => owner.isCoinRemainingNormalInput;
+        public ReactiveProperty<bool> IsBillRemainingCollection => owner.isBillRemainingCollectionInput;
+        public ReactiveProperty<bool> IsCoinRemainingCollection => owner.isCoinRemainingCollectionInput;
+
+        public void AddExitPortCounts(ExitPort port, IReadOnlyDictionary<DenominationKey, int> counts)
+        {
+            if (owner.isDisposed) return;
+
+            lock (owner.exitPortInventories)
+            {
+                var inventory = owner.exitPortInventories[port];
+                foreach (var kv in counts)
+                {
+                    inventory[kv.Key] = inventory.GetValueOrDefault(kv.Key) + kv.Value;
+                }
+
+                // 状態更新
+                if (counts.Any(c => c.Key.Type == CurrencyCashType.Bill))
+                {
+                    if (port == ExitPort.Normal) owner.isBillRemainingNormalInput.Value = true;
+                    else owner.isBillRemainingCollectionInput.Value = true;
+                }
+                if (counts.Any(c => c.Key.Type == CurrencyCashType.Coin))
+                {
+                    if (port == ExitPort.Normal) owner.isCoinRemainingNormalInput.Value = true;
+                    else owner.isCoinRemainingCollectionInput.Value = true;
+                }
+            }
+        }
+
+        public void ClearExitPort(ExitPort port)
+        {
+            if (owner.isDisposed) return;
+
+            lock (owner.exitPortInventories)
+            {
+                owner.exitPortInventories[port].Clear();
+
+                if (port == ExitPort.Normal)
+                {
+                    owner.isBillRemainingNormalInput.Value = false;
+                    owner.isCoinRemainingNormalInput.Value = false;
+                }
+                else
+                {
+                    owner.isBillRemainingCollectionInput.Value = false;
+                    owner.isCoinRemainingCollectionInput.Value = false;
+                }
+            }
+        }
 
         public Subject<Unit> ResetTrigger => resetTrigger;
     }

@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Models;
 using PosSharp.Abstractions;
 using R3;
 
@@ -39,6 +39,23 @@ public interface IHardwareStatus
 
     /// <summary>デバイスが正常な状態(主要なエラーが発生していない状態)かどうか。</summary>
     ReadOnlyReactiveProperty<bool> IsNormal { get; }
+
+    /// <summary>通常口に紙幣が残っているかどうか。</summary>
+    ReadOnlyReactiveProperty<bool> IsBillRemainingNormal { get; }
+
+    /// <summary>通常口に硬貨が残っているかどうか。</summary>
+    ReadOnlyReactiveProperty<bool> IsCoinRemainingNormal { get; }
+
+    /// <summary>回収口に紙幣が残っているかどうか。</summary>
+    ReadOnlyReactiveProperty<bool> IsBillRemainingCollection { get; }
+
+    /// <summary>回収口に硬貨が残っているかどうか。</summary>
+    ReadOnlyReactiveProperty<bool> IsCoinRemainingCollection { get; }
+
+    /// <summary>指定された出金口に現在留まっている現金の枚数内訳を取得します。</summary>
+    /// <param name="port">出金口。</param>
+    /// <returns>金種別の枚数内訳。</returns>
+    IReadOnlyDictionary<DenominationKey, int> GetExitPortCounts(ExitPort port);
 
     /// <summary>ステータス更新通知イベントのストリーム。</summary>
     Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents { get; }

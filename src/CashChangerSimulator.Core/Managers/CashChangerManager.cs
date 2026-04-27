@@ -100,7 +100,8 @@ public class CashChangerManager
     }
 
     /// <summary>すべてのリサイクル庫を回収庫に移動します。</summary>
-    public virtual void PurgeCash()
+    /// <returns>回収された金種と枚数の内訳。</returns>
+    public virtual IReadOnlyDictionary<DenominationKey, int> PurgeCash()
     {
         var counts = inventory.AllCounts
             .Where(kv => configProvider.Config.GetDenominationSetting(kv.Key).IsRecyclable)
@@ -109,6 +110,8 @@ public class CashChangerManager
         CollectRecyclableInventory(counts);
 
         RecordPurgeHistory(counts);
+
+        return counts;
     }
 
     /// <summary>在庫枚数を直接調整します(管理用)。</summary>
