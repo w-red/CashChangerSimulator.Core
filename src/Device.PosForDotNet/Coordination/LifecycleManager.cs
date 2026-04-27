@@ -11,23 +11,13 @@ namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
 /// デバイスの Open, Claim, Enable 等の状態遷移を管理します。
 /// 状態検証のスキップ設定に応じて、標準のバリデーションを行うハンドラと、検証をバイパスするハンドラを動的に切り替えます。
 /// </remarks>
-public class LifecycleManager : IUposLifecycleHandler
+public class LifecycleManager(
+    HardwareStatusManager hardwareStatusManager,
+    IUposMediator mediator,
+    TransactionHistory history,
+    ILogger logger) : IUposLifecycleHandler
 {
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly IUposMediator mediator;
-    private readonly TransactionHistory history;
-    private readonly ILogger logger;
     private IUposLifecycleHandler handler = null!;
-
-    /// <summary>Initializes a new instance of the <see cref="LifecycleManager"/> class.必要な依存関係を注入してマネージャーを初期化します。</summary>
-    /// <remarks>状態管理、バリデーション、およびロギングのためのコンポーネントを受け取ります。</remarks>
-    public LifecycleManager(HardwareStatusManager hardwareStatusManager, IUposMediator mediator, TransactionHistory history, ILogger logger)
-    {
-        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
-        this.mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        this.history = history ?? throw new ArgumentNullException(nameof(history));
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
 
     /// <summary>検証スキップ設定に基づいて適切なハンドラを初期化します。</summary>
     public void UpdateHandler(bool skipStateVerification)
