@@ -48,7 +48,7 @@ public static class CashCountAdapter
             return [];
         }
 
-        return countsStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        return [.. countsStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(pair => pair.Split(':', StringSplitOptions.TrimEntries))
             .Where(parts => parts.Length == 2 && decimal.TryParse(parts[0], out _) && int.TryParse(parts[1], out _))
             .Select(parts =>
@@ -60,8 +60,7 @@ public static class CashCountAdapter
                 // Find matching denomination to determine if it's a Bill or Coin
                 var match = availableKeys.FirstOrDefault(k => k.Value == val && k.CurrencyCode == currencyCode);
                 return ToCashCount(match ?? new DenominationKey(val, CurrencyCashType.Coin, currencyCode), count, factor);
-            })
-            .ToList();
+            })];
     }
 
     /// <summary>CashCount 配列を文字列形式 ("denom:count,denom:count") に変換します。</summary>

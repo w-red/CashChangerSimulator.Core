@@ -30,7 +30,7 @@ public static class CashCountParser
             throw new ArgumentException("Invalid cash count format: Too many semicolon sections. Expected at most 'Coins;Bills'.");
         }
 
-        return sections.SelectMany((section, index) =>
+        return [.. sections.SelectMany((section, index) =>
         {
             var trimmedSection = section.Trim();
             if (string.IsNullOrEmpty(trimmedSection))
@@ -47,7 +47,7 @@ public static class CashCountParser
 
             return trimmedSection.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(part => ParsePart(part, sectionType, activeKeys, currencyFactor));
-        }).ToList();
+        })];
     }
 
     private static CashCount ParsePart(string part, CurrencyCashType? sectionType, IEnumerable<DenominationKey> activeKeys, decimal currencyFactor)
