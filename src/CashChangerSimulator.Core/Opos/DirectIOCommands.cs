@@ -32,4 +32,10 @@ public static class DirectIOCommands
 
     /// <summary>診断ログ(ヘルスチェックレポート)を取得します。</summary>
     public const int GetDiagnosticLog = 1002;
+
+    /// <summary>出金口の現金をクリアします。 data: (int)ExitPort.</summary>
+    public const int TakeCash = 200;
+
+    /// <summary>出金口の払い出し枚数内訳を取得します。 data: (int)ExitPort, obj: IDictionary&lt;DenominationKey, int&gt;.</summary>
+    public const int GetExitPortCounts = 201;
 }
