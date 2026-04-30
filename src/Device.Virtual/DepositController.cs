@@ -1,13 +1,16 @@
-using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using PosSharp.Abstractions;
+using PosSharp.Core;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
+
+using System.Collections.Immutable;
 
 namespace CashChangerSimulator.Device.Virtual;
 
@@ -17,229 +20,108 @@ public class DepositController : IDisposable
     private readonly Inventory inventory;
     private readonly HardwareStatusManager hardwareStatusManager;
     private readonly ConfigurationProvider configProvider;
-    private readonly bool isConfigInternal;
     private readonly TimeProvider timeProvider;
     /* Stryker disable all */
-    private readonly ILogger<DepositController>? logger = LogProvider.CreateLogger<DepositController>();
-    /* Stryker restore all */
-    private readonly CompositeDisposable disposables = [];
-    private readonly Lock stateLock = new();
-    private readonly DepositState state = new();
-    private readonly DepositCalculator calculator;
+    private readonly ILogger logger;
+    private readonly AtomicState<DepositState> atomicState = new(DepositState.Empty);
     private readonly DepositTracker tracker;
-    private bool disposed;
+    private readonly DepositCalculator calculator;
+    private readonly CompositeDisposable disposables = [];
+    private readonly bool isConfigInternal;
+    private volatile bool disposed;
 
-    /// <summary>DepositController クラスの新しいインスタンスを初期化します。</summary>
+    /// <summary>初期化します。</summary>
+    /// <param name="manager">マネージャー。</param>
     /// <param name="inventory">在庫管理モデル。</param>
     /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-    /// <param name="manager">釣銭機マネージャー。</param>
     /// <param name="configProvider">設定プロバイダー。</param>
+    /// <param name="loggerFactory">ロガーファクトリ。</param>
     /// <param name="timeProvider">時間プロバイダー。</param>
     public DepositController(
+        CashChangerManager manager,
         Inventory inventory,
-        HardwareStatusManager? hardwareStatusManager = null,
-        CashChangerManager? manager = null,
-        ConfigurationProvider? configProvider = null,
+        HardwareStatusManager hardwareStatusManager,
+        ConfigurationProvider configProvider,
+        ILoggerFactory loggerFactory,
         TimeProvider? timeProvider = null)
     {
+        ArgumentNullException.ThrowIfNull(manager);
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        this.hardwareStatusManager = hardwareStatusManager ?? HardwareStatusManager.Create();
-        this.configProvider = configProvider ?? new ConfigurationProvider();
-        /* Stryker disable once all : Boilerplate config ownership logic */
-        this.isConfigInternal = configProvider == null;
+        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
+        this.configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
         this.timeProvider = timeProvider ?? TimeProvider.System;
-
-        calculator = new DepositCalculator(logger, this.inventory, manager);
-        tracker = new DepositTracker(this.inventory, this.configProvider);
+        this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger(nameof(DepositController));
+        this.calculator = new DepositCalculator(logger, inventory, manager);
+        this.tracker = new DepositTracker(inventory, configProvider);
+        this.isConfigInternal = false;
     }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
-    public virtual Observable<Unit> Changed => tracker.Changed;
+    public Observable<Unit> Changed => tracker.Changed;
 
-    /// <summary>データイベントの通知ストリーム。</summary>
-    public virtual Observable<PosSharp.Abstractions.UposDataEventArgs> DataEvents => tracker.DataEvents;
+    /// <summary>入金完了イベントを受け取るためのストリーム。</summary>
+    public Observable<UposDataEventArgs> DataEvents => tracker.DataEvents;
 
-    /// <summary>エラーイベントの通知ストリーム。</summary>
-    public virtual Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
+    /// <summary>エラーイベントを受け取るためのストリーム。</summary>
+    public Observable<UposErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
 
-    /// <summary>リアルタイムデータの通知。上位層(アダプター等)が利用します。</summary>
+    /// <summary>リアルタイムデータ更新が有効かどうかを取得します。</summary>
     public bool RealTimeDataEnabled { get; set; }
 
-    /// <summary>投入された合計金額を取得します。</summary>
-    public virtual decimal DepositAmount
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.DepositAmount;
-            }
-        }
-    }
+    /// <summary>現在投入されている合計金額を取得します。</summary>
+    public decimal DepositAmount => atomicState.Current.DepositAmount;
 
-    /// <summary>オーバーフロー(満杯等により収納不可)した金額を取得します。</summary>
-    public virtual decimal OverflowAmount
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.OverflowAmount;
-            }
-        }
-    }
+    /// <summary>オーバーフロー(収納庫満杯)により返却される金額を取得します。</summary>
+    public decimal OverflowAmount => atomicState.Current.OverflowAmount;
 
     /// <summary>リジェクト(偽札、汚れ等により返却)された金額を取得します。</summary>
-    public virtual decimal RejectAmount
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.RejectAmount;
-            }
-        }
-    }
+    public decimal RejectAmount => atomicState.Current.RejectAmount;
 
     /// <summary>投入された各種金種の枚数を取得します。</summary>
-    public virtual IReadOnlyDictionary<DenominationKey, int> DepositCounts
-    {
-        get
-        {
-            // Dictionaryのコピーが必要なため、ここだけはLockを使用。
-            // ただし、もしここでもデッドロックが起きる場合はスナップショット方式を検討。
-            lock (stateLock)
-            {
-                return new Dictionary<DenominationKey, int>(state.Counts);
-            }
-        }
-    }
+    public IReadOnlyDictionary<DenominationKey, int> DepositCounts => new Dictionary<DenominationKey, int>(atomicState.Current.Counts);
+
+    /// <summary>投入された紙幣のシリアル番号リストを取得します。</summary>
+    public IReadOnlyList<string> DepositedSerials => atomicState.Current.DepositedSerials;
+
+    /// <summary>確定時に同期される直前のシリアル番号リストを取得します。</summary>
+    public IReadOnlyList<string> LastDepositedSerials => atomicState.Current.LastDepositedSerials;
 
     /// <summary>現在の預入状態を取得します。</summary>
-    public virtual DeviceDepositStatus DepositStatus
-    {
-        get => state.Status;
-        private set
-        {
-            lock (stateLock)
-            {
-                state.Status = value;
-            }
-        }
-    }
+    public DeviceDepositStatus DepositStatus => atomicState.Current.Status;
 
     /// <summary>入金処理が進行中かどうかを取得します。</summary>
-    public virtual bool IsDepositInProgress => state.Status is
+    public bool IsDepositInProgress => atomicState.Current.Status is
         DeviceDepositStatus.Start or
         DeviceDepositStatus.Counting or
         DeviceDepositStatus.Validation;
 
     /// <summary>入金処理が一時停止中かどうかを取得します。</summary>
-    public virtual bool IsPaused
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.IsPaused;
-            }
-        }
-    }
+    public bool IsPaused => atomicState.Current.IsPaused;
 
     /// <summary>入金が確定(Fixed)されたかどうかを取得します。</summary>
-    public virtual bool IsFixed
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.IsFixed;
-            }
-        }
-    }
+    public bool IsFixed => atomicState.Current.IsFixed;
 
     /// <summary>デバイスがビジー状態かどうかを取得します。</summary>
-    public virtual bool IsBusy
-    {
-        get
-        {
-            /* Stryker disable once all : Thread-safety lock guard */
-            lock (stateLock)
-            {
-                return state.IsBusy;
-            }
-        }
-    }
+    public bool IsBusy => atomicState.Current.IsBusy;
 
     /// <summary>直近に発生したエラーコードを取得します。</summary>
-    public virtual DeviceErrorCode LastErrorCode
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.LastErrorCode;
-            }
-        }
-    }
+    public DeviceErrorCode LastErrorCode => atomicState.Current.LastErrorCode;
 
     /// <summary>直近に発生した拡張エラーコードを取得します。</summary>
-    public virtual int LastErrorCodeExtended
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.LastErrorCodeExtended;
-            }
-        }
-        private set
-        {
-            lock (stateLock)
-            {
-                state.LastErrorCodeExtended = value;
-            }
-        }
-    }
-
-    /// <summary>直近に投入された紙幣のシリアル番号のリストを取得します。</summary>
-    public virtual IReadOnlyList<string> LastDepositedSerials
-    {
-        get
-        {
-            lock (stateLock)
-            {
-                return [.. state.LastDepositedSerials];
-            }
-        }
-    }
+    public int LastErrorCodeExtended => atomicState.Current.LastErrorCodeExtended;
 
     /// <summary>必要入金金額を取得または設定します。</summary>
-    public virtual decimal RequiredAmount
+    public decimal RequiredAmount
     {
-        get
-        {
-            lock (stateLock)
-            {
-                return state.RequiredAmount;
-            }
-        }
-
+        get => atomicState.Current.RequiredAmount;
         set
         {
-            bool hasChanged = false;
-            lock (stateLock)
+            var result = atomicState.Transition(s =>
             {
-                if (state.RequiredAmount == value)
-                {
-                    return;
-                }
-
-                state.RequiredAmount = value;
-                hasChanged = true;
-            }
-
-            if (hasChanged && !disposed)
+                if (s.RequiredAmount == value) return s;
+                return s with { RequiredAmount = value };
+            });
+            if (result.Changed)
             {
                 tracker.NotifyChanged();
             }
@@ -250,35 +132,43 @@ public class DepositController : IDisposable
     public virtual void BeginDeposit()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        lock (stateLock)
+        
+        var result = atomicState.Transition(s =>
         {
-            /* Stryker disable all */
-            logger?.ZLogInformation($"BeginDeposit called. Current Status: {state.Status}");
-
-            /* Stryker restore all */
-
-            if (state.IsBusy)
+            if (s.IsBusy) return s;
+            
+            // ガード条件の確認（ハードウェア状態）
+            if (hardwareStatusManager.IsJammed.CurrentValue || hardwareStatusManager.IsOverlapped.CurrentValue)
             {
-                throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
+                return s;
             }
 
-            if (hardwareStatusManager.IsJammed.CurrentValue)
+            return DepositState.Empty with
             {
-                throw new DeviceException("Device is jammed. Cannot begin deposit.", DeviceErrorCode.Jammed);
-            }
+                Status = DeviceDepositStatus.Counting,
+                RequiredAmount = s.RequiredAmount
+            };
+        });
 
-            if (hardwareStatusManager.IsOverlapped.CurrentValue)
-            {
-                throw new DeviceException("Device has overlapped cash. Cannot begin deposit.", DeviceErrorCode.Overlapped);
-            }
-
-            state.Reset();
-            DepositStatus = DeviceDepositStatus.Counting;
-            inventory.ClearEscrow();
+        if (result.NewState.IsBusy && !result.Changed)
+        {
+            throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
         }
 
-        if (!disposed)
+        if (hardwareStatusManager.IsJammed.CurrentValue)
         {
+            throw new DeviceException("Device is jammed. Cannot begin deposit.", DeviceErrorCode.Jammed);
+        }
+
+        if (hardwareStatusManager.IsOverlapped.CurrentValue)
+        {
+            throw new DeviceException("Device has overlapped cash. Cannot begin deposit.", DeviceErrorCode.Overlapped);
+        }
+
+        if (result.Changed)
+        {
+            tracker.CreateNewCts();
+            inventory.ClearEscrow();
             tracker.NotifyChanged();
         }
     }
@@ -287,41 +177,41 @@ public class DepositController : IDisposable
     public virtual void FixDeposit()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        lock (stateLock)
-        {
-            if (state.Status != DeviceDepositStatus.Counting)
-            {
-                throw new DeviceException("Counting is not in progress.", DeviceErrorCode.Illegal);
-            }
 
-            state.IsFixed = true;
-            state.LastDepositedSerials.Clear();
-            state.LastDepositedSerials.AddRange(state.DepositedSerials);
+        var result = atomicState.Transition(s =>
+        {
+            if (s.Status != DeviceDepositStatus.Counting) return s;
+
+            return s with
+            {
+                IsFixed = true,
+                LastDepositedSerials = s.DepositedSerials
+            };
+        });
+
+        if (result.NewState.Status != DeviceDepositStatus.Counting)
+        {
+            throw new DeviceException("Counting is not in progress.", DeviceErrorCode.Illegal);
         }
 
-        // Stryker disable once all : Thread-safety guard
-        if (!disposed)
+        if (result.Changed)
         {
             tracker.NotifyChanged();
         }
     }
 
-    /// <summary>入金処理を非同期で終了します。</summary>
+    /// <summary>入金を終了します。</summary>
     /// <param name="action">終了時のアクション(収納または返却)。</param>
     /// <returns>完了を示すタスク。</returns>
     public virtual async Task EndDepositAsync(DepositAction action)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
+
         PrepareEndDeposit();
 
-        /* Stryker disable once all : Thread-safety guard */
-        if (!disposed)
-        {
-            tracker.NotifyChanged();
-        }
-
         await tracker.CancelCurrentAsync().ConfigureAwait(false);
-        var token = tracker.CreateNewToken();
+        var sessionCts = tracker.CreateNewCts();
+        var token = sessionCts.Token;
 
         try
         {
@@ -348,65 +238,76 @@ public class DepositController : IDisposable
 
     private void PrepareEndDeposit()
     {
-        lock (stateLock)
+        var result = atomicState.Transition(s =>
         {
-            if (!state.IsFixed)
-            {
-                throw new DeviceException("Invalid call sequence: FixDeposit must be called before EndDeposit.", DeviceErrorCode.Illegal);
-            }
+            if (!s.IsFixed || s.IsBusy) return s;
 
-            if (state.IsBusy)
-            {
-                throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
-            }
+            return s with { IsBusy = true, LastErrorCode = DeviceErrorCode.Success, LastErrorCodeExtended = 0 };
+        });
 
-            state.IsBusy = true;
-            state.LastErrorCode = DeviceErrorCode.Success;
-            LastErrorCodeExtended = 0;
+        if (!result.NewState.IsFixed)
+        {
+            throw new DeviceException("Invalid call sequence: FixDeposit must be called before EndDeposit.", DeviceErrorCode.Illegal);
+        }
+
+        if (result.NewState.IsBusy && !result.Changed)
+        {
+            throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
+        }
+
+        if (result.Changed)
+        {
+            tracker.NotifyChanged();
         }
     }
 
     private void PerformDepositAction(DepositAction action)
     {
-        lock (stateLock)
+        // 1. 現時点のスナップショット取得
+        var current = atomicState.Current;
+
+        // 2. 実処理（例外が発生した場合は 3 に進まず catch へ）
+        if (action == DepositAction.Repay)
         {
+            calculator.ProcessRepay();
+        }
+        else if (action == DepositAction.Change)
+        {
+            calculator.ProcessChange(current.DepositAmount, current.RequiredAmount, current.Counts);
+        }
+        else
+        {
+            calculator.ProcessNoChange(current.Counts);
+        }
+
+        if (action != DepositAction.Repay && hardwareStatusManager.IsOverlapped.CurrentValue)
+        {
+            throw new DeviceException("Device Error (Overlap). Cannot complete deposit.", DeviceErrorCode.Overlapped);
+        }
+
+        // 3. 状態確定
+        var result = atomicState.Transition(s =>
+        {
+            var next = s with { Status = DeviceDepositStatus.End, IsPaused = false, IsFixed = false };
             if (action == DepositAction.Repay)
             {
-                calculator.ProcessRepay();
+                next = next with { DepositAmount = 0m, Counts = [] };
             }
-            else if (action == DepositAction.Change)
-            {
-                calculator.ProcessChange(state.DepositAmount, state.RequiredAmount, state.Counts);
-            }
-            else
-            {
-                calculator.ProcessNoChange(state.Counts);
-            }
+            return next;
+        });
 
-            if (action != DepositAction.Repay && hardwareStatusManager.IsOverlapped.CurrentValue)
-            {
-                throw new DeviceException("Device Error (Overlap). Cannot complete deposit.", DeviceErrorCode.Overlapped);
-            }
-
-            DepositStatus = DeviceDepositStatus.End;
-            state.IsPaused = false;
-            state.IsFixed = false;
-
-            if (action == DepositAction.Repay)
-            {
-                state.DepositAmount = 0m;
-                state.Counts.Clear();
-            }
-
-            inventory.ClearEscrow();
+        if (result.Changed)
+        {
+            tracker.NotifyChanged();
         }
     }
 
     private void HandleEndDepositCancellation()
     {
-        lock (stateLock)
+        var result = atomicState.Transition(s => s with { LastErrorCode = DeviceErrorCode.Cancelled });
+        if (result.Changed)
         {
-            state.LastErrorCode = DeviceErrorCode.Cancelled;
+            tracker.NotifyChanged();
         }
     }
 
@@ -415,13 +316,13 @@ public class DepositController : IDisposable
         /* Stryker disable once all : Mutation causes CS1620 in ZLogger call */
         logger?.ZLogError(dex, $"EndDeposit failed with device error.");
 
-        lock (stateLock)
+        var result = atomicState.Transition(s => s with { LastErrorCode = dex.ErrorCode, LastErrorCodeExtended = dex.ErrorCodeExtended });
+        
+        if (result.Changed)
         {
-            state.LastErrorCode = dex.ErrorCode;
-            LastErrorCodeExtended = dex.ErrorCodeExtended;
+            tracker.NotifyChanged();
         }
 
-        /* Stryker disable once all : Thread-safety guard */
         if (!disposed)
         {
             tracker.NotifyError(dex.ErrorCode, dex.ErrorCodeExtended);
@@ -433,13 +334,13 @@ public class DepositController : IDisposable
         /* Stryker disable once all : Mutation causes CS1620 in ZLogger call */
         logger?.ZLogError(ex, $"EndDeposit failed with unexpected error.");
 
-        lock (stateLock)
+        var result = atomicState.Transition(s => s with { LastErrorCode = DeviceErrorCode.Failure, LastErrorCodeExtended = 0 });
+
+        if (result.Changed)
         {
-            state.LastErrorCode = DeviceErrorCode.Failure;
-            LastErrorCodeExtended = 0;
+            tracker.NotifyChanged();
         }
 
-        /* Stryker disable once all : Thread-safety guard */
         if (!disposed)
         {
             tracker.NotifyError(DeviceErrorCode.Failure, 0);
@@ -448,13 +349,8 @@ public class DepositController : IDisposable
 
     private void FinalizeEndDeposit()
     {
-        lock (stateLock)
-        {
-            state.IsBusy = false;
-        }
-
-        /* Stryker disable once all : Thread-safety guard */
-        if (!disposed)
+        var result = atomicState.Transition(s => s with { IsBusy = false });
+        if (result.Changed)
         {
             tracker.NotifyChanged();
         }
@@ -477,28 +373,23 @@ public class DepositController : IDisposable
     /// <returns>完了を示すタスク。</returns>
     public virtual async Task RepayDepositAsync()
     {
-        bool needsFix = false;
-        lock (stateLock)
-        {
-            needsFix = !IsFixed;
-        }
+        bool needsFix = !IsFixed;
 
         if (needsFix)
         {
             FixDeposit();
         }
 
-        await EndDepositAsync(DepositAction.Repay)
-            .ConfigureAwait(false);
+        await EndDepositAsync(DepositAction.Repay).ConfigureAwait(false);
     }
 
     /// <summary>投入された現金を返却し、入金セッションを終了します(同期ラッパー)。</summary>
     public virtual void RepayDeposit()
     {
         RepayDepositAsync().GetAwaiter().GetResult();
-        if (state.LastErrorCode != DeviceErrorCode.Success)
+        if (LastErrorCode != DeviceErrorCode.Success)
         {
-            throw new DeviceException("RepayDeposit failed.", state.LastErrorCode, state.LastErrorCodeExtended);
+            throw new DeviceException("RepayDeposit failed.", LastErrorCode, LastErrorCodeExtended);
         }
     }
 
@@ -507,35 +398,39 @@ public class DepositController : IDisposable
     public virtual void PauseDeposit(DeviceDepositPause control)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        lock (stateLock)
+
+        bool requestedPause = control == DeviceDepositPause.Pause;
+        
+        var result = atomicState.Transition(s =>
         {
-            if (!IsDepositInProgress)
-            {
-                throw new DeviceException("Session not active.", DeviceErrorCode.Illegal);
-            }
+            if (!IsDepositInProgress) return s;
+            if (s.IsPaused == requestedPause) return s;
 
-            bool requestedPause = control == DeviceDepositPause.Pause;
-            if (state.IsPaused == requestedPause)
-            {
-                throw new DeviceException($"Device is already {(requestedPause ? "paused" : "running")}.", DeviceErrorCode.Illegal);
-            }
+            return s with { IsPaused = requestedPause };
+        });
 
-            state.IsPaused = requestedPause;
+        if (!IsDepositInProgress)
+        {
+            throw new DeviceException("Session not active.", DeviceErrorCode.Illegal);
         }
 
-        // Stryker disable once all : Thread-safety check
-        if (!disposed)
+        if (result.NewState.IsPaused == requestedPause && !result.Changed)
+        {
+            throw new DeviceException($"Device is already {(requestedPause ? "paused" : "running")}.", DeviceErrorCode.Illegal);
+        }
+
+        if (result.Changed)
         {
             tracker.NotifyChanged();
         }
     }
+
 
     /// <summary>単一の金種の投入を追跡します。</summary>
     /// <param name="key">金種。</param>
     /// <param name="count">枚数。</param>
     public void TrackDeposit(DenominationKey key, int count = 1)
     {
-        /* Stryker disable once all : Redundant guard (TrackBulkDeposit handles this) */
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(key);
         TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });
@@ -547,98 +442,10 @@ public class DepositController : IDisposable
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(counts);
-        lock (stateLock)
+
+        if (hardwareStatusManager.IsOverlapped.CurrentValue)
         {
-            if (!ValidateTrackingPreconditions())
-            {
-                return;
-            }
-
-            foreach (var kv in counts)
-            {
-                tracker.ProcessDenominationTracking(kv.Key, kv.Value, state);
-            }
-        }
-
-        NotifyTrackingEvents();
-    }
-
-    /// <summary>指定された金額に近い金種をリジェクト庫(返却用)に投入します。</summary>
-    /// <param name="amount">リジェクトする合計金額。</param>
-    public void TrackReject(decimal amount)
-    {
-        ObjectDisposedException.ThrowIf(disposed, this);
-        lock (stateLock)
-        {
-            if (!IsDepositInProgress || state.IsPaused)
-            {
-                return;
-            }
-
-            state.RejectAmount += amount;
-        }
-
-        if (RealTimeDataEnabled && !disposed)
-        {
-            tracker.NotifyData(0);
-        }
-
-        // Stryker disable once all : Thread-safety check
-        if (!disposed)
-        {
-            tracker.NotifyChanged();
-        }
-    }
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        Dispose(true);
-
-        /* Stryker disable once Statement : Finalizer suppression */
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>リソースを破棄します。</summary>
-    /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
-    protected virtual void Dispose(bool disposing)
-    {
-        lock (stateLock)
-        {
-            /* Stryker disable once all : Boilerplate guard */
-            if (disposed)
-            {
-                return;
-            }
-
-            disposed = true;
-        }
-
-        if (disposing)
-        {
-            tracker.CancelCurrent();
-            tracker.Dispose();
-            disposables.Dispose();
-
-            /* Stryker disable all : Boilerplate disposal logic */
-            if (isConfigInternal)
-            {
-                configProvider.Dispose();
-            }
-            /* Stryker restore all */
-        }
-    }
-
-    private bool ValidateTrackingPreconditions()
-    {
-        if (state.Status != DeviceDepositStatus.Counting || state.IsPaused)
-        {
-            return false;
-        }
-
-        if (state.IsFixed)
-        {
-            throw new DeviceException("Deposit is already fixed.", DeviceErrorCode.Illegal);
+            throw new DeviceException("Device has overlapped cash. Cannot track deposit.", DeviceErrorCode.Overlapped);
         }
 
         if (hardwareStatusManager.IsJammed.CurrentValue)
@@ -646,26 +453,87 @@ public class DepositController : IDisposable
             throw new DeviceException("Device is jammed during tracking.", DeviceErrorCode.Jammed);
         }
 
-        if (hardwareStatusManager.IsOverlapped.CurrentValue)
+        bool changed = false;
+        foreach (var kv in counts)
         {
-            throw new DeviceException("Device has overlapped cash. Cannot track deposit.", DeviceErrorCode.Overlapped);
+            var result = atomicState.Transition(s =>
+            {
+                if (s.Status != DeviceDepositStatus.Counting || s.IsPaused || s.IsFixed)
+                {
+                    return s;
+                }
+                return tracker.ProcessDenominationTracking(kv.Key, kv.Value, s);
+            });
+
+            if (result.OldState.IsFixed)
+            {
+                 throw new DeviceException("Deposit is already fixed.", DeviceErrorCode.Illegal);
+            }
+
+            if (result.Changed)
+            {
+                changed = true;
+            }
         }
 
-        return true;
-    }
-
-    private void NotifyTrackingEvents()
-    {
-        // Stryker disable once Logical : Data event state combination block
-        if (RealTimeDataEnabled && !disposed)
-        {
-            tracker.NotifyData(0);
-        }
-
-        /* Stryker disable once all : Thread-safety guard */
-        if (!disposed)
+        if (changed)
         {
             tracker.NotifyChanged();
+            if (RealTimeDataEnabled)
+            {
+                tracker.NotifyData(0);
+            }
+        }
+    }
+
+    /// <summary>指定された金額に近い金種をリジェクト庫(返却用)に投入します。</summary>
+    /// <param name="amount">リジェクトする合計金額。</param>
+    public void TrackReject(decimal amount)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        
+        var result = atomicState.Transition(s =>
+        {
+            if (!IsDepositInProgress || s.IsPaused)
+            {
+                return s;
+            }
+
+            return s with { RejectAmount = s.RejectAmount + amount };
+        });
+
+        if (result.Changed)
+        {
+            tracker.NotifyChanged();
+            if (RealTimeDataEnabled)
+            {
+                tracker.NotifyData(0);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>リソースを解放します。</summary>
+    /// <param name="disposing">マネージリソースを解放するかどうか。</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (Interlocked.Exchange(ref disposed, true))
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            tracker.CancelCurrent();
+            tracker.Dispose();
+            disposables.Dispose();
+            if (isConfigInternal) configProvider.Dispose();
         }
     }
 }

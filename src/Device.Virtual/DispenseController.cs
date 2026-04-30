@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
@@ -6,26 +5,28 @@ using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
 using PosSharp.Abstractions;
+using PosSharp.Core;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
+
+using System.Diagnostics.CodeAnalysis;
 
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>出金(払出)シーケンスを管理するコントローラー(仮想デバイス実装)。</summary>
 public class DispenseController : IDisposable
 {
-    private readonly CashChangerManager manager;
     private readonly Inventory inventory;
     private readonly ConfigurationProvider configProvider;
     private readonly HardwareStatusManager hardwareStatusManager;
     private readonly IDeviceSimulator simulator;
     private readonly ILogger<DispenseController> logger;
 
-    private readonly Lock stateLock = new();
-    private readonly DispenseState state = new();
+    private readonly AtomicState<DispenseState> atomicState = new(new DispenseState());
     private readonly DispenseTracker tracker = new();
-    private bool disposed;
+    private readonly DispenseCalculator calculator;
+    private volatile bool disposed;
 
     /// <summary>初期化します。</summary>
     /// <param name="manager">マネージャー。</param>
@@ -42,44 +43,35 @@ public class DispenseController : IDisposable
         HardwareStatusManager hardwareStatusManager,
         IDeviceSimulator simulator)
     {
-        this.manager = manager ?? throw new ArgumentNullException(nameof(manager));
+        ArgumentNullException.ThrowIfNull(manager);
         this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         this.configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
         this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
         this.simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
         this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
+        this.calculator = new DispenseCalculator(logger, manager, hardwareStatusManager);
     }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public Observable<Unit> Changed => tracker.Changed;
 
     /// <summary>出力完了イベントを受け取るためのストリーム。</summary>
-    public Observable<PosSharp.Abstractions.UposOutputCompleteEventArgs> OutputCompleteEvents => tracker.OutputCompleteEvents;
+    public Observable<UposOutputCompleteEventArgs> OutputCompleteEvents => tracker.OutputCompleteEvents;
 
     /// <summary>エラーイベントを受け取るためのストリーム。</summary>
-    public Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
+    public Observable<UposErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
 
     /// <summary>現在のステータスを取得します。</summary>
-    public CashDispenseStatus Status
-    {
-        get => state.Status;
-        private set
-        {
-            lock (stateLock)
-            {
-                state.Status = value;
-            }
-        }
-    }
+    public virtual CashDispenseStatus Status => atomicState.Current.Status;
 
     /// <summary>最後に発生したエラーコードを取得します。</summary>
-    public DeviceErrorCode LastErrorCode => state.LastErrorCode;
+    public DeviceErrorCode LastErrorCode => atomicState.Current.LastErrorCode;
 
     /// <summary>最後に発生した詳細エラーコードを取得します。</summary>
-    public int LastErrorCodeExtended => state.LastErrorCodeExtended;
+    public int LastErrorCodeExtended => atomicState.Current.LastErrorCodeExtended;
 
     /// <summary>処理中かどうかを取得します。</summary>
-    public bool IsBusy => state.IsBusy;
+    public bool IsBusy => atomicState.Current.IsBusy;
 
     /// <summary>シミュレーターを取得します(テスト用)。</summary>
     public IDeviceSimulator Simulator => simulator;
@@ -90,12 +82,9 @@ public class DispenseController : IDisposable
     /// <returns>タスク。</returns>
     public virtual async Task DispenseChangeAsync(int amount, bool isRepay)
     {
-        lock (stateLock)
+        if (!hardwareStatusManager.IsConnected.CurrentValue)
         {
-            if (!hardwareStatusManager.IsConnected.CurrentValue)
-            {
-                throw new DeviceException("Device is not connected.", DeviceErrorCode.Closed);
-            }
+            throw new DeviceException("Device is not connected.", DeviceErrorCode.Closed);
         }
 
         var counts = ChangeCalculator.Calculate(inventory, amount, null, filter: k =>
@@ -114,31 +103,7 @@ public class DispenseController : IDisposable
     /// <returns>タスク。</returns>
     public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> dispenseCounts, bool isRepay)
     {
-        lock (stateLock)
-        {
-            ObjectDisposedException.ThrowIf(disposed, this);
-
-            if (state.IsBusy)
-            {
-                throw new DeviceException("Already processing another dispense.", DeviceErrorCode.Busy);
-            }
-
-            if (!hardwareStatusManager.IsConnected.CurrentValue)
-            {
-                throw new DeviceException("Device is not connected.", DeviceErrorCode.Closed);
-            }
-
-            if (hardwareStatusManager.IsJammed.CurrentValue)
-            {
-                throw new DeviceException("Hardware is jammed.", DeviceErrorCode.Jammed);
-            }
-
-            Status = CashDispenseStatus.Busy;
-            state.Status = CashDispenseStatus.Busy;
-            state.LastErrorCode = DeviceErrorCode.Success;
-        }
-
-        tracker.NotifyChanged();
+        PrepareDispense();
 
         var token = tracker.CreateNewToken();
 
@@ -147,60 +112,121 @@ public class DispenseController : IDisposable
             // Stryker disable once Boolean : Synchronization context optimization is untestable
             await simulator.SimulateDispenseAsync(token).ConfigureAwait(false);
 
-            lock (stateLock)
-            {
-                Status = CashDispenseStatus.Idle;
-                state.Reset();
-                manager.Dispense(dispenseCounts);
-
-                // 出金口の状態を更新
-                // isRepay が true の場合は回収口、それ以外は通常口
-                var targetPort = isRepay ? ExitPort.Collection : ExitPort.Normal;
-                hardwareStatusManager.Input.AddExitPortCounts(targetPort, dispenseCounts);
-            }
+            // 状態の確定
+            atomicState.Transition(_ => new DispenseState(CashDispenseStatus.Idle, DeviceErrorCode.Success, 0));
+            
+            // 実処理(在庫反映)
+            calculator.ProcessDispense(dispenseCounts, isRepay);
 
             tracker.NotifyComplete();
         }
         catch (OperationCanceledException)
         {
-            lock (stateLock)
-            {
-                Status = CashDispenseStatus.Idle;
-                state.Status = CashDispenseStatus.Idle;
-                state.LastErrorCode = DeviceErrorCode.Cancelled;
-                state.LastErrorCodeExtended = 0;
-            }
-
-            tracker.NotifyError(DeviceErrorCode.Cancelled, 0);
+            HandleDispenseCancellation();
         }
         catch (Exception ex)
         {
-            /* Stryker disable all */
-            logger?.ZLogError(ex, $"Dispense failed.");
-            DispenseTracker.HandleDispenseError(ex, out var code, out var codeEx);
-            /* Stryker restore all */
-
-            lock (stateLock)
-            {
-                Status = CashDispenseStatus.Error;
-                state.Status = CashDispenseStatus.Error;
-                state.LastErrorCode = code;
-                state.LastErrorCodeExtended = codeEx;
-            }
-
-            tracker.NotifyError(state.LastErrorCode, state.LastErrorCodeExtended);
+            HandleDispenseException(ex);
         }
         finally
         {
-            // Stryker disable once Statement : CancellationTokenSource disposal
-            tracker.ResetToken();
-
-            if (!disposed)
-            {
-                tracker.NotifyChanged();
-            }
+            FinalizeDispense();
         }
     }
+
+    private void PrepareDispense()
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+
+        var result = atomicState.Transition(s =>
+        {
+            if (s.IsBusy) return s;
+            
+            // ガード条件の確認（ハードウェア状態）
+            if (!hardwareStatusManager.IsConnected.CurrentValue || hardwareStatusManager.IsJammed.CurrentValue)
+            {
+                return s;
+            }
+
+            return s with
+            {
+                Status = CashDispenseStatus.Busy,
+                LastErrorCode = DeviceErrorCode.Success,
+                LastErrorCodeExtended = 0
+            };
+        });
+
+        if (result.NewState.IsBusy && !result.Changed)
+        {
+            throw new DeviceException("Already processing another dispense.", DeviceErrorCode.Busy);
+        }
+
+        if (!hardwareStatusManager.IsConnected.CurrentValue)
+        {
+            throw new DeviceException("Device is not connected.", DeviceErrorCode.Closed);
+        }
+
+        if (hardwareStatusManager.IsJammed.CurrentValue)
+        {
+            throw new DeviceException("Hardware is jammed.", DeviceErrorCode.Jammed);
+        }
+
+        if (result.Changed)
+        {
+            tracker.NotifyChanged();
+        }
+    }
+
+    private void HandleDispenseCancellation()
+    {
+        var result = atomicState.Transition(s => s with
+        {
+            Status = CashDispenseStatus.Idle,
+            LastErrorCode = DeviceErrorCode.Cancelled,
+            LastErrorCodeExtended = 0
+        });
+
+        if (result.Changed)
+        {
+            tracker.NotifyChanged();
+        }
+
+        tracker.NotifyError(DeviceErrorCode.Cancelled, 0);
+    }
+
+    private void HandleDispenseException(Exception ex)
+    {
+        /* Stryker disable all */
+        logger?.ZLogError(ex, $"Dispense failed.");
+        DispenseTracker.HandleDispenseError(ex, out var code, out var codeEx);
+        /* Stryker restore all */
+
+        var result = atomicState.Transition(s => s with
+        {
+            Status = CashDispenseStatus.Error,
+            LastErrorCode = code,
+            LastErrorCodeExtended = codeEx
+        });
+
+        if (result.Changed)
+        {
+            tracker.NotifyChanged();
+        }
+
+        tracker.NotifyError(result.NewState.LastErrorCode, result.NewState.LastErrorCodeExtended);
+    }
+
+    private void FinalizeDispense()
+    {
+        // Stryker disable once Statement : CancellationTokenSource disposal
+        tracker.ResetToken();
+
+        if (!disposed)
+        {
+            tracker.NotifyChanged();
+        }
+    }
+
 
     /// <summary>出力を中止します。</summary>
     public virtual void ClearOutput()
@@ -208,27 +234,27 @@ public class DispenseController : IDisposable
         ObjectDisposedException.ThrowIf(disposed, this);
         tracker.CancelCurrent();
 
-        bool notifyChanged = false;
-        lock (stateLock)
+        var result = atomicState.Transition(s =>
         {
-            if (Status == CashDispenseStatus.Error)
+            if (s.Status == CashDispenseStatus.Error)
             {
-                Status = CashDispenseStatus.Idle;
-                state.Reset();
-                notifyChanged = true;
+                return new DispenseState();
             }
-            else if (Status == CashDispenseStatus.Busy)
-            {
-                // [UPOS] Stop in-progress output immediately for UI/Test consistency
-                Status = CashDispenseStatus.Idle;
-                state.Status = CashDispenseStatus.Idle;
-                state.LastErrorCode = DeviceErrorCode.Cancelled;
-                state.LastErrorCodeExtended = 0;
-                notifyChanged = true;
-            }
-        }
 
-        if (notifyChanged && !disposed)
+            if (s.Status == CashDispenseStatus.Busy)
+            {
+                return s with
+                {
+                    Status = CashDispenseStatus.Idle,
+                    LastErrorCode = DeviceErrorCode.Cancelled,
+                    LastErrorCodeExtended = 0
+                };
+            }
+
+            return s;
+        });
+
+        if (result.Changed)
         {
             tracker.NotifyChanged();
         }
@@ -245,15 +271,9 @@ public class DispenseController : IDisposable
     /// <param name="disposing">破棄中かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
-        lock (stateLock)
+        if (Interlocked.Exchange(ref disposed, true))
         {
-            // Stryker disable once all : Idempotency guard for double dispose
-            if (disposed)
-            {
-                return;
-            }
-
-            disposed = true;
+            return;
         }
 
         if (disposing)

@@ -6,7 +6,10 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>入金終了時の計算および在庫操作を担当するクラス。</summary>
-internal sealed class DepositCalculator(ILogger? logger, Inventory inventory, CashChangerManager? manager)
+internal sealed class DepositCalculator(
+    ILogger? logger,
+    Inventory inventory,
+    CashChangerManager? manager)
 {
     private readonly ILogger? logger = logger;
     private readonly Inventory inventory = inventory;
@@ -26,7 +29,10 @@ internal sealed class DepositCalculator(ILogger? logger, Inventory inventory, Ca
     /// <param name="depositAmount">投入合計金額。</param>
     /// <param name="requiredAmount">要求金額。</param>
     /// <param name="depositCounts">投入金種の内訳。</param>
-    public void ProcessChange(decimal depositAmount, decimal requiredAmount, IReadOnlyDictionary<DenominationKey, int> depositCounts)
+    public void ProcessChange(
+        decimal depositAmount,
+        decimal requiredAmount,
+        IReadOnlyDictionary<DenominationKey, int> depositCounts)
     {
         decimal changeAmount = Math.Max(0, depositAmount - requiredAmount);
         var storeCounts = new Dictionary<DenominationKey, int>(depositCounts);
@@ -74,7 +80,8 @@ internal sealed class DepositCalculator(ILogger? logger, Inventory inventory, Ca
 
     /// <summary>釣銭なしで全額を収納（NoChange）処理します。</summary>
     /// <param name="depositCounts">投入金種の内訳。</param>
-    public void ProcessNoChange(IReadOnlyDictionary<DenominationKey, int> depositCounts)
+    public void ProcessNoChange(
+        IReadOnlyDictionary<DenominationKey, int> depositCounts)
     {
         /* Stryker disable all */
         logger?.ZLogInformation($"Deposit NoChange: Storing all cash into inventory.");
@@ -86,7 +93,8 @@ internal sealed class DepositCalculator(ILogger? logger, Inventory inventory, Ca
         UpdateInventoryAndManager(storeCounts);
     }
 
-    private void UpdateInventoryAndManager(Dictionary<DenominationKey, int> storeCounts)
+    private void UpdateInventoryAndManager(
+        Dictionary<DenominationKey, int> storeCounts)
     {
         if (manager != null)
         {
