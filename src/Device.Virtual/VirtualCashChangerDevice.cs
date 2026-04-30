@@ -26,9 +26,9 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     private readonly Lock stateLock = new();
     private readonly string mutexName;
 
-    private readonly ReactiveProperty<PosSharp.Abstractions.ControlState> state = new(PosSharp.Abstractions.ControlState.Closed);
+    private readonly ReactiveProperty<ControlState> state = new(PosSharp.Abstractions.ControlState.Closed);
     private readonly ReactiveProperty<bool> isBusy = new(false);
-    private readonly ReadOnlyReactiveProperty<PosSharp.Abstractions.ControlState> stateReadOnly;
+    private readonly ReadOnlyReactiveProperty<ControlState> stateReadOnly;
     private readonly ReadOnlyReactiveProperty<bool> isBusyReadOnly;
 
     private bool hasMutex;
@@ -94,23 +94,23 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     public ReadOnlyReactiveProperty<bool> IsBusy => isBusyReadOnly;
 
     /// <inheritdoc/>
-    public ReadOnlyReactiveProperty<PosSharp.Abstractions.ControlState> State => stateReadOnly;
+    public ReadOnlyReactiveProperty<ControlState> State => stateReadOnly;
 
     /// <inheritdoc/>
-    public Observable<PosSharp.Abstractions.UposDataEventArgs> DataEvents => depositController.DataEvents;
+    public Observable<UposDataEventArgs> DataEvents => depositController.DataEvents;
 
     /// <inheritdoc/>
-    public Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents =>
+    public Observable<UposErrorEventArgs> ErrorEvents =>
         Observable.Merge(depositController.ErrorEvents, dispenseController.ErrorEvents);
 
     /// <inheritdoc/>
-    public Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents => hardwareStatus.StatusUpdateEvents;
+    public Observable<UposStatusUpdateEventArgs> StatusUpdateEvents => hardwareStatus.StatusUpdateEvents;
 
     /// <inheritdoc/>
     public Observable<DeviceDirectIOEventArgs> DirectIOEvents => Observable.Empty<DeviceDirectIOEventArgs>();
 
     /// <inheritdoc/>
-    public Observable<PosSharp.Abstractions.UposOutputCompleteEventArgs> OutputCompleteEvents => dispenseController.OutputCompleteEvents;
+    public Observable<UposOutputCompleteEventArgs> OutputCompleteEvents => dispenseController.OutputCompleteEvents;
 
     /// <inheritdoc/>
     public Task OpenAsync()
@@ -293,7 +293,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     }
 
     /// <inheritdoc/>
-    public Task<string> CheckHealthAsync(PosSharp.Abstractions.HealthCheckLevel level)
+    public Task<string> CheckHealthAsync(HealthCheckLevel level)
     {
         return Task.FromResult(diagnosticController.GetHealthReport(level));
     }

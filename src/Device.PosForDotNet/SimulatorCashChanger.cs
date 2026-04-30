@@ -1,4 +1,3 @@
-using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -6,11 +5,9 @@ using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.PosForDotNet.Services;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Microsoft.PointOfService.BasicServiceObjects;
 using R3;
-using ZLogger;
 using CoreDeviceEventTypes = CashChangerSimulator.Core.Services.DeviceEventTypes;
 using IInternalUposEventSink = CashChangerSimulator.Device.PosForDotNet.Services.IUposEventSink;
 
@@ -240,7 +237,7 @@ public class SimulatorCashChanger : CashChangerBasic, IInternalUposEventSink, ID
     bool ICashChangerStatusSink.RealTimeDataEnabled => RealTimeDataEnabled;
     bool IInternalUposEventSink.DataEventEnabled => core.Context.Mediator.DataEventEnabled;
     bool IInternalUposEventSink.DisableUposEventQueuing => SkipStateVerification;
-    Microsoft.PointOfService.ControlState IInternalUposEventSink.State => State;
+    ControlState IInternalUposEventSink.State => State;
     PosSharp.Abstractions.ControlState IDeviceStateProvider.State => InternalStatusMonitor.MapToControlState(State);
 
     // Lifecycle Methods (Delegated with base calls)
@@ -336,7 +333,7 @@ public class SimulatorCashChanger : CashChangerBasic, IInternalUposEventSink, ID
         return Task.Run(() => AdjustCashCounts(posCounts));
     }
     public Task PurgeCashAsync() => Task.Run(PurgeCash);
-    public Task<string> CheckHealthAsync(PosSharp.Abstractions.HealthCheckLevel level) => Task.Run(() => CheckHealth((Microsoft.PointOfService.HealthCheckLevel)level));
+    public Task<string> CheckHealthAsync(PosSharp.Abstractions.HealthCheckLevel level) => Task.Run(() => CheckHealth((HealthCheckLevel)level));
 
     /// <inheritdoc/>
     public override void AdjustCashCounts(IEnumerable<CashCount> cashCounts) => core.InventoryFacade.AdjustCashCounts(cashCounts, core.ConfigManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(core.ConfigManager.CurrencyCode), core.Context.HardwareStatusManager);
@@ -357,7 +354,7 @@ public class SimulatorCashChanger : CashChangerBasic, IInternalUposEventSink, ID
 
     // Diagnostics & Stats (Delegated)
     /// <inheritdoc/>
-    public override string CheckHealth(Microsoft.PointOfService.HealthCheckLevel level) => checkHealthText = core.DiagnosticsFacade.CheckHealth(level);
+    public override string CheckHealth(HealthCheckLevel level) => checkHealthText = core.DiagnosticsFacade.CheckHealth(level);
     /// <inheritdoc/>
     public override string RetrieveStatistics(string[] statistics) => core.DiagnosticsFacade.RetrieveStatistics(statistics);
     /// <inheritdoc/>

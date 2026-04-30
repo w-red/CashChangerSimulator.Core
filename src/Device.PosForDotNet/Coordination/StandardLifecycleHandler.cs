@@ -16,7 +16,7 @@ public class StandardLifecycleHandler(
     ILogger logger) : IUposLifecycleHandler
 {
     /// <inheritdoc/>
-    public Microsoft.PointOfService.ControlState State
+    public ControlState State
     {
         get
         {

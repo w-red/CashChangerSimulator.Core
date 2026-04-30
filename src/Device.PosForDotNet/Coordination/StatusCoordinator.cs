@@ -4,7 +4,6 @@ using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Opos;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.PointOfService;
-using System.Threading;
 using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Coordination;
@@ -24,10 +23,10 @@ public sealed class StatusCoordinator(
     private int _wasFixed;
 
     /// <summary>現在のデバイスステータスを取得します。</summary>
-    public CashChangerSimulator.Core.Models.CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerStatus.OK;
+    public Core.Models.CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerStatus.OK;
 
     /// <summary>現在のフルステータスを取得します。</summary>
-    public CashChangerSimulator.Core.Models.CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerFullStatus.OK;
+    public Core.Models.CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerFullStatus.OK;
 
     /// <inheritdoc/>
     public void Start()
@@ -89,7 +88,7 @@ public sealed class StatusCoordinator(
         }
     }
 
-    private void FireDeviceStatusEvent(CashChangerSimulator.Core.Models.CashChangerStatus newStatus, CashChangerSimulator.Core.Models.CashChangerStatus previousStatus)
+    private void FireDeviceStatusEvent(Core.Models.CashChangerStatus newStatus, Core.Models.CashChangerStatus previousStatus)
     {
         if (newStatus == CashChangerSimulator.Core.Models.CashChangerStatus.OK &&
             previousStatus is CashChangerSimulator.Core.Models.CashChangerStatus.Empty or CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty)
@@ -127,7 +126,7 @@ public sealed class StatusCoordinator(
         }
     }
 
-    private void FireFullStatusEvent(CashChangerSimulator.Core.Models.CashChangerFullStatus newStatus, CashChangerSimulator.Core.Models.CashChangerFullStatus previousStatus)
+    private void FireFullStatusEvent(Core.Models.CashChangerFullStatus newStatus, Core.Models.CashChangerFullStatus previousStatus)
     {
         if (newStatus == CashChangerSimulator.Core.Models.CashChangerFullStatus.OK &&
             previousStatus is CashChangerSimulator.Core.Models.CashChangerFullStatus.Full or CashChangerSimulator.Core.Models.CashChangerFullStatus.NearFull)

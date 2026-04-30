@@ -1,15 +1,10 @@
 using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
-using CashChangerSimulator.Core.Managers;
-using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.PosForDotNet.Facades;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.PosForDotNet.Services;
-using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging;
-using Microsoft.PointOfService;
-using Microsoft.PointOfService.BasicServiceObjects;
 using R3;
 
 namespace CashChangerSimulator.Device.PosForDotNet;

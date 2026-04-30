@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core;
+using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -51,9 +51,10 @@ public sealed class SimulatorContext : IDisposable
         // Use the monitors from the MonitorsProvider for aggregation
         Aggregator = OverallStatusAggregator.Create(MonitorsProvider.Monitors);
 
+        var simulator = HardwareSimulator.Create(ConfigProvider, TimeProvider);
         Manager = deps.Manager ?? new CashChangerManager(Inventory, History, ConfigProvider);
-        DepositController = deps.DepositController ?? new DepositController(Inventory);
-        DispenseController = deps.DispenseController ?? new DispenseController(Manager, Inventory, ConfigProvider, LogProvider.Factory, HardwareStatusManager, HardwareSimulator.Create(ConfigProvider, deps.TimeProvider));
+        DepositController = deps.DepositController ?? new DepositController(Manager, Inventory, HardwareStatusManager, ConfigProvider, LogProvider.Factory, TimeProvider);
+        DispenseController = deps.DispenseController ?? new DispenseController(Manager, Inventory, ConfigProvider, LogProvider.Factory, HardwareStatusManager, simulator);
 
         Mediator = deps.Mediator ?? new UposMediator();
         EventNotifier = deps.EventNotifier ?? new UposEventNotifier();
