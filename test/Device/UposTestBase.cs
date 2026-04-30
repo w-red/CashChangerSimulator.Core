@@ -1,5 +1,4 @@
 using CashChangerSimulator.Device.PosForDotNet;
-using Xunit;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
@@ -13,6 +12,8 @@ public abstract class UposTestBase : IDisposable
     protected UposTestBase()
     {
         Changer = new InternalSimulatorCashChanger();
+        Changer.Context.ConfigProvider.Config.Simulation.DispenseDelayMs = 0;
+        Changer.Context.ConfigProvider.Config.Simulation.DepositDelayMs = 0;
     }
 
     /// <summary>テスト対象のキャッシュチェンジャーインスタンス。</summary>

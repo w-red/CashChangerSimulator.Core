@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -37,10 +37,11 @@ public class ControllerTestBuilder
     public DepositController BuildDepositController()
     {
         return new DepositController(
+            _fixture.Manager,
             _fixture.Inventory,
             _fixture.StatusManager,
-            _fixture.Manager,
             _fixture.ConfigurationProvider,
+            _fixture.LoggerFactory ?? NullLoggerFactory.Instance,
             _fixture.TimeProvider);
     }
 

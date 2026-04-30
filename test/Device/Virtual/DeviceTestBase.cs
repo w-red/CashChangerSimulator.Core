@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -20,8 +20,8 @@ public abstract class DeviceTestBase : IDisposable
     {
         Fixture = new CashChangerFixture();
         
-        Fixture.ConfigurationProvider.Config.Simulation.DispenseDelayMs = 1000;
-        Fixture.ConfigurationProvider.Config.Simulation.DepositDelayMs = 1000;
+        Fixture.ConfigurationProvider.Config.Simulation.DispenseDelayMs = 0;
+        Fixture.ConfigurationProvider.Config.Simulation.DepositDelayMs = 0;
         
         LoggerFactoryMock = new Mock<ILoggerFactory>();
         LoggerFactory = NullLoggerFactory.Instance;
