@@ -9,10 +9,13 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>inject-error コマンド: ハードウェアエラーを注入します。</summary>
 /// <param name="hardwareStatusManager">ハードウェア状態管理インスタンス。</param>
-public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManager) : IScriptCommandHandler
+public class InjectErrorCommandHandler(
+    HardwareStatusManager hardwareStatusManager)
+    : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
-    public ScriptCommandType OpName => ScriptCommandType.InjectError;
+    public ScriptCommandType OpName =>
+        ScriptCommandType.InjectError;
 
     /// <summary>スクリプトコマンドを実行します。</summary>
     /// <param name="cmd">コマンド。</param>
@@ -20,7 +23,11 @@ public class InjectErrorCommandHandler(HardwareStatusManager hardwareStatusManag
     /// <param name="logger">ロガー。</param>
     /// <param name="onProgress">進行状況を通知するコールバック。</param>
     /// <returns>非同期タスク。</returns>
-    public Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
+    public Task ExecuteAsync(
+        ScriptCommand cmd,
+        ScriptExecutionContext context,
+        ILogger logger,
+        Action<string>? onProgress)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         ArgumentNullException.ThrowIfNull(context);

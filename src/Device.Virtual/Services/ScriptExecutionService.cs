@@ -65,10 +65,15 @@ public class ScriptExecutionService(
 
         if (element.ValueKind == JsonValueKind.String)
         {
-            return ResolveStringElement(element.GetString(), context);
+            return ResolveStringElement(
+                element.GetString(),
+                context);
         }
 
-        return Convert.ToInt32(element, System.Globalization.CultureInfo.InvariantCulture);
+        return Convert
+            .ToInt32(
+                element,
+                System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static int ResolveStringElement(string? str, ScriptExecutionContext context)
@@ -87,14 +92,20 @@ public class ScriptExecutionService(
             return parsedInt;
         }
 
-        return Convert.ToInt32(str, System.Globalization.CultureInfo.InvariantCulture);
+        return Convert
+            .ToInt32(
+                str,
+                System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static int ResolveVariableValue(object? varValue)
     {
-        return varValue is JsonElement varElement && varElement.ValueKind == JsonValueKind.Number
-            ? varElement.GetInt32()
-            : Convert.ToInt32(varValue, System.Globalization.CultureInfo.InvariantCulture);
+        return varValue is JsonElement varElement
+            && varElement.ValueKind == JsonValueKind.Number
+                ? varElement.GetInt32()
+                : Convert.ToInt32(
+                    varValue,
+                    System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <summary>JSON スクリプトを解析して実行します。</summary>
@@ -105,7 +116,10 @@ public class ScriptExecutionService(
         string json,
         Action<string>? onProgress = null)
     {
-        var commands = JsonSerializer.Deserialize<List<ScriptCommand>>(json, JsonOptions);
+        var commands = JsonSerializer
+            .Deserialize<List<ScriptCommand>>(
+                json,
+                JsonOptions);
         if (commands == null)
         {
             logger?.ZLogError($"Failed to deserialize script JSON.");

@@ -4,10 +4,13 @@ using Microsoft.Extensions.Logging;
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>enable コマンド: デバイスを有効状態にします。</summary>
-public class EnableCommandHandler(HardwareStatusManager hardwareStatusManager) : IScriptCommandHandler
+public class EnableCommandHandler(
+    HardwareStatusManager hardwareStatusManager)
+    : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
-    public ScriptCommandType OpName => ScriptCommandType.Enable;
+    public ScriptCommandType OpName =>
+        ScriptCommandType.Enable;
 
     /// <summary>スクリプトコマンドを実行します。</summary>
     /// <param name="cmd">コマンド。</param>
@@ -15,7 +18,11 @@ public class EnableCommandHandler(HardwareStatusManager hardwareStatusManager) :
     /// <param name="logger">ロガー。</param>
     /// <param name="onProgress">進行状況を通知するコールバック。</param>
     /// <returns>非同期タスク。</returns>
-    public Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
+    public Task ExecuteAsync(
+        ScriptCommand cmd,
+        ScriptExecutionContext context,
+        ILogger logger,
+        Action<string>? onProgress)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         ArgumentNullException.ThrowIfNull(context);

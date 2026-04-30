@@ -5,10 +5,14 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>trackdeposit コマンド: 金種を投入シミュレーションします。</summary>
-public class TrackDepositCommandHandler(DepositController depositController, TimeProvider timeProvider) : IScriptCommandHandler
+public class TrackDepositCommandHandler(
+    DepositController depositController,
+    TimeProvider timeProvider)
+    : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
-    public ScriptCommandType OpName => ScriptCommandType.TrackDeposit;
+    public ScriptCommandType OpName =>
+        ScriptCommandType.TrackDeposit;
 
     /// <summary>スクリプトコマンドを実行します。</summary>
     /// <param name="cmd">コマンド。</param>
@@ -16,7 +20,11 @@ public class TrackDepositCommandHandler(DepositController depositController, Tim
     /// <param name="logger">ロガー。</param>
     /// <param name="onProgress">進行状況を通知するコールバック。</param>
     /// <returns>非同期タスク。</returns>
-    public async Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
+    public async Task ExecuteAsync(
+        ScriptCommand cmd,
+        ScriptExecutionContext context,
+        ILogger logger,
+        Action<string>? onProgress)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         ArgumentNullException.ThrowIfNull(context);

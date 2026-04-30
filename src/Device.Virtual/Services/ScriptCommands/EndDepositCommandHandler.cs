@@ -1,14 +1,16 @@
-using CashChangerSimulator.Core.Models;
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>enddeposit コマンド: 入金を終了します(仮想デバイス)。</summary>
-public class EndDepositCommandHandler(DepositController depositController) : IScriptCommandHandler
+public class EndDepositCommandHandler(
+    DepositController depositController)
+    : IScriptCommandHandler
 {
     /// <summary>コマンド名を取得します。</summary>
-    public ScriptCommandType OpName => ScriptCommandType.EndDeposit;
+    public ScriptCommandType OpName =>
+        ScriptCommandType.EndDeposit;
 
     /// <summary>スクリプトコマンドを実行します。</summary>
     /// <param name="cmd">コマンド。</param>
@@ -16,7 +18,11 @@ public class EndDepositCommandHandler(DepositController depositController) : ISc
     /// <param name="logger">ロガー。</param>
     /// <param name="onProgress">進行状況を通知するコールバック。</param>
     /// <returns>非同期タスク。</returns>
-    public async Task ExecuteAsync(ScriptCommand cmd, ScriptExecutionContext context, ILogger logger, Action<string>? onProgress)
+    public async Task ExecuteAsync(
+        ScriptCommand cmd,
+        ScriptExecutionContext context,
+        ILogger logger,
+        Action<string>? onProgress)
     {
         ArgumentNullException.ThrowIfNull(cmd);
         ArgumentNullException.ThrowIfNull(context);

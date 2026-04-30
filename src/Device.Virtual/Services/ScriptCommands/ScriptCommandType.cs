@@ -39,7 +39,7 @@ public sealed record ScriptCommandType
     /// <summary>REPEAT コマンド（制御フロー用）。</summary>
     public static readonly ScriptCommandType Repeat = new("REPEAT");
 
-    /// <summary>コマンド名（大文字）。</summary>
+    /// <summary>コマンド名(大文字)。</summary>
     public string Name { get; }
 
     private ScriptCommandType(string name) => Name = name;
@@ -53,7 +53,9 @@ public sealed record ScriptCommandType
     public static ScriptCommandType FromString(string op)
     {
         ArgumentNullException.ThrowIfNull(op);
-        var normalized = op.ToUpperInvariant().Replace("-", "", StringComparison.Ordinal);
+        var normalized = op
+            .ToUpperInvariant()
+            .Replace("-", "", StringComparison.Ordinal);
         return normalized switch
         {
             "OPEN" => Open,

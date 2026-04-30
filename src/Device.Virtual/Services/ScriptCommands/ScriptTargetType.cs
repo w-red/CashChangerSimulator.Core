@@ -9,7 +9,7 @@ public sealed record ScriptTargetType
     /// <summary>ステータス対象。</summary>
     public static readonly ScriptTargetType Status = new("STATUS");
 
-    /// <summary>対象名（大文字）。</summary>
+    /// <summary>対象名(大文字)。</summary>
     public string Name { get; }
 
     private ScriptTargetType(string name) => Name = name;
@@ -24,7 +24,8 @@ public sealed record ScriptTargetType
     {
         if (string.IsNullOrEmpty(target)) return new ScriptTargetType(string.Empty);
 
-        var normalized = target.ToUpperInvariant();
+        var normalized = target
+            .ToUpperInvariant();
         return normalized switch
         {
             "INVENTORY" => Inventory,
