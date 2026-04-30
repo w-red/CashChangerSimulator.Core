@@ -12,39 +12,18 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 /// 金額指定の払い出し(DispenseChange)および金種指定の払い出し(DispenseCash)のリクエストを受け、
 /// 適切なバリデーション(在庫確認、状態チェック)を行った後にコマンドを実行します。
 /// </remarks>
-public class UposDispenseFacade
+/// <param name="dispenseController">出金コントローラー。</param>
+/// <param name="depositController">入金コントローラー。</param>
+/// <param name="hardwareStatusManager">ハードウェアステータスマネージャー。</param>
+/// <param name="inventory">在庫管理オブジェクト。</param>
+/// <param name="mediator">UPOS メディエーター。</param>
+public class UposDispenseFacade(
+    DispenseController dispenseController,
+    DepositController depositController,
+    HardwareStatusManager hardwareStatusManager,
+    Inventory inventory,
+    IUposMediator mediator)
 {
-    private readonly DispenseController dispenseController;
-    private readonly DepositController depositController;
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly Inventory inventory;
-    private readonly IUposMediator mediator;
-
-    /// <summary>Initializes a new instance of the <see cref="UposDispenseFacade"/> class.必要なコントローラーとサービスを注入して Facade を初期化します。</summary>
-    /// <param name="dispenseController">出金コントローラー。</param>
-    /// <param name="depositController">入金コントローラー。</param>
-    /// <param name="hardwareStatusManager">ハードウェアステータスマネージャー。</param>
-    /// <param name="inventory">在庫管理オブジェクト。</param>
-    /// <param name="mediator">UPOS メディエーター。</param>
-    public UposDispenseFacade(
-        DispenseController dispenseController,
-        DepositController depositController,
-        HardwareStatusManager hardwareStatusManager,
-        Inventory inventory,
-        IUposMediator mediator)
-    {
-        ArgumentNullException.ThrowIfNull(dispenseController);
-        ArgumentNullException.ThrowIfNull(depositController);
-        ArgumentNullException.ThrowIfNull(hardwareStatusManager);
-        ArgumentNullException.ThrowIfNull(inventory);
-        ArgumentNullException.ThrowIfNull(mediator);
-
-        this.dispenseController = dispenseController;
-        this.depositController = depositController;
-        this.hardwareStatusManager = hardwareStatusManager;
-        this.inventory = inventory;
-        this.mediator = mediator;
-    }
 
     /// <summary>金額指定の出金を実行します。</summary>
     /// <param name="amount">払出金額。</param>
