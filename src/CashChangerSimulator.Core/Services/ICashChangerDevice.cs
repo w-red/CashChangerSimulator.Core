@@ -12,22 +12,22 @@ public interface ICashChangerDevice : IDisposable
     ReadOnlyReactiveProperty<bool> IsBusy { get; }
 
     /// <summary>デバイスの現在の制御状態。</summary>
-    ReadOnlyReactiveProperty<PosSharp.Abstractions.ControlState> State { get; }
+    ReadOnlyReactiveProperty<ControlState> State { get; }
 
     /// <summary>データイベント通知。</summary>
-    Observable<PosSharp.Abstractions.UposDataEventArgs> DataEvents { get; }
+    Observable<UposDataEventArgs> DataEvents { get; }
 
     /// <summary>エラーイベント通知。</summary>
-    Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents { get; }
+    Observable<UposErrorEventArgs> ErrorEvents { get; }
 
     /// <summary>ステータス更新イベント通知。</summary>
-    Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents { get; }
+    Observable<UposStatusUpdateEventArgs> StatusUpdateEvents { get; }
 
     /// <summary>ダイレクトIOイベント通知。</summary>
     Observable<DeviceDirectIOEventArgs> DirectIOEvents { get; }
 
     /// <summary>出力完了イベント通知。</summary>
-    Observable<PosSharp.Abstractions.UposOutputCompleteEventArgs> OutputCompleteEvents { get; }
+    Observable<UposOutputCompleteEventArgs> OutputCompleteEvents { get; }
 
     /// <summary>デバイスを非同期でオープンします。</summary>
     /// <returns>完了を示すタスク。</returns>
@@ -102,7 +102,7 @@ public interface ICashChangerDevice : IDisposable
     /// <summary>デバイスの健康診断(自己診断)を実行します。</summary>
     /// <param name="level">診断レベル。</param>
     /// <returns>診断結果メッセージ。</returns>
-    Task<string> CheckHealthAsync(PosSharp.Abstractions.HealthCheckLevel level);
+    Task<string> CheckHealthAsync(HealthCheckLevel level);
 
     /// <summary>ベンダー独自のコマンドを実行します。</summary>
     /// <param name="command">コマンド番号。</param>

@@ -1,5 +1,3 @@
-﻿using CashChangerSimulator.Core.Models;
-
 namespace CashChangerSimulator.Core.Services;
 
 /// <summary>デバイスの現在の制御状態を提供するインターフェース。</summary>
