@@ -103,7 +103,7 @@ internal sealed class DepositTracker(
     {
         if (!disposed)
         {
-            errorEventsSubject.OnNext(new UposErrorEventArgs((UposErrorCode)errorCode, extended, PosSharp.Abstractions.UposErrorLocus.Output, PosSharp.Abstractions.UposErrorResponse.Retry));
+            errorEventsSubject.OnNext(new UposErrorEventArgs((UposErrorCode)errorCode, extended, UposErrorLocus.Output, UposErrorResponse.Retry));
         }
     }
 

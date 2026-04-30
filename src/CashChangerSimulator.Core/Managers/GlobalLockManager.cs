@@ -65,7 +65,7 @@ public sealed class GlobalLockManager : IDisposable
                     return true;
                 }
 
-                System.Threading.Thread.Sleep(20);
+                Thread.Sleep(20);
             }
             catch (UnauthorizedAccessException ex)
             {

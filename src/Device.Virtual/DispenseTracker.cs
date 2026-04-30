@@ -143,11 +143,11 @@ internal sealed class DispenseTracker : IDisposable
     /// <param name="code">エラーコード。</param>
     /// <param name="codeEx">拡張エラーコード。</param>
     /// <param name="response">エラーレスポンス。</param>
-    public void NotifyError(DeviceErrorCode code, int codeEx, UposErrorResponse response = PosSharp.Abstractions.UposErrorResponse.None)
+    public void NotifyError(DeviceErrorCode code, int codeEx, UposErrorResponse response = UposErrorResponse.None)
     {
         if (!disposed)
         {
-            errorEventsSubject.OnNext(new UposErrorEventArgs((UposErrorCode)code, codeEx, PosSharp.Abstractions.UposErrorLocus.Output, response));
+            errorEventsSubject.OnNext(new UposErrorEventArgs((UposErrorCode)code, codeEx, UposErrorLocus.Output, response));
         }
     }
 

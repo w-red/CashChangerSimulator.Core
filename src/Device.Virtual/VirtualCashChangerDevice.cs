@@ -26,7 +26,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     private readonly Lock stateLock = new();
     private readonly string mutexName;
 
-    private readonly ReactiveProperty<ControlState> state = new(PosSharp.Abstractions.ControlState.Closed);
+    private readonly ReactiveProperty<ControlState> state = new(ControlState.Closed);
     private readonly ReactiveProperty<bool> isBusy = new(false);
     private readonly ReadOnlyReactiveProperty<ControlState> stateReadOnly;
     private readonly ReadOnlyReactiveProperty<bool> isBusyReadOnly;
@@ -305,12 +305,14 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
 
         switch (command)
         {
-            case DirectIOCommands.TakeCash: // TakeCash
+            // TakeCash
+            case DirectIOCommands.TakeCash:
                 var port = (ExitPort)data;
                 hardwareStatus.Input.ClearExitPort(port);
                 return Task.FromResult(0);
 
-            case DirectIOCommands.GetExitPortCounts: // GetExitPortCounts
+            // GetExitPortCounts
+            case DirectIOCommands.GetExitPortCounts:
                 var targetPort = (ExitPort)data;
                 var counts = hardwareStatus.State.GetExitPortCounts(targetPort);
                 if (obj is IDictionary<DenominationKey, int> outDict)
@@ -400,21 +402,21 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
 
             if (!hardwareStatus.IsConnected.CurrentValue)
             {
-                state.Value = PosSharp.Abstractions.ControlState.Closed;
+                state.Value = ControlState.Closed;
             }
             else if (busy)
             {
-                state.Value = PosSharp.Abstractions.ControlState.Busy;
+                state.Value = ControlState.Busy;
             }
             else if (depositController.LastErrorCode != DeviceErrorCode.Success
                      || dispenseController.LastErrorCode != DeviceErrorCode.Success)
             {
                 // エラー状態の判定(リカバリ待ち等の詳細ロジックは必要に応じて拡張)
-                state.Value = PosSharp.Abstractions.ControlState.Error;
+                state.Value = ControlState.Error;
             }
             else
             {
-                state.Value = PosSharp.Abstractions.ControlState.Idle;
+                state.Value = ControlState.Idle;
             }
         }
     }

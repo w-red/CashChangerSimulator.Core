@@ -251,7 +251,7 @@ public class InventoryTests : CoreTestBase
         dict.Keys.ShouldContain("JPY:B1000");
         dict.Keys.ShouldNotContain("");
 
-        var newInventory = CashChangerSimulator.Core.Models.Inventory.Create();
+        var newInventory = Inventory.Create();
         InventoryPersistenceMapper.LoadFromDictionary(newInventory, dict);
         newInventory.GetCount(pay).ShouldBe(1);
         newInventory.CollectionCounts.First(kv => kv.Key == pay).Value.ShouldBe(2);
@@ -275,7 +275,7 @@ public class InventoryTests : CoreTestBase
             { "COL:JPY:B1000", 2 }    // 正しい
         };
 
-        var inventory = CashChangerSimulator.Core.Models.Inventory.Create();
+        var inventory = Inventory.Create();
         InventoryPersistenceMapper.LoadFromDictionary(inventory, dict);
 
         // 正しいものだけが取り込まれていること
@@ -589,7 +589,7 @@ public class InventoryTests : CoreTestBase
     [Fact]
     public void OperationsAfterDisposeShouldThrowObjectDisposedExceptionFull()
     {
-        var inv = CashChangerSimulator.Core.Models.Inventory.Create();
+        var inv = Inventory.Create();
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
         inv.Dispose();
 

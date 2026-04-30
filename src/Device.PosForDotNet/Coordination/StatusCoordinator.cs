@@ -24,10 +24,10 @@ public sealed class StatusCoordinator(
     private int _wasFixed;
 
     /// <summary>現在のデバイスステータスを取得します。</summary>
-    public Core.Models.CashChangerStatus LastCashChangerStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerStatus.OK;
+    public Core.Models.CashChangerStatus LastCashChangerStatus { get; private set; } = Core.Models.CashChangerStatus.OK;
 
     /// <summary>現在のフルステータスを取得します。</summary>
-    public Core.Models.CashChangerFullStatus LastFullStatus { get; private set; } = CashChangerSimulator.Core.Models.CashChangerFullStatus.OK;
+    public Core.Models.CashChangerFullStatus LastFullStatus { get; private set; } = Core.Models.CashChangerFullStatus.OK;
 
     /// <inheritdoc/>
     public void Start()
@@ -51,16 +51,16 @@ public sealed class StatusCoordinator(
     {
         LastFullStatus = statusAggregator.FullStatus.CurrentValue switch
         {
-            CashStatus.Full => CashChangerSimulator.Core.Models.CashChangerFullStatus.Full,
-            CashStatus.NearFull => CashChangerSimulator.Core.Models.CashChangerFullStatus.NearFull,
-            _ => CashChangerSimulator.Core.Models.CashChangerFullStatus.OK
+            CashStatus.Full => Core.Models.CashChangerFullStatus.Full,
+            CashStatus.NearFull => Core.Models.CashChangerFullStatus.NearFull,
+            _ => Core.Models.CashChangerFullStatus.OK
         };
 
         LastCashChangerStatus = statusAggregator.DeviceStatus.CurrentValue switch
         {
-            CashStatus.Empty => CashChangerSimulator.Core.Models.CashChangerStatus.Empty,
-            CashStatus.NearEmpty => CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty,
-            _ => CashChangerSimulator.Core.Models.CashChangerStatus.OK
+            CashStatus.Empty => Core.Models.CashChangerStatus.Empty,
+            CashStatus.NearEmpty => Core.Models.CashChangerStatus.NearEmpty,
+            _ => Core.Models.CashChangerStatus.OK
         };
     }
 
@@ -76,9 +76,9 @@ public sealed class StatusCoordinator(
 
         var newDeviceStatus = status switch
         {
-            CashStatus.Empty => CashChangerSimulator.Core.Models.CashChangerStatus.Empty,
-            CashStatus.NearEmpty => CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty,
-            _ => CashChangerSimulator.Core.Models.CashChangerStatus.OK
+            CashStatus.Empty => Core.Models.CashChangerStatus.Empty,
+            CashStatus.NearEmpty => Core.Models.CashChangerStatus.NearEmpty,
+            _ => Core.Models.CashChangerStatus.OK
         };
 
         if (newDeviceStatus != LastCashChangerStatus)
@@ -91,8 +91,8 @@ public sealed class StatusCoordinator(
 
     private void FireDeviceStatusEvent(Core.Models.CashChangerStatus newStatus, Core.Models.CashChangerStatus previousStatus)
     {
-        if (newStatus == CashChangerSimulator.Core.Models.CashChangerStatus.OK &&
-            previousStatus is CashChangerSimulator.Core.Models.CashChangerStatus.Empty or CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty)
+        if (newStatus == Core.Models.CashChangerStatus.OK &&
+            previousStatus is Core.Models.CashChangerStatus.Empty or Core.Models.CashChangerStatus.NearEmpty)
         {
             sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.EmptyOk));
         }
@@ -100,8 +100,8 @@ public sealed class StatusCoordinator(
         {
             var code = newStatus switch
             {
-                CashChangerSimulator.Core.Models.CashChangerStatus.Empty => (int)UposCashChangerStatusUpdateCode.Empty,
-                CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty => (int)UposCashChangerStatusUpdateCode.NearEmpty,
+                Core.Models.CashChangerStatus.Empty => (int)UposCashChangerStatusUpdateCode.Empty,
+                Core.Models.CashChangerStatus.NearEmpty => (int)UposCashChangerStatusUpdateCode.NearEmpty,
                 _ => (int)UposCashChangerStatusUpdateCode.Ok
             };
             sink.FireEvent(new StatusUpdateEventArgs(code));
@@ -114,9 +114,9 @@ public sealed class StatusCoordinator(
 
         var newFullStatus = status switch
         {
-            CashStatus.Full => CashChangerSimulator.Core.Models.CashChangerFullStatus.Full,
-            CashStatus.NearFull => CashChangerSimulator.Core.Models.CashChangerFullStatus.NearFull,
-            _ => CashChangerSimulator.Core.Models.CashChangerFullStatus.OK
+            CashStatus.Full => Core.Models.CashChangerFullStatus.Full,
+            CashStatus.NearFull => Core.Models.CashChangerFullStatus.NearFull,
+            _ => Core.Models.CashChangerFullStatus.OK
         };
 
         if (newFullStatus != LastFullStatus)
@@ -129,8 +129,8 @@ public sealed class StatusCoordinator(
 
     private void FireFullStatusEvent(Core.Models.CashChangerFullStatus newStatus, Core.Models.CashChangerFullStatus previousStatus)
     {
-        if (newStatus == CashChangerSimulator.Core.Models.CashChangerFullStatus.OK &&
-            previousStatus is CashChangerSimulator.Core.Models.CashChangerFullStatus.Full or CashChangerSimulator.Core.Models.CashChangerFullStatus.NearFull)
+        if (newStatus == Core.Models.CashChangerFullStatus.OK &&
+            previousStatus is Core.Models.CashChangerFullStatus.Full or Core.Models.CashChangerFullStatus.NearFull)
         {
             sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.FullOk));
         }
@@ -171,9 +171,9 @@ public sealed class StatusCoordinator(
         {
             LastCashChangerStatus = statusAggregator.DeviceStatus.CurrentValue switch
             {
-                CashStatus.Empty => CashChangerSimulator.Core.Models.CashChangerStatus.Empty,
-                CashStatus.NearEmpty => CashChangerSimulator.Core.Models.CashChangerStatus.NearEmpty,
-                _ => CashChangerSimulator.Core.Models.CashChangerStatus.OK
+                CashStatus.Empty => Core.Models.CashChangerStatus.Empty,
+                CashStatus.NearEmpty => Core.Models.CashChangerStatus.NearEmpty,
+                _ => Core.Models.CashChangerStatus.OK
             };
             sink.FireEvent(new StatusUpdateEventArgs((int)UposCashChangerStatusUpdateCode.Ok));
         }
