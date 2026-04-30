@@ -58,5 +58,5 @@ public interface IHardwareStatus
     IReadOnlyDictionary<DenominationKey, int> GetExitPortCounts(ExitPort port);
 
     /// <summary>ステータス更新通知イベントのストリーム。</summary>
-    Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents { get; }
+    Observable<UposStatusUpdateEventArgs> StatusUpdateEvents { get; }
 }

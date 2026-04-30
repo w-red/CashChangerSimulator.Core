@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Threading;
 using CashChangerSimulator.Core.Models;
 using PosSharp.Abstractions;
 using R3;
@@ -105,7 +104,7 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     }
 
     /// <inheritdoc/>
-    public Observable<PosSharp.Abstractions.UposStatusUpdateEventArgs> StatusUpdateEvents { get; private set; } = null!;
+    public Observable<UposStatusUpdateEventArgs> StatusUpdateEvents { get; private set; } = null!;
 
     /// <summary>このインスタンスが破棄されているかどうかを取得します。</summary>
     public bool IsDisposed => Volatile.Read(ref _disposed) == 1;
@@ -254,8 +253,8 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     private void SetupEvents()
     {
         StatusUpdateEvents = Observable.Merge(
-            IsConnected.Select(c => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
-            IsJammed.Select(j => new PosSharp.Abstractions.UposStatusUpdateEventArgs((int)(j ? DeviceStatus.Jam : DeviceStatus.Ok))),
+            IsConnected.Select(c => new UposStatusUpdateEventArgs((int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
+            IsJammed.Select(j => new UposStatusUpdateEventArgs((int)(j ? DeviceStatus.Jam : DeviceStatus.Ok))),
             SetupExitPortEvents(),
             vendorStatusEvents);
     }
