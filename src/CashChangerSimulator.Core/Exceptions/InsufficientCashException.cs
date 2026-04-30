@@ -11,7 +11,8 @@ public class InsufficientCashException : DeviceException
 
     /// <summary>Initializes a new instance of the <see cref="InsufficientCashException"/> class.メッセージを指定して初期化する。</summary>
     /// <param name="message">例外メッセージ。</param>
-    public InsufficientCashException(string message)
+    public InsufficientCashException(
+        string message)
         : base(message, Models.DeviceErrorCode.Extended, 201)
     {
     }
@@ -19,7 +20,9 @@ public class InsufficientCashException : DeviceException
     /// <summary>Initializes a new instance of the <see cref="InsufficientCashException"/> class.メッセージと内部例外を指定して初期化する。</summary>
     /// <param name="message">例外メッセージ。</param>
     /// <param name="innerException">内部例外。</param>
-    public InsufficientCashException(string message, Exception innerException)
+    public InsufficientCashException(
+        string message,
+        Exception innerException)
         : base(message, Models.DeviceErrorCode.Extended, 201, innerException)
     {
     }

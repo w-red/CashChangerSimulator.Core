@@ -6,7 +6,8 @@ using R3;
 namespace CashChangerSimulator.Core.Services;
 
 /// <summary>通貨コードに基づいて通貨のメタデータを提供するサービス。</summary>
-public class CurrencyMetadataProvider : ICurrencyMetadataProvider, IDisposable
+public class CurrencyMetadataProvider
+    : ICurrencyMetadataProvider, IDisposable
 {
     private static readonly Dictionary<string, List<DenominationKey>> DefaultDenominations = new()
     {

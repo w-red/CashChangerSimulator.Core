@@ -6,7 +6,8 @@ using R3;
 namespace CashChangerSimulator.Core.Managers;
 
 /// <summary>釣銭機のハードウェア的な障害状態(ジャムなど)を管理するクラス。</summary>
-public class HardwareStatusManager : IHardwareStatus, IDisposable
+public class HardwareStatusManager
+    : IHardwareStatus, IDisposable
 {
     private readonly CompositeDisposable disposables = [];
 
@@ -26,11 +27,12 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     private ReactiveProperty<bool> isBillRemainingCollectionInput = null!;
     private ReactiveProperty<bool> isCoinRemainingCollectionInput = null!;
 
-    private readonly ConcurrentDictionary<ExitPort, ConcurrentDictionary<DenominationKey, int>> exitPortInventories = new()
-    {
-        [ExitPort.Normal] = new(),
-        [ExitPort.Collection] = new()
-    };
+    private readonly ConcurrentDictionary<ExitPort, ConcurrentDictionary<DenominationKey, int>> exitPortInventories =
+        new()
+        {
+            [ExitPort.Normal] = new(),
+            [ExitPort.Collection] = new()
+        };
 
     private int _disposed;
     private Subject<UposStatusUpdateEventArgs> vendorStatusEvents = null!;
@@ -98,7 +100,8 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     public ReadOnlyReactiveProperty<bool> IsCoinRemainingCollection { get; private set; } = null!;
 
     /// <inheritdoc/>
-    public IReadOnlyDictionary<DenominationKey, int> GetExitPortCounts(ExitPort port)
+    public IReadOnlyDictionary<DenominationKey, int> GetExitPortCounts(
+        ExitPort port)
     {
         return new Dictionary<DenominationKey, int>(exitPortInventories[port]);
     }
@@ -217,27 +220,45 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
 
     private void SetupPipelines()
     {
-        IsClaimedByAnother = isClaimedByAnotherInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        DeviceEnabled = deviceEnabledInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        IsJammed = isJammedInput.ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsClaimedByAnother = isClaimedByAnotherInput
+            .ToReadOnlyReactiveProperty()
+            .AddTo(disposables);
+        DeviceEnabled = deviceEnabledInput
+            .ToReadOnlyReactiveProperty()
+            .AddTo(disposables);
+        IsJammed = isJammedInput
+            .ToReadOnlyReactiveProperty()
+            .AddTo(disposables);
 
         // JamLocation は IsJammed が false なら強制的に None にするパイプライン
         CurrentJamLocation = isJammedInput
-            .CombineLatest(jamLocationInput, (jammed, loc) => jammed ? loc : JamLocation.None)
+            .CombineLatest(
+                jamLocationInput,
+                (jammed, loc) => jammed ? loc : JamLocation.None)
             .ToReadOnlyReactiveProperty(JamLocation.None)
             .AddTo(disposables);
 
-        IsOverlapped = isOverlappedInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        IsDeviceError = isDeviceErrorInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        IsConnected = isConnectedInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        IsCollectionBoxRemoved = isCollectionBoxRemovedInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        CurrentErrorCode = currentErrorCodeInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        CurrentErrorCodeExtended = currentErrorCodeExtendedInput.ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsOverlapped = isOverlappedInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsDeviceError = isDeviceErrorInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsConnected = isConnectedInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsCollectionBoxRemoved = isCollectionBoxRemovedInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
+        CurrentErrorCode = currentErrorCodeInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
+        CurrentErrorCodeExtended = currentErrorCodeExtendedInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
 
-        IsBillRemainingNormal = isBillRemainingNormalInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        IsCoinRemainingNormal = isCoinRemainingNormalInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        IsBillRemainingCollection = isBillRemainingCollectionInput.ToReadOnlyReactiveProperty().AddTo(disposables);
-        IsCoinRemainingCollection = isCoinRemainingCollectionInput.ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsBillRemainingNormal = isBillRemainingNormalInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsCoinRemainingNormal = isCoinRemainingNormalInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsBillRemainingCollection = isBillRemainingCollectionInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
+        IsCoinRemainingCollection = isCoinRemainingCollectionInput
+            .ToReadOnlyReactiveProperty().AddTo(disposables);
 
         // 合成ステータスの構築: エラーがない場合に true
         IsNormal = Observable.CombineLatest(
@@ -253,8 +274,16 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     private void SetupEvents()
     {
         StatusUpdateEvents = Observable.Merge(
-            IsConnected.Select(c => new UposStatusUpdateEventArgs((int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
-            IsJammed.Select(j => new UposStatusUpdateEventArgs((int)(j ? DeviceStatus.Jam : DeviceStatus.Ok))),
+            IsConnected
+                .Select(
+                    c =>
+                    new UposStatusUpdateEventArgs(
+                        (int)(c ? DeviceStatus.PowerOn : DeviceStatus.PowerOff))),
+            IsJammed
+                .Select(
+                    j =>
+                    new UposStatusUpdateEventArgs(
+                        (int)(j ? DeviceStatus.Jam : DeviceStatus.Ok))),
             SetupExitPortEvents(),
             vendorStatusEvents);
     }
@@ -262,10 +291,18 @@ public class HardwareStatusManager : IHardwareStatus, IDisposable
     private Observable<UposStatusUpdateEventArgs> SetupExitPortEvents()
     {
         return Observable.Merge(
-            IsBillRemainingNormal.DistinctUntilChanged().Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusBillRemainingNormal : ExitPortStatusEvents.StatusBillClearedNormal)),
-            IsCoinRemainingNormal.DistinctUntilChanged().Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusCoinRemainingNormal : ExitPortStatusEvents.StatusCoinClearedNormal)),
-            IsBillRemainingCollection.DistinctUntilChanged().Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusBillRemainingCollection : ExitPortStatusEvents.StatusBillClearedCollection)),
-            IsCoinRemainingCollection.DistinctUntilChanged().Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusCoinRemainingCollection : ExitPortStatusEvents.StatusCoinClearedCollection))
+            IsBillRemainingNormal
+                .DistinctUntilChanged()
+                .Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusBillRemainingNormal : ExitPortStatusEvents.StatusBillClearedNormal)),
+            IsCoinRemainingNormal
+                .DistinctUntilChanged()
+                .Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusCoinRemainingNormal : ExitPortStatusEvents.StatusCoinClearedNormal)),
+            IsBillRemainingCollection
+                .DistinctUntilChanged()
+                .Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusBillRemainingCollection : ExitPortStatusEvents.StatusBillClearedCollection)),
+            IsCoinRemainingCollection
+                .DistinctUntilChanged()
+                .Select(r => new UposStatusUpdateEventArgs(r ? ExitPortStatusEvents.StatusCoinRemainingCollection : ExitPortStatusEvents.StatusCoinClearedCollection))
         );
     }
 

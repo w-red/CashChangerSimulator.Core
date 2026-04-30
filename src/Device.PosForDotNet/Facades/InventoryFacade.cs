@@ -13,7 +13,10 @@ namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 /// <remarks>
 /// 各金種ごとの枚数取得、合計金額の計算、および在庫調整(全回収など)を行う機能を集約します。
 /// </remarks>
-public class InventoryFacade(Inventory inventory, CashChangerManager manager, IUposMediator mediator)
+public class InventoryFacade(
+    Inventory inventory,
+    CashChangerManager manager,
+    IUposMediator mediator)
 {
     /// <summary>現在の現金在庫数を読み取ります。</summary>
     /// <remarks>

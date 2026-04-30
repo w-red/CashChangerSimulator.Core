@@ -33,7 +33,10 @@ public class DeviceException : Exception
     /// <param name="message">例外メッセージ。</param>
     /// <param name="errorCode">デバイスエラーコード。</param>
     /// <param name="errorCodeExtended">詳細エラーコード。</param>
-    public DeviceException(string message, DeviceErrorCode errorCode, int errorCodeExtended = 0)
+    public DeviceException(
+        string message,
+        DeviceErrorCode errorCode,
+        int errorCodeExtended = 0)
         : base(message)
     {
         ErrorCode = errorCode;
@@ -45,7 +48,11 @@ public class DeviceException : Exception
     /// <param name="errorCode">デバイスエラーコード。</param>
     /// <param name="errorCodeExtended">詳細エラーコード。</param>
     /// <param name="inner">内部例外。</param>
-    public DeviceException(string message, DeviceErrorCode errorCode, int errorCodeExtended, Exception inner)
+    public DeviceException(
+        string message,
+        DeviceErrorCode errorCode,
+        int errorCodeExtended,
+        Exception inner)
         : base(message, inner)
     {
         ErrorCode = errorCode;

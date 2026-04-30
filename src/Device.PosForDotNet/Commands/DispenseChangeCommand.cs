@@ -14,7 +14,8 @@ public class DispenseChangeCommand(
     HardwareStatusManager hardwareStatusManager,
     DepositController depositController,
     decimal amount,
-    bool isAsync) : IUposCommand
+    bool isAsync)
+    : IUposCommand
 {
     private IUposMediator? mediator;
 

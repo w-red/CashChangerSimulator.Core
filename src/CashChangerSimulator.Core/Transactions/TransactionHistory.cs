@@ -32,7 +32,8 @@ public class TransactionHistory : IDisposable
 
     /// <summary>履歴を追加します。</summary>
     /// <param name="entry">追加する履歴エントリ。</param>
-    public virtual void Add(TransactionEntry entry)
+    public virtual void Add(
+        TransactionEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
         entries.Insert(0, entry); // 最新を先頭に

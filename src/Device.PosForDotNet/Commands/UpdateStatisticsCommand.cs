@@ -5,7 +5,8 @@ namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 /// <summary>統計情報更新操作をカプセル化するコマンド。</summary>
 /// <param name="statistics">更新する統計情報の配列。</param>
 public class UpdateStatisticsCommand(
-    Statistic[] statistics) : IUposCommand
+    Statistic[] statistics)
+    : IUposCommand
 {
     /// <inheritdoc/>
     public void Execute() => ExecuteAsync().GetAwaiter().GetResult();

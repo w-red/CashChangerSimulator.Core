@@ -21,7 +21,11 @@ public static class ChangeCalculator
     /// <param name="filter">追加の金種フィルタ。</param>
     /// <returns>金種キーと枚数のディクショナリ。</returns>
     /// <exception cref="InsufficientCashException">在庫不足や端数不一致により計算できない場合。</exception>
-    public static IReadOnlyDictionary<DenominationKey, int> Calculate(IReadOnlyInventory inventory, decimal targetAmount, string? currencyCode = null, Func<DenominationKey, bool>? filter = null)
+    public static IReadOnlyDictionary<DenominationKey, int> Calculate(
+        IReadOnlyInventory inventory,
+        decimal targetAmount,
+        string? currencyCode = null,
+        Func<DenominationKey, bool>? filter = null)
     {
         ArgumentNullException.ThrowIfNull(inventory);
         var result = new Dictionary<DenominationKey, int>();

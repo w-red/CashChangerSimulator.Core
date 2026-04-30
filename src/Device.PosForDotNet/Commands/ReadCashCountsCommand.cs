@@ -8,7 +8,8 @@ namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 public class ReadCashCountsCommand(
     Inventory inventory,
     string currencyCode,
-    decimal currencyFactor) : IUposCommand
+    decimal currencyFactor)
+    : IUposCommand
 {
     private readonly Inventory inventory = inventory;
     private readonly string currencyCode = currencyCode;

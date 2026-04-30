@@ -7,7 +7,8 @@ namespace CashChangerSimulator.Core.Services.DeviceEventTypes;
 public class DeviceDirectIOEventArgs(
     int eventNumber,
     int data,
-    object objectData) : DeviceEventArgs
+    object objectData)
+    : DeviceEventArgs
 {
 
     /// <summary>イベント番号。</summary>

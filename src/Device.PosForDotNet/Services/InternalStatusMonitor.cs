@@ -7,20 +7,27 @@ namespace CashChangerSimulator.Device.PosForDotNet.Services;
 public class InternalStatusMonitor(SimulatorContext ctx)
 {
     /// <summary>デバイスの現在のステータスを取得します。</summary>
-    public Microsoft.PointOfService.CashChangerStatus DeviceStatus => 
-        ctx.LifecycleManager.State == ControlState.Closed ? Microsoft.PointOfService.CashChangerStatus.OK : (Microsoft.PointOfService.CashChangerStatus)ctx.StatusCoordinator.LastCashChangerStatus;
+    public CashChangerStatus DeviceStatus => 
+        ctx.LifecycleManager.State == ControlState.Closed ? CashChangerStatus.OK : (CashChangerStatus)ctx.StatusCoordinator.LastCashChangerStatus;
 
     /// <summary>デバイスのフルステータスを取得します。</summary>
-    public Microsoft.PointOfService.CashChangerFullStatus FullStatus => 
-        ctx.LifecycleManager.State == ControlState.Closed ? Microsoft.PointOfService.CashChangerFullStatus.OK : (Microsoft.PointOfService.CashChangerFullStatus)ctx.StatusCoordinator.LastFullStatus;
+    public CashChangerFullStatus FullStatus => 
+        ctx.LifecycleManager.State ==
+        ControlState.Closed
+        ? CashChangerFullStatus.OK
+        : (CashChangerFullStatus)ctx.StatusCoordinator.LastFullStatus;
 
     /// <summary>現在のコントロール状態を UPOS の形式にマップします。</summary>
     public static PosSharp.Abstractions.ControlState MapToControlState(ControlState state) => state switch
     {
-        ControlState.Busy => PosSharp.Abstractions.ControlState.Busy,
-        ControlState.Closed => PosSharp.Abstractions.ControlState.Closed,
-        ControlState.Error => PosSharp.Abstractions.ControlState.Error,
-        ControlState.Idle => PosSharp.Abstractions.ControlState.Idle,
+        ControlState.Busy =>
+            PosSharp.Abstractions.ControlState.Busy,
+        ControlState.Closed =>
+            PosSharp.Abstractions.ControlState.Closed,
+        ControlState.Error =>
+            PosSharp.Abstractions.ControlState.Error,
+        ControlState.Idle =>
+            PosSharp.Abstractions.ControlState.Idle,
         _ => PosSharp.Abstractions.ControlState.Error
     };
 }

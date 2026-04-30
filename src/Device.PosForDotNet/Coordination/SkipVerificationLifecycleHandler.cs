@@ -12,7 +12,8 @@ public class SkipVerificationLifecycleHandler(
     HardwareStatusManager hardware,
     IUposMediator mediator,
     TransactionHistory history,
-    ILogger logger) : IUposLifecycleHandler
+    ILogger logger)
+    : IUposLifecycleHandler
 {
     /// <inheritdoc/>
     public ControlState State

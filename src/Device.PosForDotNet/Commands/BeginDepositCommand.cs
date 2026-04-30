@@ -1,5 +1,6 @@
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.Virtual;
+
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>投入開始操作をカプセル化するコマンド。</summary>

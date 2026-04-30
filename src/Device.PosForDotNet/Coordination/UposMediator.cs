@@ -84,10 +84,7 @@ public class UposMediator : IUposMediator
         get => sink?.ClaimedByAnother ?? false;
         set
         {
-            if (sink != null)
-            {
-                sink.ClaimedByAnother = value;
-            }
+            if (sink is not null) sink.ClaimedByAnother = value;
         }
     }
 
@@ -106,28 +103,15 @@ public class UposMediator : IUposMediator
         }
         set
         {
-            bool changed = false;
             lock (stateLock)
             {
                 if (field == value) return;
                 field = value;
-                changed = true;
-                if (value)
-                {
-                    ResultCode = (int)ErrorCode.Busy;
-                }
-                else
-                {
-                    // When busy is cleared, we assume back to success unless explicitly failed
-                    ResultCode = (int)ErrorCode.Success;
-                }
+                ResultCode = (int)(value ? ErrorCode.Busy : ErrorCode.Success);
             }
 
-            if (changed)
-            {
-                isBusyProperty.Value = value;
-                sink?.SetAsyncProcessing(value);
-            }
+            isBusyProperty.Value = value;
+            sink?.SetAsyncProcessing(value);
         }
     }
 
@@ -294,22 +278,17 @@ public class UposMediator : IUposMediator
     /// <inheritdoc/>
     public void FireEvent(EventArgs e)
     {
-        if (EventSink == null)
-        {
-            return;
-        }
-
         if (e is DataEventArgs de)
         {
-            EventSink.QueueDataEvent(de);
+            EventSink?.QueueDataEvent(de);
         }
         else if (e is StatusUpdateEventArgs se)
         {
-            EventSink.QueueStatusUpdateEvent(se);
+            EventSink?.QueueStatusUpdateEvent(se);
         }
         else
         {
-            EventSink.QueueEvent(e);
+            EventSink?.QueueEvent(e);
         }
     }
 

@@ -15,7 +15,8 @@ public class DispenseCashCommand(
     HardwareStatusManager hardwareStatusManager,
     DepositController depositController,
     IReadOnlyDictionary<DenominationKey, int> counts,
-    bool isAsync) : IUposCommand
+    bool isAsync)
+    : IUposCommand
 {
     private IUposMediator? mediator;
 

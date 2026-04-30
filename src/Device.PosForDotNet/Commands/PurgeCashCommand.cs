@@ -4,7 +4,8 @@ namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>在庫回収操作をカプセル化するコマンド。</summary>
 public class PurgeCashCommand(
-    CashChangerManager manager) : IUposCommand
+    CashChangerManager manager)
+    : IUposCommand
 {
     private readonly CashChangerManager manager = manager;
 

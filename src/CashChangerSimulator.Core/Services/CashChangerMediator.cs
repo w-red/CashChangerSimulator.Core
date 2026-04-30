@@ -5,7 +5,8 @@ using R3;
 namespace CashChangerSimulator.Core.Services;
 
 /// <summary>釣銭機固有の状態とプロパティを管理するメディエータークラス。</summary>
-public class CashChangerMediator : UposMediator
+public class CashChangerMediator
+    : UposMediator
 {
     private readonly ReactiveProperty<int> depositAmount = new(0);
     private readonly ReactiveProperty<DeviceDepositStatus> depositStatus = new(DeviceDepositStatus.None);

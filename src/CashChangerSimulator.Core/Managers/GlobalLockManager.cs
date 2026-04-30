@@ -20,7 +20,9 @@ public sealed class GlobalLockManager : IDisposable
     /// <summary>保持されたファイルパスを使用してロックマネージャーを初期化します。</summary>
     /// <param name="lockFilePath">ロックに使用するファイルパス。</param>
     /// <param name="logger">ロガー。</param>
-    public GlobalLockManager(string? lockFilePath, ILogger logger)
+    public GlobalLockManager(
+        string? lockFilePath,
+        ILogger logger)
     {
         this.lockFilePath = string.IsNullOrEmpty(lockFilePath)
             ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "device.lock")

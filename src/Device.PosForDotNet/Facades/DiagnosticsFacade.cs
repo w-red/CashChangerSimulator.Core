@@ -12,7 +12,9 @@ namespace CashChangerSimulator.Device.PosForDotNet.Facades;
 /// デバイスのヘルスチェック(<see cref="CheckHealth"/>)、統計情報の取得・更新・リセット(<see cref="RetrieveStatistics"/>等)など、
 /// デバイスのメンテナンスと診断に関連する操作を集約します。
 /// </remarks>
-public class DiagnosticsFacade(DiagnosticController diagnosticController, IUposMediator mediator)
+public class DiagnosticsFacade(
+    DiagnosticController diagnosticController,
+    IUposMediator mediator)
 {
     /// <summary>デバイスの健康状態を確認します。</summary>
     /// <returns>ヘルスチェック結果を示す文字列。</returns>

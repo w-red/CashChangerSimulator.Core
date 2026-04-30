@@ -5,7 +5,10 @@ using Microsoft.PointOfService;
 namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 
 /// <summary>ヘルスチェック操作をカプセル化するコマンド。</summary>
-public class CheckHealthCommand(DiagnosticController controller, HealthCheckLevel level) : IUposCommand
+public class CheckHealthCommand(
+    DiagnosticController controller,
+    HealthCheckLevel level)
+    : IUposCommand
 {
     private readonly DiagnosticController controller = controller;
     private readonly HealthCheckLevel level = level;

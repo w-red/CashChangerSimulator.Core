@@ -15,7 +15,8 @@ public sealed class StatusCoordinator(
     OverallStatusAggregator statusAggregator,
     HardwareStatusManager hardwareStatusManager,
     DepositController depositController,
-    DispenseController dispenseController) : IDisposable
+    DispenseController dispenseController)
+    : IDisposable
 {
     private readonly CompositeDisposable disposables = [];
     private int _disposed;

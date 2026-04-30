@@ -5,7 +5,8 @@ namespace CashChangerSimulator.Device.PosForDotNet.Commands;
 /// <summary>統計情報取得操作をカプセル化するコマンド。</summary>
 public class RetrieveStatisticsCommand(
     DiagnosticController controller,
-    string[] statistics) : IUposCommand
+    string[] statistics)
+    : IUposCommand
 {
     private readonly DiagnosticController controller = controller;
     private readonly string[] statistics = statistics;
