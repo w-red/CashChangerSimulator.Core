@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Services.DeviceEventTypes;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -334,9 +333,7 @@ public class DispenseControllerMutationTests : DeviceTestBase
         controller.Dispose();
 
         // Assert
-        var field = typeof(DispenseController).GetField("disposed", BindingFlags.NonPublic | BindingFlags.Instance);
-        field.ShouldNotBeNull();
-        ((bool)field.GetValue(controller)!).ShouldBeTrue();
+        Should.Throw<ObjectDisposedException>(controller.ClearOutput);
 
         // Dispose 後のリソース解放チェック
         var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -584,10 +581,10 @@ public class DispenseControllerMutationTests : DeviceTestBase
 
     private void SetControllerStatus(CashDispenseStatus status)
     {
-        var stateField = typeof(DispenseController).GetField("state", BindingFlags.NonPublic | BindingFlags.Instance);
-        var stateObj = stateField!.GetValue(controller);
-        var statusProp = typeof(DispenseState).GetProperty("Status", BindingFlags.Public | BindingFlags.Instance);
-        statusProp!.SetValue(stateObj, status);
+        var atomicStateField = typeof(DispenseController).GetField("atomicState", BindingFlags.NonPublic | BindingFlags.Instance);
+        var atomicStateObj = atomicStateField!.GetValue(controller);
+        var exchangeMethod = atomicStateObj!.GetType().GetMethod("Exchange");
+        exchangeMethod!.Invoke(atomicStateObj, [new DispenseState(status)]);
     }
 
     private class MockPosControlException(int errorCode, int extendedCode) : Exception

@@ -1,7 +1,6 @@
-﻿using CashChangerSimulator.Core.Managers;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.Virtual;
-using Moq;
 using PosSharp.Abstractions;
 using Shouldly;
 

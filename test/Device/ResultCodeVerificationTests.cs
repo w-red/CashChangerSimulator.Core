@@ -1,10 +1,14 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.PosForDotNet.Models;
 using CashChangerSimulator.Device.Virtual;
+using CashChangerSimulator.Core.Transactions;
+using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -30,7 +34,7 @@ public class ResultCodeVerificationTests
             inventory,
             null,
             null,
-            new DepositController(inventory, hardwareStatusManager),
+            new DepositController(new Mock<CashChangerManager>(inventory, new TransactionHistory(), configProvider).Object, inventory, hardwareStatusManager, configProvider, new LoggerFactory()),
             null,
             null,
             hardwareStatusManager);

@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Services;
@@ -23,10 +23,12 @@ public class UposCommandTests
     {
         mediatorMock = new Mock<IUposMediator>();
 
-        // DepositController needs Inventory and HardwareStatusManager
+        // DepositController needs CashChangerManager, Inventory, HardwareStatusManager, ConfigurationProvider, ILoggerFactory, IDeviceSimulator
         var inventory = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        depositControllerMock = new Mock<DepositController>(inventory, hardware, null!, null!, null);
+        var configProvider = new ConfigurationProvider();
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), configProvider);
+        depositControllerMock = new Mock<DepositController>(manager, inventory, hardware, configProvider, NullLoggerFactory.Instance, null);
     }
 
     /// <summary>BeginDepositCommand の実行がコントローラへ委譲されることを検証します。</summary>
@@ -176,10 +178,10 @@ public class UposCommandTests
     {
         var manager = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
         var hw = HardwareStatusManager.Create();
-        var deposit = new Mock<DepositController>(Inventory.Create(), hw, null!, null!, null);
         var sim = new Mock<IDeviceSimulator>();
         var inv = Inventory.Create();
         var cp = new ConfigurationProvider();
+        var deposit = new Mock<DepositController>(manager.Object, inv, hw, cp, NullLoggerFactory.Instance, null);
         var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object);
         var command = new DispenseChangeCommand(controllerMock.Object, hw, deposit.Object, 1000m, false);
 
@@ -194,9 +196,9 @@ public class UposCommandTests
         var manager = new Mock<CashChangerManager>(Inventory.Create(), new TransactionHistory(), null);
         var inv = Inventory.Create();
         var hw = HardwareStatusManager.Create();
-        var deposit = new Mock<DepositController>(inv, hw, null!, null!, null);
         var sim = new Mock<IDeviceSimulator>();
         var cp = new ConfigurationProvider();
+        var deposit = new Mock<DepositController>(manager.Object, inv, hw, cp, NullLoggerFactory.Instance, null);
         var controllerMock = new Mock<DispenseController>(manager.Object, inv, cp, NullLoggerFactory.Instance, hw, sim.Object);
         var counts = new Dictionary<DenominationKey, int>();
         var command = new DispenseCashCommand(controllerMock.Object, inv, hw, deposit.Object, counts, false);

@@ -1,8 +1,12 @@
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet.Commands;
 using CashChangerSimulator.Device.PosForDotNet.Coordination;
 using CashChangerSimulator.Device.Virtual;
+using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using Moq;
 using Shouldly;
@@ -12,6 +16,10 @@ namespace CashChangerSimulator.Tests.Device;
 /// <summary>各コマンド(AdjustCashCounts, DispenseCash 等)の実行前検証と例外処理をテストするクラス。</summary>
 public class CommandTests
 {
+    private readonly CashChangerManager manager;
+    private readonly ConfigurationProvider configProvider;
+    private readonly ILoggerFactory loggerFactory;
+    private readonly IDeviceSimulator simulator;
     private readonly Inventory inventory;
     private readonly HardwareStatusManager hardware;
     private readonly Mock<IUposMediator> mediator;
@@ -21,7 +29,13 @@ public class CommandTests
         inventory = Inventory.Create();
         hardware = HardwareStatusManager.Create();
         mediator = new Mock<IUposMediator>();
+        configProvider = new ConfigurationProvider();
+        manager = new CashChangerManager(inventory, new TransactionHistory(), configProvider);
+        loggerFactory = new LoggerFactory();
+        simulator = new Mock<IDeviceSimulator>().Object;
     }
+
+    private DepositController CreateController() => new(manager, inventory, hardware, configProvider, loggerFactory);
 
     /// <summary>デバイスがジャム状態の時に AdjustCashCountsCommand が E_EXT をスローすることを検証します。</summary>
     [Fact]
@@ -39,7 +53,7 @@ public class CommandTests
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenJammed()
     {
-        var deposit = new DepositController(inventory, hardware);
+        var deposit = CreateController();
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         inventory.SetCount(key, 10);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };
@@ -54,7 +68,7 @@ public class CommandTests
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenDepositInProgress()
     {
-        var deposit = new DepositController(inventory, hardware);
+        var deposit = CreateController();
         deposit.BeginDeposit(); // Sets IsDepositInProgress to true
 
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
@@ -70,7 +84,7 @@ public class CommandTests
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenDenominationNotRegistered()
     {
-        var deposit = new DepositController(inventory, hardware);
+        var deposit = CreateController();
         var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(999, CurrencyCashType.Bill), 1 } };
         var cmd = new DispenseCashCommand(null!, inventory, hardware, deposit, counts, false);
 
@@ -82,7 +96,7 @@ public class CommandTests
     [Fact]
     public void DispenseCashCommandVerifyShouldThrowWhenInsufficientInventory()
     {
-        var deposit = new DepositController(inventory, hardware);
+        var deposit = CreateController();
         var key = new DenominationKey(1000, CurrencyCashType.Bill);
         inventory.SetCount(key, 0);
         var counts = new Dictionary<DenominationKey, int> { { key, 1 } };

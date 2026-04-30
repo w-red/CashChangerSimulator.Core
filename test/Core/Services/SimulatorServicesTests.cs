@@ -7,7 +7,6 @@ using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Shouldly;
 
@@ -93,7 +92,7 @@ public class SimulatorServicesTests : IDisposable
         var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
         var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
         var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
-        var depositController = new DepositController(inventory, hw);
+        var depositController = new DepositController(manager, inventory, hw, configProvider, NullLoggerFactory.Instance);
         var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object);
 
         var provider = new TestServiceProvider(

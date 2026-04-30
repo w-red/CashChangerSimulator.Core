@@ -23,7 +23,10 @@ public class ComplianceTests
         var hardwareStatusManager = HardwareStatusManager.Create();
         hardwareStatusManager.Input.IsConnected.Value = true;
         var history = new CashChangerSimulator.Core.Transactions.TransactionHistory();
-        var controller = new DepositController(inventory, hardwareStatusManager);
+        var configProvider = new CashChangerSimulator.Core.Configuration.ConfigurationProvider();
+        configProvider.Config.Simulation.DepositDelayMs = 0;
+        var manager = new CashChangerManager(inventory, history, configProvider);
+        var controller = new DepositController(manager, inventory, hardwareStatusManager, configProvider, new Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory());
         var deps = new SimulatorDependencies(
                 null,
                 inventory,

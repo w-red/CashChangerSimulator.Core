@@ -1,6 +1,8 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.Virtual;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
@@ -15,7 +17,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
     {
         // Default behavior for these tests
         StatusManager.Input.IsConnected.Value = true;
-        controller = new DepositController(Inventory, StatusManager, manager: null, configProvider: ConfigurationProvider, timeProvider: TimeProvider);
+        controller = new DepositController(Manager, Inventory, StatusManager, ConfigurationProvider, LoggerFactory, TimeProvider);
     }
 
     /// <summary>IsBusy プロパティが初期状態で偽であることを検証する。</summary>

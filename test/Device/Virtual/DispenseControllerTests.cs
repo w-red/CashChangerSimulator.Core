@@ -3,7 +3,6 @@ using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.PointOfService;

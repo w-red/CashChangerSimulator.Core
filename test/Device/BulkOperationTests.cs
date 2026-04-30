@@ -22,9 +22,12 @@ public class BulkOperationTests
         // Arrange
         var inv = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        var controller = new DepositController(inv, hardware);
-        var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object);
+        var configProvider = new ConfigurationProvider();
+        configProvider.Config.Simulation.DepositDelayMs = 0;
+        configProvider.Config.Simulation.DispenseDelayMs = 0;
+        var manager = new CashChangerManager(inv, new TransactionHistory(), configProvider);
+        var controller = new DepositController(manager, inv, hardware, configProvider, NullLoggerFactory.Instance);
+        var dispenseController = new DispenseController(manager, inv, configProvider, NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         var json = @"
@@ -53,9 +56,12 @@ public class BulkOperationTests
         // Arrange
         var inv = Inventory.Create();
         var hardware = HardwareStatusManager.Create();
-        var controller = new DepositController(inv, hardware);
-        var manager = new CashChangerManager(inv, new TransactionHistory(), null);
-        var dispenseController = new DispenseController(manager, inv, new ConfigurationProvider(), NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object);
+        var configProvider = new ConfigurationProvider();
+        configProvider.Config.Simulation.DepositDelayMs = 0;
+        configProvider.Config.Simulation.DispenseDelayMs = 0;
+        var manager = new CashChangerManager(inv, new TransactionHistory(), configProvider);
+        var controller = new DepositController(manager, inv, hardware, configProvider, NullLoggerFactory.Instance);
+        var dispenseController = new DispenseController(manager, inv, configProvider, NullLoggerFactory.Instance, hardware, new Mock<IDeviceSimulator>().Object);
         var service = new ScriptExecutionService(controller, dispenseController, inv, hardware);
 
         var json = @"

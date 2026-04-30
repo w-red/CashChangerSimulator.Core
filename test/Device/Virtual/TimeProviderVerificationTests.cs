@@ -1,8 +1,12 @@
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
@@ -32,10 +36,17 @@ public class TimeProviderVerificationTests
         var delayMs = config.Config.Simulation.DepositDelayMs;
         delayMs.ShouldBeGreaterThan(0);
 
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), config);
+        var loggerFactory = new LoggerFactory();
+        var simulator = new Mock<IDeviceSimulator>().Object;
+
         var controller = new DepositController(
+            manager,
             inventory,
             hardwareStatusManager,
-            timeProvider: timeProvider);
+            config,
+            loggerFactory,
+            timeProvider);
 
         controller.BeginDeposit();
         // 直接 DenominationKey を生成

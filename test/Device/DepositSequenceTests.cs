@@ -2,8 +2,11 @@ using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device;
@@ -15,10 +18,14 @@ public class DepositSequenceTests
     {
         var inventory = Inventory.Create();
         var history = new TransactionHistory();
-        _ = new CashChangerManager(inventory, history, null);
+        var configProvider = new ConfigurationProvider();
+        configProvider.Config.Simulation.DepositDelayMs = 0;
+        var manager = new CashChangerManager(inventory, history, configProvider);
         var hw = HardwareStatusManager.Create();
         hw.Input.IsConnected.Value = true;
-        var controller = new DepositController(inventory, hw);
+        var loggerFactory = new LoggerFactory();
+        var simulator = new Mock<IDeviceSimulator>().Object;
+        var controller = new DepositController(manager, inventory, hw, configProvider, loggerFactory);
         return (controller, inventory, hw);
     }
 
@@ -187,7 +194,10 @@ public class DepositSequenceTests
         var configProvider = new ConfigurationProvider();
         configProvider.Update(config);
 
-        var controller = new DepositController(inventory, hw, null, configProvider);
+        var loggerFactory = new LoggerFactory();
+        var simulator = new Mock<IDeviceSimulator>().Object;
+        var manager = new CashChangerManager(inventory, new TransactionHistory(), configProvider);
+        var controller = new DepositController(manager, inventory, hw, configProvider, loggerFactory);
         inventory.SetCount(b1000, 5); // Already Full
 
         controller.BeginDeposit();
@@ -240,7 +250,7 @@ public class DepositSequenceTests
         var c10 = new DenominationKey(10, CurrencyCashType.Coin);
 
         // Required Amount: 1050
-        controller.RequiredAmount = 1050; // New property
+        controller.RequiredAmount = 1050;
 
         controller.BeginDeposit();
 

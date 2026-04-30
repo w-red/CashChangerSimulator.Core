@@ -1,5 +1,6 @@
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
 using Moq;
@@ -14,8 +15,8 @@ public class DepositControllerDelegationTest : DeviceTestBase
 
     public DepositControllerDelegationTest()
     {
-        managerMock = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), null);
-        controller = new DepositController(Inventory, StatusManager, managerMock.Object);
+        managerMock = new Mock<CashChangerManager>(Inventory, new TransactionHistory(), ConfigurationProvider);
+        controller = new DepositController(managerMock.Object, Inventory, StatusManager, ConfigurationProvider, LoggerFactory, TimeProvider);
         StatusManager.Input.IsConnected.Value = true;
     }
 

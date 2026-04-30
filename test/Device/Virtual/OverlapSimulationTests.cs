@@ -1,6 +1,8 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
+using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.Virtual;
+using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
@@ -13,7 +15,7 @@ public class OverlapSimulationTests : DeviceTestBase
 
     public OverlapSimulationTests()
     {
-        controller = new DepositController(Inventory, StatusManager);
+        controller = new DepositController(Manager, Inventory, StatusManager, ConfigurationProvider, LoggerFactory, TimeProvider);
         StatusManager.Input.IsConnected.Value = true;
     }
 
