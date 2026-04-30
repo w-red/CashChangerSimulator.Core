@@ -1,3 +1,7 @@
+using System.Collections.Frozen;
+using System.Reflection;
+using CashChangerSimulator.Core.Models;
+
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>スクリプトコマンドの種類を表す列挙型クラス。</summary>
@@ -39,6 +43,29 @@ public sealed record ScriptCommandType
     /// <summary>REPEAT コマンド（制御フロー用）。</summary>
     public static readonly ScriptCommandType Repeat = new("REPEAT");
 
+    private static readonly FrozenDictionary<string, ScriptCommandType> AllTypes =
+        typeof(ScriptCommandType)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(f => f.FieldType == typeof(ScriptCommandType))
+            .Select(f => (ScriptCommandType)f.GetValue(null)!)
+            .ToFrozenDictionary(t => t.Name);
+
+    private static readonly FrozenDictionary<string, CurrencyCashType> CashTypeMap =
+        new Dictionary<string, CurrencyCashType>(StringComparer.OrdinalIgnoreCase)
+        {
+            { nameof(CurrencyCashType.Coin), CurrencyCashType.Coin },
+            { nameof(CurrencyCashType.Bill), CurrencyCashType.Bill }
+        }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly FrozenDictionary<string, DepositAction> DepositActionMap =
+        new Dictionary<string, DepositAction>(StringComparer.OrdinalIgnoreCase)
+        {
+            { nameof(DepositAction.Repay), DepositAction.Repay },
+            { nameof(DepositAction.Change), DepositAction.Change },
+            { nameof(DepositAction.NoChange), DepositAction.NoChange },
+            { "STORE", DepositAction.NoChange } // STORE は NoChange のエイリアス
+        }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>コマンド名(大文字)。</summary>
     public string Name { get; }
 
@@ -56,46 +83,29 @@ public sealed record ScriptCommandType
         var normalized = op
             .ToUpperInvariant()
             .Replace("-", "", StringComparison.Ordinal);
-        return normalized switch
-        {
-            "OPEN" => Open,
-            "SET" => Set,
-            "INJECTERROR" => InjectError,
-            "ASSERT" => Assert,
-            "BEGINDEPOSIT" => BeginDeposit,
-            "TRACKDEPOSIT" => TrackDeposit,
-            "FIXDEPOSIT" => FixDeposit,
-            "ENDDEPOSIT" => EndDeposit,
-            "DISPENSE" => Dispense,
-            "DELAY" => Delay,
-            "ENABLE" => Enable,
-            "REPEAT" => Repeat,
-            _ => new ScriptCommandType(normalized)
-        };
+
+        return AllTypes.TryGetValue(normalized, out var type)
+            ? type
+            : new ScriptCommandType(normalized);
     }
 
     /// <summary>文字列から CurrencyCashType を取得します。</summary>
     /// <param name="type">種別文字列。</param>
     /// <returns>対応する CurrencyCashType。</returns>
-    public static Core.Models.CurrencyCashType ToCurrencyCashType(string? type)
+    public static CurrencyCashType ToCurrencyCashType(string? type)
     {
-        return string.Equals(type, "coin", StringComparison.OrdinalIgnoreCase)
-            ? Core.Models.CurrencyCashType.Coin
-            : Core.Models.CurrencyCashType.Bill;
+        if (type == null) return CurrencyCashType.Bill;
+        return CashTypeMap.TryGetValue(type, out var cashType) ? cashType : CurrencyCashType.Bill;
     }
 
     /// <summary>文字列から DepositAction を取得します。</summary>
     /// <param name="action">アクション文字列。</param>
     /// <returns>対応する DepositAction。</returns>
-    public static Core.Models.DepositAction ToDepositAction(string? action)
+    public static DepositAction ToDepositAction(string? action)
     {
-        return (action?.ToUpperInvariant()) switch
-        {
-            "REPAY" => Core.Models.DepositAction.Repay,
-            "CHANGE" => Core.Models.DepositAction.Change,
-            "NOCHANGE" => Core.Models.DepositAction.NoChange,
-            "STORE" => Core.Models.DepositAction.NoChange,
-            _ => Core.Models.DepositAction.NoChange
-        };
+        if (action == null) return DepositAction.NoChange;
+        return DepositActionMap
+            .TryGetValue(action, out var depositAction)
+            ? depositAction : DepositAction.NoChange;
     }
 }

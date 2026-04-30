@@ -5,20 +5,16 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>assert コマンド: 実行時の状態をアサーションします。</summary>
+/// <param name="inventory">在庫管理インスタンス。</param>
 public class AssertCommandHandler(
     Inventory inventory)
     : IScriptCommandHandler
 {
-    /// <summary>コマンド名を取得します。</summary>
+    /// <inheritdoc/>
     public ScriptCommandType OpName =>
         ScriptCommandType.Assert;
 
-    /// <summary>スクリプトコマンドを実行します。</summary>
-    /// <param name="cmd">コマンド。</param>
-    /// <param name="context">実行コンテキスト。</param>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="onProgress">進行状況を通知するコールバック。</param>
-    /// <returns>非同期タスク。</returns>
+    /// <inheritdoc/>
     public Task ExecuteAsync(
         ScriptCommand cmd,
         ScriptExecutionContext context,

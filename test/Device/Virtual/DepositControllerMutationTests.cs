@@ -11,7 +11,6 @@ using Moq;
 using R3;
 using Shouldly;
 using CashChangerSimulator.Core.Services;
-using CashChangerSimulator.Core;
 using CashChangerSimulator.Tests.Fixtures;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
@@ -1388,9 +1387,8 @@ public class DepositControllerMutationTests : DeviceTestBase
         // Since isConfigInternal is currently always false in the new constructor, 
         // we might need a special constructor if we want to test this, 
         // but for now let's just use reflection to set it for the test.
-        var target = new DepositController(Manager, Inventory, StatusManager, configProvider, LoggerFactory);
-        var internalField = typeof(DepositController).GetField("isConfigInternal", BindingFlags.NonPublic | BindingFlags.Instance);
-        internalField!.SetValue(target, true);
+        var target = new DepositController(Manager, Inventory, StatusManager, configProvider, LoggerFactory, null, true);
+
 
         // Act
         bool completed = false;

@@ -12,7 +12,9 @@ public sealed class DeviceEventHistoryObserver : IDisposable
     private readonly TransactionHistory history;
 
     /// <summary>Initializes a new instance of the <see cref="DeviceEventHistoryObserver"/> class.オブザーバーを初期化し、イベントを購読します。</summary>
-    public DeviceEventHistoryObserver(InternalSimulatorCashChanger device, TransactionHistory history)
+    public DeviceEventHistoryObserver(
+        InternalSimulatorCashChanger device,
+        TransactionHistory history)
     {
         this.device = device ?? throw new ArgumentNullException(nameof(device));
         this.history = history ?? throw new ArgumentNullException(nameof(history));

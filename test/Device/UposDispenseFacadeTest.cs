@@ -61,7 +61,7 @@ public class UposDispenseFacadeTest
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>
-            facade.DispenseByAmount(1000, "JPY", 1m, false));
+            facade.DispenseByAmount(1000, 1m, false));
     }
 
     /// <summary>ジャム中に出金しようとすると例外がスローされることを確認します。</summary>
@@ -72,7 +72,7 @@ public class UposDispenseFacadeTest
         SetupMediatorToThrow();
 
         Should.Throw<PosControlException>(() =>
-            facade.DispenseByAmount(1000, "JPY", 1m, false));
+            facade.DispenseByAmount(1000, 1m, false));
     }
 
     /// <summary>金額0以下で例外がスローされることを確認します。</summary>
@@ -80,14 +80,14 @@ public class UposDispenseFacadeTest
     public void DispenseByAmountZeroAmountShouldThrow()
     {
         Should.Throw<PosControlException>(() =>
-            facade.DispenseByAmount(0, "JPY", 1m, false));
+            facade.DispenseByAmount(0, 1m, false));
     }
 
     /// <summary>正常な金額出金が成功することを確認します。</summary>
     [Fact]
     public void DispenseByAmountValidAmountShouldSucceed()
     {
-        facade.DispenseByAmount(1000, "JPY", 1m, false);
+        facade.DispenseByAmount(1000, 1m, false);
         dispenseController.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
     }
 

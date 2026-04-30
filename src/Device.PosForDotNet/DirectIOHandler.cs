@@ -44,9 +44,16 @@ public class DirectIOHandler
     /// <param name="obj">オブジェクトデータ。</param>
     /// <param name="serviceObject">サービスオブジェクトのインスタンス。</param>
     /// <returns>実行結果のデータ。</returns>
-    public DirectIOData Handle(int command, int data, object obj, SimulatorCashChanger serviceObject)
+    public DirectIOData Handle(
+        int command,
+        int data,
+        object obj,
+        SimulatorCashChanger serviceObject)
     {
         ArgumentNullException.ThrowIfNull(serviceObject);
-        return commands.TryGetValue(command, out var strategy) ? strategy.Execute(data, obj, serviceObject) : new DirectIOData(data, obj);
+        return commands
+            .TryGetValue(command, out var strategy)
+            ? strategy.Execute(data, obj, serviceObject)
+            : new DirectIOData(data, obj);
     }
 }

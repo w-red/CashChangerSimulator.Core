@@ -6,16 +6,11 @@ namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 /// <summary>set コマンド: 変数に値を格納します。</summary>
 public class SetCommandHandler : IScriptCommandHandler
 {
-    /// <summary>コマンド名を取得します。</summary>
+    /// <inheritdoc/>
     public ScriptCommandType OpName =>
         ScriptCommandType.Set;
 
-    /// <summary>スクリプトコマンドを実行します。</summary>
-    /// <param name="cmd">コマンド。</param>
-    /// <param name="context">実行コンテキスト。</param>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="onProgress">進行状況を通知するコールバック。</param>
-    /// <returns>非同期タスク。</returns>
+    /// <inheritdoc/>
     public Task ExecuteAsync(
         ScriptCommand cmd,
         ScriptExecutionContext context,

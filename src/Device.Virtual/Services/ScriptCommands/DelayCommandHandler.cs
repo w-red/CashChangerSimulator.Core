@@ -4,20 +4,16 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>delay コマンド: 指定ミリ秒待機します。</summary>
+/// <param name="timeProvider">時刻プロバイダー。</param>
 public class DelayCommandHandler(
     TimeProvider timeProvider)
     : IScriptCommandHandler
 {
-    /// <summary>コマンド名を取得します。</summary>
+    /// <inheritdoc/>
     public ScriptCommandType OpName =>
         ScriptCommandType.Delay;
 
-    /// <summary>スクリプトコマンドを実行します。</summary>
-    /// <param name="cmd">コマンド。</param>
-    /// <param name="context">実行コンテキスト。</param>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="onProgress">進行状況を通知するコールバック。</param>
-    /// <returns>非同期タスク。</returns>
+    /// <inheritdoc/>
     public async Task ExecuteAsync(
         ScriptCommand cmd,
         ScriptExecutionContext context,

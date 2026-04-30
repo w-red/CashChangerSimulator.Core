@@ -17,30 +17,19 @@ namespace CashChangerSimulator.Core.Managers;
 /// 設定に基づいた入金の振り分けや、アルゴリズムによる出金の内訳計算(ChangeCalculator)を統合します。
 /// シミュレータのドメインロジックの中核を担います。
 /// </remarks>
-public class CashChangerManager
+/// <param name="inventory">在庫。</param>
+/// <param name="history">取引履歴。</param>
+/// <param name="configProvider">設定プロバイダー。</param>
+public class CashChangerManager(
+    Inventory inventory,
+    TransactionHistory history,
+    ConfigurationProvider? configProvider)
 {
-    private readonly Inventory inventory;
-    private readonly TransactionHistory history;
-    private readonly ConfigurationProvider configProvider;
+    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+    private readonly TransactionHistory history = history ?? throw new ArgumentNullException(nameof(history));
+    private readonly ConfigurationProvider configProvider = configProvider ?? new ConfigurationProvider();
     private readonly ILogger<CashChangerManager> logger = LogProvider.CreateLogger<CashChangerManager>();
 
-    /// <summary>Initializes a new instance of the <see cref="CashChangerManager"/> class.必要な依存コンポーネントを注入してマネージャーを初期化します。</summary>
-    /// <remarks>指定されない場合はデフォルトの設定プロバイダーが使用されます。</remarks>
-    /// <param name="inventory">在庫。</param>
-    /// <param name="history">取引履歴。</param>
-    /// <param name="configProvider">設定プロバイダー。</param>
-    public CashChangerManager(
-        Inventory inventory,
-        TransactionHistory history,
-        ConfigurationProvider? configProvider)
-    {
-        ArgumentNullException.ThrowIfNull(inventory);
-        ArgumentNullException.ThrowIfNull(history);
-
-        this.inventory = inventory;
-        this.history = history;
-        this.configProvider = configProvider ?? new ConfigurationProvider();
-    }
 
     /// <summary>入金を処理します。</summary>
     /// <remarks>金種の設定(リサイクル可否、満杯しきい値)に基づき、通常庫または回収庫に振り分けます。</remarks>

@@ -16,7 +16,10 @@ public static class CashCountParser
     /// <param name="currencyFactor">通貨の係数(USDなら100, JPYなら1).</param>
     /// <returns>パースされた CashCount のリスト.</returns>
     /// <exception cref="ArgumentException">フォーマットが不正な場合、または曖昧な値の場合にスローされます。</exception>
-    public static IEnumerable<CashCount> Parse(string input, IEnumerable<DenominationKey> activeKeys, decimal currencyFactor)
+    public static IEnumerable<CashCount> Parse(
+        string input,
+        IEnumerable<DenominationKey> activeKeys,
+        decimal currencyFactor)
     {
         ArgumentNullException.ThrowIfNull(activeKeys);
         if (string.IsNullOrWhiteSpace(input))
@@ -45,12 +48,17 @@ public static class CashCountParser
                 sectionType = (index == 0 ? CurrencyCashType.Coin : CurrencyCashType.Bill);
             }
 
-            return trimmedSection.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            return trimmedSection
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(part => ParsePart(part, sectionType, activeKeys, currencyFactor));
         })];
     }
 
-    private static CashCount ParsePart(string part, CurrencyCashType? sectionType, IEnumerable<DenominationKey> activeKeys, decimal currencyFactor)
+    private static CashCount ParsePart(
+        string part,
+        CurrencyCashType? sectionType,
+        IEnumerable<DenominationKey> activeKeys,
+        decimal currencyFactor)
     {
         var pair = part.Split(':');
         if (pair.Length != 2)
@@ -80,9 +88,15 @@ public static class CashCountParser
     private static string NormalizeNominalValue(string value) =>
         value.StartsWith('.') ? "0" + value : value;
 
-    private static DenominationKey FindKey(decimal decimalValue, CurrencyCashType? sectionType, IEnumerable<DenominationKey> activeKeys, string part)
+    private static DenominationKey FindKey(
+        decimal decimalValue,
+        CurrencyCashType? sectionType,
+        IEnumerable<DenominationKey> activeKeys,
+        string part)
     {
-        var matchingKeys = activeKeys.Where(k => k.Value == decimalValue).ToList();
+        var matchingKeys = activeKeys
+            .Where(k => k.Value == decimalValue)
+            .ToList();
 
         if (matchingKeys.Count == 0)
         {
@@ -91,7 +105,8 @@ public static class CashCountParser
 
         if (sectionType.HasValue)
         {
-            return matchingKeys.FirstOrDefault(k => k.Type == sectionType.Value)
+            return matchingKeys
+                .FirstOrDefault(k => k.Type == sectionType.Value)
                 ?? throw new ArgumentException($"Denomination '{decimalValue}' is not registered as a {sectionType} in the current inventory, but was found in the {sectionType} section.");
         }
 

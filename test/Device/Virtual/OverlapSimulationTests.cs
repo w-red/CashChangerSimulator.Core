@@ -1,8 +1,6 @@
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Services;
 using CashChangerSimulator.Device.Virtual;
-using Moq;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;

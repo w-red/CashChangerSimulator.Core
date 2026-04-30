@@ -13,7 +13,7 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 /// SimulatorCashChanger の核となるロジックを管理する内部クラス。
 /// POS for .NET SDK からの依存を最小限に抑え、Facade やコントローラーのライフサイクルを管理します。
 /// </summary>
-internal sealed class UposCashChangerCore : IDisposable
+internal sealed partial class UposCashChangerCore : IDisposable
 {
     private readonly CompositeDisposable disposables = [];
     private readonly ILogger logger;
@@ -43,9 +43,12 @@ internal sealed class UposCashChangerCore : IDisposable
         StatusMonitor = new InternalStatusMonitor(Context);
 
         Context.HardwareStatusManager.IsConnected
-            .Subscribe(v => logger.LogDebug("Hardware connection: {0}", v))
+            .Subscribe(v => LogHardwareConnection(v))
             .AddTo(disposables);
     }
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Hardware connection: {IsConnected}")]
+    private partial void LogHardwareConnection(bool isConnected);
 
     public SimulatorContext Context { get; }
     public UposEventNotifier EventNotifier { get; }

@@ -3,20 +3,16 @@ using Microsoft.Extensions.Logging;
 namespace CashChangerSimulator.Device.Virtual.Services.ScriptCommands;
 
 /// <summary>begindeposit コマンド: 入金受付を開始します。</summary>
+/// <param name="depositController">入金管理コントローラー。</param>
 public class BeginDepositCommandHandler(
     DepositController depositController)
     : IScriptCommandHandler
 {
-    /// <summary>コマンド名を取得します。</summary>
+    /// <inheritdoc/>
     public ScriptCommandType OpName =>
         ScriptCommandType.BeginDeposit;
 
-    /// <summary>スクリプトコマンドを実行します。</summary>
-    /// <param name="cmd">コマンド。</param>
-    /// <param name="context">実行コンテキスト。</param>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="onProgress">進行状況を通知するコールバック。</param>
-    /// <returns>非同期タスク。</returns>
+    /// <inheritdoc/>
     public Task ExecuteAsync(
         ScriptCommand cmd,
         ScriptExecutionContext context,

@@ -10,47 +10,34 @@ using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>出金(払出)シーケンスを管理するコントローラー(仮想デバイス実装)。</summary>
-public class DispenseController : IDisposable
+/// <param name="manager">マネージャー。</param>
+/// <param name="inventory">在庫管理モデル。</param>
+/// <param name="configProvider">設定プロバイダー。</param>
+/// <param name="loggerFactory">ロガーファクトリ。</param>
+/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+/// <param name="simulator">デバイスシミュレーター。</param>
+public class DispenseController(
+    CashChangerManager manager,
+    Inventory inventory,
+    ConfigurationProvider configProvider,
+    ILoggerFactory loggerFactory,
+    HardwareStatusManager hardwareStatusManager,
+    IDeviceSimulator simulator) : IDisposable
 {
-    private readonly Inventory inventory;
-    private readonly ConfigurationProvider configProvider;
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly IDeviceSimulator simulator;
-    private readonly ILogger<DispenseController> logger;
+    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+    private readonly ConfigurationProvider configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
+    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
+    private readonly IDeviceSimulator simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
+    private readonly ILogger<DispenseController> logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
 
     private readonly AtomicState<DispenseState> atomicState = new(new DispenseState());
     private readonly DispenseTracker tracker = new();
-    private readonly DispenseCalculator calculator;
+    private readonly DispenseCalculator calculator = new(manager ?? throw new ArgumentNullException(nameof(manager)), hardwareStatusManager);
     private volatile bool disposed;
 
-    /// <summary>初期化します。</summary>
-    /// <param name="manager">マネージャー。</param>
-    /// <param name="inventory">在庫管理モデル。</param>
-    /// <param name="configProvider">設定プロバイダー。</param>
-    /// <param name="loggerFactory">ロガーファクトリ。</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-    /// <param name="simulator">デバイスシミュレーター。</param>
-    public DispenseController(
-        CashChangerManager manager,
-        Inventory inventory,
-        ConfigurationProvider configProvider,
-        ILoggerFactory loggerFactory,
-        HardwareStatusManager hardwareStatusManager,
-        IDeviceSimulator simulator)
-    {
-        ArgumentNullException.ThrowIfNull(manager);
-        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        this.configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
-        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
-        this.simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
-        this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
-        this.calculator = new DispenseCalculator(logger, manager, hardwareStatusManager);
-    }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public Observable<Unit> Changed => tracker.Changed;
@@ -80,7 +67,9 @@ public class DispenseController : IDisposable
     /// <param name="amount">払い出す金額。</param>
     /// <param name="isRepay">返却処理かどうか。</param>
     /// <returns>タスク。</returns>
-    public virtual async Task DispenseChangeAsync(int amount, bool isRepay)
+    public virtual async Task DispenseChangeAsync(
+        int amount,
+        bool isRepay)
     {
         if (!hardwareStatusManager.IsConnected.CurrentValue)
         {
@@ -101,7 +90,9 @@ public class DispenseController : IDisposable
     /// <param name="dispenseCounts">払い出す金種と枚数の辞書。</param>
     /// <param name="isRepay">返却処理かどうか。</param>
     /// <returns>タスク。</returns>
-    public virtual async Task DispenseCashAsync(IReadOnlyDictionary<DenominationKey, int> dispenseCounts, bool isRepay)
+    public virtual async Task DispenseCashAsync(
+        IReadOnlyDictionary<DenominationKey, int> dispenseCounts,
+        bool isRepay)
     {
         PrepareDispense();
 

@@ -48,12 +48,10 @@ public class UposDispenseFacade
 
     /// <summary>金額指定の出金を実行します。</summary>
     /// <param name="amount">払出金額。</param>
-    /// <param name="currencyCode">通貨コード。</param>
     /// <param name="factor">金額の係数。</param>
     /// <param name="asyncMode">非同期実行フラグ。</param>
     public void DispenseByAmount(
         int amount,
-        string currencyCode,
         decimal factor,
         bool asyncMode)
     {

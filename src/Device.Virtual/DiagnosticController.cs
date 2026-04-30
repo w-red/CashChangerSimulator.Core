@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
@@ -8,7 +8,10 @@ namespace CashChangerSimulator.Device.Virtual;
 /// <summary>デバイスの診断機能(ヘルスチェック、統計情報)を管理するコントローラー(仮想デバイス実装)。</summary>
 /// <param name="inventory">在庫管理モデル。</param>
 /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-public class DiagnosticController(Inventory inventory, HardwareStatusManager hardwareStatusManager) : IDisposable
+public class DiagnosticController(
+    Inventory inventory,
+    HardwareStatusManager hardwareStatusManager)
+    : IDisposable
 {
     private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
     private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
@@ -23,7 +26,8 @@ public class DiagnosticController(Inventory inventory, HardwareStatusManager har
     /// <summary>健康状態の報告書を作成します。</summary>
     /// <param name="level">ヘルスチェックのレベル。</param>
     /// <returns>ヘルスチェック報告書の文字列。</returns>
-    public virtual string GetHealthReport(PosSharp.Abstractions.HealthCheckLevel level)
+    public virtual string GetHealthReport(
+        PosSharp.Abstractions.HealthCheckLevel level)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         var sb = new StringBuilder();
@@ -51,7 +55,8 @@ public class DiagnosticController(Inventory inventory, HardwareStatusManager har
     /// <summary>統計情報を取得します。</summary>
     /// <param name="statistics">取得する統計情報の名前。</param>
     /// <returns>統計情報の XML 表現。</returns>
-    public virtual string RetrieveStatistics(IEnumerable<string> statistics)
+    public virtual string RetrieveStatistics(
+        IEnumerable<string> statistics)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(statistics);
@@ -107,9 +112,7 @@ public class DiagnosticController(Inventory inventory, HardwareStatusManager har
         disposed = true;
     }
 
-    /// <summary>
-    /// インスタンスが実際に破棄される際に呼び出されるフックメソッドです。
-    /// </summary>
+    /// <summary>インスタンスが実際に破棄される際に呼び出されるフックメソッド。</summary>
     /// <param name="disposing">マネージリソースを破棄中の場合は true。</param>
     protected virtual void OnDisposing(bool disposing)
     {

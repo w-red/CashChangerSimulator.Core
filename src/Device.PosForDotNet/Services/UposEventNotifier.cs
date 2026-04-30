@@ -1,4 +1,5 @@
 using Microsoft.PointOfService;
+using CashChangerSimulator.Core.Services;
 
 namespace CashChangerSimulator.Device.PosForDotNet.Services;
 
@@ -77,39 +78,21 @@ public class UposEventNotifier : IUposEventNotifier
     public bool DeviceEnabled
     {
         get => sink?.DeviceEnabled ?? false;
-        set
-        {
-            if (sink != null)
-            {
-                sink.DeviceEnabled = value;
-            }
-        }
+        set => sink?.Apply(s => s.DeviceEnabled = value);
     }
 
     /// <inheritdoc/>
     public bool Claimed
     {
         get => sink?.Claimed ?? false;
-        set
-        {
-            if (sink != null)
-            {
-                sink.Claimed = value;
-            }
-        }
+        set => sink?.Apply(s => s.Claimed = value);
     }
 
     /// <inheritdoc/>
     public bool ClaimedByAnother
     {
         get => sink?.ClaimedByAnother ?? false;
-        set
-        {
-            if (sink != null)
-            {
-                sink.ClaimedByAnother = value;
-            }
-        }
+        set => sink?.Apply(s => s.ClaimedByAnother = value);
     }
 
     /// <inheritdoc/>
@@ -125,25 +108,13 @@ public class UposEventNotifier : IUposEventNotifier
     public int AsyncResultCode
     {
         get => sink?.AsyncResultCode ?? 0;
-        set
-        {
-            if (sink != null)
-            {
-                sink.AsyncResultCode = value;
-            }
-        }
+        set => sink?.Apply(s => s.AsyncResultCode = value);
     }
 
     /// <inheritdoc/>
     public int AsyncResultCodeExtended
     {
         get => sink?.AsyncResultCodeExtended ?? 0;
-        set
-        {
-            if (sink != null)
-            {
-                sink.AsyncResultCodeExtended = value;
-            }
-        }
+        set => sink?.Apply(s => s.AsyncResultCodeExtended = value);
     }
 }

@@ -20,7 +20,8 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 /// 物理デバイスなしでのアプリケーション開発とテストを支援します。
 /// </remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Virtual Cash Changer Simulator", 1, 14)]
-public class SimulatorCashChanger : CashChangerBasic, IInternalUposEventSink, IDeviceStateProvider, ICashChangerStatusSink, ICashChangerDevice
+public class SimulatorCashChanger
+    : CashChangerBasic, IInternalUposEventSink, IDeviceStateProvider, ICashChangerStatusSink, ICashChangerDevice
 {
     private readonly Subject<PosSharp.Abstractions.UposDataEventArgs> dataEvents = new();
     private readonly Subject<PosSharp.Abstractions.UposErrorEventArgs> errorEvents = new();
@@ -289,7 +290,7 @@ public class SimulatorCashChanger : CashChangerBasic, IInternalUposEventSink, ID
     public virtual void RepayDeposit() => core.DepositFacade.RepayDeposit();
 
     /// <inheritdoc/>
-    public override void DispenseChange(int amount) => core.DispenseFacade.DispenseByAmount(amount, core.ConfigManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(core.ConfigManager.CurrencyCode), AsyncMode);
+    public override void DispenseChange(int amount) => core.DispenseFacade.DispenseByAmount(amount, UposCurrencyHelper.GetCurrencyFactor(core.ConfigManager.CurrencyCode), AsyncMode);
 
     /// <inheritdoc/>
     public override void DispenseCash(CashCount[] cashCounts) => core.DispenseFacade.DispenseByCashCounts(cashCounts, core.ConfigManager.CurrencyCode, UposCurrencyHelper.GetCurrencyFactor(core.ConfigManager.CurrencyCode), AsyncMode);

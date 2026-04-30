@@ -1,60 +1,47 @@
-using CashChangerSimulator.Core;
 using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
-using CashChangerSimulator.Core.Services;
 using PosSharp.Abstractions;
 using PosSharp.Core;
 using Microsoft.Extensions.Logging;
 using R3;
 using ZLogger;
 
-using System.Collections.Immutable;
-
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー(仮想デバイス実装)。</summary>
-public class DepositController : IDisposable
+/// <param name="manager">マネージャー。</param>
+/// <param name="inventory">在庫管理モデル。</param>
+/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+/// <param name="configProvider">設定プロバイダー。</param>
+/// <param name="loggerFactory">ロガーファクトリ。</param>
+/// <param name="timeProvider">時間プロバイダー。</param>
+/// <param name="isConfigInternal">内部設定かどうか。</param>
+public class DepositController(
+    CashChangerManager manager,
+    Inventory inventory,
+    HardwareStatusManager hardwareStatusManager,
+    ConfigurationProvider configProvider,
+    ILoggerFactory loggerFactory,
+    TimeProvider? timeProvider = null,
+    bool isConfigInternal = false) : IDisposable
 {
-    private readonly Inventory inventory;
-    private readonly HardwareStatusManager hardwareStatusManager;
-    private readonly ConfigurationProvider configProvider;
-    private readonly TimeProvider timeProvider;
+    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
+    private readonly ConfigurationProvider configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
+    private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
+    private readonly bool isConfigInternal = isConfigInternal;
+
     /* Stryker disable all */
-    private readonly ILogger logger;
+    private readonly ILogger logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger(nameof(DepositController));
     private readonly AtomicState<DepositState> atomicState = new(DepositState.Empty);
-    private readonly DepositTracker tracker;
-    private readonly DepositCalculator calculator;
+    private readonly DepositTracker tracker = new(inventory, configProvider);
+    private readonly DepositCalculator calculator = new((loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger(nameof(DepositController)), inventory, manager ?? throw new ArgumentNullException(nameof(manager)));
     private readonly CompositeDisposable disposables = [];
-    private readonly bool isConfigInternal;
     private volatile bool disposed;
 
-    /// <summary>初期化します。</summary>
-    /// <param name="manager">マネージャー。</param>
-    /// <param name="inventory">在庫管理モデル。</param>
-    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-    /// <param name="configProvider">設定プロバイダー。</param>
-    /// <param name="loggerFactory">ロガーファクトリ。</param>
-    /// <param name="timeProvider">時間プロバイダー。</param>
-    public DepositController(
-        CashChangerManager manager,
-        Inventory inventory,
-        HardwareStatusManager hardwareStatusManager,
-        ConfigurationProvider configProvider,
-        ILoggerFactory loggerFactory,
-        TimeProvider? timeProvider = null)
-    {
-        ArgumentNullException.ThrowIfNull(manager);
-        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
-        this.configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
-        this.timeProvider = timeProvider ?? TimeProvider.System;
-        this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger(nameof(DepositController));
-        this.calculator = new DepositCalculator(logger, inventory, manager);
-        this.tracker = new DepositTracker(inventory, configProvider);
-        this.isConfigInternal = false;
-    }
+
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public Observable<Unit> Changed => tracker.Changed;

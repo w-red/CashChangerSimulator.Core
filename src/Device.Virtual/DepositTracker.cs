@@ -6,7 +6,10 @@ using R3;
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>投入された現金の追跡と通知、非同期リソースのライフサイクルを担当するクラス。</summary>
-internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider configProvider) : IDisposable
+internal sealed class DepositTracker(
+    Inventory inventory,
+    ConfigurationProvider configProvider)
+    : IDisposable
 {
     private readonly Inventory inventory = inventory;
     private readonly ConfigurationProvider configProvider = configProvider;

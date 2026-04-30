@@ -13,16 +13,11 @@ public class InjectErrorCommandHandler(
     HardwareStatusManager hardwareStatusManager)
     : IScriptCommandHandler
 {
-    /// <summary>コマンド名を取得します。</summary>
+    /// <inheritdoc/>
     public ScriptCommandType OpName =>
         ScriptCommandType.InjectError;
 
-    /// <summary>スクリプトコマンドを実行します。</summary>
-    /// <param name="cmd">コマンド。</param>
-    /// <param name="context">実行コンテキスト。</param>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="onProgress">進行状況を通知するコールバック。</param>
-    /// <returns>非同期タスク。</returns>
+    /// <inheritdoc/>
     public Task ExecuteAsync(
         ScriptCommand cmd,
         ScriptExecutionContext context,

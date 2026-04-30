@@ -12,13 +12,15 @@ namespace CashChangerSimulator.Device.PosForDotNet;
 /// <summary>シミュレータ内部およびテストでのみ使用される機能を備えた <see cref="SimulatorCashChanger"/> の拡張クラス。</summary>
 /// <remarks>本番用(サービスオブジェクト)のロジックと、シミュレータの利便性・テスト用フックを分離するために使用します。</remarks>
 [ServiceObject(DeviceType.CashChanger, "SimulatorCashChanger", "Internal Simulator Cash Changer", 1, 14)]
-public class InternalSimulatorCashChanger : SimulatorCashChanger, IDeviceSimulator
+public class InternalSimulatorCashChanger
+    : SimulatorCashChanger, IDeviceSimulator
 {
     static InternalSimulatorCashChanger()
     {
         // [FIX] Pre-create LocalSettings directory in a static constructor to avoid race conditions
         // during high-concurrency test initialization.
-        var settingsDir = Path.Combine(AppContext.BaseDirectory, "LocalSettings");
+        var settingsDir = Path
+            .Combine(AppContext.BaseDirectory, "LocalSettings");
         if (!Directory.Exists(settingsDir))
         {
             try

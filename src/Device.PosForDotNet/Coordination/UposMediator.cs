@@ -2,6 +2,7 @@ using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Device.PosForDotNet.Services;
+using CashChangerSimulator.Core.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.PointOfService;
 using R3;
@@ -82,10 +83,7 @@ public class UposMediator : IUposMediator
     public bool ClaimedByAnother
     {
         get => sink?.ClaimedByAnother ?? false;
-        set
-        {
-            if (sink is not null) sink.ClaimedByAnother = value;
-        }
+        set => sink?.Apply(s => s.ClaimedByAnother = value);
     }
 
     /// <inheritdoc/>
