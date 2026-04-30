@@ -1,4 +1,3 @@
-﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using CashChangerSimulator.Core.Exceptions;
 using CashChangerSimulator.Core.Models;
@@ -12,8 +11,8 @@ internal sealed class DispenseTracker : IDisposable
 {
     private readonly CompositeDisposable disposables = [];
     private readonly Subject<Unit> changedSubject = new();
-    private readonly Subject<PosSharp.Abstractions.UposOutputCompleteEventArgs> outputCompleteEventsSubject = new();
-    private readonly Subject<PosSharp.Abstractions.UposErrorEventArgs> errorEventsSubject = new();
+    private readonly Subject<UposOutputCompleteEventArgs> outputCompleteEventsSubject = new();
+    private readonly Subject<UposErrorEventArgs> errorEventsSubject = new();
 
     private CancellationTokenSource? dispenseCts;
     private bool disposed;
@@ -34,10 +33,10 @@ internal sealed class DispenseTracker : IDisposable
     public Observable<Unit> Changed => changedSubject;
 
     /// <summary>出力完了イベントを受け取るためのストリーム。</summary>
-    public Observable<PosSharp.Abstractions.UposOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEventsSubject;
+    public Observable<UposOutputCompleteEventArgs> OutputCompleteEvents => outputCompleteEventsSubject;
 
     /// <summary>エラーイベントを受け取るためのストリーム。</summary>
-    public Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents => errorEventsSubject;
+    public Observable<UposErrorEventArgs> ErrorEvents => errorEventsSubject;
 
     /// <summary>例外をエラーコードへマッピングします。</summary>
     /// <param name="ex">例外。</param>
@@ -136,7 +135,7 @@ internal sealed class DispenseTracker : IDisposable
     {
         if (!disposed)
         {
-            outputCompleteEventsSubject.OnNext(new PosSharp.Abstractions.UposOutputCompleteEventArgs(0));
+            outputCompleteEventsSubject.OnNext(new UposOutputCompleteEventArgs(0));
         }
     }
 
@@ -144,11 +143,11 @@ internal sealed class DispenseTracker : IDisposable
     /// <param name="code">エラーコード。</param>
     /// <param name="codeEx">拡張エラーコード。</param>
     /// <param name="response">エラーレスポンス。</param>
-    public void NotifyError(DeviceErrorCode code, int codeEx, PosSharp.Abstractions.UposErrorResponse response = PosSharp.Abstractions.UposErrorResponse.None)
+    public void NotifyError(DeviceErrorCode code, int codeEx, UposErrorResponse response = PosSharp.Abstractions.UposErrorResponse.None)
     {
         if (!disposed)
         {
-            errorEventsSubject.OnNext(new PosSharp.Abstractions.UposErrorEventArgs((PosSharp.Abstractions.UposErrorCode)code, codeEx, PosSharp.Abstractions.UposErrorLocus.Output, response));
+            errorEventsSubject.OnNext(new UposErrorEventArgs((UposErrorCode)code, codeEx, PosSharp.Abstractions.UposErrorLocus.Output, response));
         }
     }
 

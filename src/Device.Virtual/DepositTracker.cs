@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Models;
 using PosSharp.Abstractions;
 using R3;
@@ -11,34 +11,35 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
     private readonly Inventory inventory = inventory;
     private readonly ConfigurationProvider configProvider = configProvider;
     private readonly Subject<Unit> changedSubject = new();
-    private readonly Subject<PosSharp.Abstractions.UposDataEventArgs> dataEventsSubject = new();
-    private readonly Subject<PosSharp.Abstractions.UposErrorEventArgs> errorEventsSubject = new();
+    private readonly Subject<UposDataEventArgs> dataEventsSubject = new();
+    private readonly Subject<UposErrorEventArgs> errorEventsSubject = new();
     private readonly CompositeDisposable disposables = [];
     private CancellationTokenSource? depositCts;
     private bool disposed;
-
-    /// <summary>初期化します。</summary>
-    public DepositTracker()
-        : this(null!, null!)
-    {
-    }
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
     public Observable<Unit> Changed => changedSubject;
 
     /// <summary>データイベントの通知ストリーム。</summary>
-    public Observable<PosSharp.Abstractions.UposDataEventArgs> DataEvents => dataEventsSubject;
+    public Observable<UposDataEventArgs> DataEvents => dataEventsSubject;
 
     /// <summary>エラーイベントの通知ストリーム。</summary>
-    public Observable<PosSharp.Abstractions.UposErrorEventArgs> ErrorEvents => errorEventsSubject;
+    public Observable<UposErrorEventArgs> ErrorEvents => errorEventsSubject;
+
+    /// <summary>新しいセッション用の CancellationTokenSource を作成し、内部状態を更新します。</summary>
+    /// <returns>新しい CancellationTokenSource。</returns>
+    public CancellationTokenSource CreateNewCts()
+    {
+        depositCts?.Dispose();
+        depositCts = new CancellationTokenSource();
+        return depositCts;
+    }
 
     /// <summary>新しい払い出しセッション用の CancellationToken を作成します。</summary>
     /// <returns>新しいトークン。</returns>
     public CancellationToken CreateNewToken()
     {
-        depositCts?.Dispose();
-        depositCts = new CancellationTokenSource();
-        return depositCts.Token;
+        return CreateNewCts().Token;
     }
 
     /// <summary>現在の操作を非同期でキャンセルします。</summary>
@@ -88,7 +89,7 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
     {
         if (!disposed)
         {
-            dataEventsSubject.OnNext(new PosSharp.Abstractions.UposDataEventArgs(data));
+            dataEventsSubject.OnNext(new UposDataEventArgs(data));
         }
     }
 
@@ -99,19 +100,17 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
     {
         if (!disposed)
         {
-            errorEventsSubject.OnNext(new PosSharp.Abstractions.UposErrorEventArgs((PosSharp.Abstractions.UposErrorCode)errorCode, extended, PosSharp.Abstractions.UposErrorLocus.Output, PosSharp.Abstractions.UposErrorResponse.Retry));
+            errorEventsSubject.OnNext(new UposErrorEventArgs((UposErrorCode)errorCode, extended, PosSharp.Abstractions.UposErrorLocus.Output, PosSharp.Abstractions.UposErrorResponse.Retry));
         }
     }
 
     /// <summary>投入された現金の追跡処理（集計、バリデーション、シリアル番号生成）を行います。</summary>
     /// <param name="key">投入された金種。</param>
     /// <param name="count">投入された枚数。</param>
-    /// <param name="state">更新対象の預入状態。</param>
-    public void ProcessDenominationTracking(DenominationKey key, int count, DepositState state)
+    /// <param name="state">現在の預入状態。</param>
+    /// <returns>更新後の預入状態。</returns>
+    public DepositState ProcessDenominationTracking(DenominationKey key, int count, DepositState state)
     {
-        // [UPOS] Simulate identification/validation
-        state.Status = DeviceDepositStatus.Validation;
-
         var config = configProvider.Config;
         var denomConfig = config.GetDenominationSetting(key);
         var maxCount = denomConfig.Full;
@@ -120,27 +119,27 @@ internal sealed class DepositTracker(Inventory inventory, ConfigurationProvider 
         var available = Math.Max(0, maxCount - currentInStorage);
         var overflow = Math.Max(0, count - available);
 
-        // [LIFECYCLE] Record progress
-        if (state.Counts.TryGetValue(key, out var current))
-        {
-            state.Counts[key] = current + count;
-        }
-        else
-        {
-            state.Counts[key] = count;
-        }
-
+        // [UPOS] Record progress
         inventory.AddEscrow(key, count);
-        state.DepositAmount += key.Value * count;
-        state.OverflowAmount += key.Value * overflow;
 
+        var newCounts = state.Counts.SetItem(key, state.Counts.GetValueOrDefault(key) + count);
+        var newAmount = state.DepositAmount + (key.Value * count);
+        var newOverflow = state.OverflowAmount + (key.Value * overflow);
+
+        var serialsBuilder = state.DepositedSerials.ToBuilder();
         for (var i = 0; i < count; i++)
         {
-            state.DepositedSerials.Add($"SN-{key.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}-{Guid.NewGuid().ToString()[..8]}");
+            serialsBuilder.Add($"SN-{key.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}-{Guid.NewGuid().ToString()[..8]}");
         }
 
-        // [LIFECYCLE] Finished identification
-        state.Status = DeviceDepositStatus.Counting;
+        return state with
+        {
+            Status = DeviceDepositStatus.Counting,
+            Counts = newCounts,
+            DepositAmount = newAmount,
+            OverflowAmount = newOverflow,
+            DepositedSerials = serialsBuilder.ToImmutable()
+        };
     }
 
     /// <inheritdoc/>
