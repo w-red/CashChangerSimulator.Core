@@ -49,11 +49,25 @@ internal sealed class DepositTracker(
     /// <returns>完了を示すタスク。</returns>
     public async Task CancelCurrentAsync()
     {
-        if (depositCts != null && !depositCts.IsCancellationRequested)
+        var cts = depositCts;
+        if (cts != null && !cts.IsCancellationRequested)
         {
-            await depositCts.CancelAsync().ConfigureAwait(false);
-            depositCts.Dispose();
-            depositCts = null;
+            try
+            {
+                await cts.CancelAsync().ConfigureAwait(false);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Already disposed by another task, ignore.
+            }
+            finally
+            {
+                if (ReferenceEquals(depositCts, cts))
+                {
+                    depositCts = null;
+                }
+                cts.Dispose();
+            }
         }
     }
 
@@ -61,20 +75,43 @@ internal sealed class DepositTracker(
     /// <returns>キャンセルが実行された場合は true。</returns>
     public bool CancelCurrent()
     {
-        if (depositCts == null || depositCts.IsCancellationRequested)
+        var cts = depositCts;
+        if (cts == null || cts.IsCancellationRequested)
         {
             return false;
         }
 
-        depositCts.Cancel();
-        return true;
+        try
+        {
+            cts.Cancel();
+            return true;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+        finally
+        {
+            if (ReferenceEquals(depositCts, cts))
+            {
+                depositCts = null;
+            }
+            cts.Dispose();
+        }
     }
 
     /// <summary>トークンをリセット(破棄)します。</summary>
     public void ResetToken()
     {
-        depositCts?.Dispose();
-        depositCts = null;
+        var cts = depositCts;
+        if (cts != null)
+        {
+            if (ReferenceEquals(depositCts, cts))
+            {
+                depositCts = null;
+            }
+            cts.Dispose();
+        }
     }
 
     /// <summary>状態変更を通知します。</summary>
