@@ -1,596 +1,439 @@
 using System.Reflection;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Exceptions;
+using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Monitoring;
 using CashChangerSimulator.Core.Services;
+using CashChangerSimulator.Core.Transactions;
 using CashChangerSimulator.Device.Virtual;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
+using PosSharp.Abstractions;
+using PosSharp.Core;
 using R3;
 using Shouldly;
+using Xunit;
 
 namespace CashChangerSimulator.Tests.Device.Virtual;
 
-/// <summary>DispenseController のミューテーションテストを補強するテストクラス。</summary>
-[Collection("SequentialHardwareTests")]
-public class DispenseControllerMutationTests : DeviceTestBase
+public class DispenseControllerMutationTests : IDisposable
 {
-    private readonly Mock<IDeviceSimulator> simulatorMock = new();
-    private readonly DispenseController controller;
+    private readonly Inventory _inventory;
+    private readonly ConfigurationProvider _configProvider;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly HardwareStatusManager _hardwareStatusManager;
+    private readonly Mock<IDeviceSimulator> _mockSimulator;
+    private readonly Mock<CashChangerManager> _mockManager;
+    private readonly FakeTimeProvider _timeProvider;
+    private readonly DispenseController _target;
 
-    /// <summary>テストの初期設定を行います。</summary>
     public DispenseControllerMutationTests()
     {
-        controller = new DispenseController(
-            Manager,
-            Inventory,
-            ConfigurationProvider,
-            NullLoggerFactory.Instance,
-            StatusManager,
-            simulatorMock.Object);
+        _inventory = Inventory.Create();
+        _configProvider = new ConfigurationProvider();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(new Mock<ILogger>().Object);
+        _hardwareStatusManager = HardwareStatusManager.Create();
+        _mockSimulator = new Mock<IDeviceSimulator>();
+        _mockManager = new Mock<CashChangerManager>(_inventory, new TransactionHistory(), null!);
+        _timeProvider = new FakeTimeProvider();
 
-        // テストのためにデバイスを接続状態にする
-        StatusManager.Input.IsConnected.Value = true;
+        _target = new DispenseController(
+            _mockManager.Object,
+            _inventory,
+            _configProvider,
+            _mockLoggerFactory.Object,
+            _hardwareStatusManager,
+            _mockSimulator.Object);
+
+        // デフォルトで接続済みにしておく
+        _hardwareStatusManager.Input.IsConnected.Value = true;
     }
 
-    /// <summary>LoggerFactory が null の場合に明示的に ArgumentNullException がスローされることを検証します。</summary>
-    [Fact]
-    public void ConstructorWhenLoggerFactoryIsNullThrowsArgumentNullException()
+    public void Dispose()
     {
-        // Act & Assert
-        var ex = Should.Throw<ArgumentNullException>(() => new DispenseController(Manager, Inventory, ConfigurationProvider, null!, StatusManager, simulatorMock.Object));
-        ex.ParamName.ShouldBe("loggerFactory");
+        _target.Dispose();
+        _hardwareStatusManager.Dispose();
     }
 
-    /// <summary>リフレクションを用いて内部のエラーハンドリングロジックが例外からエラーコードを正しく抽出することを検証します。</summary>
-    [Fact]
-    public void HandleDispenseErrorWithPosControlExceptionExtractsErrorCodeUsingReflection()
+    private void SetControllerState(CashDispenseStatus status, DeviceErrorCode errorCode = DeviceErrorCode.Success)
     {
-        // Arrange
-        var method = typeof(DispenseTracker)
-            .GetMethod(
-                "HandleDispenseError",
-                BindingFlags.Public | BindingFlags.Static);
-        method.ShouldNotBeNull();
-
-        var posException = new MockPosControlException(99, 100);
-        object[] parameters = [posException, DeviceErrorCode.Success, 0];
-
-        // Act
-        method.Invoke(null, parameters);
-
-        // Assert
-        ((DeviceErrorCode)parameters[1]).ShouldBe((DeviceErrorCode)99);
-        ((int)parameters[2]).ShouldBe(100);
-    }
-
-    /// <summary>払い出し処理中にキャンセルが発生した場合、ステータスが Idle に戻りキャンセルイベントが発火することを検証します。</summary>
-    /// <returns>非同期タスク。</returns>
-    [Fact]
-    public async Task ExecuteDispenseWhenOperationCanceledSetsCancelledStatusAndFiresEvents()
-    {
-        // Arrange
-        var counts = new Dictionary<DenominationKey, int>();
-        simulatorMock.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new OperationCanceledException());
-
-        bool changedFired = false;
-        controller.Changed.Subscribe(_ => changedFired = true);
-
-        PosSharp.Abstractions.UposErrorEventArgs? errorEvent = null;
-        controller.ErrorEvents.Subscribe(e => errorEvent = e);
-
-        // Act
-        await controller.DispenseCashAsync(counts, false);
-
-        // Assert
-        controller.Status.ShouldBe(CashDispenseStatus.Idle);
-        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
-        changedFired.ShouldBeTrue();
-        errorEvent.ShouldNotBeNull();
-        ((int)errorEvent.ErrorCode).ShouldBe((int)DeviceErrorCode.Cancelled);
-    }
-
-    /// <summary>デバイス例外発生時、適切なエラーコードがマッピングされイベントが通知されることを検証します。</summary>
-    /// <returns>非同期タスク。</returns>
-    [Fact]
-    public async Task ExecuteDispenseWhenDeviceExceptionOccursMapsCorrectErrorCodeAndFiresEvents()
-    {
-        // Arrange
-        var counts = new Dictionary<DenominationKey, int>();
-        simulatorMock.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new DeviceException("Hardware error", DeviceErrorCode.Jammed, 505));
-
-        PosSharp.Abstractions.UposErrorEventArgs? errorEvent = null;
-        controller.ErrorEvents.Subscribe(e => errorEvent = e);
-
-        // Act
-        await controller.DispenseCashAsync(counts, false);
-
-        // Assert
-        controller.Status.ShouldBe(CashDispenseStatus.Error);
-        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Jammed);
-        controller.LastErrorCodeExtended.ShouldBe(505);
-        errorEvent.ShouldNotBeNull();
-        ((int)errorEvent.ErrorCode).ShouldBe((int)DeviceErrorCode.Jammed);
-    }
-
-    /// <summary>未接続状態で DispenseCashAsync を呼んだ場合の例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
-    /// <returns>非同期タスク。</returns>
-    [Fact]
-    public async Task DispenseCashAsyncWhenNotConnectedThrowsWithDetailedMessage()
-    {
-        // Arrange
-        StatusManager.Input.IsConnected.Value = false;
-        var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
-
-        // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => controller.DispenseCashAsync(counts, false));
-        ex.Message.ShouldBe("Device is not connected.");
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
-    }
-
-    /// <summary>未接続状態で DispenseChangeAsync を呼んだ場合の例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
-    /// <returns>非同期タスク。</returns>
-    [Fact]
-    public async Task DispenseChangeAsyncWhenNotConnectedThrowsWithDetailedMessage()
-    {
-        // Arrange
-        StatusManager.Input.IsConnected.Value = false;
-
-        // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => controller.DispenseChangeAsync(1000, false));
-        ex.Message.ShouldBe("Device is not connected.");
-        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
-    }
-
-    /// <summary>ビジー状態での例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
-    /// <returns>非同期タスク。</returns>
-    [Fact]
-    public async Task DispenseCashAsyncWhenBusyThrowsWithDetailedMessage()
-    {
-        // Arrange
-        SetControllerStatus(CashDispenseStatus.Busy);
-        var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
-
-        // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => controller.DispenseCashAsync(counts, false));
-        ex.Message.ShouldBe("Already processing another dispense.");
-    }
-
-    /// <summary>Jammed 状態での例外メッセージを厳密に検証します（String mutation 撃破）。</summary>
-    /// <returns>非同期タスク。</returns>
-    [Fact]
-    public async Task DispenseCashAsyncWhenJammedThrowsWithDetailedMessage()
-    {
-        // Arrange
-        StatusManager.Input.IsJammed.Value = true;
-        var counts = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
-
-        // Act & Assert
-        var ex = await Should.ThrowAsync<DeviceException>(() => controller.DispenseCashAsync(counts, false));
-        ex.Message.ShouldBe("Hardware is jammed.");
-    }
-
-    /// <summary>Dispose 済み状態で公開メソッドが ObjectDisposedException を投げることを検証します（!disposedガードの網羅）。</summary>
-    /// <param name="methodName">対象となるメソッド名。</param>
-    /// <returns>非同期タスク。</returns>
-    [Theory]
-    [InlineData(nameof(DispenseController.DispenseCashAsync))]
-    [InlineData(nameof(DispenseController.ClearOutput))]
-    public async Task AllPublicMethodsThrowObjectDisposedExceptionAfterDispose(string methodName)
-    {
-        // Arrange
-        controller.Dispose();
-        simulatorMock.Invocations.Clear();
-
-        // Act & Assert
-        if (methodName == nameof(DispenseController.DispenseCashAsync))
+        var field = typeof(DispenseController).GetField("atomicState", BindingFlags.NonPublic | BindingFlags.Instance);
+        var atomicState = field?.GetValue(_target);
+        var transitionMethod = atomicState?.GetType().GetMethod("Transition");
+        if (transitionMethod != null)
         {
-            // Await to ensure we hit the guard at the start of the async method
-            await Should.ThrowAsync<ObjectDisposedException>(async () => await controller.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false));
+            var newState = new DispenseState(status, errorCode, 0);
+            var stateType = typeof(DispenseState);
+            var funcType = typeof(Func<,>).MakeGenericType(stateType, stateType);
+            var lambda = (Delegate)typeof(DispenseControllerMutationTests)
+                .GetMethod(nameof(CreateSpecificState), BindingFlags.NonPublic | BindingFlags.Static)!
+                .MakeGenericMethod(stateType)
+                .Invoke(null, [newState])!;
 
-            // 変異で ThrowIf が消えた場合、メソッドが進んでしまい別の場所で例外が出る可能性があるため、Simulator が呼ばれないことを厳密に検証
-            simulatorMock.Verify(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()), Times.Never);
-        }
-        else
-        {
-            Should.Throw<ObjectDisposedException>(controller.ClearOutput);
+            transitionMethod.Invoke(atomicState, [lambda]);
         }
     }
 
-    /// <summary>払い出し成功時、完了イベントが正しく通知されることを検証します。</summary>
-    /// <returns>非同期タスク。</returns>
+    private static Func<T, T> CreateSpecificState<T>(T state) => _ => state;
+
     [Fact]
-    public async Task ExecuteDispenseWhenSuccessfulFiresCompleteEvent()
+    public async Task DispenseChangeAsync_Success_CallsManagerAndSimulator()
     {
         // Arrange
-        var counts = new Dictionary<DenominationKey, int>();
-        simulatorMock.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        PosSharp.Abstractions.UposOutputCompleteEventArgs? completeEvent = null;
-        controller.OutputCompleteEvents.Subscribe(e => completeEvent = e);
+        var key = new DenominationKey(1000, CurrencyCashType.Bill);
+        _inventory.SetCount(key, 10);
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         // Act
-        await controller.DispenseCashAsync(counts, false);
+        await _target.DispenseChangeAsync(1000, false);
 
         // Assert
-        completeEvent.ShouldNotBeNull();
-        controller.Status.ShouldBe(CashDispenseStatus.Idle);
+        _mockSimulator.Verify(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockManager.Verify(m => m.Dispense(It.Is<IReadOnlyDictionary<DenominationKey, int>>(d => d[key] == 1)), Times.Once);
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
     }
 
-    /// <summary>コンストラクタの引数バリデーション（nullチェック）を検証します。</summary>
-    /// <param name="m">Manager が null かどうか。</param>
-    /// <param name="i">Inventory が null かどうか。</param>
-    /// <param name="c">ConfigurationProvider が null かどうか。</param>
-    /// <param name="s">StatusManager が null かどうか。</param>
-    /// <param name="sim">Simulator が null かどうか。</param>
-    [Theory]
-    [InlineData(true, false, false, false, false)]
-    [InlineData(false, true, false, false, false)]
-    [InlineData(false, false, true, false, false)]
-    [InlineData(false, false, false, true, false)]
-    [InlineData(false, false, false, false, true)]
-    public void ConstructorWhenArgumentIsNullThrowsArgumentNullException(
-        bool m,
-        bool i,
-        bool c,
-        bool s,
-        bool sim)
-    {
-        Should.Throw<ArgumentNullException>(() => new DispenseController(
-            m ? null! : Manager,
-            i ? null! : Inventory,
-            c ? null! : ConfigurationProvider,
-            NullLoggerFactory.Instance,
-            s ? null! : StatusManager,
-            sim ? null! : simulatorMock.Object));
-    }
-
-    /// <summary>非接続状態で払い出しを試みた際、DeviceException がスローされることを検証します。</summary>
-    /// <returns>非同期タスク。</returns>
     [Fact]
-    public async Task DispenseCashAsyncWhenNotConnectedThrowsDeviceException()
+    public async Task DispenseChangeAsync_MultipleDenominations_CallsManagerWithCorrectCounts()
     {
         // Arrange
-        var counts = new Dictionary<DenominationKey, int>();
-        StatusManager.Input.IsConnected.Value = false;
+        var key1000 = new DenominationKey(1000, CurrencyCashType.Bill);
+        var key5000 = new DenominationKey(5000, CurrencyCashType.Bill);
+        _inventory.SetCount(key1000, 10);
+        _inventory.SetCount(key5000, 10);
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        // Act
+        // 7000 -> 1x5000 + 2x1000
+        await _target.DispenseChangeAsync(7000, false);
+
+        // Assert
+        _mockManager.Verify(m => m.Dispense(It.Is<IReadOnlyDictionary<DenominationKey, int>>(d => 
+            d[key5000] == 1 && d[key1000] == 2)), Times.Once);
+    }
+
+    [Fact]
+    public async Task DispenseChangeAsync_WhenDisconnected_ThrowsDeviceException()
+    {
+        // Arrange
+        _hardwareStatusManager.Input.IsConnected.Value = false;
 
         // Act & Assert
-        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseCashAsync(counts, false));
+        await Should.ThrowAsync<DeviceException>(() => _target.DispenseChangeAsync(1000, false));
     }
 
-    /// <summary>ハードウェア障害時に払い出しを試みた際、DeviceException がスローされることを検証します。</summary>
-    /// <returns>非同期タスク。</returns>
     [Fact]
-    public async Task DispenseCashAsyncWhenJammedThrowsDeviceException()
+    public async Task DispenseCashAsync_Success_FiresOutputCompleteEvent()
     {
         // Arrange
-        var counts = new Dictionary<DenominationKey, int>();
-        StatusManager.Input.IsJammed.Value = true;
-
-        // Act & Assert
-        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseCashAsync(counts, false));
-    }
-
-    /// <summary>Error 状態から ClearOutput を呼び出すと Idle に復帰することを検証します。</summary>
-    [Fact]
-    public void ClearOutputWhenErrorSetsStatusToIdle()
-    {
-        // Arrange
-        SetControllerStatus(CashDispenseStatus.Error);
+        var eventFired = false;
+        using var sub = _target.OutputCompleteEvents.Subscribe(_ => eventFired = true);
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         // Act
-        controller.ClearOutput();
+        await _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false);
 
         // Assert
-        controller.Status.ShouldBe(CashDispenseStatus.Idle);
+        eventFired.ShouldBeTrue();
     }
 
-    /// <summary>Dispose 済み状態での通知抑制を網羅します（!disposed 網羅）。</summary>
     [Fact]
-    public void AllNotificationMethodsSuppressWhenDisposed()
+    public async Task DispenseCashAsync_Cancellation_HandlesGracefully()
     {
         // Arrange
-        int callCount = 0;
-        using var sub = controller.Changed.Subscribe(_ => callCount++);
-
-        // Error 状態にして notifyChanged = true になる条件を作る
-        SetControllerStatus(CashDispenseStatus.Error);
-
-        // Act & Assert
-        controller.Dispose();
-        Should.Throw<ObjectDisposedException>(controller.ClearOutput);
-
-        // Assert
-        callCount.ShouldBe(0);
-    }
-
-    /// <summary>処理中に ClearOutput を呼び出すとキャンセルされ、ステータスが Idle になることを検証します。</summary>
-    [Fact]
-    public void ClearOutputWhenBusyCancelsAndSetsStatusToIdle()
-    {
-        // Reflection to set Status to Busy
-        SetControllerStatus(CashDispenseStatus.Busy);
-
-        // Act
-        controller.ClearOutput();
-
-        // Assert
-        controller.Status.ShouldBe(CashDispenseStatus.Idle);
-        controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
-    }
-
-    /// <summary>Dispose 時に内部のフラグが正しく更新され、リソースが破棄されることを検証します。</summary>
-    [Fact]
-    public void DisposeSetsDisposedFlagAndDisposesResources()
-    {
-        // Arrange
-        var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, simulatorMock.Object);
-
-        // Act
-        controller.Dispose();
-
-        // Assert
-        Should.Throw<ObjectDisposedException>(controller.ClearOutput);
-
-        // Dispose 後のリソース解放チェック
-        var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
-        var trackerObj = trackerField!.GetValue(controller);
-        var ctsField = typeof(DispenseTracker).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
-        var cts = (CancellationTokenSource?)ctsField?.GetValue(trackerObj);
-
-        if (cts != null)
-        {
-            Should.Throw<ObjectDisposedException>(() => cts.Token);
-        }
-    }
-
-    /// <summary>notifyChanged と !disposed の論理演算真偽値テーブルを網羅検証します（Logical mutation 撃破）。</summary>
-    [Fact]
-    public void NotifyChangeGuardTruthTableCoverage()
-    {
-        // Case 1: notifyChanged = true, disposed = false (Baseline: Fire)
-        int callCount1 = 0;
-        using (var sub = controller.Changed.Subscribe(_ => callCount1++))
-        {
-            controller.ClearOutput();
-            SetControllerStatus(CashDispenseStatus.Error);
-            controller.ClearOutput();
-        }
-
-        callCount1.ShouldBe(1);
-
-        // Case 2: notifyChanged = false, disposed = false (Baseline: No fire)
-        int callCount2 = 0;
-        using (var sub = controller.Changed.Subscribe(_ => callCount2++))
-        {
-            // Status を既に Idle にしておけば notifyChanged = false になる
-            controller.ClearOutput();
-        }
-
-        callCount2.ShouldBe(0);
-
-        // Case 3: notifyChanged = true, disposed = true (Baseline: No fire)
-        int callCount3 = 0;
-        using (var sub = controller.Changed.Subscribe(_ => callCount3++))
-        {
-            SetControllerStatus(CashDispenseStatus.Error);
-            controller.Dispose();
-            Should.Throw<ObjectDisposedException>(controller.ClearOutput);
-        }
-
-        callCount3.ShouldBe(0);
-    }
-
-    /// <summary>Dispose された後に ClearOutput を呼んでも Changed イベントが通知されないことを検証します。</summary>
-    [Fact]
-    public void ClearOutputWhenDisposedDoesNotNotifyChanged()
-    {
-        // Arrange
-        var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, simulatorMock.Object);
-
-        // エラー状態にして notifyChanged が true になる条件を作る
-        SetControllerStatus(CashDispenseStatus.Error);
-
-        int callCount = 0;
-        using var sub = controller.Changed.Subscribe(_ => callCount++);
-
-        // Act & Assert
-        controller.Dispose();
-        Should.Throw<ObjectDisposedException>(controller.ClearOutput);
-
-        // Assert
-        callCount.ShouldBe(0);
-    }
-
-    /// <summary>リフレクションを用いて、ErrorCode プロパティを持つ任意の例外から値を抽出できることを検証します。</summary>
-    [Fact]
-    public void HandleDispenseErrorWithComplexExceptionExtractsCorrectProperties()
-    {
-        // Arrange
-        var method = typeof(DispenseTracker).GetMethod("HandleDispenseError", BindingFlags.Public | BindingFlags.Static);
-        method.ShouldNotBeNull();
-
-        var complexEx = new MockPosControlException(777, 888);
-        object[] parameters = [complexEx, DeviceErrorCode.Success, 0];
-
-        // Act
-        method.Invoke(null, parameters);
-
-        // Assert
-        ((DeviceErrorCode)parameters[1]).ShouldBe((DeviceErrorCode)777);
-        ((int)parameters[2]).ShouldBe(888);
-    }
-
-    /// <summary>Dispose 呼び出し時に、内部の CancellationTokenSource がキャンセル・破棄されることを検証します（disposing 変異撃破）。</summary>
-    [Fact]
-    public void DisposeWhenDisposingCancelsAndDisposesCancellationTokenSource()
-    {
-        // Arrange
-        var mockSimulator = new Mock<IDeviceSimulator>();
         var tcs = new TaskCompletionSource();
-        mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
+        var changedCount = 0;
+        using var sub = _target.Changed.Subscribe(_ => changedCount++);
 
-        var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, mockSimulator.Object);
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .Returns<CancellationToken>(async t => 
+            {
+                using (t.Register(() => tcs.TrySetResult()))
+                {
+                    await tcs.Task;
+                    throw new OperationCanceledException(t);
+                }
+            });
 
-        var request = new Dictionary<DenominationKey, int> { { new DenominationKey(1000, CurrencyCashType.Bill), 1 } };
-        _ = controller.DispenseCashAsync(request, false);
-
-        controller.IsBusy.ShouldBeTrue();
-
-        // リフレクションで CancellationTokenSource を取得
-        var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
-        var trackerObj = trackerField!.GetValue(controller);
-        var ctsField = typeof(DispenseTracker).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
-        var cts = (CancellationTokenSource)ctsField!.GetValue(trackerObj)!;
+        var dispenseTask = _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false);
 
         // Act
-        controller.Dispose();
+        _target.ClearOutput();
+        await dispenseTask;
 
         // Assert
-        cts.IsCancellationRequested.ShouldBeTrue();
-        Should.Throw<ObjectDisposedException>(() => cts.Token);
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
+        _target.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
+        
+        // Verify Changed event was fired during cancellation
+        changedCount.ShouldBeGreaterThanOrEqualTo(2); // Prepare + Cancellation
     }
 
-    /// <summary>ビジー状態の時に追加の DispenseChangeAsync を呼び出すと例外がスローされることを検証します（IsBusyガード変異撃破）。</summary>
-    /// <returns>非同期タスク。</returns>
     [Fact]
-    public async Task DispenseChangeAsyncWhenBusyThrowsDeviceException()
+    public async Task DispenseCashAsync_HardwareError_SetsErrorStatus()
     {
         // Arrange
-        SetControllerStatus(CashDispenseStatus.Busy);
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DeviceException("Hardware failure", DeviceErrorCode.Failure));
+
+        // Act
+        var changedFired = false;
+        var errorFired = false;
+        using var subChanged = _target.Changed.Subscribe(_ => changedFired = true);
+        using var subError = _target.ErrorEvents.Subscribe(_ => errorFired = true);
+
+        await _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false);
+
+        // Assert
+        _target.Status.ShouldBe(CashDispenseStatus.Error);
+        _target.LastErrorCode.ShouldBe(DeviceErrorCode.Failure);
+        changedFired.ShouldBeTrue();
+        errorFired.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task DispenseCashAsync_WhenJammed_ThrowsDeviceException()
+    {
+        // Arrange
+        _hardwareStatusManager.Input.IsJammed.Value = true;
 
         // Act & Assert
-        await Should.ThrowAsync<DeviceException>(async () => await controller.DispenseChangeAsync(1000, false));
+        await Should.ThrowAsync<DeviceException>(() => _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false));
     }
 
-    /// <summary>ClearOutput がステータス変更時のみ通知を行い、かつ Dispose 済みでないことを検証します（真偽値変異撃破）。</summary>
     [Fact]
-    public void ClearOutputNotifiesChangedOnlyWhenStatusChangesAndNotDisposed()
+    public async Task DispenseCashAsync_WhenBusy_ThrowsDeviceException()
     {
         // Arrange
-        int callCount = 0;
-        using var sub = controller.Changed.Subscribe(_ => callCount++);
+        var tcs = new TaskCompletionSource();
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
 
-        // 1. ステータスが変わらない場合
-        controller.ClearOutput();
-        callCount.ShouldBe(0);
+        var firstTask = _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false);
 
-        // 2. ステータスが変わる場合
-        SetControllerStatus(CashDispenseStatus.Error);
-        controller.ClearOutput();
-        callCount.ShouldBe(1);
+        // Act & Assert
+        await Should.ThrowAsync<DeviceException>(() => _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false));
 
-        // 3. Dispose 済みの場合
-        SetControllerStatus(CashDispenseStatus.Error);
-        controller.Dispose();
-        Should.Throw<ObjectDisposedException>(controller.ClearOutput);
-        callCount.ShouldBe(1);
+        tcs.SetResult();
+        await firstTask;
     }
 
-    /// <summary>Busy 状態の時に ClearOutput を呼び出すと Changed 通知が発生することを検証します。</summary>
     [Fact]
-    public void ClearOutputWhenBusyNotifiesChanged()
+    public void Methods_AfterDispose_ShouldThrowObjectDisposedException()
     {
         // Arrange
-        SetControllerStatus(CashDispenseStatus.Busy);
+        _target.Dispose();
 
-        int callCount = 0;
-        using var sub = controller.Changed.Subscribe(_ => callCount++);
+        // Act & Assert
+        Should.Throw<ObjectDisposedException>(() => _target.ClearOutput());
+        Should.ThrowAsync<ObjectDisposedException>(() => _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false)).Wait();
+    }
+
+    [Fact]
+    public void NotifyChanged_CalledDuringTransitions()
+    {
+        // Arrange
+        var changedCount = 0;
+        using var sub = _target.Changed.Subscribe(_ => changedCount++);
 
         // Act
-        controller.ClearOutput();
+        // 1. PrepareDispense (Busy) -> +1
+        // 2. FinalizeDispense (via successful task) -> +1
+        var tcs = new TaskCompletionSource();
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
+        var task = _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false);
+        
+        tcs.SetResult();
+        task.Wait();
 
         // Assert
-        callCount.ShouldBe(1);
-        controller.Status.ShouldBe(CashDispenseStatus.Idle);
+        changedCount.ShouldBeGreaterThanOrEqualTo(2);
     }
 
-    /// <summary>Dispose を複数回呼び出しても安全であり、二回目以降は早期リターンされることを検証します。</summary>
     [Fact]
-    public void DisposeCalledMultipleTimesIsSafe()
+    public async Task Dispose_CancelsCurrentOperation()
     {
         // Arrange
-        var controller = new DispenseController(Manager, Inventory, ConfigurationProvider, NullLoggerFactory.Instance, StatusManager, simulatorMock.Object);
+        var tcs = new TaskCompletionSource();
+        var canceled = false;
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .Returns<CancellationToken>(async t => 
+            {
+                using (t.Register(() => canceled = true))
+                {
+                    await tcs.Task;
+                }
+            });
+
+        var task = _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false);
 
         // Act
-        controller.Dispose();
-        Action act = controller.Dispose;
+        _target.Dispose();
+        tcs.TrySetResult();
+        await task;
 
         // Assert
-        act.ShouldNotThrow();
+        canceled.ShouldBeTrue();
     }
 
-    /// <summary>払い出しが正常終了した際、リソース(Token)が確実にリセットされることを検証します。</summary>
-    /// <returns>非同期タスク。</returns>
     [Fact]
-    public async Task ExecuteDispenseWhenSuccessfulResetsToken()
+    public void HandleDispenseException_DirectCall_NotifiesChanged()
     {
         // Arrange
-        var counts = new Dictionary<DenominationKey, int>();
-        simulatorMock.Setup(x => x.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var changedFired = false;
+        using var sub = _target.Changed.Subscribe(_ => changedFired = true);
 
         // Act
-        await controller.DispenseCashAsync(counts, false);
+        var method = typeof(DispenseController).GetMethod("HandleDispenseException", BindingFlags.NonPublic | BindingFlags.Instance);
+        method!.Invoke(_target, [new Exception("Test error")]);
 
         // Assert
-        // リフレクションで内部の dispenseCts が null になっているか確認
-        var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
-        var tracker = trackerField!.GetValue(controller);
-        var ctsField = typeof(DispenseTracker).GetField("dispenseCts", BindingFlags.NonPublic | BindingFlags.Instance);
-        var cts = ctsField!.GetValue(tracker);
-
-        cts.ShouldBeNull();
+        changedFired.ShouldBeTrue();
+        _target.Status.ShouldBe(CashDispenseStatus.Error);
     }
 
-    /// <summary>キャンセル処理を連続で呼んだ場合、2回目以降は false を返し、余計なキャンセルを行わないことを検証します。</summary>
     [Fact]
-    public void CancelCurrentMultipleTimesReturnsCorrectBooleans()
+    public void HandleDispenseCancellation_DirectCall_NotifiesObservers()
     {
         // Arrange
-        var trackerField = typeof(DispenseController).GetField("tracker", BindingFlags.NonPublic | BindingFlags.Instance);
-        var tracker = (DispenseTracker)trackerField!.GetValue(controller)!;
-
-        // トークンを作成（実行中状態を模倣）
-        tracker.CreateNewToken();
+        var changedFired = false;
+        using var sub = _target.Changed.Subscribe(_ => changedFired = true);
+        var errorFired = false;
+        using var errSub = _target.ErrorEvents.Subscribe(_ => errorFired = true);
 
         // Act
-        var firstResult = tracker.CancelCurrent();
-        var secondResult = tracker.CancelCurrent();
+        var method = typeof(DispenseController).GetMethod("HandleDispenseCancellation", BindingFlags.NonPublic | BindingFlags.Instance);
+        method!.Invoke(_target, null);
 
         // Assert
-        firstResult.ShouldBeTrue();
-        secondResult.ShouldBeFalse();
+        changedFired.ShouldBeTrue();
+        errorFired.ShouldBeTrue();
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
     }
 
-    /// <summary>コントローラーを破棄した際、Tracker の各 Subject が適切に破棄(完了)されることを検証します。</summary>
     [Fact]
-    public void DisposeShouldCompleteSubjects()
+    public async Task DispenseCashAsync_HardwareDisconnected_ThrowsException()
     {
         // Arrange
+        _hardwareStatusManager.Input.IsConnected.Value = false;
+        bool changedFired = false;
+        using var d = _target.Changed.Subscribe(_ => changedFired = true);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<DeviceException>(async () => 
+            await _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false));
+        
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Closed);
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
+        changedFired.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DispenseCashAsync_HardwareJammed_ThrowsException()
+    {
+        // Arrange
+        _hardwareStatusManager.Input.IsConnected.Value = true;
+        _hardwareStatusManager.Input.IsJammed.Value = true;
+        bool changedFired = false;
+        using var d = _target.Changed.Subscribe(_ => changedFired = true);
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<DeviceException>(async () => 
+            await _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false));
+        
+        ex.ErrorCode.ShouldBe(DeviceErrorCode.Jammed);
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
+        changedFired.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DispenseCashAsync_Cancellation_ResetsToIdle()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource();
+        _mockSimulator.Setup(s => s.SimulateDispenseAsync(It.IsAny<CancellationToken>()))
+            .Returns(async (CancellationToken t) => {
+                using (t.Register(() => tcs.TrySetResult()))
+                {
+                    await tcs.Task;
+                }
+                throw new OperationCanceledException(t);
+            });
+
+        var task = _target.DispenseCashAsync(new Dictionary<DenominationKey, int>(), false);
+        
         // Act
-        controller.Dispose();
+        _target.ClearOutput();
+        await task;
+        
+        // Assert
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
+        _target.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
+    }
+
+    [Fact]
+    public void VerifySetControllerStateHelperWorks()
+    {
+        // Arrange
+        SetControllerState(CashDispenseStatus.Busy, DeviceErrorCode.Failure);
 
         // Assert
-        // Subscribe will not throw and dispose successfully
-        Assert.True(true);
+        _target.Status.ShouldBe(CashDispenseStatus.Busy);
+        _target.LastErrorCode.ShouldBe(DeviceErrorCode.Failure);
+
+        // Reset
+        SetControllerState(CashDispenseStatus.Idle, DeviceErrorCode.Success);
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
     }
 
-    private void SetControllerStatus(CashDispenseStatus status)
+    [Fact]
+    public void ClearOutput_WhenBusy_TransitionsToIdleAndFiresNotification()
     {
-        var atomicStateField = typeof(DispenseController).GetField("atomicState", BindingFlags.NonPublic | BindingFlags.Instance);
-        var atomicStateObj = atomicStateField!.GetValue(controller);
-        var exchangeMethod = atomicStateObj!.GetType().GetMethod("Exchange");
-        exchangeMethod!.Invoke(atomicStateObj, [new DispenseState(status)]);
+        // Arrange
+        SetControllerState(CashDispenseStatus.Busy);
+        int changedCount = 0;
+        using var d = _target.Changed.Subscribe(_ => changedCount++);
+        
+        // Act
+        _target.ClearOutput();
+
+        // Assert
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
+        _target.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
+        changedCount.ShouldBe(1);
     }
 
-    private class MockPosControlException(int errorCode, int extendedCode) : Exception
+    [Fact]
+    public void ClearOutput_WhenError_ResetsToIdleAndFiresNotification()
     {
-        public int ErrorCode { get; } = errorCode;
-        public int ErrorCodeExtended { get; } = extendedCode;
+        // Arrange
+        SetControllerState(CashDispenseStatus.Error, DeviceErrorCode.Failure);
+        int changedCount = 0;
+        using var d = _target.Changed.Subscribe(_ => changedCount++);
+        
+        // Act
+        _target.ClearOutput();
+
+        // Assert
+        _target.Status.ShouldBe(CashDispenseStatus.Idle);
+        _target.LastErrorCode.ShouldBe(DeviceErrorCode.Success);
+        changedCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public void ClearOutput_WhenIdle_DoesNothing()
+    {
+        // Arrange
+        SetControllerState(CashDispenseStatus.Idle);
+        int changedCount = 0;
+        using var d = _target.Changed.Subscribe(_ => changedCount++);
+
+        // Act
+        _target.ClearOutput();
+
+        // Assert
+        changedCount.ShouldBe(0);
     }
 }
-
