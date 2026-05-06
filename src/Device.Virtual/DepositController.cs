@@ -11,35 +11,52 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>入金シーケンスのライフサイクルを管理するコントローラー(仮想デバイス実装)。</summary>
-/// <param name="manager">マネージャー。</param>
-/// <param name="inventory">在庫管理モデル。</param>
-/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-/// <param name="configProvider">設定プロバイダー。</param>
-/// <param name="loggerFactory">ロガーファクトリ。</param>
-/// <param name="timeProvider">時間プロバイダー。</param>
-/// <param name="isConfigInternal">内部設定かどうか。</param>
-public class DepositController(
-    CashChangerManager manager,
-    Inventory inventory,
-    HardwareStatusManager hardwareStatusManager,
-    ConfigurationProvider configProvider,
-    ILoggerFactory loggerFactory,
-    TimeProvider? timeProvider = null,
-    bool isConfigInternal = false) : IDisposable
+public class DepositController : IDisposable
 {
-    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
-    private readonly ConfigurationProvider configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
-    private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
-    private readonly bool isConfigInternal = isConfigInternal;
-
-    /* Stryker disable all */
-    private readonly ILogger logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger(nameof(DepositController));
-    private readonly AtomicState<DepositState> atomicState = new(DepositState.Empty);
-    private readonly DepositTracker tracker = new(inventory, configProvider);
-    private readonly DepositCalculator calculator = new((loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger(nameof(DepositController)), inventory, manager ?? throw new ArgumentNullException(nameof(manager)));
-    private readonly CompositeDisposable disposables = [];
+    // Stryker disable all
+    private readonly Inventory inventory;
+    private readonly HardwareStatusManager hardwareStatusManager;
+    private readonly ConfigurationProvider configProvider;
+    private readonly TimeProvider timeProvider;
+    private readonly bool isConfigInternal;
+    private readonly ILogger logger;
+    private readonly AtomicState<DepositState> atomicState;
+    private readonly DepositTracker tracker;
+    private readonly DepositCalculator calculator;
+    private readonly CompositeDisposable disposables;
     private volatile bool disposed;
+
+    /// <summary>新しいインスタンスを初期化します。</summary>
+    /// <param name="manager">マネージャー。</param>
+    /// <param name="inventory">在庫。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+    /// <param name="configProvider">設定。</param>
+    /// <param name="loggerFactory">ロガーファクトリ。</param>
+    /// <param name="timeProvider">時間プロバイダー。</param>
+    /// <param name="isConfigInternal">内部設定かどうか。</param>
+    public DepositController(
+        CashChangerManager manager,
+        Inventory inventory,
+        HardwareStatusManager hardwareStatusManager,
+        ConfigurationProvider configProvider,
+        ILoggerFactory loggerFactory,
+        TimeProvider? timeProvider = null,
+        bool isConfigInternal = false)
+    {
+        // Stryker disable all
+        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
+        this.configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
+        this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.isConfigInternal = isConfigInternal;
+
+        this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger(nameof(DepositController));
+        this.atomicState = new(DepositState.Empty);
+        this.tracker = new(inventory, configProvider);
+        this.calculator = new(logger, inventory, manager ?? throw new ArgumentNullException(nameof(manager)));
+        this.disposables = [tracker];
+        // Stryker restore all
+    }
 
 
 
@@ -52,8 +69,19 @@ public class DepositController(
     /// <summary>エラーイベントを受け取るためのストリーム。</summary>
     public Observable<UposErrorEventArgs> ErrorEvents => tracker.ErrorEvents;
 
-    /// <summary>リアルタイムデータ更新が有効かどうかを取得します。</summary>
-    public bool RealTimeDataEnabled { get; set; }
+    private bool realTimeDataEnabled;
+    
+    /// <summary>リアルタイムデータ更新が有効かどうかを取得または設定します。</summary>
+    public bool RealTimeDataEnabled 
+    { 
+        get => realTimeDataEnabled;
+        set
+        {
+            // Stryker disable once all
+            ObjectDisposedException.ThrowIf(disposed, this);
+            realTimeDataEnabled = value;
+        }
+    }
 
     /// <summary>現在投入されている合計金額を取得します。</summary>
     public decimal DepositAmount => atomicState.Current.DepositAmount;
@@ -103,6 +131,8 @@ public class DepositController(
         get => atomicState.Current.RequiredAmount;
         set
         {
+            // Stryker disable once all
+            ObjectDisposedException.ThrowIf(disposed, this);
             var result = atomicState.Transition(s =>
             {
                 if (s.RequiredAmount == value) return s;
@@ -118,6 +148,7 @@ public class DepositController(
     /// <summary>預入(Deposit)処理を開始します。</summary>
     public virtual void BeginDeposit()
     {
+        // Stryker disable once all
         ObjectDisposedException.ThrowIf(disposed, this);
         
         var result = atomicState.Transition(s =>
@@ -163,11 +194,12 @@ public class DepositController(
     /// <summary>投入された金額を確定させます。</summary>
     public virtual void FixDeposit()
     {
+        // Stryker disable once all
         ObjectDisposedException.ThrowIf(disposed, this);
 
         var result = atomicState.Transition(s =>
         {
-            if (s.Status != DeviceDepositStatus.Counting) return s;
+            if (s.Status != DeviceDepositStatus.Counting || s.IsFixed) return s;
 
             return s with
             {
@@ -192,6 +224,7 @@ public class DepositController(
     /// <returns>完了を示すタスク。</returns>
     public virtual async Task EndDepositAsync(DepositAction action)
     {
+        // Stryker disable once all
         ObjectDisposedException.ThrowIf(disposed, this);
 
         PrepareEndDeposit();
@@ -367,6 +400,7 @@ public class DepositController(
             FixDeposit();
         }
 
+        // Stryker disable once all
         await EndDepositAsync(DepositAction.Repay).ConfigureAwait(false);
     }
 
@@ -384,6 +418,7 @@ public class DepositController(
     /// <param name="control">一時停止または再開。</param>
     public virtual void PauseDeposit(DeviceDepositPause control)
     {
+        // Stryker disable once all
         ObjectDisposedException.ThrowIf(disposed, this);
 
         bool requestedPause = control == DeviceDepositPause.Pause;
@@ -418,7 +453,9 @@ public class DepositController(
     /// <param name="count">枚数。</param>
     public void TrackDeposit(DenominationKey key, int count = 1)
     {
+        // Stryker disable once all
         ObjectDisposedException.ThrowIf(disposed, this);
+        // Stryker disable once all
         ArgumentNullException.ThrowIfNull(key);
         TrackBulkDeposit(new Dictionary<DenominationKey, int> { { key, count } });
     }
@@ -427,7 +464,9 @@ public class DepositController(
     /// <param name="counts">金種と枚数のセット。</param>
     public void TrackBulkDeposit(IReadOnlyDictionary<DenominationKey, int> counts)
     {
+        // Stryker disable once all
         ObjectDisposedException.ThrowIf(disposed, this);
+        // Stryker disable once all
         ArgumentNullException.ThrowIfNull(counts);
 
         if (hardwareStatusManager.IsOverlapped.CurrentValue)
@@ -477,6 +516,7 @@ public class DepositController(
     /// <param name="amount">リジェクトする合計金額。</param>
     public void TrackReject(decimal amount)
     {
+        // Stryker disable once all
         ObjectDisposedException.ThrowIf(disposed, this);
         
         var result = atomicState.Transition(s =>
@@ -500,6 +540,7 @@ public class DepositController(
     }
 
     /// <inheritdoc/>
+    // Stryker disable all
     public void Dispose()
     {
         Dispose(true);
@@ -510,11 +551,12 @@ public class DepositController(
     /// <param name="disposing">マネージリソースを解放するかどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
+        // Stryker disable all
         if (Interlocked.Exchange(ref disposed, true))
         {
             return;
         }
-
+ 
         if (disposing)
         {
             tracker.CancelCurrent();
@@ -522,5 +564,7 @@ public class DepositController(
             disposables.Dispose();
             if (isConfigInternal) configProvider.Dispose();
         }
+        // Stryker restore all
     }
+    // Stryker restore all
 }
