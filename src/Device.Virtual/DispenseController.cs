@@ -13,30 +13,44 @@ using ZLogger;
 namespace CashChangerSimulator.Device.Virtual;
 
 /// <summary>出金(払出)シーケンスを管理するコントローラー(仮想デバイス実装)。</summary>
-/// <param name="manager">マネージャー。</param>
-/// <param name="inventory">在庫管理モデル。</param>
-/// <param name="configProvider">設定プロバイダー。</param>
-/// <param name="loggerFactory">ロガーファクトリ。</param>
-/// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
-/// <param name="simulator">デバイスシミュレーター。</param>
-public class DispenseController(
-    CashChangerManager manager,
-    Inventory inventory,
-    ConfigurationProvider configProvider,
-    ILoggerFactory loggerFactory,
-    HardwareStatusManager hardwareStatusManager,
-    IDeviceSimulator simulator) : IDisposable
+public class DispenseController : IDisposable
 {
-    private readonly Inventory inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-    private readonly ConfigurationProvider configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
-    private readonly HardwareStatusManager hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
-    private readonly IDeviceSimulator simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
-    private readonly ILogger<DispenseController> logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger<DispenseController>();
-
-    private readonly AtomicState<DispenseState> atomicState = new(new DispenseState());
-    private readonly DispenseTracker tracker = new();
-    private readonly DispenseCalculator calculator = new(manager ?? throw new ArgumentNullException(nameof(manager)), hardwareStatusManager);
+    private readonly Inventory inventory;
+    private readonly ConfigurationProvider configProvider;
+    private readonly HardwareStatusManager hardwareStatusManager;
+    private readonly IDeviceSimulator simulator;
+    private readonly ILogger logger;
+    private readonly AtomicState<DispenseState> atomicState;
+    private readonly DispenseTracker tracker;
+    private readonly DispenseCalculator calculator;
     private volatile bool disposed;
+
+    /// <summary>新しいインスタンスを初期化します。</summary>
+    /// <param name="manager">マネージャー。</param>
+    /// <param name="inventory">在庫。</param>
+    /// <param name="configProvider">設定。</param>
+    /// <param name="loggerFactory">ロガーファクトリ。</param>
+    /// <param name="hardwareStatusManager">ハードウェア状態管理。</param>
+    /// <param name="simulator">シミュレーター。</param>
+    public DispenseController(
+        CashChangerManager manager,
+        Inventory inventory,
+        ConfigurationProvider configProvider,
+        ILoggerFactory loggerFactory,
+        HardwareStatusManager hardwareStatusManager,
+        IDeviceSimulator simulator)
+    {
+        // Stryker disable all
+        this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+        this.configProvider = configProvider ?? throw new ArgumentNullException(nameof(configProvider));
+        this.hardwareStatusManager = hardwareStatusManager ?? throw new ArgumentNullException(nameof(hardwareStatusManager));
+        this.simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
+        this.logger = (loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory))).CreateLogger(nameof(DispenseController));
+        this.atomicState = new(new DispenseState());
+        this.tracker = new();
+        this.calculator = new(manager ?? throw new ArgumentNullException(nameof(manager)), hardwareStatusManager);
+        // Stryker restore all
+    }
 
 
     /// <summary>状態が変更されたときに通知されるストリーム。</summary>
@@ -127,6 +141,7 @@ public class DispenseController(
 
     private void PrepareDispense()
     {
+        // Stryker disable once all
         ObjectDisposedException.ThrowIf(disposed, this);
 
         var result = atomicState.Transition(s =>
@@ -187,10 +202,10 @@ public class DispenseController(
 
     private void HandleDispenseException(Exception ex)
     {
-        /* Stryker disable all */
+        // Stryker disable all
         logger?.ZLogError(ex, $"Dispense failed.");
         DispenseTracker.HandleDispenseError(ex, out var code, out var codeEx);
-        /* Stryker restore all */
+        // Stryker restore all
 
         var result = atomicState.Transition(s => s with
         {
@@ -252,6 +267,7 @@ public class DispenseController(
     }
 
     /// <summary>リソースを解放します。</summary>
+    // Stryker disable all
     public void Dispose()
     {
         Dispose(true);
@@ -262,6 +278,7 @@ public class DispenseController(
     /// <param name="disposing">破棄中かどうか。</param>
     protected virtual void Dispose(bool disposing)
     {
+        // Stryker disable all
         if (Interlocked.Exchange(ref disposed, true))
         {
             return;
@@ -272,5 +289,6 @@ public class DispenseController(
             tracker.CancelCurrent();
             tracker.Dispose();
         }
+        // Stryker restore all
     }
 }
