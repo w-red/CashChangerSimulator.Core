@@ -105,20 +105,43 @@ internal sealed class DispenseTracker : IDisposable
     /// <returns>キャンセル処理が発行された場合は true。</returns>
     public bool CancelCurrent()
     {
-        if (dispenseCts != null && !dispenseCts.IsCancellationRequested)
+        var cts = dispenseCts;
+        if (cts == null || cts.IsCancellationRequested)
         {
-            dispenseCts.Cancel();
-            return true;
+            return false;
         }
 
-        return false;
+        try
+        {
+            cts.Cancel();
+            return true;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+        finally
+        {
+            if (ReferenceEquals(dispenseCts, cts))
+            {
+                dispenseCts = null;
+            }
+            cts.Dispose();
+        }
     }
 
     /// <summary>キャンセレーショントークンをリセット(破棄)します。</summary>
     public void ResetToken()
     {
-        dispenseCts?.Dispose();
-        dispenseCts = null;
+        var cts = dispenseCts;
+        if (cts != null)
+        {
+            if (ReferenceEquals(dispenseCts, cts))
+            {
+                dispenseCts = null;
+            }
+            cts.Dispose();
+        }
     }
 
     /// <summary>状態変更イベントを発火します。</summary>
@@ -161,8 +184,23 @@ internal sealed class DispenseTracker : IDisposable
 
         disposed = true;
 
-        dispenseCts?.Cancel();
-        dispenseCts?.Dispose();
+        var cts = dispenseCts;
+        if (cts != null)
+        {
+            if (ReferenceEquals(dispenseCts, cts))
+            {
+                dispenseCts = null;
+            }
+            try
+            {
+                cts.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Ignore ObjectDisposedException during disposal
+            }
+            cts.Dispose();
+        }
         disposables.Dispose();
     }
 }
