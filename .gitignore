@@ -494,3 +494,5 @@ analysis_results*.md
 # Temporary files and screenshots
 tmp/
 Vault/
+scratch/
+debug_log.txt
