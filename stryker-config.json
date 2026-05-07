@@ -1,0 +1,31 @@
+{
+  "stryker-config": {
+    "project": "src/CashChangerSimulator.Core/CashChangerSimulator.Core.csproj",
+    "test-projects": [
+      "../../test/CashChangerSimulator.Tests.csproj"
+    ],
+    "mutate": [
+      "Controllers/*.cs",
+      "Managers/HardwareStatusManager.cs",
+      "Services/Calculators/*.cs",
+      "../Device.Virtual/VirtualCashChangerDevice.cs",
+      "../Device.Virtual/HardwareSimulator.cs"
+    ],
+    "reporters": [
+      "html",
+      "json",
+      "progress",
+      "cleartext"
+    ],
+    "test-runner": "mtp",
+    "coverage-analysis": "perTest",
+    "concurrency": 8,
+    "additional-timeout": 30000,
+    "verbosity": "info",
+    "ignore-mutations": [
+      "linq.Skip",
+      "linq.Take",
+      "String"
+    ]
+  }
+}
