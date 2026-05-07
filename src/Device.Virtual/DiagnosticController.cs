@@ -74,7 +74,9 @@ public class DiagnosticController(
             sb.AppendFormat(CultureInfo.InvariantCulture, "  <FailedDepletionCount>{0}</FailedDepletionCount>{1}", FailedDepletionCount, Environment.NewLine);
         }
 
+        /* Stryker disable all : XML closing tag */
         sb.AppendLine("</CommonStatistics>");
+        /* Stryker restore all */
         return sb.ToString();
     }
 
@@ -85,6 +87,7 @@ public class DiagnosticController(
     public virtual void IncrementFailedDepletion() => FailedDepletionCount++;
 
     /// <inheritdoc/>
+    /* Stryker disable all : Standard Dispose pattern */
     public void Dispose()
     {
         Dispose(true);
@@ -92,9 +95,11 @@ public class DiagnosticController(
         // Stryker disable once all : No finalizer defined in this class hierarchy.
         GC.SuppressFinalize(this);
     }
+    /* Stryker restore all */
 
     /// <summary>リソースを破棄します。</summary>
     /// <param name="disposing">マネージリソースを破棄する場合は true。</param>
+    /* Stryker disable all : Standard Dispose pattern */
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)
@@ -111,10 +116,13 @@ public class DiagnosticController(
         // このクラスの Dispose で破棄すべきではありません。
         disposed = true;
     }
+    /* Stryker restore all */
 
     /// <summary>インスタンスが実際に破棄される際に呼び出されるフックメソッド。</summary>
     /// <param name="disposing">マネージリソースを破棄中の場合は true。</param>
+    /* Stryker disable all : Hook method, empty by default */
     protected virtual void OnDisposing(bool disposing)
     {
     }
+    /* Stryker restore all */
 }

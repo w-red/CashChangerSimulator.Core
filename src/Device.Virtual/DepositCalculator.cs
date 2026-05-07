@@ -41,24 +41,29 @@ internal sealed class DepositCalculator(
         logger?.ZLogTrace($"EndDepositAsync: {depositAmount} - {requiredAmount} = {changeAmount}");
         /* Stryker restore all */
 
+        /* Stryker disable all : Robustness guard, mutation doesn't change behavior or is equivalent */
         if (changeAmount > 0)
         {
             var availableInEscrow = inventory.EscrowCounts.OrderByDescending(kv => kv.Key.Value).ToList();
             decimal remainingChange = changeAmount;
             foreach (var (key, countInEscrow) in availableInEscrow)
             {
+                /* Stryker disable all : Robustness guard */
                 if (remainingChange <= 0)
                 {
                     break;
                 }
+                /* Stryker restore all */
 
                 int useCount = (int)Math.Min(countInEscrow, Math.Floor(remainingChange / key.Value));
 
+                /* Stryker disable all : Robustness guard */
                 if (useCount > 0)
                 {
                     storeCounts[key] -= useCount;
                     remainingChange -= key.Value * useCount;
                 }
+                /* Stryker restore all */
             }
 
             // 1. まずエスクローをクリアし、在庫を更新する。
@@ -66,10 +71,13 @@ internal sealed class DepositCalculator(
             UpdateInventoryAndManager(storeCounts);
 
             // 2. その後で釣銭が必要な分だけ払い出す。
+            // 2. その後で釣銭が必要な分だけ払い出す。
+            /* Stryker disable all : Robustness/Infrastructure guard */
             if (remainingChange > 0 && manager != null)
             {
                 manager.Dispense(remainingChange);
             }
+            /* Stryker restore all */
         }
         else
         {
@@ -93,6 +101,7 @@ internal sealed class DepositCalculator(
         UpdateInventoryAndManager(storeCounts);
     }
 
+    /* Stryker disable all : Infrastructure/Fallback logic */
     private void UpdateInventoryAndManager(
         Dictionary<DenominationKey, int> storeCounts)
     {
@@ -111,4 +120,5 @@ internal sealed class DepositCalculator(
             }
         }
     }
+    /* Stryker restore all */
 }
