@@ -171,7 +171,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.BeginDeposit();
         controller.FixDeposit();
 
-        ConfigurationProvider.Config.Simulation.DepositDelayMs = 5000;
+        ConfigurationProvider.Config.Simulation.DepositDelayMs = 1000;
 
         // Start an operation that sets isBusy = true
         var task = controller.EndDepositAsync(DepositAction.NoChange);

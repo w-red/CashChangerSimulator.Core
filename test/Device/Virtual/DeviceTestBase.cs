@@ -83,7 +83,7 @@ public abstract class DeviceTestBase : IDisposable
                 throw new Xunit.Sdk.XunitException($"Condition was not met within {timeoutSeconds}s (virtual time)");
             }
 
-            TimeProvider.Advance(TimeSpan.FromMilliseconds(10));
+            TimeProvider.Advance(TimeSpan.FromMilliseconds(100));
             await Task.Delay(1).ConfigureAwait(false);
         }
     }

@@ -418,7 +418,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         // リフレクションで IsBusy を true にする
         var atomicStateField = typeof(DepositController).GetField("atomicState", BindingFlags.NonPublic | BindingFlags.Instance);
         var atomicState = (PosSharp.Core.AtomicState<DepositState>)atomicStateField!.GetValue(controller)!;
-        atomicState.Exchange(atomicState.Current with { IsBusy = true });
+        atomicState.Exchange(atomicState.Current with { Status = DeviceDepositStatus.Validation });
 
         // Act & Assert
         var ex = Should.Throw<DeviceException>(controller.BeginDeposit);
@@ -437,7 +437,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         // リフレクションで IsBusy を true にする
         var atomicStateField = typeof(DepositController).GetField("atomicState", BindingFlags.NonPublic | BindingFlags.Instance);
         var atomicState = (PosSharp.Core.AtomicState<DepositState>)atomicStateField!.GetValue(controller)!;
-        atomicState.Exchange(atomicState.Current with { IsBusy = true });
+        atomicState.Exchange(atomicState.Current with { Status = DeviceDepositStatus.Counting });
 
         // Act & Assert
         var ex = await Should.ThrowAsync<DeviceException>(() => controller.EndDepositAsync(DepositAction.NoChange));
@@ -2290,7 +2290,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         var field = typeof(DepositController).GetField("atomicState", BindingFlags.NonPublic | BindingFlags.Instance);
         var atomicState = field!.GetValue(target);
         var method = atomicState!.GetType().GetMethod("Transition");
-        var transitionFunc = new Func<DepositState, DepositState>(s => s with { IsBusy = false });
+        var transitionFunc = new Func<DepositState, DepositState>(s => s with { Status = DeviceDepositStatus.None, IsEnding = false });
         method!.Invoke(atomicState, new object[] { transitionFunc });
     }
 
@@ -2521,7 +2521,7 @@ public class DepositControllerMutationTests : DeviceTestBase
 
         // Assert
         controller.DepositStatus.ShouldBe(DeviceDepositStatus.End);
-        changedCount.ShouldBe(3); // 1: IsBusy=true (Prepare), 2: Status=End (Perform), 3: IsBusy=false (Finalize)
+        changedCount.ShouldBe(2); // 1: LastErrorCode=Success (Prepare), 2: Status=End (Perform)
     }
 
     [Fact]

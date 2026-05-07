@@ -52,7 +52,7 @@ public class DepositSequenceTests
 
         // fixDeposit: 入金確定
         controller.FixDeposit();
-        controller.DepositStatus.ShouldBe(DeviceDepositStatus.Counting);
+        controller.DepositStatus.ShouldBe(DeviceDepositStatus.Validation);
 
         // endDeposit(Change): 釣銭分を払い出す
         // 1000円投入、必要金額0円の場合、全額1000円が釣銭対象となる

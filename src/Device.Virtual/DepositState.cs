@@ -12,13 +12,15 @@ public sealed record DepositState(
     DeviceDepositStatus Status = DeviceDepositStatus.None,
     bool IsPaused = false,
     bool IsFixed = false,
-    bool IsBusy = false,
+    bool IsEnding = false,
     DeviceErrorCode LastErrorCode = DeviceErrorCode.Success,
     int LastErrorCodeExtended = 0,
     ImmutableDictionary<DenominationKey, int>? Counts = null,
     ImmutableList<string>? DepositedSerials = null,
     ImmutableList<string>? LastDepositedSerials = null)
 {
+    /// <summary>ビジー状態(入金中)かどうかを取得します。</summary>
+    public bool IsBusy => Status is DeviceDepositStatus.Counting or DeviceDepositStatus.Validation;
     /// <summary>投入された金種ごとの枚数。</summary>
     public ImmutableDictionary<DenominationKey, int> Counts { get; init; } = Counts ?? [];
 

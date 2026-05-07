@@ -153,7 +153,7 @@ public class DepositController : IDisposable
         
         var result = atomicState.Transition(s =>
         {
-            if (s.IsBusy) return s;
+            if (s.Status == DeviceDepositStatus.Validation) return s;
             
             // ガード条件の確認（ハードウェア状態）
             if (hardwareStatusManager.IsJammed.CurrentValue || hardwareStatusManager.IsOverlapped.CurrentValue)
@@ -203,12 +203,13 @@ public class DepositController : IDisposable
 
             return s with
             {
+                Status = DeviceDepositStatus.Validation,
                 IsFixed = true,
                 LastDepositedSerials = s.DepositedSerials
             };
         });
 
-        if (result.NewState.Status != DeviceDepositStatus.Counting)
+        if (result.NewState.Status != DeviceDepositStatus.Validation)
         {
             throw new DeviceException("Counting is not in progress.", DeviceErrorCode.Illegal);
         }
@@ -261,9 +262,10 @@ public class DepositController : IDisposable
     {
         var result = atomicState.Transition(s =>
         {
-            if (!s.IsFixed || s.IsBusy) return s;
+            // すでに終了処理中、または計数中の場合は遷移しない
+            if (!s.IsFixed || s.IsEnding || s.Status == DeviceDepositStatus.Counting) return s;
 
-            return s with { IsBusy = true, LastErrorCode = DeviceErrorCode.Success, LastErrorCodeExtended = 0 };
+            return s with { IsEnding = true, LastErrorCode = DeviceErrorCode.Success, LastErrorCodeExtended = 0 };
         });
 
         if (!result.NewState.IsFixed)
@@ -271,7 +273,7 @@ public class DepositController : IDisposable
             throw new DeviceException("Invalid call sequence: FixDeposit must be called before EndDeposit.", DeviceErrorCode.Illegal);
         }
 
-        if (result.NewState.IsBusy && !result.Changed)
+        if (!result.Changed)
         {
             throw new DeviceException("Device is busy", DeviceErrorCode.Busy);
         }
@@ -316,7 +318,6 @@ public class DepositController : IDisposable
             }
             return next;
         });
-
         if (result.Changed)
         {
             tracker.NotifyChanged();
@@ -370,12 +371,7 @@ public class DepositController : IDisposable
 
     private void FinalizeEndDeposit()
     {
-        var result = atomicState.Transition(s => s with { IsBusy = false });
-        if (result.Changed)
-        {
-            tracker.NotifyChanged();
-        }
-
+        atomicState.Transition(s => s with { IsEnding = false });
         tracker.ResetToken();
     }
 
