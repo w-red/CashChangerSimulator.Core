@@ -5,8 +5,8 @@
       "../../test/CashChangerSimulator.Tests.csproj"
     ],
     "mutate": [
-      "DepositController.cs",
-      "DispenseController.cs"
+      "VirtualCashChangerDevice.cs",
+      "HardwareSimulator.cs"
     ],
     "reporters": [
       "html",
@@ -16,7 +16,7 @@
     ],
     "test-runner": "mtp",
     "coverage-analysis": "off",
-    "test-case-filter": "FullyQualifiedName~ControllerMutationTests",
+    "test-case-filter": "FullyQualifiedName~VirtualCashChangerDeviceTests|FullyQualifiedName~HardwareSimulatorTests",
     "concurrency": 6,
     "additional-timeout": 30000,
     "verbosity": "info",
