@@ -96,52 +96,44 @@ internal sealed class DispenseTracker : IDisposable
     public CancellationToken CreateNewToken()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        dispenseCts?.Dispose();
-        dispenseCts = new CancellationTokenSource();
-        return dispenseCts.Token;
+        var oldCts = Interlocked.Exchange(ref dispenseCts, new CancellationTokenSource());
+        oldCts?.Dispose();
+        return dispenseCts!.Token;
     }
 
     /// <summary>現在のキャンセル処理を要求します。実行中だった場合は true を返します。</summary>
     /// <returns>キャンセル処理が発行された場合は true。</returns>
     public bool CancelCurrent()
     {
-        var cts = dispenseCts;
-        if (cts == null || cts.IsCancellationRequested)
+        var cts = Interlocked.Exchange(ref dispenseCts, null);
+        if (cts == null)
         {
             return false;
         }
 
-        try
+        bool cancelled = false;
+        if (!cts.IsCancellationRequested)
         {
-            cts.Cancel();
-            return true;
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-        finally
-        {
-            if (ReferenceEquals(dispenseCts, cts))
+            try
             {
-                dispenseCts = null;
+                cts.Cancel();
+                cancelled = true;
             }
-            cts.Dispose();
+            catch (ObjectDisposedException)
+            {
+                // Ignored
+            }
         }
+
+        cts.Dispose();
+        return cancelled;
     }
 
     /// <summary>キャンセレーショントークンをリセット(破棄)します。</summary>
     public void ResetToken()
     {
-        var cts = dispenseCts;
-        if (cts != null)
-        {
-            if (ReferenceEquals(dispenseCts, cts))
-            {
-                dispenseCts = null;
-            }
-            cts.Dispose();
-        }
+        var cts = Interlocked.Exchange(ref dispenseCts, null);
+        cts?.Dispose();
     }
 
     /// <summary>状態変更イベントを発火します。</summary>
@@ -184,20 +176,19 @@ internal sealed class DispenseTracker : IDisposable
 
         disposed = true;
 
-        var cts = dispenseCts;
+        var cts = Interlocked.Exchange(ref dispenseCts, null);
         if (cts != null)
         {
-            if (ReferenceEquals(dispenseCts, cts))
+            if (!cts.IsCancellationRequested)
             {
-                dispenseCts = null;
-            }
-            try
-            {
-                cts.Cancel();
-            }
-            catch (ObjectDisposedException)
-            {
-                // Ignore ObjectDisposedException during disposal
+                try
+                {
+                    cts.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Ignored
+                }
             }
             cts.Dispose();
         }

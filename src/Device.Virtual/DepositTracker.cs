@@ -33,9 +33,9 @@ internal sealed class DepositTracker(
     /// <returns>新しい CancellationTokenSource。</returns>
     public CancellationTokenSource CreateNewCts()
     {
-        depositCts?.Dispose();
-        depositCts = new CancellationTokenSource();
-        return depositCts;
+        var oldCts = Interlocked.Exchange(ref depositCts, new CancellationTokenSource());
+        oldCts?.Dispose();
+        return depositCts!;
     }
 
     /// <summary>新しい払い出しセッション用の CancellationToken を作成します。</summary>
@@ -49,25 +49,21 @@ internal sealed class DepositTracker(
     /// <returns>完了を示すタスク。</returns>
     public async Task CancelCurrentAsync()
     {
-        var cts = depositCts;
-        if (cts != null && !cts.IsCancellationRequested)
+        var cts = Interlocked.Exchange(ref depositCts, null);
+        if (cts != null)
         {
-            try
+            if (!cts.IsCancellationRequested)
             {
-                await cts.CancelAsync().ConfigureAwait(false);
-            }
-            catch (ObjectDisposedException)
-            {
-                // Already disposed by another task, ignore.
-            }
-            finally
-            {
-                if (ReferenceEquals(depositCts, cts))
+                try
                 {
-                    depositCts = null;
+                    await cts.CancelAsync().ConfigureAwait(false);
                 }
-                cts.Dispose();
+                catch (ObjectDisposedException)
+                {
+                    // Ignored
+                }
             }
+            cts.Dispose();
         }
     }
 
@@ -75,43 +71,35 @@ internal sealed class DepositTracker(
     /// <returns>キャンセルが実行された場合は true。</returns>
     public bool CancelCurrent()
     {
-        var cts = depositCts;
-        if (cts == null || cts.IsCancellationRequested)
+        var cts = Interlocked.Exchange(ref depositCts, null);
+        if (cts == null)
         {
             return false;
         }
 
-        try
+        bool cancelled = false;
+        if (!cts.IsCancellationRequested)
         {
-            cts.Cancel();
-            return true;
-        }
-        catch (ObjectDisposedException)
-        {
-            return false;
-        }
-        finally
-        {
-            if (ReferenceEquals(depositCts, cts))
+            try
             {
-                depositCts = null;
+                cts.Cancel();
+                cancelled = true;
             }
-            cts.Dispose();
+            catch (ObjectDisposedException)
+            {
+                // Ignored
+            }
         }
+
+        cts.Dispose();
+        return cancelled;
     }
 
     /// <summary>トークンをリセット(破棄)します。</summary>
     public void ResetToken()
     {
-        var cts = depositCts;
-        if (cts != null)
-        {
-            if (ReferenceEquals(depositCts, cts))
-            {
-                depositCts = null;
-            }
-            cts.Dispose();
-        }
+        var cts = Interlocked.Exchange(ref depositCts, null);
+        cts?.Dispose();
     }
 
     /// <summary>状態変更を通知します。</summary>
