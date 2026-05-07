@@ -241,6 +241,7 @@ public class DepositController : IDisposable
         catch (OperationCanceledException)
         {
             HandleEndDepositCancellation();
+            throw; // Propagate cancellation to the caller
         }
         catch (DeviceException dex)
         {
