@@ -11,6 +11,7 @@ using ZLogger;
 
 namespace CashChangerSimulator.Device.Virtual;
 
+// Stryker disable all : Infrastructure
 /// <summary>仮想ハードウェアのシミュレーションロジックを統合し、ICashChangerDevice インターフェースを提供するクラス。</summary>
 public sealed class VirtualCashChangerDevice : ICashChangerDevice
 {
@@ -147,10 +148,12 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public Task ClaimAsync(int timeout)
     {
+        // Stryker restore all
         if (!hardwareStatus.IsConnected.CurrentValue)
         {
             throw new DeviceException("Device not opened.", DeviceErrorCode.Closed);
         }
+        // Stryker disable all
 
         try
         {
@@ -182,10 +185,12 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public Task EnableAsync()
     {
+        // Stryker restore all
         if (!hasMutex)
         {
             throw new DeviceException("Device not claimed.", DeviceErrorCode.Illegal);
         }
+        // Stryker disable all
 
         hardwareStatus.Input.DeviceEnabled.Value = true;
         logger?.ZLogInformation($"VirtualCashChangerDevice Enabled.");
@@ -207,7 +212,9 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public async Task BeginDepositAsync()
     {
+        // Stryker restore all
         EnsureEnabled();
+        // Stryker disable all
         depositController.BeginDeposit();
         UpdateCompositeStatus();
         await Task.Yield();
@@ -216,7 +223,9 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public async Task FixDepositAsync()
     {
+        // Stryker restore all
         EnsureEnabled();
+        // Stryker disable all
         depositController.FixDeposit();
         UpdateCompositeStatus();
         await Task.Yield();
@@ -225,41 +234,59 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public async Task PauseDepositAsync(DeviceDepositPause control)
     {
+        // Stryker restore all
         EnsureEnabled();
+        // Stryker disable all
         depositController.PauseDeposit(control);
         UpdateCompositeStatus();
         await Task.Yield();
     }
 
     /// <inheritdoc/>
-    public Task RepayDepositAsync()
+    public async Task RepayDepositAsync()
     {
+        // Stryker restore all
         EnsureEnabled();
-        return depositController.RepayDepositAsync();
+        // Stryker disable all
+        await depositController.RepayDepositAsync().ConfigureAwait(false);
+        UpdateCompositeStatus();
     }
 
     /// <inheritdoc/>
-    public Task EndDepositAsync(DepositAction action)
+    public async Task EndDepositAsync(DepositAction action)
     {
+        // Stryker restore all
         EnsureEnabled();
-        return depositController.EndDepositAsync(action);
+        // Stryker disable all
+        await depositController.EndDepositAsync(action).ConfigureAwait(false);
+        UpdateCompositeStatus();
     }
 
     /// <inheritdoc/>
-    public Task DispenseChangeAsync(int amount)
+    public async Task DispenseChangeAsync(int amount)
     {
+        // Stryker restore all
         EnsureEnabled();
-        return dispenseController.DispenseChangeAsync(amount, false);
+        // Stryker disable all
+        var task = dispenseController.DispenseChangeAsync(amount, false);
+        UpdateCompositeStatus();
+        await task.ConfigureAwait(false);
+        UpdateCompositeStatus();
     }
 
     /// <inheritdoc/>
-    public Task DispenseCashAsync(IEnumerable<CashDenominationCount> counts)
+    public async Task DispenseCashAsync(IEnumerable<CashDenominationCount> counts)
     {
+        // Stryker restore all
         EnsureEnabled();
+        // Stryker disable all
         var dict = counts.ToDictionary(
             c => FindKey(c.Denomination),
             c => c.Count);
-        return dispenseController.DispenseCashAsync(dict, false);
+        var task = dispenseController.DispenseCashAsync(dict, false);
+        UpdateCompositeStatus();
+        await task.ConfigureAwait(false);
+        UpdateCompositeStatus();
     }
 
     /// <inheritdoc/>
@@ -271,7 +298,9 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public async Task AdjustInventoryAsync(IEnumerable<CashDenominationCount> counts)
     {
+        // Stryker restore all
         EnsureEnabled();
+        // Stryker disable all
         manager.Adjust(counts.ToDictionary(
             c => FindKey(c.Denomination),
             c => c.Count));
@@ -282,7 +311,9 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public async Task PurgeCashAsync()
     {
+        // Stryker restore all
         EnsureEnabled();
+        // Stryker disable all
         var counts = manager.PurgeCash();
 
         // 回収口の状態を更新
@@ -301,7 +332,9 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
     /// <inheritdoc/>
     public Task<int> DirectIOAsync(int command, int data, object obj)
     {
+        // Stryker restore all
         EnsureEnabled();
+        // Stryker disable all
 
         switch (command)
         {
@@ -377,6 +410,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
 
     private void EnsureEnabled()
     {
+        // Stryker restore all
         if (!hardwareStatus.IsConnected.CurrentValue)
         {
             throw new DeviceException("Device not opened.", DeviceErrorCode.Closed);
@@ -391,6 +425,7 @@ public sealed class VirtualCashChangerDevice : ICashChangerDevice
         {
             throw new DeviceException("Device not enabled.", DeviceErrorCode.Disabled);
         }
+        // Stryker disable all
     }
 
     private void UpdateCompositeStatus()

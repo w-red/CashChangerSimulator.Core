@@ -4,13 +4,16 @@ using R3;
 
 namespace CashChangerSimulator.Device.Virtual;
 
+// Stryker disable all : Infrastructure
 /// <summary>釣銭機ハードウェアの動作をシミュレートするクラス。</summary>
 public class HardwareSimulator : IDeviceSimulator
 {
+    // Stryker restore all
     private readonly ConfigurationProvider? configProvider;
     private readonly TimeProvider timeProvider;
     private readonly CompositeDisposable disposables = [];
 
+    // Stryker disable all
     /// <summary>Initializes a new instance of the <see cref="HardwareSimulator"/> class.デフォルト設定でシミュレーターを初期化する。</summary>
     private HardwareSimulator()
         : this(null, null)

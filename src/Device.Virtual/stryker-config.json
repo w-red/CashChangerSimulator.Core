@@ -6,7 +6,8 @@
     ],
     "mutate": [
       "VirtualCashChangerDevice.cs",
-      "HardwareSimulator.cs"
+      "HardwareSimulator.cs",
+      "../CashChangerSimulator.Core/Managers/HardwareStatusManager.cs"
     ],
     "reporters": [
       "html",
@@ -16,7 +17,7 @@
     ],
     "test-runner": "mtp",
     "coverage-analysis": "off",
-    "test-case-filter": "FullyQualifiedName~VirtualCashChangerDeviceTests|FullyQualifiedName~HardwareSimulatorTests",
+    "test-case-filter": "FullyQualifiedName~VirtualCashChangerDeviceTests|FullyQualifiedName~HardwareSimulatorTests|FullyQualifiedName~HardwareStatusManagerTests",
     "concurrency": 6,
     "additional-timeout": 30000,
     "verbosity": "info",
