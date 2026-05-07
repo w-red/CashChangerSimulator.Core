@@ -236,7 +236,7 @@ public class DepositControllerCoverageTests : DeviceTestBase
         controller.Dispose(); // This cancels the internal CTS
         TimeProvider.Advance(TimeSpan.FromMilliseconds(100)); // Ensure cancellation is processed
 
-        await task;
+        await Should.ThrowAsync<OperationCanceledException>(async () => await task);
         controller.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
     }
 

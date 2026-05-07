@@ -912,7 +912,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         // 時間を進めて EndDepositAsync の後半を続行させる
         TimeProvider.Advance(TimeSpan.FromMilliseconds(100));
 
-        await task;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
 
         // Assert
         // 変異 (!disposed -> disposed または削除) があると、ErrorEvents や Changed が発火してしまう。
@@ -943,7 +943,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         TimeProvider.Advance(TimeSpan.FromMilliseconds(100));
 
         // キャッチされたDeviceExceptionにより ErrorEvents が飛ばないことを確認
-        await task;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
 
         // Assert
         errorCallCount.ShouldBe(0);
@@ -2099,7 +2099,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         currentCts?.Cancel();
         
         TimeProvider.Advance(TimeSpan.FromSeconds(2));
-        await task;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
 
         // Assert
         target.LastErrorCode.ShouldBe(DeviceErrorCode.Cancelled);
@@ -2260,22 +2260,27 @@ public class DepositControllerMutationTests : DeviceTestBase
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 1000;
 
         // Act
-        // 1回目の呼び出し。Task.Delay で止まる。
         var task1 = target.EndDepositAsync(DepositAction.NoChange);
         
-        // リフレクションで IsBusy を強引に解除して 2 回目を呼べるようにする
+        // Ensure task1 starts and reaches Task.Delay
+        await Task.Yield();
+        TimeProvider.Advance(TimeSpan.FromMilliseconds(1));
+
         ResetBusy(target);
 
-        // 2回目の呼び出し。これにより 1 回目がキャンセルされるはず。
+        // 2回目の呼び出し。これにより task1 がキャンセルされるはず。
         var task2 = target.EndDepositAsync(DepositAction.NoChange);
         
-        // 時間を進めて task2 を完了させる
-        TimeProvider.Advance(TimeSpan.FromSeconds(2));
+        // task1 が終了するのを待つ（キャンセルにより終了するはず）
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task1.WaitAsync(TimeSpan.FromSeconds(5)));
 
-        // 両方のタスクの完了を待機 (task1 はキャンセル、task2 は完了)
-        await Task.WhenAll(task1, task2);
-
+        // task2 を完了させるために時間を進める
+        TimeProvider.Advance(TimeSpan.FromSeconds(10));
+        
         // Assert
+        // task2 は成功するはず
+        await task2.WaitAsync(TimeSpan.FromSeconds(5));
+
         target.DepositStatus.ShouldBe(DeviceDepositStatus.End);
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 0;
     }

@@ -111,6 +111,7 @@ public class DepositReliabilityTests
         changer.DeviceEnabled = true;
         changer.DataEventEnabled = true;
         changer.RealTimeDataEnabled = false;
+        changer.Context.ConfigProvider.Config.Simulation.DepositDelayMs = 0;
 
         var key = new DenominationKey(1000, CurrencyCashType.Bill, "JPY");
 

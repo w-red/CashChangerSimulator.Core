@@ -102,7 +102,8 @@ public class DiagnosticControllerTests : IDisposable
     public void RetrieveStatistics_WhenFilterIsNull_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Should.Throw<ArgumentNullException>(() => _target.RetrieveStatistics(null!));
+        var ex = Should.Throw<ArgumentNullException>(() => _target.RetrieveStatistics(null!));
+        ex.ParamName.ShouldBe("statistics");
     }
 
     [Fact]
@@ -128,5 +129,50 @@ public class DiagnosticControllerTests : IDisposable
     {
         // Act & Assert
         Should.Throw<ArgumentNullException>(() => new DiagnosticController(_inventory, null!));
+    }
+
+    [Fact]
+    public void GetHealthReport_External_WhenDisconnected_ShowsDisconnected()
+    {
+        // Arrange
+        _hardwareStatusManager.Input.IsConnected.Value = false;
+
+        // Act
+        var report = _target.GetHealthReport(HealthCheckLevel.External);
+
+        // Assert
+        report.ShouldContain("Hardware: Disconnected");
+    }
+
+    [Fact]
+    public void GetHealthReport_External_WhenJammed_ShowsJammed()
+    {
+        // Arrange
+        _hardwareStatusManager.Input.IsJammed.Value = true;
+
+        // Act
+        var report = _target.GetHealthReport(HealthCheckLevel.External);
+
+        // Assert
+        report.ShouldContain("Jam Status: Jammed");
+    }
+
+    [Fact]
+    public void RetrieveStatistics_OutputContainsXmlTags()
+    {
+        // Act
+        var stats = _target.RetrieveStatistics(new[] { "*" });
+
+        // Assert
+        stats.ShouldContain("<CommonStatistics>");
+        stats.ShouldContain("</CommonStatistics>");
+    }
+
+    [Fact]
+    public void Dispose_CalledTwice_ShouldNotThrow()
+    {
+        // Act & Assert
+        _target.Dispose();
+        _target.Dispose(); // Should not throw
     }
 }
