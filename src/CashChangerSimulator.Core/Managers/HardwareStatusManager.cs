@@ -5,10 +5,12 @@ using R3;
 
 namespace CashChangerSimulator.Core.Managers;
 
+// Stryker disable all : Infrastructure
 /// <summary>釣銭機のハードウェア的な障害状態(ジャムなど)を管理するクラス。</summary>
 public class HardwareStatusManager
     : IHardwareStatus, IDisposable
 {
+    // Stryker restore all
     private readonly CompositeDisposable disposables = [];
 
     // --- 内部入力用 ReactiveProperties ---
@@ -178,6 +180,7 @@ public class HardwareStatusManager
         }
     }
 
+    // Stryker disable all : Boilerplate
     private void InitializeInputProperties()
     {
         isClaimedByAnotherInput = new ReactiveProperty<bool>(false).AddTo(disposables);
@@ -218,6 +221,7 @@ public class HardwareStatusManager
             .AddTo(disposables);
     }
 
+    // Stryker restore all
     private void SetupPipelines()
     {
         IsClaimedByAnother = isClaimedByAnotherInput
