@@ -583,9 +583,9 @@ public class DepositControllerMutationTests : DeviceTestBase
         controller.RequiredAmount.ShouldBe(999m);
     }
 
-    /// <summary>DepositCounts が防御的コピーを返していることを検証します（BlockRemoval 対策）。</summary>
+    /// <summary>DepositCounts が不変コレクションを返しており、インスタンスが再利用されていることを検証します。</summary>
     [Fact]
-    public void DepositCountsReturnsDefensiveCopy()
+    public void DepositCountsReturnsImmutableCollection()
     {
         // Arrange
         controller.BeginDeposit();
@@ -597,7 +597,7 @@ public class DepositControllerMutationTests : DeviceTestBase
         var counts2 = controller.DepositCounts;
 
         // Assert
-        counts1.ShouldNotBeSameAs(counts2); // 毎回新しいインスタンス
+        counts1.ShouldBeSameAs(counts2); // 不変コレクションなので同じインスタンスを返して良い
         counts1.Count.ShouldBe(1);
         counts1[key].ShouldBe(1);
     }

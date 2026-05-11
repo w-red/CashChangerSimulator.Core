@@ -93,7 +93,7 @@ public class DepositController : IDisposable
     public decimal RejectAmount => atomicState.Current.RejectAmount;
 
     /// <summary>投入された各種金種の枚数を取得します。</summary>
-    public IReadOnlyDictionary<DenominationKey, int> DepositCounts => new Dictionary<DenominationKey, int>(atomicState.Current.Counts);
+    public IReadOnlyDictionary<DenominationKey, int> DepositCounts => atomicState.Current.Counts;
 
     /// <summary>投入された紙幣のシリアル番号リストを取得します。</summary>
     public IReadOnlyList<string> DepositedSerials => atomicState.Current.DepositedSerials;
