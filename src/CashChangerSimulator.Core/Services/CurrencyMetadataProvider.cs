@@ -160,7 +160,8 @@ public class CurrencyMetadataProvider
             return $"{key.Value.ToString(CultureInfo.InvariantCulture)} ({key.Type})";
         }
 
-        var isJapanese = cultureCode.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
+        var culture = cultureCode ?? ((BindableReactiveProperty<string>)CultureCodeProperty).Value;
+        var isJapanese = culture.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
 
         // Explicit override in config takes priority
         if (isJapanese && !string.IsNullOrEmpty(setting.DisplayNameJP))
@@ -261,7 +262,7 @@ public class CurrencyMetadataProvider
             if (isJapanese)
             {
                 ((BindableReactiveProperty<string>)SymbolPrefixProperty).Value = string.Empty;
-                ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value = "円";
+                ((BindableReactiveProperty<string>)SymbolSuffixProperty).Value = string.IsNullOrEmpty(inventorySettings.Symbol) ? "円" : inventorySettings.Symbol;
             }
             else
             {
