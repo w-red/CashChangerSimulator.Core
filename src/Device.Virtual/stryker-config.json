@@ -5,20 +5,20 @@
       "../../test/CashChangerSimulator.Tests.csproj"
     ],
     "mutate": [
-      "VirtualCashChangerDevice.cs",
+      "DepositController.cs",
+      "DispenseController.cs",
       "HardwareSimulator.cs",
-      "../CashChangerSimulator.Core/Managers/HardwareStatusManager.cs"
+      "VirtualCashChangerDevice.cs"
     ],
     "reporters": [
       "html",
-      "json",
       "progress",
       "cleartext"
     ],
     "test-runner": "mtp",
-    "coverage-analysis": "off",
-    "test-case-filter": "FullyQualifiedName~VirtualCashChangerDeviceTests|FullyQualifiedName~HardwareSimulatorTests|FullyQualifiedName~HardwareStatusManagerTests",
-    "concurrency": 6,
+    "coverage-analysis": "perTest",
+    "test-case-filter": "FullyQualifiedName~DepositController|FullyQualifiedName~DispenseController|FullyQualifiedName~HardwareSimulator|FullyQualifiedName~VirtualCashChangerDevice",
+    "concurrency": 8,
     "additional-timeout": 30000,
     "verbosity": "info",
     "ignore-mutations": [

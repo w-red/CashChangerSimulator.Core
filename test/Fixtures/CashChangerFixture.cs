@@ -20,7 +20,7 @@ public class CashChangerFixture : IDisposable
     public CashChangerFixture()
     {
         Inventory = Inventory.Create();
-        ConfigurationProvider = new ConfigurationProvider();
+        ConfigurationProvider = new ConfigurationProvider(false);
         History = new TransactionHistory(ConfigurationProvider.Config);
         StatusManager = HardwareStatusManager.Create();
         TimeProvider = new FakeTimeProvider();

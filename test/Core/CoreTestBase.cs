@@ -1,4 +1,4 @@
-﻿using CashChangerSimulator.Core.Configuration;
+using CashChangerSimulator.Core.Configuration;
 using CashChangerSimulator.Core.Managers;
 using CashChangerSimulator.Core.Models;
 using CashChangerSimulator.Core.Transactions;
@@ -59,7 +59,7 @@ public abstract class CoreTestBase : IDisposable
     protected virtual TransactionHistory CreateHistory(ConfigurationProvider configProvider) => new TransactionHistory(configProvider.Config);
 
     /// <summary>ConfigurationProvider を生成します。Moq に差し替える場合はオーバーライドします。</summary>
-    protected virtual ConfigurationProvider CreateConfigurationProvider() => new ConfigurationProvider();
+    protected virtual ConfigurationProvider CreateConfigurationProvider() => new ConfigurationProvider(false);
 
     /// <summary>CashChangerManager を生成します。Moq に差し替える場合はオーバーライドします。</summary>
     protected virtual CashChangerManager CreateManager(

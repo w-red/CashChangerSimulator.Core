@@ -4,12 +4,15 @@
       "name": "CashChangerSimulator.Core"
     },
     "mutate": [
+      "Services/ChangeCalculator.cs",
+      "Managers/HardwareStatusManager.cs",
       "Services/CurrencyMetadataProvider.cs"
     ],
-    "test-case-filter": "FullyQualifiedName~CurrencyMetadataProviderTests",
+    "test-case-filter": "FullyQualifiedName~ChangeCalculator|FullyQualifiedName~HardwareStatusManager|FullyQualifiedName~CurrencyMetadataProvider",
     "reporters": [
       "progress",
-      "html"
+      "html",
+      "json"
     ],
     "concurrency": 6,
     "test-runner": "mtp",

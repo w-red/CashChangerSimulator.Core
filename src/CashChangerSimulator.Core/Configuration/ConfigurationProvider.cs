@@ -15,13 +15,23 @@ public class ConfigurationProvider : IDisposable
     private string? configPath;
     private bool disposed;
 
-    /// <summary>Initializes a new instance of the <see cref="ConfigurationProvider"/> class.デフォルト設定ファイルを読み込むプロバイダーを初期化します。</summary>
+    /// <summary>デフォルト設定ファイルを読み込むプロバイダーを初期化します。</summary>
     public ConfigurationProvider()
+        : this(true)
+    {
+    }
+
+    /// <summary>デフォルト設定ファイルを読み込み、監視の有効無効を指定して初期化します。</summary>
+    /// <param name="useWatcher">設定ファイルを監視するかどうか。</param>
+    public ConfigurationProvider(bool useWatcher)
     {
         lastReadTicks = Environment.TickCount64;
         configPath = null;
         Config = ConfigurationLoader.Load();
-        SetupWatcher(ConfigurationLoader.DefaultConfigFilePath);
+        if (useWatcher)
+        {
+            SetupWatcher(ConfigurationLoader.DefaultConfigFilePath);
+        }
     }
 
     /// <summary>設定が再読み込みされたときに通知されるストリーム。</summary>

@@ -8,6 +8,7 @@ using CashChangerSimulator.Device.PosForDotNet;
 using CashChangerSimulator.Device.Virtual;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using R3;
 using Shouldly;
 
 namespace CashChangerSimulator.Tests.Core.Services;
@@ -15,7 +16,7 @@ namespace CashChangerSimulator.Tests.Core.Services;
 /// <summary>SimulatorServices の DI 抽象レイヤーを検証するテストクラス (TDD)。</summary>
 public class SimulatorServicesTests : IDisposable
 {
-    /// <summary>Initializes a new instance of the <see cref="SimulatorServicesTests"/> class.SimulatorServicesTests の新しいインスタンスを初期化します。</summary>
+    /// <summary>SimulatorServicesTests の新しいインスタンスを初期化します。</summary>
     public SimulatorServicesTests()
     {
         // 各テスト開始時にプロバイダーをクリア
@@ -84,14 +85,16 @@ public class SimulatorServicesTests : IDisposable
     [Fact]
     public void SimulatorCashChangerShouldUseProviderInstancesWhenAvailable()
     {
-        var configProvider = new ConfigurationProvider();
-        var inventory = Inventory.Create();
-        var history = new TransactionHistory();
-        var hw = HardwareStatusManager.Create();
+        using var configProvider = new ConfigurationProvider(false);
+        using var inventory = Inventory.Create();
+        using var history = new TransactionHistory();
+        using var hw = HardwareStatusManager.Create();
+        
+        // manager, depositController, dispenseController are NOT IDisposable
         var manager = new CashChangerManager(inventory, history, null);
-        var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
-        var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
-        var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
+        using var metadataProvider = CurrencyMetadataProvider.Create(configProvider);
+        using var monitorsProvider = MonitorsProvider.Create(inventory, configProvider, metadataProvider);
+        using var aggregatorProvider = new OverallStatusAggregatorProvider(monitorsProvider);
         var depositController = new DepositController(manager, inventory, hw, configProvider, NullLoggerFactory.Instance);
         var dispenseController = new DispenseController(manager, inventory, configProvider, NullLoggerFactory.Instance, hw, new Mock<IDeviceSimulator>().Object);
 
@@ -109,8 +112,8 @@ public class SimulatorServicesTests : IDisposable
 
         SimulatorServices.Provider = provider;
 
-        // InternalSimulatorCashChanger default constructor should pick up from SimulatorServices
-        var cc = new InternalSimulatorCashChanger
+        // InternalSimulatorCashChanger is IDisposable (via SimulatorCashChanger -> PosCommon)
+        using var cc = new InternalSimulatorCashChanger
         {
             SkipStateVerification = false
         };
