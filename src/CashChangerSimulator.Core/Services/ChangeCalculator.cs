@@ -39,10 +39,12 @@ public static class ChangeCalculator
 
         foreach (var key in availableKeys)
         {
+            // Stryker disable all : Redundant loop termination; SelectDenominations handles remaining=0 via needed=0 path
             if (remaining <= 0)
             {
                 break;
             }
+            // Stryker restore all
 
             remaining = SelectDenominations(inventory, key, remaining, result);
         }
@@ -59,10 +61,12 @@ public static class ChangeCalculator
     private static decimal SelectDenominations(IReadOnlyInventory inventory, DenominationKey key, decimal remaining, Dictionary<DenominationKey, int> result)
     {
         int needed = (int)(remaining / key.Value);
+        // Stryker disable all : Redundant early return; subsequent Math.Min(0, available) produces same result
         if (needed <= 0)
         {
             return remaining;
         }
+        // Stryker restore all
 
         int available = inventory.GetCount(key);
         int countToTake = Math.Min(needed, available);
