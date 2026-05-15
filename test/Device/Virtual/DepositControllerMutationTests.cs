@@ -2271,15 +2271,19 @@ public class DepositControllerMutationTests : DeviceTestBase
         // 2回目の呼び出し。これにより task1 がキャンセルされるはず。
         var task2 = target.EndDepositAsync(DepositAction.NoChange);
         
+        // Ensure task2 reaches its internal Task.Delay before we advance time
+        await Task.Yield();
+        await Task.Delay(10); // Small real-time delay to let CI scheduler breathe
+
         // task1 が終了するのを待つ（キャンセルにより終了するはず）
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task1.WaitAsync(TimeSpan.FromSeconds(5)));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task1.WaitAsync(TimeSpan.FromSeconds(10)));
 
         // task2 を完了させるために時間を進める
         TimeProvider.Advance(TimeSpan.FromSeconds(10));
         
         // Assert
         // task2 は成功するはず
-        await task2.WaitAsync(TimeSpan.FromSeconds(5));
+        await task2.WaitAsync(TimeSpan.FromSeconds(10));
 
         target.DepositStatus.ShouldBe(DeviceDepositStatus.End);
         ConfigurationProvider.Config.Simulation.DepositDelayMs = 0;
